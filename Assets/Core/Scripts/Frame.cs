@@ -4,19 +4,40 @@ using UnityEngine;
 
 public class Frame
 {
-    public static Frame current
+    /// <summary>
+    /// The current game frame according to current simulations
+    /// </summary>
+    public static Frame local
     {
         get
         {
             if (_current == null)
             {
-                _current = GameManager.singleton.currentFrame;
+                _current = GameManager.singleton.localFrame;
             }
 
             return _current;
         }
     }
     private static Frame _current;
+
+    /// <summary>
+    /// The actual physical game frame
+    /// </summary>
+    public static Frame server
+    {
+        get
+        {
+            if (_server == null)
+            {
+                _server = GameManager.singleton.serverFrame;
+            }
+
+            return _server;
+        }
+    }
+    private static Frame _server;
+
 
     // Game time
     /// <summary>
@@ -28,6 +49,11 @@ public class Frame
     /// The time at the current tick
     /// </summary>
     public float time;
+
+    /// <summary>
+    /// Fixed delta time running at the server tick rate
+    /// </summary>
+    public const float serverDeltaTime = 0.1f;
 
     /// <summary>
     /// The local player's inputs at this tick
@@ -45,32 +71,23 @@ public class Frame
         time = time + deltaTime;
 
         // Update player inputs
-        localInput.moveHorizontalAxis = Input.GetAxis("Horizontal");
-        localInput.moveVerticalAxis = Input.GetAxis("Vertical");
+        localInput.moveHorizontalAxis = Input.GetAxisRaw("Horizontal");
+        localInput.moveVerticalAxis = Input.GetAxisRaw("Vertical");
 
         localInput.lookHorizontalAxis = Input.GetAxis("Mouse X");
         localInput.lookVerticalAxis = -Input.GetAxis("Mouse Y");
 
         // Update game objects
-        foreach (SyncedObject obj in GameObject.FindObjectsOfType<SyncedObject>())
+        foreach (SyncedObject obj in GameManager.singleton.syncedObjects)
         {
             obj.TriggerStartIfCreated();
             obj.FrameUpdate();
         }
 
-        foreach (SyncedObject obj in GameObject.FindObjectsOfType<SyncedObject>())
+        foreach (SyncedObject obj in GameManager.singleton.syncedObjects)
         {
             obj.FrameLateUpdate();
         }
-    }
-
-    /// <summary>
-    /// Rewinds the gamestate to an earlier snapshot
-    /// </summary>
-    /// <param name="state"></param>
-    public void Rewind(GameState state)
-    {
-
     }
 }
 

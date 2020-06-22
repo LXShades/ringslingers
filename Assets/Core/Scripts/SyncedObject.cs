@@ -16,10 +16,32 @@ public abstract class SyncedObject : SyncedObjectBase
 {
     private bool hasCalledStart = false;
 
+    private int _id;
+
+    public int id => _id;
+
+    private static int nextId = 1;
+
     // The following Unity functions are disabled to prevent idiot programmers, such as myself, from causing synchronisation errors.
     protected override sealed void Start() { }
     protected override sealed void Update() { }
     protected override sealed void LateUpdate() { }
+
+    protected virtual void Awake()
+    {
+        // Register the object to the thingy thing
+        GameManager.singleton.syncedObjects.Add(this);
+
+        _id = nextId++;
+
+        // Call Awake proper real-like
+        FrameAwake();
+    }
+
+    /// <summary>
+    /// Called when an object is created and its synced _stuff_ is initialized
+    /// </summary>
+    public virtual void FrameAwake() { return; }
 
     /// <summary>
     /// Called before the first frame where the object exists begins

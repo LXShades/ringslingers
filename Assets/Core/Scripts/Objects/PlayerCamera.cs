@@ -26,8 +26,8 @@ public class PlayerCamera : SyncedObject
 
     public override void FrameUpdate()
     {
-        horizontalAngle += Frame.current.localInput.lookHorizontalAxis;
-        verticalAngle += Frame.current.localInput.lookVerticalAxis;
+        horizontalAngle += Frame.local.localInput.lookHorizontalAxis;
+        verticalAngle += Frame.local.localInput.lookVerticalAxis;
         horizontalAngle = ((horizontalAngle % 360) + 360) % 360;
     }
 
