@@ -11,4 +11,14 @@ public class Player : SyncedObject
 
     [Header("Look")]
     public float lookVerticalAngle = 0;
+
+    /// <summary>
+    /// Current inputs of this player
+    /// </summary>
+    [HideInInspector] public InputCmds input;
+
+    /// <summary>
+    /// Player ID
+    /// </summary>
+    public int playerId;
 }

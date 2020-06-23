@@ -1,0 +1,131 @@
+Camera height: 2.
+
+1536
+1472
+1408
+metre: 1 tile in GFZ = 64 fracunits
+Sonic's height: about 95% one tile
+accelstart: 96
+thrustfactor: 5
+acceleration: 40
+normalspd: 36
+forwardmove: 50
+gravity: 0.5
+jumpfactor: 1
+
+
+// gravity
+	fixed_t gravityadd = P_GetMobjGravity(mo);
+
+	if (!mo->momz) // mobj at stop, no floor, so feel the push of gravity!
+		gravityadd <<= 1;
+
+	if (affect)
+		mo->momz += gravityadd;
+
+
+		// Decide current stats
+		if (player->powers[pw_super] || player->powers[pw_sneakers])
+		{
+			topspeed = 5 * normalspd / 3; // 1.67x
+			thrustfactor = player->thrustfactor*2;
+			acceleration = player->accelstart/2 + (FixedDiv(player->speed, player->mo->scale)>>FRACBITS) * player->acceleration/2;
+		}
+		else
+		{
+			topspeed = normalspd;
+			thrustfactor = player->thrustfactor;
+			acceleration = player->accelstart + (FixedDiv(player->speed, player->mo->scale)>>FRACBITS) * player->acceleration;
+		}
+
+		if (player->powers[pw_tailsfly])
+			topspeed >>= 1;
+		else if (player->mo->eflags & (MFE_UNDERWATER|MFE_GOOWATER))
+		{
+			topspeed >>= 1;
+			acceleration = 2*acceleration/3;
+		}
+
+		// Move forward/backward
+		movepushforward = cmd->forwardmove * (thrustfactor * acceleration);
+
+		// Allow a bit of movement while spinning
+		if ((player->pflags & (PF_SPINNING|PF_THOKKED)) == PF_SPINNING)
+		{
+			if ((mforward && cmd->forwardmove > 0) || (mbackward && cmd->forwardmove < 0)
+			|| (player->pflags & PF_STARTDASH))
+				movepushforward = 0;
+			else if (onground)
+				movepushforward >>= 4;
+			else
+				movepushforward >>= 3;
+		}
+		// allow very small movement while in air for gameplay
+		else if (!onground)
+			movepushforward >>= 2; // proper air movement
+
+		movepushforward = FixedMul(movepushforward, player->mo->scale);
+
+		totalthrust.x += P_ReturnThrustX(player->mo, movepushangle, movepushforward);
+		totalthrust.y += P_ReturnThrustY(player->mo, movepushangle, movepushforward);
+
+		movepushside = cmd->sidemove * (thrustfactor * acceleration);
+
+		// allow very small movement while in air for gameplay
+		if (!onground)
+		{
+			movepushside >>= 2; // proper air movement
+			// Reduce movepushslide even more if over "max" flight speed
+			if (((player->pflags & (PF_SPINNING|PF_THOKKED)) == PF_SPINNING) || (player->powers[pw_tailsfly] && player->speed > topspeed))
+				movepushside >>= 2;
+		}
+		// Allow a bit of movement while spinning
+		else if ((player->pflags & (PF_SPINNING|PF_THOKKED)) == PF_SPINNING)
+		{
+			if (player->pflags & PF_STARTDASH)
+				movepushside = 0;
+			else if (onground)
+				movepushside >>= 4;
+			else
+				movepushside >>= 3;
+		}
+
+		// Finally move the player now that their speed/direction has been decided.
+		movepushside = FixedMul(movepushside, player->mo->scale);
+
+		totalthrust.x += P_ReturnThrustX(player->mo, movepushsideangle, movepushside);
+		totalthrust.y += P_ReturnThrustY(player->mo, movepushsideangle, movepushside);
+
+	// Time to ask three questions:
+	// 1) Are we over topspeed?
+	// 2) If "yes" to 1, were we moving over topspeed to begin with?
+	// 3) If "yes" to 2, are we now going faster?
+
+	// If "yes" to 3, normalize to our initial momentum; this will allow thoks to stay as fast as they normally are.
+	// If "no" to 3, ignore it; the player might be going too fast, but they're slowing down, so let them.
+	// If "no" to 2, normalize to topspeed, so we can't suddenly run faster than it of our own accord.
+	// If "no" to 1, we're not reaching any limits yet, so ignore this entirely!
+	// -Shadow Hog
+	newMagnitude = R_PointToDist2(player->mo->momx - player->cmomx, player->mo->momy - player->cmomy, 0, 0);
+	if (newMagnitude > topspeed)
+	{
+		fixed_t tempmomx, tempmomy;
+		if (oldMagnitude > topspeed && !spin)
+		{
+			if (newMagnitude > oldMagnitude)
+			{
+				tempmomx = FixedMul(FixedDiv(player->mo->momx - player->cmomx, newMagnitude), oldMagnitude);
+				tempmomy = FixedMul(FixedDiv(player->mo->momy - player->cmomy, newMagnitude), oldMagnitude);
+				player->mo->momx = tempmomx + player->cmomx;
+				player->mo->momy = tempmomy + player->cmomy;
+			}
+			// else do nothing
+		}
+		else
+		{
+			tempmomx = FixedMul(FixedDiv(player->mo->momx - player->cmomx, newMagnitude), topspeed);
+			tempmomy = FixedMul(FixedDiv(player->mo->momy - player->cmomy, newMagnitude), topspeed);
+			player->mo->momx = tempmomx + player->cmomx;
+			player->mo->momy = tempmomy + player->cmomy;
+		}
+	}

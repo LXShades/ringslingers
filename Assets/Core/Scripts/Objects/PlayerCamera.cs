@@ -10,6 +10,11 @@ public class PlayerCamera : SyncedObject
     public Player currentPlayer;
 
     /// <summary>
+    /// The height of the camera relative to the player's feet
+    /// </summary>
+    public float eyeHeight = 0.6f;
+
+    /// <summary>
     /// Horizontal look angle in degrees
     /// </summary>
     public float horizontalAngle = 0;
@@ -26,14 +31,14 @@ public class PlayerCamera : SyncedObject
 
     public override void FrameUpdate()
     {
-        horizontalAngle += Frame.local.localInput.lookHorizontalAxis;
-        verticalAngle += Frame.local.localInput.lookVerticalAxis;
+        horizontalAngle += currentPlayer.input.lookHorizontalAxis;
+        verticalAngle += currentPlayer.input.lookVerticalAxis;
         horizontalAngle = ((horizontalAngle % 360) + 360) % 360;
     }
 
     public override void FrameLateUpdate()
     {
-        transform.position = currentPlayer.transform.position + Vector3.up;
+        transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
         transform.rotation = Quaternion.Euler(verticalAngle, horizontalAngle, 0);
     }
 }
