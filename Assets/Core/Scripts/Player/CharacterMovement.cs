@@ -52,6 +52,9 @@ public class CharacterMovement : SyncedObject
     /// </summary>
     private Vector3 inputRunDirection;
 
+    /// <summary>
+    /// Whether the player is on the ground
+    /// </summary>
     [HideInInspector] public bool isOnGround = false;
 
     public override void FrameStart()

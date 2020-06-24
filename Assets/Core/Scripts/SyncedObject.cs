@@ -66,4 +66,14 @@ public abstract class SyncedObject : SyncedObjectBase
             hasCalledStart = true;
         }
     }
+
+    private void OnDestroy()
+    {
+        Debug.Log("Synced object destroyed");
+
+        if (GameManager.singleton)
+        {
+            GameManager.singleton.syncedObjects.Remove(this);
+        }
+    }
 }

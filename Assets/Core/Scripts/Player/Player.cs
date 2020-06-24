@@ -32,6 +32,11 @@ public class Player : SyncedObject
     /// </summary>
     public CharacterMovement movement;
 
+    /// <summary>
+    /// Number of rings picked up
+    /// </summary>
+    public int numRings = 0;
+
     public override void FrameAwake()
     {
         movement = GetComponent<CharacterMovement>();

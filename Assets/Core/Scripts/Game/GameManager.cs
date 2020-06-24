@@ -61,6 +61,17 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public GameObject playerPrefab;
 
+    /// <summary>
+    /// The currently active in-game camera
+    /// </summary>
+    public new PlayerCamera camera
+    {
+        get
+        {
+            return FindObjectOfType<PlayerCamera>(); // prototyping
+        }
+    }
+
     bool isMouseLocked = true;
 
     private void Awake()
