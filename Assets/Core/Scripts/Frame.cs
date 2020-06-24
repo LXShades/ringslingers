@@ -92,6 +92,7 @@ public class Frame
         {
             if (players[i])
             {
+                players[i].lastInput = players[i].input;
                 players[i].input = playerInputs[i];
             }
         }
@@ -356,6 +357,9 @@ public struct InputCmds
 
     public float lookHorizontalAxis;
     public float lookVerticalAxis;
+
+    public bool btnJump;
+    public bool btnFire;
 
     public void ToStream(Stream output)
     {

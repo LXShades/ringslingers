@@ -103,6 +103,16 @@ public class GameManager : MonoBehaviour
             Frame.local.playerInputs[localPlayerId] = MakeLocalInputCmds();
 
             Frame.local.Tick(Time.deltaTime);
+
+            // Debug controls
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                Application.targetFrameRate = 35;
+            }
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                Application.targetFrameRate = 144;
+            }
         }
         else
         {
@@ -186,6 +196,9 @@ public class GameManager : MonoBehaviour
 
         localInput.lookHorizontalAxis = Input.GetAxis("Mouse X");
         localInput.lookVerticalAxis = -Input.GetAxis("Mouse Y");
+
+        localInput.btnFire = Input.GetButton("Fire");
+        localInput.btnJump = Input.GetButton("Jump");
 
         return localInput;
     }

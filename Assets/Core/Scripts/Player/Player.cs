@@ -18,6 +18,11 @@ public class Player : SyncedObject
     [HideInInspector] public InputCmds input;
 
     /// <summary>
+    /// Previous inputs of this player
+    /// </summary>
+    [HideInInspector] public InputCmds lastInput;
+
+    /// <summary>
     /// Player ID
     /// </summary>
     public int playerId;

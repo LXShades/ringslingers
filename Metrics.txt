@@ -12,7 +12,16 @@ normalspd: 36
 forwardmove: 50
 gravity: 0.5
 jumpfactor: 1
+actionspd: 60
 
+// thok
+						// Catapult the player
+						fixed_t actionspd = player->actionspd;
+
+						if (player->mo->eflags & MFE_UNDERWATER)
+							actionspd >>= 1;
+
+						P_InstaThrust(player->mo, player->mo->angle, FixedMul(actionspd, player->mo->scale));
 
 // gravity
 	fixed_t gravityadd = P_GetMobjGravity(mo);
