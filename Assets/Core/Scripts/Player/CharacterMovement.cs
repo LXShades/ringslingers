@@ -11,7 +11,6 @@ public class CharacterMovement : SyncedObject
     private new PlayerCamera camera;
 
     [Header("Movement (all FRACUNITS)")]
-
     public float accelStart = 96;
     public float acceleration = 40;
     public float thrustFactor = 5;
@@ -32,8 +31,6 @@ public class CharacterMovement : SyncedObject
     [Header("Scaling")]
     public float fracunitsPerM = 64;
 
-    private Vector3 velocity;
-
     // States
     [Flags]
     enum State
@@ -46,11 +43,16 @@ public class CharacterMovement : SyncedObject
     private State state;
 
     /// <summary>
+    /// Speed of the player right now
+    /// </summary>
+    [HideInInspector] public Vector3 velocity;
+
+    /// <summary>
     /// The direction the player is trying to run in
     /// </summary>
     private Vector3 inputRunDirection;
 
-    private bool isOnGround = false;
+    [HideInInspector] public bool isOnGround = false;
 
     public override void FrameStart()
     {
@@ -106,7 +108,7 @@ public class CharacterMovement : SyncedObject
 
     private bool DetectOnGround()
     {
-        foreach (var hit in Physics.RaycastAll(transform.position + Vector3.up * 0.1f, -Vector3.up, 0.2f, ~0, QueryTriggerInteraction.Ignore))
+        foreach (var hit in Physics.RaycastAll(transform.position + Vector3.up * 0.1f, -Vector3.up, 0.199f, ~0, QueryTriggerInteraction.Ignore))
         {
             if (!hit.collider.GetComponentInParent<Player>())
             {
@@ -148,7 +150,7 @@ public class CharacterMovement : SyncedObject
 
         if (speedToClamp > topSpeed && speedToClamp > lastHorizontalSpeed)
         {
-            velocity.SetHorizontal(velocity.Horizontal() * lastHorizontalSpeed / velocity.magnitude);
+            velocity.SetHorizontal(velocity.Horizontal() * lastHorizontalSpeed / speedToClamp);
         }
     }
 
@@ -162,7 +164,7 @@ public class CharacterMovement : SyncedObject
                 velocity.y = jumpSpeed * jumpFactor;
                 state |= State.Jumped;
             }
-            else if (!state.HasFlag(State.Thokked) && !player.lastInput.btnJump)
+            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
                 // Thok
                 velocity.SetHorizontal(camera.transform.forward.Horizontal().normalized * actionSpeed);

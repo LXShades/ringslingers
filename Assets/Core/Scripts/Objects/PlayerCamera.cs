@@ -15,6 +15,31 @@ public class PlayerCamera : SyncedObject
     public float eyeHeight = 0.6f;
 
     /// <summary>
+    /// The height (positive and negative) of eye bobs
+    /// </summary>
+    public float eyeBobHeight = 0.1f;
+
+    /// <summary>
+    /// The speed of eye bobs, in degrees per second
+    /// </summary>
+    public float eyeBobSpeed = 630;
+
+    /// <summary>
+    /// Maximum player velocity for maximum eye bob
+    /// </summary>
+    public float maxPlayerVelocityForEyeBob = 30;
+
+    /// <summary>
+    /// The max eye bob height when landing
+    /// </summary>
+    public float landEyeBobHeight = 0.3f;
+
+    /// <summary>
+    /// Maximum player landing speed for maximum eye bob
+    /// </summary>
+    public float maxPlayerLandForEyeBob = 30;
+
+    /// <summary>
     /// Horizontal look angle in degrees
     /// </summary>
     public float horizontalAngle = 0;
@@ -24,6 +49,12 @@ public class PlayerCamera : SyncedObject
     /// </summary>
     public float verticalAngle = 0;
 
+    private float lastPlayerFallSpeed = 0;
+
+    private float landBobTimer = 0;
+    private float landBobMagnitude = 0;
+    private float landBobDuration = 0;
+
     public override void FrameStart()
     {
         currentPlayer = FindObjectOfType<Player>(); // temporary
@@ -31,6 +62,7 @@ public class PlayerCamera : SyncedObject
 
     public override void FrameUpdate()
     {
+        // Apply controls
         horizontalAngle += currentPlayer.input.lookHorizontalAxis;
         verticalAngle += currentPlayer.input.lookVerticalAxis;
         horizontalAngle = ((horizontalAngle % 360) + 360) % 360;
@@ -38,7 +70,30 @@ public class PlayerCamera : SyncedObject
 
     public override void FrameLateUpdate()
     {
+        // Move to player position
         transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
         transform.rotation = Quaternion.Euler(verticalAngle, horizontalAngle, 0);
+
+        // Apply eye bob
+        if (currentPlayer.movement.isOnGround)
+        {
+            if (lastPlayerFallSpeed > 0)
+            {
+                landBobDuration = 0.4f;
+                landBobTimer = landBobDuration;
+                landBobMagnitude = landEyeBobHeight * Mathf.Min(lastPlayerFallSpeed / maxPlayerLandForEyeBob, 1);
+            }
+
+            if (landBobTimer > 0)
+            {
+                float landProgress = 1 - (landBobTimer / landBobDuration);
+                transform.position += Vector3.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
+                landBobTimer = Mathf.Max(landBobTimer - Frame.local.deltaTime, 0);
+            }
+
+            transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * Frame.local.time * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
+        }
+
+        lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);
     }
 }

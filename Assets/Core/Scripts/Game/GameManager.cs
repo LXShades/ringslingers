@@ -61,6 +61,8 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public GameObject playerPrefab;
 
+    bool isMouseLocked = true;
+
     private void Awake()
     {
         // Register network callbacks
@@ -69,6 +71,8 @@ public class GameManager : MonoBehaviour
 
         // Register message handlers
         CustomMessagingManager.RegisterNamedMessageHandler("servertick", OnReceivedServerTick);
+
+        Cursor.lockState = CursorLockMode.Locked;
 
 #if UNITY_EDITOR
         if (UnityEditor.EditorPrefs.GetBool("netCurrentlyEditorTesting") && false)
@@ -112,6 +116,19 @@ public class GameManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Q))
             {
                 Application.targetFrameRate = 144;
+            }
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                isMouseLocked = !isMouseLocked;
+
+                if (isMouseLocked)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                }
+                else
+                {
+                    Cursor.lockState = CursorLockMode.None;
+                }
             }
         }
         else

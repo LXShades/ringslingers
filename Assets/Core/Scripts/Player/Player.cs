@@ -26,4 +26,14 @@ public class Player : SyncedObject
     /// Player ID
     /// </summary>
     public int playerId;
+
+    /// <summary>
+    /// Player movement component
+    /// </summary>
+    public CharacterMovement movement;
+
+    public override void FrameAwake()
+    {
+        movement = GetComponent<CharacterMovement>();
+    }
 }
