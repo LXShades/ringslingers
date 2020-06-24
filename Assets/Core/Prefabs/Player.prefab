@@ -1,5 +1,35 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &824879587919164344
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3310946930297574031}
+  m_Layer: 0
+  m_Name: RingSpawnPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3310946930297574031
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 824879587919164344}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.656, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 7352825796714013432}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3772004447444073683
 GameObject:
   m_ObjectHideFlags: 0
@@ -93,6 +123,7 @@ GameObject:
   - component: {fileID: 7352825796714013434}
   - component: {fileID: 7352825796714013433}
   - component: {fileID: 7352825796714013435}
+  - component: {fileID: 1227556274159782272}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -112,6 +143,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 701023802387300388}
+  - {fileID: 3310946930297574031}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -126,7 +158,7 @@ CharacterController:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Height: 1.01
+  m_Height: 1
   m_Radius: 0.37
   m_SlopeLimit: 45
   m_StepOffset: 0.3
@@ -148,6 +180,9 @@ MonoBehaviour:
   name: Frederic Fred McFred Freddie Jr
   lookVerticalAngle: 0
   playerId: 0
+  movement: {fileID: 0}
+  numRings: 0
+  aimForward: {x: 0, y: 0, z: 0}
 --- !u!114 &7352825796714013435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -160,16 +195,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4118904f0bb36834eab3af1056ce998b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 8
-  topSpeed: 36
-  gravity: 0.5
   accelStart: 96
   acceleration: 40
-  friction: 0.90625
   thrustFactor: 5
-  airAccelerationMultiplier: 0.25
-  stopSpeed: 0.015625
+  topSpeed: 36
+  friction: 0.90625
+  stopSpeed: 1
   jumpSpeed: 9.75
   jumpFactor: 1
+  gravity: 0.5
+  airAccelerationMultiplier: 0.25
   actionSpeed: 60
-  fracunitsPerM: 64
+  velocity: {x: 0, y: 0, z: 0}
+  isOnGround: 0
+--- !u!114 &1227556274159782272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25d19b786be947a4a876fe24e175a23e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentWeapon: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
+  spawnPosition: {fileID: 3310946930297574031}
+  spawnNudge: 0.469

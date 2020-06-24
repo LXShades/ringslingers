@@ -39,16 +39,6 @@ public class PlayerCamera : SyncedObject
     /// </summary>
     public float maxPlayerLandForEyeBob = 30;
 
-    /// <summary>
-    /// Horizontal look angle in degrees
-    /// </summary>
-    public float horizontalAngle = 0;
-
-    /// <summary>
-    /// Vertiacl look angle in degrees
-    /// </summary>
-    public float verticalAngle = 0;
-
     private float lastPlayerFallSpeed = 0;
 
     private float landBobTimer = 0;
@@ -60,19 +50,11 @@ public class PlayerCamera : SyncedObject
         currentPlayer = FindObjectOfType<Player>(); // temporary
     }
 
-    public override void FrameUpdate()
-    {
-        // Apply controls
-        horizontalAngle += currentPlayer.input.lookHorizontalAxis;
-        verticalAngle += currentPlayer.input.lookVerticalAxis;
-        horizontalAngle = ((horizontalAngle % 360) + 360) % 360;
-    }
-
     public override void FrameLateUpdate()
     {
         // Move to player position
         transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
-        transform.rotation = Quaternion.Euler(verticalAngle, horizontalAngle, 0);
+        transform.rotation = Quaternion.Euler(currentPlayer.input.verticalAim, currentPlayer.input.horizontalAim, 0);
 
         // Apply eye bob
         if (currentPlayer.movement.isOnGround)

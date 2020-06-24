@@ -11,6 +11,8 @@ public class GameHUD : MonoBehaviour
     [Header("Hierarchy")]
     public Text ringsText;
 
+    public Text debugText;
+
     void Update()
     {
         Player player = GameManager.singleton.camera.currentPlayer;
@@ -20,6 +22,8 @@ public class GameHUD : MonoBehaviour
         if (player)
         {
             ringsText.text = player.numRings.ToString();
+
+            debugText.text = $"Run Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}";
         }
     }
 }

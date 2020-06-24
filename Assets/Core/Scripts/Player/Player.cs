@@ -37,8 +37,20 @@ public class Player : SyncedObject
     /// </summary>
     public int numRings = 0;
 
+    /// <summary>
+    /// Forward vector representing where we're aiming
+    /// </summary>
+    public Vector3 aimForward;
+
     public override void FrameAwake()
     {
         movement = GetComponent<CharacterMovement>();
+    }
+
+    public override void FrameUpdate()
+    {
+        float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
+
+        aimForward = new Vector3(Mathf.Sin(horizontalRads) * Mathf.Cos(verticalRads), -Mathf.Sin(verticalRads), Mathf.Cos(horizontalRads) * Mathf.Cos(verticalRads));
     }
 }

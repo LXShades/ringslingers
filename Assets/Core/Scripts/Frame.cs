@@ -355,8 +355,8 @@ public struct InputCmds
     public float moveHorizontalAxis;
     public float moveVerticalAxis;
 
-    public float lookHorizontalAxis;
-    public float lookVerticalAxis;
+    public float horizontalAim;
+    public float verticalAim;
 
     public bool btnJump;
     public bool btnFire;

@@ -28,9 +28,6 @@ public class CharacterMovement : SyncedObject
     [Header("Abilities")]
     public float actionSpeed = 60;
 
-    [Header("Scaling")]
-    public float fracunitsPerM = 64;
-
     // States
     [Flags]
     enum State
@@ -66,8 +63,6 @@ public class CharacterMovement : SyncedObject
 
     public override void FrameUpdate()
     {
-        float lastHorizontalSpeed = velocity.Horizontal().magnitude;
-
         // Check whether on ground
         isOnGround = DetectOnGround();
 
@@ -82,8 +77,12 @@ public class CharacterMovement : SyncedObject
             }
         }
 
-        // Move based on where we're looking, EZ
+        // Point towards relevent direction
+        transform.rotation = Quaternion.Euler(0, player.input.horizontalAim, 0);
+
+        // Friction
         ApplyFriction();
+        float lastHorizontalSpeed = velocity.Horizontal().magnitude; // this is our new max speed if our max speed was already exceeded
 
         ApplyRunAcceleration();
 
@@ -100,13 +99,10 @@ public class CharacterMovement : SyncedObject
         }
 
         // Perform final movement and collision
-        controller.Move(velocity * (35 * Frame.local.deltaTime / fracunitsPerM));
+        controller.Move(velocity * (35 * Frame.local.deltaTime / GameManager.singleton.fracunitsPerM));
 
         // Jump button
         HandleJumpAbilities();
-
-        // Point towards relevent direction
-        transform.rotation = Quaternion.Euler(0, camera.horizontalAngle, 0);
     }
 
     private bool DetectOnGround()
@@ -125,7 +121,7 @@ public class CharacterMovement : SyncedObject
     private void ApplyFriction()
     {
         // Friction
-        if (velocity.magnitude > 0 && isOnGround)
+        if (velocity.Horizontal().magnitude > 0 && isOnGround)
         {
             velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, Frame.local.deltaTime * 35f));
         }
@@ -133,7 +129,7 @@ public class CharacterMovement : SyncedObject
 
     private void ApplyRunAcceleration()
     {
-        inputRunDirection = camera.transform.forward.Horizontal().normalized * player.input.moveVerticalAxis + camera.transform.right.Horizontal().normalized * player.input.moveHorizontalAxis;
+        inputRunDirection = transform.forward.Horizontal().normalized * player.input.moveVerticalAxis + transform.right.Horizontal().normalized * player.input.moveHorizontalAxis;
 
         if (inputRunDirection.magnitude > 1)
             inputRunDirection.Normalize();

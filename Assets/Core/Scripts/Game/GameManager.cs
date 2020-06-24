@@ -61,6 +61,9 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public GameObject playerPrefab;
 
+    [Header("Scaling")]
+    public float fracunitsPerM = 64;
+
     /// <summary>
     /// The currently active in-game camera
     /// </summary>
@@ -115,7 +118,7 @@ public class GameManager : MonoBehaviour
         if (Frame.local.time + Time.deltaTime < Frame.server.time + Frame.tickDeltaTime || true) // DISABLED
         {
             // Run simulated high-precision frame
-            Frame.local.playerInputs[localPlayerId] = MakeLocalInputCmds();
+            Frame.local.playerInputs[localPlayerId] = MakeLocalInputCmds(Frame.local.playerInputs[localPlayerId]);
 
             Frame.local.Tick(Time.deltaTime);
 
@@ -152,7 +155,7 @@ public class GameManager : MonoBehaviour
             // Advance the server frame
             while (Frame.local.time + Time.deltaTime >= Frame.server.time + Frame.tickDeltaTime)
             {
-                Frame.server.playerInputs[localPlayerId] = MakeLocalInputCmds();
+                Frame.server.playerInputs[localPlayerId] = MakeLocalInputCmds(Frame.local.playerInputs[localPlayerId]);
                 Frame.server.Tick(Frame.tickDeltaTime);
 
                 if (net.IsServer)
@@ -215,15 +218,15 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region Input
-    public InputCmds MakeLocalInputCmds()
+    public InputCmds MakeLocalInputCmds(InputCmds lastInput)
     {
         InputCmds localInput;
 
         localInput.moveHorizontalAxis = Input.GetAxisRaw("Horizontal");
         localInput.moveVerticalAxis = Input.GetAxisRaw("Vertical");
 
-        localInput.lookHorizontalAxis = Input.GetAxis("Mouse X");
-        localInput.lookVerticalAxis = -Input.GetAxis("Mouse Y");
+        localInput.horizontalAim = (lastInput.horizontalAim + Input.GetAxis("Mouse X") % 360 + 360) % 360;
+        localInput.verticalAim = Mathf.Clamp(lastInput.verticalAim - Input.GetAxis("Mouse Y"), -89.99f, 89.99f);
 
         localInput.btnFire = Input.GetButton("Fire");
         localInput.btnJump = Input.GetButton("Jump");
