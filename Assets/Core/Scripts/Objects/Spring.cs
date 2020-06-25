@@ -8,6 +8,9 @@ public class Spring : MonoBehaviour
     // red: 32, yellow: 20, blue: 11
     public float springForce = (32 * 35);
 
+    [Header("Sounds")]
+    public GameSound springSound = new GameSound();
+
     private Animator animator;
 
     void Start()
@@ -23,6 +26,8 @@ public class Spring : MonoBehaviour
         {
             movement.SpringUp(springForce, transform.up);
             animator.SetTrigger("DoSpring");
+
+            GameSounds.PlaySound(gameObject, springSound);
         }
     }
 }

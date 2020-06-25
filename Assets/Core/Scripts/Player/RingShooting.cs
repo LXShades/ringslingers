@@ -49,6 +49,8 @@ public class RingShooting : SyncedObject
                 ringAsThrownRing.settings = currentWeapon;
                 ringAsThrownRing.Throw(player, spawnPosition.position, player.aimForward);
 
+                GameSounds.PlaySound(gameObject, currentWeapon.fireSound);
+
                 lastFiredRingTime = Frame.local.time;
             }
         }

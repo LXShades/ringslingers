@@ -206,6 +206,16 @@ MonoBehaviour:
   gravity: 0.5
   airAccelerationMultiplier: 0.25
   actionSpeed: 60
+  jumpSound:
+    clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
+    volume: 0.3
+    pitch: 1
+    pitchVariance: 0
+  thokSound:
+    clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0.05
   velocity: {x: 0, y: 0, z: 0}
   isOnGround: 0
 --- !u!114 &1227556274159782272

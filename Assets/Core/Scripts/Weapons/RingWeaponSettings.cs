@@ -17,6 +17,11 @@ public class RingWeaponSettings : ScriptableObject
     public float shotsPerSecond = 3f;
 
     /// <summary>
+    /// Sound effect to play when firing
+    /// </summary>
+    public GameSound fireSound;
+
+    /// <summary>
     /// Maximum ammunition that can be held for this ring
     /// </summary>
     public int maxAmmo = 99;

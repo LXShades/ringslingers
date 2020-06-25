@@ -362,6 +362,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   springForce: 20
+  springSound:
+    clip: {fileID: 8300000, guid: bea3bd06b69d6574687ef74c64f82e9e, type: 3}
+    volume: 0.5
+    pitch: 1
+    pitchVariance: 0
 --- !u!136 &21588467317917135
 CapsuleCollider:
   m_ObjectHideFlags: 0

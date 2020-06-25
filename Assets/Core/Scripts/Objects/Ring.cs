@@ -11,6 +11,8 @@ public class Ring : SyncedObject
     [Header("Hierarchy")]
     public GameObject pickupParticles;
 
+    public GameSound pickupSound = new GameSound();
+
     public override void FrameStart()
     {
         // Hover above the ground
@@ -36,6 +38,7 @@ public class Ring : SyncedObject
             other.GetComponent<Player>().numRings++;
             pickupParticles.SetActive(true);
             pickupParticles.transform.SetParent(null);
+            GameSounds.PlaySound(other.gameObject, pickupSound);
             Destroy(gameObject);
         }
     }

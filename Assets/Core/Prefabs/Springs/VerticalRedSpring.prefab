@@ -387,7 +387,7 @@ GameObject:
   - component: {fileID: 7023939424432625305}
   - component: {fileID: 1688293574949975825}
   m_Layer: 0
-  m_Name: VerticalRedSpring (3)
+  m_Name: VerticalRedSpring
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -443,6 +443,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   springForce: 32
+  springSound:
+    clip: {fileID: 8300000, guid: bea3bd06b69d6574687ef74c64f82e9e, type: 3}
+    volume: 0.5
+    pitch: 1
+    pitchVariance: 0
 --- !u!136 &1688293574949975825
 CapsuleCollider:
   m_ObjectHideFlags: 0

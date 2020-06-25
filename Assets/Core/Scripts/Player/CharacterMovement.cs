@@ -28,6 +28,10 @@ public class CharacterMovement : SyncedObject
     [Header("Abilities")]
     public float actionSpeed = 60;
 
+    [Header("Sounds")]
+    public GameSound jumpSound = new GameSound();
+    public GameSound thokSound = new GameSound();
+
     // States
     [Flags]
     enum State
@@ -161,12 +165,14 @@ public class CharacterMovement : SyncedObject
             {
                 // Jump
                 velocity.y = jumpSpeed * jumpFactor;
+                GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
                 // Thok
                 velocity.SetHorizontal(camera.transform.forward.Horizontal().normalized * actionSpeed);
+                GameSounds.PlaySound(gameObject, thokSound);
                 state |= State.Thokked;
             }
         }
