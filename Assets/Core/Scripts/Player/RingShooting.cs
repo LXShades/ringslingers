@@ -25,6 +25,11 @@ public class RingShooting : SyncedObject
     /// </summary>
     private float lastFiredRingTime = -1;
 
+    /// <summary>
+    /// Er, it's hard to explain. Although useless, this comment loves you.
+    /// </summary>
+    private bool hasFiredOnThisClick = false;
+
     // Components
     private Player player;
 
@@ -35,12 +40,12 @@ public class RingShooting : SyncedObject
 
     public override void FrameUpdate()
     {
-        if (player.input.btnFire && (!player.lastInput.btnFire || currentWeapon.isAutomatic))
+        if (player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.isAutomatic))
         {
             Debug.Assert(currentWeapon.shotsPerSecond != 0); // division by zero otherwise
             
             // Fire if we can
-            if (Frame.local.time - lastFiredRingTime >= 1f / currentWeapon.shotsPerSecond)
+            if (Frame.local.time - lastFiredRingTime >= 1f / currentWeapon.shotsPerSecond && player.numRings > 0)
             {
                 GameObject ring = Instantiate(currentWeapon.prefab, spawnPosition.position, Quaternion.identity);
                 ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
@@ -52,7 +57,12 @@ public class RingShooting : SyncedObject
                 GameSounds.PlaySound(gameObject, currentWeapon.fireSound);
 
                 lastFiredRingTime = Frame.local.time;
+                player.numRings--;
+
+                hasFiredOnThisClick = true;
             }
         }
+
+        hasFiredOnThisClick &= player.input.btnFire;
     }
 }

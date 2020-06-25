@@ -28,6 +28,11 @@ public class Player : SyncedObject
     public int playerId;
 
     /// <summary>
+    /// Associated Client ID
+    /// </summary>
+    public ulong clientId;
+
+    /// <summary>
     /// Player movement component
     /// </summary>
     public CharacterMovement movement;
@@ -52,5 +57,25 @@ public class Player : SyncedObject
         float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
 
         aimForward = new Vector3(Mathf.Sin(horizontalRads) * Mathf.Cos(verticalRads), -Mathf.Sin(verticalRads), Mathf.Cos(horizontalRads) * Mathf.Cos(verticalRads));
+    }
+
+    public void Respawn()
+    {
+        GameObject[] spawners = GameObject.FindGameObjectsWithTag("PlayerSpawn");
+
+        if (spawners.Length > 0)
+        {
+            GameObject spawnPoint = spawners[Random.Range(0, spawners.Length)];
+
+            transform.position = spawnPoint.transform.position;
+            transform.forward = spawnPoint.transform.forward.Horizontal(); // todo
+
+            // meh...charactercontroller bugs
+            Physics.SyncTransforms();
+        }
+        else
+        {
+            Debug.LogWarning("No player spawners in this stage!");
+        }
     }
 }

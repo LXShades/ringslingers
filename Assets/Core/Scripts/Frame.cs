@@ -1,11 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using MLAPI.Messaging;
 using System.Runtime.InteropServices;
 using System.IO;
 using System;
-using Unity.Collections.LowLevel.Unsafe;
 
 /// <summary>
 /// A Frame contains the current virtual state of the game. It can be Advanced, serialized and deserialized (rewinded).
@@ -61,11 +59,6 @@ public class Frame
     /// The time at the current tick
     /// </summary>
     public float time;
-
-    /// <summary>
-    /// Fixed delta time running at the server tick rate
-    /// </summary>
-    public const float tickDeltaTime = 0.1f;
 
     /// <summary>
     /// Player inputs by ID at the beginning of this frame
@@ -152,6 +145,8 @@ public class Frame
 
         player.playerId = freeId;
         players[freeId] = player;
+
+        player.Respawn();
 
         return player;
     }
@@ -349,6 +344,7 @@ public class Frame
     #endregion
 }
 
+[System.Serializable]
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
 public struct InputCmds
 {

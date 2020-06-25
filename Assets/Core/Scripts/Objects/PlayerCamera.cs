@@ -45,37 +45,45 @@ public class PlayerCamera : SyncedObject
     private float landBobMagnitude = 0;
     private float landBobDuration = 0;
 
-    public override void FrameStart()
-    {
-        currentPlayer = FindObjectOfType<Player>(); // temporary
-    }
-
     public override void FrameLateUpdate()
     {
-        // Move to player position
-        transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
-        transform.rotation = Quaternion.Euler(currentPlayer.input.verticalAim, currentPlayer.input.horizontalAim, 0);
-
-        // Apply eye bob
-        if (currentPlayer.movement.isOnGround)
+        if (currentPlayer == null)
         {
-            if (lastPlayerFallSpeed > 0)
-            {
-                landBobDuration = 0.4f;
-                landBobTimer = landBobDuration;
-                landBobMagnitude = landEyeBobHeight * Mathf.Min(lastPlayerFallSpeed / maxPlayerLandForEyeBob, 1);
-            }
-
-            if (landBobTimer > 0)
-            {
-                float landProgress = 1 - (landBobTimer / landBobDuration);
-                transform.position += Vector3.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
-                landBobTimer = Mathf.Max(landBobTimer - Frame.local.deltaTime, 0);
-            }
-
-            transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * Frame.local.time * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
+            if (GameManager.singleton.localPlayerId >= 0)
+                currentPlayer = Frame.local.players[GameManager.singleton.localPlayerId];
         }
 
-        lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);
+        if (currentPlayer)
+        {
+            // Move to player position
+            transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
+            transform.rotation = Quaternion.Euler(currentPlayer.input.verticalAim, currentPlayer.input.horizontalAim, 0);
+
+            // Apply eye bob
+            if (currentPlayer.movement.isOnGround)
+            {
+                if (lastPlayerFallSpeed > 0)
+                {
+                    landBobDuration = 0.4f;
+                    landBobTimer = landBobDuration;
+                    landBobMagnitude = landEyeBobHeight * Mathf.Min(lastPlayerFallSpeed / maxPlayerLandForEyeBob, 1);
+                }
+
+                if (landBobTimer > 0)
+                {
+                    float landProgress = 1 - (landBobTimer / landBobDuration);
+                    transform.position += Vector3.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
+                    landBobTimer = Mathf.Max(landBobTimer - Frame.local.deltaTime, 0);
+                }
+
+                transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * Frame.local.time * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
+            }
+
+            lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);
+        }
+        else
+        {
+            // spectator cam goes here?
+        }
     }
 }

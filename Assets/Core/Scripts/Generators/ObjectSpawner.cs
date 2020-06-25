@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+#if UNITY_EDITOR
 using UnityEditor.Experimental.SceneManagement;
+#endif
 
 /// <summary>
 /// A component which spawns objects, usually in the editor. Calls OnObjectUpdate when an object is spawned or changed. Inheritable.

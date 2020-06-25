@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
+[InitializeOnLoad]
 public class NetworkEditorTools : MonoBehaviour
 {
     /** Stores whether the 'use editor testing' menu checkbox is checked */
@@ -13,21 +14,26 @@ public class NetworkEditorTools : MonoBehaviour
         set { EditorPrefs.SetBool("netUseEditorTesting", value); }
     }
 
-    public static bool isRunningEditorTest
-    {
-        get { return EditorPrefs.GetBool("netCurrentlyEditorTesting"); }
-        set { EditorPrefs.SetBool("netCurrentlyEditorTesting", value); }
-    }
-
     public static int numTestPlayers
     {
-        get { return Mathf.Clamp(EditorPrefs.GetInt("netNumTestPlayers"), 2, 4); }
+        get { return Mathf.Clamp(EditorPrefs.GetInt("netNumTestPlayers"), 1, 4); }
         set { EditorPrefs.SetInt("netNumTestPlayers", value); }
     }
 
     public static string buildPath
     {
         get { return $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/NetTest"; }
+    }
+
+    public static bool editorIsClient
+    {
+        get { return EditorPrefs.GetBool("netEditorIsServer"); }
+        set { EditorPrefs.SetBool("netEditorIsServer", value); }
+    }
+
+    static NetworkEditorTools()
+    {
+        EditorApplication.playModeStateChanged += OnPlayStateChanged;
     }
 
     [MenuItem("NetTest/Build and Run", priority=1)]
@@ -92,14 +98,15 @@ public class NetworkEditorTools : MonoBehaviour
         if (useEditorTesting)
         {
             // play an instance in the editor
-            isRunningEditorTest = true;
+            if (editorIsClient)
+            {
+                GameManager.editorCommandLineArgs = new string[] { "connect", "127.0.0.1" };
+            }
 
             EditorApplication.isPlaying = true;
-            EditorApplication.playModeStateChanged += OnPlayStateChanged;
-            Debug.Log("Running in-editor test");
         }
 
-        for (int i = isRunningEditorTest ? 1 : 0; i < numTestPlayers; i++)
+        for (int i = useEditorTesting ? 1 : 0; i < numTestPlayers; i++)
         {
             RunBuild();
         }
@@ -107,12 +114,9 @@ public class NetworkEditorTools : MonoBehaviour
 
     private static void OnPlayStateChanged(PlayModeStateChange obj)
     {
-        if (obj == PlayModeStateChange.ExitingPlayMode)
+        if (obj == PlayModeStateChange.ExitingPlayMode || obj == PlayModeStateChange.ExitingPlayMode)
         {
-            isRunningEditorTest = false;
-
-            EditorApplication.playModeStateChanged -= OnPlayStateChanged;
-            Debug.Log("No longer testing");
+            GameManager.editorCommandLineArgs = new string[0];
         }
     }
 
@@ -129,21 +133,42 @@ public class NetworkEditorTools : MonoBehaviour
         return true;
     }
 
-    [MenuItem("NetTest/2 players", priority = 30)]
+    [MenuItem("NetTest/Join as client", priority = 21)]
+    private static void EditorIsServer()
+    {
+        editorIsClient = !editorIsClient;
+    }
+
+    [MenuItem("NetTest/Join as client", true)]
+    private static bool EditorIsServerValidate()
+    {
+        Menu.SetChecked("NetTest/Join as client", editorIsClient);
+        return useEditorTesting;
+    }
+
+
+    [MenuItem("NetTest/1 player", priority = 40)]
+    private static void OneTestPlayer() { numTestPlayers = 1; }
+
+    [MenuItem("NetTest/1 player", true)]
+    private static bool OneTestPlayerValidate() { Menu.SetChecked("NetTest/1 player", numTestPlayers == 1); return true; }
+
+
+    [MenuItem("NetTest/2 players", priority = 41)]
     private static void TwoTestPlayers() { numTestPlayers = 2; }
 
     [MenuItem("NetTest/2 players", true)]
     private static bool TwoTestPlayersValidate() { Menu.SetChecked("NetTest/2 players", numTestPlayers == 2); return true; }
 
 
-    [MenuItem("NetTest/3 players", priority = 31)]
+    [MenuItem("NetTest/3 players", priority = 42)]
     private static void ThreeTestPlayers() { numTestPlayers = 3; }
 
     [MenuItem("NetTest/3 players", true)]
     private static bool ThreeTestPlayersValidate() { Menu.SetChecked("NetTest/3 players", numTestPlayers == 3); return true; }
 
 
-    [MenuItem("NetTest/4 players", priority = 32)]
+    [MenuItem("NetTest/4 players", priority = 43)]
     private static void FourTestPlayers() { numTestPlayers = 4; }
 
     [MenuItem("NetTest/4 players", true)]
@@ -157,7 +182,7 @@ public class NetworkEditorTools : MonoBehaviour
 
         process.StartInfo.FileName = $"{buildPath}/build.exe";
         process.StartInfo.WorkingDirectory = buildPath;
-        process.StartInfo.Arguments = $"AutoConnect";
+        //process.StartInfo.Arguments = $"AutoConnect";
 
         process.Start();
     }

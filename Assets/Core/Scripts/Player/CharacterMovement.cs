@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MLAPI.Serialization.Pooled;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,6 @@ public class CharacterMovement : SyncedObject
 {
     private Player player;
     private CharacterController controller;
-    private new PlayerCamera camera;
 
     [Header("Movement (all FRACUNITS)")]
     public float accelStart = 96;
@@ -60,8 +60,7 @@ public class CharacterMovement : SyncedObject
 
     public override void FrameStart()
     {
-        camera = FindObjectOfType<PlayerCamera>();
-        controller = FindObjectOfType<CharacterController>();
+        controller = GetComponent<CharacterController>();
         player = GetComponent<Player>();
     }
 
@@ -171,7 +170,7 @@ public class CharacterMovement : SyncedObject
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
                 // Thok
-                velocity.SetHorizontal(camera.transform.forward.Horizontal().normalized * actionSpeed);
+                velocity.SetHorizontal(player.aimForward.Horizontal().normalized * actionSpeed);
                 GameSounds.PlaySound(gameObject, thokSound);
                 state |= State.Thokked;
             }
@@ -193,4 +192,36 @@ public class CharacterMovement : SyncedObject
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
         velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
     }
+
+    #region Networking
+    public override void ReadSyncer(System.IO.Stream stream)
+    {
+        using (PooledBitReader reader = PooledBitReader.Get(stream))
+        {
+            Vector3 position;
+            position.x = reader.ReadSinglePacked();
+            position.y = reader.ReadSinglePacked();
+            position.z = reader.ReadSinglePacked();
+            velocity.x = reader.ReadSinglePacked();
+            velocity.y = reader.ReadSinglePacked();
+            velocity.z = reader.ReadSinglePacked();
+
+            transform.position = position;
+            Physics.SyncTransforms();
+        }
+    }
+
+    public override void WriteSyncer(System.IO.Stream stream)
+    {
+        using (PooledBitWriter writer = PooledBitWriter.Get(stream))
+        {
+            writer.WriteSinglePacked(transform.position.x);
+            writer.WriteSinglePacked(transform.position.y);
+            writer.WriteSinglePacked(transform.position.z);
+            writer.WriteSinglePacked(velocity.x);
+            writer.WriteSinglePacked(velocity.y);
+            writer.WriteSinglePacked(velocity.z);
+        }
+    }
+    #endregion
 }
