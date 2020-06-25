@@ -181,4 +181,10 @@ public class CharacterMovement : SyncedObject
             }
         }
     }
+
+    public void SpringUp(float force, Vector3 direction)
+    {
+        state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
+        velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
+    }
 }
