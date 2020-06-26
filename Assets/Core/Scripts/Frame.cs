@@ -91,26 +91,34 @@ public class Frame
         }
 
         // Update game objects
-        foreach (SyncedObject obj in GameManager.singleton.syncedObjects)
+        List<SyncedObject> syncedObjects = GameManager.singleton.syncedObjects;
+        for (int i = 0; i < syncedObjects.Count; i++)
         {
-            obj.TriggerStartIfCreated();
-            obj.FrameUpdate();
+            if (syncedObjects[i])
+            {
+                syncedObjects[i].TriggerStartIfCreated();
+                syncedObjects[i].FrameUpdate();
+            }
         }
 
-        foreach (SyncedObject obj in GameManager.singleton.syncedObjects)
+        for (int i = 0; i < syncedObjects.Count; i++)
         {
-            obj.FrameLateUpdate();
+            if (syncedObjects[i])
+            {
+                syncedObjects[i].FrameLateUpdate();
+            }
         }
+
+        // Cleanup missing synced objects
+        syncedObjects.RemoveAll(a => a == null);
     }
 
 
     /// <summary>
     /// Serializes the current player inputs into a stream
     /// </summary>
-    public System.IO.Stream ReadInputs()
+    public void ReadInputs(Stream output)
     {
-        System.IO.MemoryStream output = new System.IO.MemoryStream(2000);
-
         for (int i = 0; i < GameManager.maxPlayers; i++)
         {
             if (players[i])
@@ -119,8 +127,6 @@ public class Frame
                 players[i].input.ToStream(output);
             }
         }
-
-        return output;
     }
 
     public Player CmdAddPlayer()

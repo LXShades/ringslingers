@@ -106,9 +106,13 @@ public class NetworkEditorTools : MonoBehaviour
             EditorApplication.isPlaying = true;
         }
 
-        for (int i = useEditorTesting ? 1 : 0; i < numTestPlayers; i++)
+        // Run the builds
+        for (int i = 0; i < numTestPlayers - (useEditorTesting ? 1 : 0); i++)
         {
-            RunBuild();
+            if (i == 0 && (!useEditorTesting || editorIsClient))
+                RunBuild("server");
+            else
+                RunBuild("connect 127.0.0.1");
         }
     }
 
@@ -174,7 +178,7 @@ public class NetworkEditorTools : MonoBehaviour
     [MenuItem("NetTest/4 players", true)]
     private static bool FourTestPlayersValidate() { Menu.SetChecked("NetTest/4 players", numTestPlayers == 4); return true; }
 
-    private static void RunBuild()
+    private static void RunBuild(string arguments = "")
     {
 
         // Run another instance of the game
@@ -182,7 +186,7 @@ public class NetworkEditorTools : MonoBehaviour
 
         process.StartInfo.FileName = $"{buildPath}/build.exe";
         process.StartInfo.WorkingDirectory = buildPath;
-        //process.StartInfo.Arguments = $"AutoConnect";
+        process.StartInfo.Arguments = arguments;
 
         process.Start();
     }

@@ -5,7 +5,6 @@ using MLAPI;
 using System.IO;
 using MLAPI.Messaging;
 using System;
-using RufflesTransport;
 
 public class GameManager : MonoBehaviour
 {
@@ -122,10 +121,23 @@ public class GameManager : MonoBehaviour
         get; private set;
     }
 
+    /// <summary>
+    /// Server ticks that have been received but not processed
+    /// </summary>
+    private List<ServerTick> pendingServerTicks = new List<ServerTick>();
+
     bool isMouseLocked = true;
 
     private void Start()
     {
+        ServerTick test = new ServerTick();
+        MemoryStream stream = new MemoryStream();
+        test.syncers.WriteByte(10);
+        test.syncers.WriteByte(2);
+        test.ToStream(stream);
+        stream.Position = 0;
+        test.FromStream(stream);
+
         // Register network callbacks
         net.OnClientConnectedCallback += OnClientConnected;
         net.OnClientDisconnectCallback += OnClientDisconnected;
@@ -150,12 +162,6 @@ public class GameManager : MonoBehaviour
             CreateServer();
     }
 
-    private float lastClientTickTime = 0;
-
-    private int numReceivedTicks = 0;
-    private int numSentTicks = 0;
-    private int numReceivedBytes = 0;
-
     void Update()
     {
         bool doServerTick = net.IsServer && Frame.local.time >= Frame.server.time + serverDeltaTime;
@@ -166,17 +172,18 @@ public class GameManager : MonoBehaviour
         // Send local inputs
         localInputCmds = MakeLocalInputCmds(localInputCmds);
         if (localPlayerId >= 0 && net.IsServer)
-        {
             Frame.local.playerInputs[localPlayerId] = localInputCmds;
-        }
-
-        Frame.local.Tick(Time.deltaTime);
-
+        
+        // Send server tick information before actually running the tick locally
+        // This is because the server tick contains the last ticks we received from clients, and may also contain syncs
+        // Sending this before the tick means we'll send the sync immediately followed by the tic due to be processed, so that the client can treat it as such
         while (doServerTick)
         {
             Frame.server.time += serverDeltaTime;
             ServerSendTick();
             doServerTick = Frame.local.time + Time.deltaTime >= Frame.server.time + serverDeltaTime;
+
+            doServerTick = false; // tempTEMPOROONI
         }
 
         if (doClientTick)
@@ -185,40 +192,72 @@ public class GameManager : MonoBehaviour
             lastClientTickTime = Mathf.Max(lastClientTickTime + serverDeltaTime, Frame.local.time - serverDeltaTime * 3);
         }
 
-        if ((int)Frame.local.time != (int)(Frame.local.time - Frame.local.deltaTime))
+        // Tick the game
+        if (net.IsServer)
         {
-            netStat = $"Bytes recv: {numReceivedBytes}\nTicks recv: {numReceivedTicks}\nTicks sent: {numSentTicks}";
-            numSentTicks = 0;
-            numReceivedTicks = 0;
-            numReceivedBytes = 0;
+            Frame.local.Tick(Time.deltaTime);
         }
-        /*{
-            // Run server frame
-            float oldLocalTime = Frame.local.time;
+        else
+        {
+            pendingServerTicks.Sort((a, b) => (int)(a.time - b.time >= 0 ? 1 : -1));
 
-            // Rewind to the last server frame
-
-            // Advance the server frame
-            while (Frame.local.time + Time.deltaTime >= Frame.server.time + Frame.tickDeltaTime)
+            foreach (ServerTick tick in pendingServerTicks)
             {
-                Frame.server.playerInputs[localPlayerId] = MakeLocalInputCmds(Frame.local.playerInputs[localPlayerId]);
-                Frame.server.Tick(Frame.tickDeltaTime);
+                tick.playerInputs.CopyTo(Frame.local.playerInputs, 0);
+
+                // Spawn players who aren't in the game (kinda hacky and temporary-y)
+                for (int i = 0; i < Frame.local.players.Length; i++)
+                {
+                    if (Frame.local.players[i] == null && tick.isPlayerInGame[i])
+                    {
+                        Frame.local.players[i] = Instantiate(playerPrefab).GetComponent<Player>();
+                        Frame.local.players[i].playerId = i;
+                    }
+                }
+
+                // Read syncers
+                if (tick.syncers.Length > 0)
+                {
+                    tick.syncers.Seek(0, SeekOrigin.Begin);
+                    while (tick.syncers.Position < tick.syncers.Length)
+                    {
+                        int player = tick.syncers.ReadByte();
+                        Frame.local.players[player].movement.ReadSyncer(tick.syncers);
+                    }
+                }
+
+                // Tick!
+                Frame.local.Tick(tick.deltaTime);
             }
 
-            // We're now at the server frame's time
-            Frame.local.time = Frame.server.time;
+            pendingServerTicks.Clear();
+        }
 
-            // Advance the remaining time
-            Frame.local.Tick(oldLocalTime - Frame.local.time + Time.deltaTime);
-        }*/
-
+        // Do debug stuff
+        UpdateNetStat();
         RunDebugCommands();
+    }
+
+    #region ObjectReferencing
+    public void UnregisterSyncedObject(SyncedObject obj)
+    {
+        int index = syncedObjects.IndexOf(obj);
+
+        if (index >= 0)
+        {
+            syncedObjects[index] = null;
+        }
+        else
+        {
+            Debug.LogWarning("Couldn't unregister synced object: obj not found");
+        }
     }
 
     public Player GetPlayerFromClient(ulong clientId)
     {
         return System.Array.Find(Frame.local.players, a => a != null && a.clientId == clientId);
     }
+    #endregion
 
     #region Networking
     private void ConnectToServer(string ipString)
@@ -273,74 +312,48 @@ public class GameManager : MonoBehaviour
             Debug.Log("Disconnected from server");
     }
 
-    private int numTicksSent = 0;
-
     void ServerSendTick()
     {
-        Stream stream = Frame.local.ReadInputs();
+        // Make a server tick
+        MemoryStream output = new MemoryStream();
+        ServerTick tick = new ServerTick()
+        {
+            deltaTime = Frame.local.deltaTime,
+            time = Frame.local.time,
+            playerInputs = Frame.local.playerInputs
+        };
 
-        // Add syncers to the message
-        stream.WriteByte(255);
-
-        long sz = stream.Length;
+        // Add syncers
         foreach (Player player in Frame.local.players)
         {
             if (player)
             {
                 if ((int)((Frame.server.time - serverDeltaTime) * player.movement.syncsPerSecond) != (int)(Frame.server.time * player.movement.syncsPerSecond))
                 {
-                    stream.WriteByte((byte)player.playerId);
-                    player.movement.WriteSyncer(stream);
+                    tick.syncers.WriteByte((byte)player.playerId);
+                    player.movement.WriteSyncer(tick.syncers);
                 }
             }
         }
 
-        if (stream.Length != sz)
-        {
-            Debug.Log($"Wrote syncers");
-        }
+        tick.ToStream(output);
 
         // Send it to all clients
         foreach (var client in net.ConnectedClientsList)
         {
-            CustomMessagingManager.SendNamedMessage("servertick", client.ClientId, stream, "Unreliable");
+            CustomMessagingManager.SendNamedMessage("servertick", client.ClientId, output, "Unreliable");
         }
+
+        numSentTicks++;
     }
 
     private void OnReceivedServerTick(ulong sender, Stream payload)
     {
         if (!net.IsServer)
         {
-            while (payload.Position < payload.Length)
-            {
-                int player = payload.ReadByte();
+            pendingServerTicks.Add(new ServerTick(payload));
 
-                if (player == 255)
-                    break;
-
-                Frame.local.playerInputs[player].FromStream(payload);
-
-                // If player isn't in the game, spawn them or some shiznit
-                if (Frame.local.players[player] == null)
-                {
-                    Frame.local.players[player] = Instantiate(playerPrefab).GetComponent<Player>();
-                    Frame.local.players[player].playerId = player;
-                }
-            }
-
-            if (payload.Position < payload.Length)
-            {
-                Debug.Log($"Received syncs at {Frame.local.time}");
-            }
-
-            while (payload.Position < payload.Length)
-            {
-                int player = payload.ReadByte();
-                Frame.local.players[player].movement.ReadSyncer(payload);
-            }
-
-            numReceivedBytes += (int)payload.Length;
-            numReceivedTicks++;
+            numTicksPerFrame[Mathf.Min(netStatFrameNum, numTicksPerFrame.Length - 1)]++;
         }
     }
 
@@ -383,6 +396,8 @@ public class GameManager : MonoBehaviour
         Debug.Assert(player);
 
         Frame.local.playerInputs[player.playerId].FromStream(payload);
+
+        numTicksPerFrame[Mathf.Min(netStatFrameNum, numTicksPerFrame.Length - 1)]++;
     }
 
 #endregion
@@ -408,13 +423,25 @@ public class GameManager : MonoBehaviour
     #region Debug
     Stream tempSave;
 
+    private float lastClientTickTime = 0;
+
+    private int netStatFrameNum = 0;
+    private int[] numTicksPerFrame = new int[500];
+    private int numReceivedTicks = 0;
+    private int numSentTicks = 0;
+    private int numReceivedBytes = 0;
+
     void RunDebugCommands()
     {
         // Debug controls
-        if (Input.GetKeyDown(KeyCode.E))
+        QualitySettings.vSyncCount = 0;
+        if (Input.GetKeyDown(KeyCode.Alpha1))
             Application.targetFrameRate = 35;
 
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+            Application.targetFrameRate = 60;
+
+        if (Input.GetKeyDown(KeyCode.Alpha3))
             Application.targetFrameRate = 144;
 
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -434,5 +461,102 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.F2) && tempSave != null)
             Frame.local.Deserialize(tempSave);
     }
+
+    void UpdateNetStat()
+    {
+        netStatFrameNum++;
+
+        // Update netstat
+        if ((int)Frame.local.time != (int)(Frame.local.time - Frame.local.deltaTime))
+        {
+            float averageTicksPerFrame = 0;
+            int maxTicksPerFrame = Int32.MinValue, minTicksPerFrame = Int32.MaxValue;
+            int numFramesWhereTicksWereReceived = 0;
+
+            for (int i = 0; i < Mathf.Min(netStatFrameNum, numTicksPerFrame.Length); i++)
+            {
+                averageTicksPerFrame += numTicksPerFrame[i];
+                if (numTicksPerFrame[i] > 0)
+                {
+                    numFramesWhereTicksWereReceived++;
+                    maxTicksPerFrame = Mathf.Max(maxTicksPerFrame, numTicksPerFrame[i]);
+                    minTicksPerFrame = Mathf.Min(minTicksPerFrame, numTicksPerFrame[i]);
+                }
+            }
+            averageTicksPerFrame /= Mathf.Max(numFramesWhereTicksWereReceived, 1);
+
+            netStat = $"Bytes recv: {numReceivedBytes}\nTicks recv: {numReceivedTicks}\nTicks sent: {numSentTicks}\nAvg ticks per frame: {averageTicksPerFrame} (max {maxTicksPerFrame} min {minTicksPerFrame}";
+            numSentTicks = 0;
+            numReceivedTicks = 0;
+            numReceivedBytes = 0;
+            netStatFrameNum = 0;
+
+            Array.Clear(numTicksPerFrame, 0, numTicksPerFrame.Length);
+        }
+    }
     #endregion
+}
+
+public class ServerTick
+{
+    public float time;
+    public float deltaTime;
+
+    public InputCmds[] playerInputs = new InputCmds[GameManager.maxPlayers];
+    public bool[] isPlayerInGame = new bool[GameManager.maxPlayers];
+
+    public MemoryStream syncers = new MemoryStream();
+
+    public ServerTick() { }
+
+    public ServerTick(Stream source)
+    {
+        FromStream(source);
+    }
+
+    public void FromStream(Stream stream)
+    {
+        using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.ASCII, true))
+        {
+            time = reader.ReadSingle();
+            deltaTime = reader.ReadSingle();
+        }
+
+        while (stream.Position < stream.Length)
+        {
+            int player = stream.ReadByte();
+
+            if (player == 255)
+                break;
+
+            isPlayerInGame[player] = true;
+            playerInputs[player].FromStream(stream);
+        }
+
+        syncers = new MemoryStream();
+
+        if (stream.Position < stream.Length)
+        {
+            stream.CopyTo(syncers, Mathf.Min((int)(stream.Length - stream.Position), 10000));
+            syncers.Position = 0;
+        }
+    }
+
+    public void ToStream(Stream stream)
+    {
+        using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.ASCII, true))
+        {
+            writer.Write(time);
+            writer.Write(deltaTime);
+        }
+
+        Frame.local.ReadInputs(stream);
+
+        // Add syncers to the message
+        stream.WriteByte(255);
+
+        int strlen = (int)stream.Length;
+
+        syncers.WriteTo(stream);
+    }
 }

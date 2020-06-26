@@ -81,9 +81,6 @@ public abstract class SyncedObject : SyncedObjectBase
     private void OnDestroy()
     {
         if (GameManager.singleton)
-        {
-            GameManager.singleton.syncedObjects.Remove(this);
-            //Debug.Log("Unregistered synced object");
-        }
+            GameManager.singleton.UnregisterSyncedObject(this);
     }
 }
