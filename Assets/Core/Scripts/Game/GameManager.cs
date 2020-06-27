@@ -32,6 +32,10 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public NetworkingManager net;
 
+    [Header("Game Settings")]
+    [Tooltip("How long until items respawn, in seconds")]
+    public float itemRespawnTime = 20;
+
     [Header("Scaling")]
     public float fracunitsPerM = 64;
 
@@ -123,7 +127,10 @@ public class GameManager : MonoBehaviour
             tempSave = Frame.local.Serialize();
 
         if (Input.GetKeyDown(KeyCode.F2) && tempSave != null)
+        {
+            tempSave.Position = 0;
             Frame.local.Deserialize(tempSave);
+        }
     }
     #endregion
 }

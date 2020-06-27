@@ -1,7 +1,11 @@
 + Add player spawn points
 + Make multiplayer testing work properly and EASILY
 + Spawn players on join
-- Sync player movement
++ Sync player movement
++ Add client-side prediction
+ + Revisit Rewinding ability in SyncedObjects
+- Add Respawnable
+- Add ring collision/hits
 - Make Rail model
 - Make Sonic model
 - Make HUD w/ rail times, etc
@@ -21,3 +25,4 @@ Additional touches:
 
 Gameplay ideas
 - Bounce shield - has a cooldown, returns you to the height from whence you came
+- Character ability: jump directly onto walls and/or ceilings

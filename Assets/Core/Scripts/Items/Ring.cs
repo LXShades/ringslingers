@@ -13,6 +13,14 @@ public class Ring : SyncedObject
 
     public GameSound pickupSound = new GameSound();
 
+    // Components
+    private RespawnableItem respawnableItem;
+
+    public override void FrameAwake()
+    {
+        respawnableItem = GetComponent<RespawnableItem>();
+    }
+
     public override void FrameStart()
     {
         // Hover above the ground
@@ -38,8 +46,10 @@ public class Ring : SyncedObject
             other.GetComponent<Player>().numRings++;
             pickupParticles.SetActive(true);
             pickupParticles.transform.SetParent(null);
+
             GameSounds.PlaySound(other.gameObject, pickupSound);
-            Destroy(gameObject);
+
+            respawnableItem.Pickup();
         }
     }
 }

@@ -217,7 +217,7 @@ public class CharacterMovement : SyncedObject
             Physics.SyncTransforms();
         }
 
-        if (originalPosition != transform.position && originalVelocity != velocity)
+        if (originalPosition != transform.position || originalVelocity != velocity)
             Debug.Log($"Resync {player.playerId}@{Frame.local.time.ToString("0.0")}");
     }
 

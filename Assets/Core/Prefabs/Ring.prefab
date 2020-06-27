@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1513010616310851283}
   - component: {fileID: 233868881636913150}
   - component: {fileID: 233868881636913151}
+  - component: {fileID: 8745252381286273571}
   - component: {fileID: 233868881636913148}
   m_Layer: 0
   m_Name: Ring
@@ -111,6 +112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de1131573d6397440b56301f169589e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncsPerSecond: 0
   spinSpeed: 270
   hoverHeight: 0.64
   pickupParticles: {fileID: 8883259143873366175}
@@ -119,6 +121,20 @@ MonoBehaviour:
     volume: 0.3
     pitch: 1
     pitchVariance: 0
+--- !u!114 &8745252381286273571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152841599159748358}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18e6f51da8c84284ca6029c31a7aaa77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncsPerSecond: 0
+  respawnCountdownTimer: 0
 --- !u!54 &233868881636913148
 Rigidbody:
   m_ObjectHideFlags: 0
