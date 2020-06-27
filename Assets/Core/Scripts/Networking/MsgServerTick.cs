@@ -22,6 +22,7 @@ public class MsgServerTick
 
     public void FromStream(Stream stream)
     {
+        // Read key info
         int syncersLength = 0;
         using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.ASCII, true))
         {
@@ -30,8 +31,10 @@ public class MsgServerTick
             syncersLength = reader.ReadInt32();
         }
 
+        // Read inputs
         playerInputs = Netplay.singleton.DeserializePlayerInputs(stream, isPlayerInGame);
 
+        // Read syncers
         syncers = new MemoryStream();
 
         if (syncersLength > 0)
@@ -45,6 +48,7 @@ public class MsgServerTick
 
     public void ToStream(Stream stream)
     {
+        // Write key info
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.ASCII, true))
         {
             writer.Write(time);
@@ -52,6 +56,7 @@ public class MsgServerTick
             writer.Write((int)syncers.Length);
         }
 
+        // Write inputs
         Netplay.singleton.SerializePlayerInputs(stream);
 
         // Add syncers to the message

@@ -119,6 +119,9 @@ public class CharacterMovement : SyncedObject
 
     private bool DetectOnGround()
     {
+        if (debugDisableCollision)
+            return transform.position.y <= 0;
+
         foreach (var hit in Physics.RaycastAll(transform.position + Vector3.up * 0.1f, -Vector3.up, 0.199f, ~0, QueryTriggerInteraction.Ignore))
         {
             if (!hit.collider.GetComponentInParent<Player>())
@@ -169,6 +172,8 @@ public class CharacterMovement : SyncedObject
                 velocity.y = jumpSpeed * jumpFactor;
                 GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
+
+                Debug.Log($"UWAAAA! {Frame.local.time} ni jaampu~ desu!!");
             }
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
@@ -212,8 +217,9 @@ public class CharacterMovement : SyncedObject
             transform.position = position;
         }
 
-        if (player.playerId == Netplay.singleton.localPlayerId)
-            Debug.Log($"Received sync {Frame.local.time}/{Time.unscaledTime}! Difference: {transform.position - originalPosition}, {velocity - originalVelocity}");
+        if (player.playerId == Netplay.singleton.localPlayerId && originalPosition != transform.position && originalVelocity != velocity)
+            Debug.Log($"Resync@{Frame.local.time.ToString("0.0")}. dP: {transform.position - originalPosition} dV: {velocity - originalVelocity} " + 
+                $"p: {originalPosition}/{transform.position} v: {originalVelocity}/{velocity}");
     }
 
     public override void WriteSyncer(System.IO.Stream stream)

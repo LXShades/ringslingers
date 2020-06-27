@@ -78,11 +78,22 @@ public class Netplay : MonoBehaviour
     /// </summary>
     private List<MsgServerTick> pendingServerTicks = new List<MsgServerTick>();
 
+    /// <summary>
+    /// Client ticks received but not yet processed
+    /// </summary>
+    private List<MsgClientTick>[] pendingClientTicks = new List<MsgClientTick>[maxPlayers];
+
     private NetworkingManager net;
 
     public string netStat
     {
         get; private set;
+    }
+
+    private void Awake()
+    {
+        for (int i = 0; i < pendingClientTicks.Length; i++)
+            pendingClientTicks[i] = new List<MsgClientTick>();
     }
 
     private bool InitNet()
@@ -124,39 +135,52 @@ public class Netplay : MonoBehaviour
 
         // There's a lot todo here, don't worry if it doesn't make much sense
         bool doServerTick = net.IsServer;
-        bool doClientTick = !net.IsServer && net.IsClient && Time.unscaledTime >= lastClientTickTime + serverDeltaTime;
+        bool doClientTick = !net.IsServer && net.IsClient;
 
-        // Send local inputs
+        // Generate local inputs
         localInputCmds = InputCmds.FromLocalInput(localInputCmds);
-        if (localPlayerId >= 0 && net.IsServer)
-            Frame.local.playerInputs[localPlayerId] = localInputCmds;
 
         // Tick the game
         if (net.IsServer)
         {
-            // Send server inputs
-            if (doServerTick)
-                ServerSendTick(Time.deltaTime);
+            // Receive player inputs
+            for (int i = 0; i < maxPlayers; i++)
+            {
+                pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
+
+                foreach (MsgClientTick tick in pendingClientTicks[i])
+                    Frame.local.playerInputs[i] = tick.playerInputs;
+
+                pendingClientTicks[i].Clear();
+            }
+
+            // Set local inputs
+            if (localPlayerId >= 0)
+                Frame.local.playerInputs[localPlayerId] = localInputCmds;
 
             // Run tick locally
             if (doServerTick)
+            {
+                // Send server inputs
+                ServerSendTick(Time.deltaTime);
+
                 Frame.local.Tick(Time.deltaTime);
+            }
         }
         else
         {
-            // Send current inputs
+            // Send local inputs
             if (doClientTick)
-            {
                 ClientSendTick();
-                lastClientTickTime = Mathf.Max(lastClientTickTime + serverDeltaTime, Time.unscaledTime - serverDeltaTime * 3);
-            }
 
             // Run received ticks
             pendingServerTicks.Sort((a, b) => (int)(a.time - b.time >= 0 ? 1 : -1));
 
             foreach (MsgServerTick tick in pendingServerTicks)
             {
+                // Copy tick to local frame
                 tick.playerInputs.CopyTo(Frame.local.playerInputs, 0);
+                Frame.local.time = tick.time;
 
                 // Spawn players who aren't in the game (kinda hacky and temporary-y)
                 for (int i = 0; i < players.Length; i++)
@@ -240,7 +264,7 @@ public class Netplay : MonoBehaviour
             if (players[i])
             {
                 output.WriteByte((byte)i);
-                players[i].input.ToStream(output);
+                Frame.local.playerInputs[i].ToStream(output);
             }
         }
     }
@@ -418,6 +442,7 @@ public class Netplay : MonoBehaviour
 
             numTicksPerFrame[Mathf.Min(netStatFrameNum, numTicksPerFrame.Length - 1)]++;
             numReceivedTicks++;
+            numReceivedBytes += (int)payload.Length;
         }
     }
 
@@ -445,8 +470,14 @@ public class Netplay : MonoBehaviour
         if (localPlayerId >= 0 && players[localPlayerId])
         {
             Stream inputs = new MemoryStream();
+            MsgClientTick clientTick = new MsgClientTick()
+            {
+                deltaTime = Frame.local.deltaTime,
+                playerInputs = localInputCmds,
+                serverTime = Frame.local.time
+            };
 
-            localInputCmds.ToStream(inputs);
+            clientTick.ToStream(inputs);
             CustomMessagingManager.SendNamedMessage("clienttick", net.ServerClientId, inputs, "Unreliable");
 
             numSentTicks++;
@@ -457,11 +488,13 @@ public class Netplay : MonoBehaviour
     {
         Player player = GetPlayerFromClient(sender);
 
-        Debug.Assert(player);
-
-        Frame.local.playerInputs[player.playerId].FromStream(payload);
+        // Add this tick to pending list
+        if (player != null)
+            pendingClientTicks[player.playerId].Add(new MsgClientTick(payload));
 
         numTicksPerFrame[Mathf.Min(netStatFrameNum, numTicksPerFrame.Length - 1)]++;
+        numReceivedBytes += (int)payload.Length;
+        numReceivedTicks++;
     }
     #endregion
 
