@@ -6,12 +6,10 @@ using System.IO;
 using System;
 
 /// <summary>
-/// A Frame contains the current virtual state of the game. It can be Advanced, serialized and deserialized (rewinded).
+/// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).
 /// 
-/// Serializing and Deserializing a frame works in tandem with the state of objects in the Unity game engine.
-/// In other words Deserializing a frame will update object positions and variables too
-/// This may change in the future as it is a little bit finnicky- for example we can't 'peek' at a frame's objects without loading them into the real scene.
-/// It would be nice if we could store them in the frame though. We'll see where it goes.
+/// A caveat is that a Tick will run in the real game rather than inside the frame. This means the frame won't always be synced with the live game state.
+/// Deserializing syncs the frame to the game state while serializing syncs the game state to the frame.
 /// </summary>
 public class Frame
 {
@@ -24,30 +22,13 @@ public class Frame
         {
             if (_current == null)
             {
-                _current = GameManager.singleton.localFrame;
+                _current = new Frame();
             }
 
             return _current;
         }
     }
     private static Frame _current;
-
-    /// <summary>
-    /// The actual physical game frame
-    /// </summary>
-    public static Frame server
-    {
-        get
-        {
-            if (_server == null)
-            {
-                _server = GameManager.singleton.serverFrame;
-            }
-
-            return _server;
-        }
-    }
-    private static Frame _server;
 
     // Game time
     /// <summary>
@@ -63,12 +44,7 @@ public class Frame
     /// <summary>
     /// Player inputs by ID at the beginning of this frame
     /// </summary>
-    public InputCmds[] playerInputs = new InputCmds[GameManager.maxPlayers];
-
-    /// <summary>
-    /// Players by ID. May contain null gaps
-    /// </summary>
-    public Player[] players = new Player[GameManager.maxPlayers];
+    public InputCmds[] playerInputs = new InputCmds[Netplay.maxPlayers];
 
     /// <summary>
     /// Advances the game by the given delta time
@@ -81,17 +57,17 @@ public class Frame
         time = time + deltaTime;
 
         // Apply player inputs
-        for (int i = 0; i < GameManager.maxPlayers; i++)
+        for (int i = 0; i < Netplay.maxPlayers; i++)
         {
-            if (players[i])
+            if (Netplay.singleton.players[i])
             {
-                players[i].lastInput = players[i].input;
-                players[i].input = playerInputs[i];
+                Netplay.singleton.players[i].lastInput = Netplay.singleton.players[i].input;
+                Netplay.singleton.players[i].input = playerInputs[i];
             }
         }
 
         // Update game objects
-        List<SyncedObject> syncedObjects = GameManager.singleton.syncedObjects;
+        List<SyncedObject> syncedObjects = Netplay.singleton.syncedObjects;
         for (int i = 0; i < syncedObjects.Count; i++)
         {
             if (syncedObjects[i])
@@ -113,58 +89,13 @@ public class Frame
         syncedObjects.RemoveAll(a => a == null);
     }
 
-
-    /// <summary>
-    /// Serializes the current player inputs into a stream
-    /// </summary>
-    public void ReadInputs(Stream output)
-    {
-        for (int i = 0; i < GameManager.maxPlayers; i++)
-        {
-            if (players[i])
-            {
-                output.WriteByte((byte)i);
-                players[i].input.ToStream(output);
-            }
-        }
-    }
-
-    public Player CmdAddPlayer()
-    {
-        // Find the appropriate ID for this player
-        int freeId = -1;
-        for (freeId = 0; freeId < GameManager.maxPlayers; freeId++)
-        {
-            if (players[freeId] == null)
-            {
-                break;
-            }
-        }
-
-        if (freeId == GameManager.maxPlayers)
-        {
-            Debug.LogWarning("Can't add new player - too many!");
-            return null;
-        }
-
-        Player player = GameObject.Instantiate(GameManager.singleton.playerPrefab).GetComponent<Player>();
-
-        player.playerId = freeId;
-        players[freeId] = player;
-
-        player.Respawn();
-
-        return player;
-    }
-
-
     #region Serialization
     public MemoryStream Serialize()
     {
         MemoryStream stream = new MemoryStream(1024 * 1024);
         byte[] byteBuffer = new byte[32];
 
-        foreach (SyncedObject obj in GameManager.singleton.syncedObjects)
+        foreach (SyncedObject obj in Netplay.singleton.syncedObjects)
         {
             System.Type objType = obj.GetType();
             System.Reflection.FieldInfo[] fields = objType.GetFields();
@@ -253,15 +184,13 @@ public class Frame
     public bool Deserialize(Stream stream)
     {
         if (stream.Length <= 0)
-        {
             return false;
-        }
 
         byte[] byteBuffer = new byte[32];
 
         stream.Seek(0, SeekOrigin.Begin);
 
-        foreach (SyncedObject obj in GameManager.singleton.syncedObjects)
+        foreach (SyncedObject obj in Netplay.singleton.syncedObjects)
         {
             Type objType = obj.GetType();
             System.Reflection.FieldInfo[] fields = objType.GetFields();
@@ -390,5 +319,26 @@ public struct InputCmds
                 this = *(InputCmds*)b;
             }
         }
+    }
+
+    /// <summary>
+    /// Generates input commands from the current input
+    /// </summary>
+    /// <param name="lastInput"></param>
+    /// <returns></returns>
+    public static InputCmds FromLocalInput(InputCmds lastInput)
+    {
+        InputCmds localInput;
+
+        localInput.moveHorizontalAxis = Input.GetAxisRaw("Horizontal");
+        localInput.moveVerticalAxis = Input.GetAxisRaw("Vertical");
+
+        localInput.horizontalAim = (lastInput.horizontalAim + Input.GetAxis("Mouse X") % 360 + 360) % 360;
+        localInput.verticalAim = Mathf.Clamp(lastInput.verticalAim - Input.GetAxis("Mouse Y"), -89.99f, 89.99f);
+
+        localInput.btnFire = Input.GetButton("Fire");
+        localInput.btnJump = Input.GetButton("Jump");
+
+        return localInput;
     }
 }

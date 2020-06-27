@@ -33,16 +33,29 @@ public class GameSounds : MonoBehaviour
     /// </summary>
     private AudioSource[] sources;
 
+    private GameObject[] sourceAttachments;
+
     private int currentChannel = -1;
 
     private void Awake()
     {
         sources = new AudioSource[numSoundChannels];
+        sourceAttachments = new GameObject[numSoundChannels];
 
         Debug.Assert(audioSourcePrefab && audioSourcePrefab.GetComponent<AudioSource>());
         for (int i = 0; i < numSoundChannels; i++)
         {
             sources[i] = Instantiate(audioSourcePrefab, transform).GetComponent<AudioSource>();
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // We can't just attach them because if the objects get destroyed, so does the source. So we'll just move the sources around
+        for (int i = 0; i < numSoundChannels; i++)
+        {
+            if (sourceAttachments[i] != null)
+                sources[i].transform.position = sourceAttachments[i].transform.position;
         }
     }
 
@@ -73,9 +86,8 @@ public class GameSounds : MonoBehaviour
         sources[currentChannel].clip = sound.clip;
         sources[currentChannel].volume = sound.volume;
         sources[currentChannel].pitch = sound.pitch + Random.Range(-sound.pitchVariance, sound.pitchVariance);
-        sources[currentChannel].transform.SetParent(source.transform, false);
-        sources[currentChannel].transform.localPosition = Vector3.zero;
         sources[currentChannel].Play();
+        sourceAttachments[currentChannel] = source;
     }
 }
 

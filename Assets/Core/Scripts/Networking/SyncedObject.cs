@@ -37,7 +37,8 @@ public abstract class SyncedObject : SyncedObjectBase
     protected virtual void Awake()
     {
         // Register the object to the thingy thing
-        GameManager.singleton.syncedObjects.Add(this);
+        if (Netplay.singleton)
+            Netplay.singleton.RegisterSyncedObject(this);
 
         _id = nextId++;
 
@@ -80,7 +81,7 @@ public abstract class SyncedObject : SyncedObjectBase
 
     private void OnDestroy()
     {
-        if (GameManager.singleton)
-            GameManager.singleton.UnregisterSyncedObject(this);
+        if (Netplay.singleton)
+            Netplay.singleton.UnregisterSyncedObject(this);
     }
 }

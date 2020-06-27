@@ -49,8 +49,8 @@ public class PlayerCamera : SyncedObject
     {
         if (currentPlayer == null)
         {
-            if (GameManager.singleton.localPlayerId >= 0)
-                currentPlayer = Frame.local.players[GameManager.singleton.localPlayerId];
+            if (Netplay.singleton.localPlayerId >= 0)
+                currentPlayer = Netplay.singleton.players[Netplay.singleton.localPlayerId];
         }
 
         if (currentPlayer)

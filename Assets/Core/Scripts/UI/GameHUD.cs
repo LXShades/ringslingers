@@ -45,12 +45,22 @@ public class GameHUD : MonoBehaviour
             ringsText.text = player.numRings.ToString();
 
             debugText.text = $"Run Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}\n"
-                + GameManager.singleton.netStat;
+                + Netplay.singleton.netStat;
         }
 
-        if (GameManager.singleton.connectionStatus == GameManager.NetConnectStatus.Connecting)
+        if (Netplay.singleton.connectionStatus != Netplay.ConnectionStatus.Ready)
         {
             connectStatusText.enabled = true;
+
+            switch (Netplay.singleton.connectionStatus)
+            {
+                case Netplay.ConnectionStatus.Disconnected:
+                    connectStatusText.text = "Disconnected from server";
+                    break;
+                case Netplay.ConnectionStatus.Connecting:
+                    connectStatusText.text = "Connecting...";
+                    break;
+            }
         }
         else
         {

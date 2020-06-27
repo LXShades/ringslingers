@@ -69,17 +69,6 @@ public class CharacterMovement : SyncedObject
         // Check whether on ground
         isOnGround = DetectOnGround();
 
-        if (isOnGround)
-        {
-            velocity.y = Mathf.Max(velocity.y, 0);
-
-            if (velocity.y == 0)
-            {
-                isOnGround = true;
-                state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
-            }
-        }
-
         // Point towards relevent direction
         transform.rotation = Quaternion.Euler(0, player.input.horizontalAim, 0);
 
@@ -97,25 +86,43 @@ public class CharacterMovement : SyncedObject
 
         // Stop speed
         if (inputRunDirection.sqrMagnitude == 0 && velocity.Horizontal().magnitude < stopSpeed)
-        {
             velocity.SetHorizontal(Vector3.zero);
-        }
-
-        // Perform final movement and collision
-        controller.Move(velocity * (35 * Frame.local.deltaTime / GameManager.singleton.fracunitsPerM));
 
         // Jump button
         HandleJumpAbilities();
+
+        // Do not slip through the ground
+        if (isOnGround)
+        {
+            velocity.y = Mathf.Max(velocity.y, 0);
+
+            if (velocity.y == 0)
+            {
+                isOnGround = true;
+                state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
+            }
+        }
+
+        // Perform final movement and collision
+        if (debugDisableCollision)
+        {
+            transform.position += velocity * (35 * Frame.local.deltaTime / GameManager.singleton.fracunitsPerM);
+        }
+        else
+        {
+            controller.Move(velocity * (35 * Frame.local.deltaTime / GameManager.singleton.fracunitsPerM));
+            Physics.SyncTransforms();
+        }
     }
+
+    public bool debugDisableCollision = true;
 
     private bool DetectOnGround()
     {
         foreach (var hit in Physics.RaycastAll(transform.position + Vector3.up * 0.1f, -Vector3.up, 0.199f, ~0, QueryTriggerInteraction.Ignore))
         {
             if (!hit.collider.GetComponentInParent<Player>())
-            {
                 return true;
-            }
         }
 
         return false;
@@ -125,9 +132,7 @@ public class CharacterMovement : SyncedObject
     {
         // Friction
         if (velocity.Horizontal().magnitude > 0 && isOnGround)
-        {
             velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, Frame.local.deltaTime * 35f));
-        }
     }
 
     private void ApplyRunAcceleration()
@@ -151,9 +156,7 @@ public class CharacterMovement : SyncedObject
         float speedToClamp = velocity.Horizontal().magnitude;
 
         if (speedToClamp > topSpeed && speedToClamp > lastHorizontalSpeed)
-        {
             velocity.SetHorizontal(velocity.Horizontal() * lastHorizontalSpeed / speedToClamp);
-        }
     }
 
     private void HandleJumpAbilities()
@@ -181,9 +184,7 @@ public class CharacterMovement : SyncedObject
             state |= State.CanceledJump;
 
             if (velocity.y > 0)
-            {
                 velocity.y /= 2f;
-            }
         }
     }
 
@@ -196,31 +197,35 @@ public class CharacterMovement : SyncedObject
     #region Networking
     public override void ReadSyncer(System.IO.Stream stream)
     {
-        using (PooledBitReader reader = PooledBitReader.Get(stream))
+        Vector3 originalPosition = transform.position;
+        Vector3 originalVelocity = velocity;
+
+        using (System.IO.BinaryReader reader = new System.IO.BinaryReader(stream, System.Text.Encoding.ASCII, true))
         {
             Vector3 position;
-            position.x = reader.ReadSinglePacked();
-            position.y = reader.ReadSinglePacked();
-            position.z = reader.ReadSinglePacked();
-            velocity.x = reader.ReadSinglePacked();
-            velocity.y = reader.ReadSinglePacked();
-            velocity.z = reader.ReadSinglePacked();
-
+            position.x = reader.ReadSingle();
+            position.y = reader.ReadSingle();
+            position.z = reader.ReadSingle();
+            velocity.x = reader.ReadSingle();
+            velocity.y = reader.ReadSingle();
+            velocity.z = reader.ReadSingle();
             transform.position = position;
-            Physics.SyncTransforms();
         }
+
+        if (player.playerId == Netplay.singleton.localPlayerId)
+            Debug.Log($"Received sync {Frame.local.time}/{Time.unscaledTime}! Difference: {transform.position - originalPosition}, {velocity - originalVelocity}");
     }
 
     public override void WriteSyncer(System.IO.Stream stream)
     {
-        using (PooledBitWriter writer = PooledBitWriter.Get(stream))
+        using (System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream, System.Text.Encoding.ASCII, true))
         {
-            writer.WriteSinglePacked(transform.position.x);
-            writer.WriteSinglePacked(transform.position.y);
-            writer.WriteSinglePacked(transform.position.z);
-            writer.WriteSinglePacked(velocity.x);
-            writer.WriteSinglePacked(velocity.y);
-            writer.WriteSinglePacked(velocity.z);
+            writer.Write(transform.position.x);
+            writer.Write(transform.position.y);
+            writer.Write(transform.position.z);
+            writer.Write(velocity.x);
+            writer.Write(velocity.y);
+            writer.Write(velocity.z);
         }
     }
     #endregion
