@@ -172,8 +172,6 @@ public class CharacterMovement : SyncedObject
                 velocity.y = jumpSpeed * jumpFactor;
                 GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
-
-                Debug.Log($"UWAAAA! {Frame.local.time} ni jaampu~ desu!!");
             }
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
@@ -214,12 +212,13 @@ public class CharacterMovement : SyncedObject
             velocity.x = reader.ReadSingle();
             velocity.y = reader.ReadSingle();
             velocity.z = reader.ReadSingle();
+
             transform.position = position;
+            Physics.SyncTransforms();
         }
 
-        if (player.playerId == Netplay.singleton.localPlayerId && originalPosition != transform.position && originalVelocity != velocity)
-            Debug.Log($"Resync@{Frame.local.time.ToString("0.0")}. dP: {transform.position - originalPosition} dV: {velocity - originalVelocity} " + 
-                $"p: {originalPosition}/{transform.position} v: {originalVelocity}/{velocity}");
+        if (originalPosition != transform.position && originalVelocity != velocity)
+            Debug.Log($"Resync {player.playerId}@{Frame.local.time.ToString("0.0")}");
     }
 
     public override void WriteSyncer(System.IO.Stream stream)

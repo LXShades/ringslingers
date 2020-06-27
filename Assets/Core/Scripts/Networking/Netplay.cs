@@ -135,80 +135,88 @@ public class Netplay : MonoBehaviour
 
         // There's a lot todo here, don't worry if it doesn't make much sense
         bool doServerTick = net.IsServer;
-        bool doClientTick = !net.IsServer && net.IsClient;
 
         // Generate local inputs
         localInputCmds = InputCmds.FromLocalInput(localInputCmds);
 
         // Tick the game
         if (net.IsServer)
-        {
-            // Receive player inputs
-            for (int i = 0; i < maxPlayers; i++)
-            {
-                pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
-
-                foreach (MsgClientTick tick in pendingClientTicks[i])
-                    Frame.local.playerInputs[i] = tick.playerInputs;
-
-                pendingClientTicks[i].Clear();
-            }
-
-            // Set local inputs
-            if (localPlayerId >= 0)
-                Frame.local.playerInputs[localPlayerId] = localInputCmds;
-
-            // Run tick locally
-            if (doServerTick)
-            {
-                // Send server inputs
-                ServerSendTick(Time.deltaTime);
-
-                Frame.local.Tick(Time.deltaTime);
-            }
-        }
+            TickServer();
         else
-        {
-            // Send local inputs
-            if (doClientTick)
-                ClientSendTick();
-
-            // Run received ticks
-            pendingServerTicks.Sort((a, b) => (int)(a.time - b.time >= 0 ? 1 : -1));
-
-            foreach (MsgServerTick tick in pendingServerTicks)
-            {
-                // Copy tick to local frame
-                tick.playerInputs.CopyTo(Frame.local.playerInputs, 0);
-                Frame.local.time = tick.time;
-
-                // Spawn players who aren't in the game (kinda hacky and temporary-y)
-                for (int i = 0; i < players.Length; i++)
-                {
-                    if (players[i] == null && tick.isPlayerInGame[i])
-                        AddPlayer(i);
-                }
-
-                // Read syncers
-                if (tick.syncers.Length > 0)
-                {
-                    tick.syncers.Position = 0;
-                    while (tick.syncers.Position < tick.syncers.Length)
-                    {
-                        int player = tick.syncers.ReadByte();
-                        players[player].movement.ReadSyncer(tick.syncers);
-                    }
-                }
-
-                // Tick!
-                Frame.local.Tick(tick.deltaTime);
-            }
-
-            pendingServerTicks.Clear();
-        }
+            TickClient();
 
         // Do debug stuff
         UpdateNetStat();
+    }
+
+    void TickClient()
+    {
+        bool doClientTick = true;
+        // Send local inputs
+        if (doClientTick)
+            ClientSendTick();
+
+        // Run received ticks
+        pendingServerTicks.Sort((a, b) => (int)(a.time - b.time >= 0 ? 1 : -1));
+
+        foreach (MsgServerTick tick in pendingServerTicks)
+        {
+            // Copy tick to local frame
+            tick.playerInputs.CopyTo(Frame.local.playerInputs, 0);
+            Frame.local.time = tick.time;
+
+            // Spawn players who aren't in the game (kinda hacky and temporary-y)
+            for (int i = 0; i < players.Length; i++)
+            {
+                if (players[i] == null && tick.isPlayerInGame[i])
+                    AddPlayer(i);
+            }
+
+            // Read syncers
+            if (tick.syncers.Length > 0)
+            {
+                tick.syncers.Position = 0;
+                while (tick.syncers.Position < tick.syncers.Length)
+                {
+                    int player = tick.syncers.ReadByte();
+                    players[player].movement.ReadSyncer(tick.syncers);
+                }
+            }
+
+            // Tick!
+            Frame.local.Tick(tick.deltaTime);
+        }
+
+        pendingServerTicks.Clear();
+    }
+
+    void TickServer()
+    {
+        bool doServerTick = true;
+
+        // Receive player inputs
+        for (int i = 0; i < maxPlayers; i++)
+        {
+            pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
+
+            foreach (MsgClientTick tick in pendingClientTicks[i])
+                Frame.local.playerInputs[i] = tick.playerInputs;
+
+            pendingClientTicks[i].Clear();
+        }
+
+        // Set local inputs
+        if (localPlayerId >= 0)
+            Frame.local.playerInputs[localPlayerId] = localInputCmds;
+
+        // Run tick locally
+        if (doServerTick)
+        {
+            // Send server inputs
+            ServerSendTick(Time.deltaTime);
+
+            Frame.local.Tick(Time.deltaTime);
+        }
     }
 
     #region Players
@@ -255,43 +263,6 @@ public class Netplay : MonoBehaviour
     public Player GetPlayerFromClient(ulong clientId)
     {
         return System.Array.Find(players, a => a != null && a.clientId == clientId);
-    }
-
-    public void SerializePlayerInputs(Stream output)
-    {
-        for (int i = 0; i < maxPlayers; i++)
-        {
-            if (players[i])
-            {
-                output.WriteByte((byte)i);
-                Frame.local.playerInputs[i].ToStream(output);
-            }
-        }
-    }
-
-    public InputCmds[] DeserializePlayerInputs(Stream input, bool[] isPlayerInGame = null)
-    {
-        InputCmds[] playerInputs = new InputCmds[maxPlayers];
-
-        Debug.Assert(isPlayerInGame == null || isPlayerInGame.Length == maxPlayers);
-
-        if (isPlayerInGame != null)
-            System.Array.Clear(isPlayerInGame, 0, isPlayerInGame.Length);
-
-        while (input.Position < input.Length)
-        {
-            int player = input.ReadByte();
-
-            if (player == 255)
-                break;
-
-            if (isPlayerInGame != null)
-                isPlayerInGame[player] = true;
-
-            playerInputs[player].FromStream(input);
-        }
-
-        return playerInputs;
     }
     #endregion
 
@@ -409,7 +380,8 @@ public class Netplay : MonoBehaviour
         {
             deltaTime = deltaTime,
             time = Frame.local.time,
-            playerInputs = Frame.local.playerInputs
+            playerInputs = Frame.local.playerInputs,
+            isPlayerInGame = System.Array.ConvertAll<Player, bool>(Netplay.singleton.players, a => a != null)
         };
 
         // Add syncers

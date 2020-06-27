@@ -22,27 +22,37 @@ public class MsgServerTick
 
     public void FromStream(Stream stream)
     {
-        // Read key info
-        int syncersLength = 0;
-        using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.ASCII, true))
+        try
         {
-            time = reader.ReadSingle();
-            deltaTime = reader.ReadSingle();
-            syncersLength = reader.ReadInt32();
+            // Read key info
+            int syncersLength = 0;
+            using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.ASCII, true))
+            {
+                time = reader.ReadSingle();
+                deltaTime = reader.ReadSingle();
+                syncersLength = reader.ReadInt32();
+            }
+
+            // Read inputs
+            for (int player = stream.ReadByte(); player != 255 && player != -1; player = stream.ReadByte())
+            {
+                isPlayerInGame[player] = true;
+                playerInputs[player].FromStream(stream);
+            }
+
+            // Read syncers
+            syncers = new MemoryStream();
+
+            if (syncersLength > 0)
+            {
+                byte[] becauseCopyToJustDoesntWork = new byte[syncersLength];
+
+                stream.Read(becauseCopyToJustDoesntWork, 0, syncersLength);
+                syncers.Write(becauseCopyToJustDoesntWork, 0, syncersLength);
+            }
         }
-
-        // Read inputs
-        playerInputs = Netplay.singleton.DeserializePlayerInputs(stream, isPlayerInGame);
-
-        // Read syncers
-        syncers = new MemoryStream();
-
-        if (syncersLength > 0)
-        {
-            byte[] becauseCopyToJustDoesntWork = new byte[syncersLength];
-
-            stream.Read(becauseCopyToJustDoesntWork, 0, syncersLength);
-            syncers.Write(becauseCopyToJustDoesntWork, 0, syncersLength);
+        catch {
+            Debug.LogError("Could not read server tick");
         }
     }
 
@@ -57,11 +67,17 @@ public class MsgServerTick
         }
 
         // Write inputs
-        Netplay.singleton.SerializePlayerInputs(stream);
-
-        // Add syncers to the message
+        for (int i = 0; i < playerInputs.Length; i++)
+        {
+            if (isPlayerInGame[i])
+            {
+                stream.WriteByte((byte)i);
+                playerInputs[i].ToStream(stream);
+            }
+        }
         stream.WriteByte(255);
 
+        // Add syncers to the message
         syncers.WriteTo(stream);
     }
 }

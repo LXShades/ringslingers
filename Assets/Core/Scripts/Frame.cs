@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Runtime.InteropServices;
 using System.IO;
 using System;
+using MLAPI.Serialization.Pooled;
 
 /// <summary>
 /// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).
@@ -294,30 +295,36 @@ public struct InputCmds
 
     public void ToStream(Stream output)
     {
-        unsafe
+        using (PooledBitStream data = PooledBitStream.Get())
         {
-            byte[] streamBytes = new byte[sizeof(InputCmds)];
-            fixed (byte* b = streamBytes)
+            using (PooledBitWriter stream = PooledBitWriter.Get(data))
             {
-                *(InputCmds*)b = this;
+                stream.WriteSinglePacked(moveHorizontalAxis);
+                stream.WriteSinglePacked(moveVerticalAxis);
+                stream.WriteSinglePacked(horizontalAim);
+                stream.WriteSinglePacked(verticalAim);
+
+                stream.WriteBit(btnJump);
+                stream.WriteBit(btnFire);
+                stream.WritePadBits();
             }
 
-            output.Write(streamBytes, 0, sizeof(InputCmds));
+            data.CopyTo(output);
         }
     }
 
     public void FromStream(Stream input)
     {
-        unsafe
+        using (PooledBitReader stream = PooledBitReader.Get(input))
         {
-            byte[] source = new byte[sizeof(InputCmds)];
+            moveHorizontalAxis = stream.ReadSinglePacked();
+            moveVerticalAxis = stream.ReadSinglePacked();
+            horizontalAim = stream.ReadSinglePacked();
+            verticalAim = stream.ReadSinglePacked();
 
-            input.Read(source, 0, source.Length);
-
-            fixed (byte* b = source)
-            {
-                this = *(InputCmds*)b;
-            }
+            btnJump = stream.ReadBit();
+            btnFire = stream.ReadBit();
+            stream.SkipPadBits();
         }
     }
 

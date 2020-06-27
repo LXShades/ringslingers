@@ -19179,7 +19179,7 @@ MonoBehaviour:
   AllowUnconnectedMessages: 0
   AllowBroadcasts: 0
   EnableAckNotifications: 0
-  LogicDelay: 50
+  LogicDelay: 4
   ReuseChannels: 1
   LogicThreads: 1
   SocketThreads: 1
@@ -19215,10 +19215,10 @@ MonoBehaviour:
   ReliabilityResendRoundtripMultiplier: 1.2
   ReliabilityMinPacketResendDelay: 100
   ReliabilityMinAckResendDelay: 100
-  UseSimulator: 0
-  DropPercentage: 0.1
-  MaxLatency: 100
-  MinLatency: 30
+  UseSimulator: 1
+  DropPercentage: 0
+  MaxLatency: 250
+  MinLatency: 250
   EnableHeartbeats: 1
   EnableTimeouts: 1
   EnableChannelUpdates: 1
