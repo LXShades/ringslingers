@@ -4,8 +4,13 @@
 + Sync player movement
 + Add client-side prediction
  + Revisit Rewinding ability in SyncedObjects
-- Add Respawnable
-- Add ring collision/hits
++ Add RespawnableItems
++ Add ring drop
+ + Add ObjectMovement component
+ - Rings should despawn after a while
+ - Players should be able to pick up rings
+ - Ring drop sound should play when hit
+- Add ring hits by other players
 - Make Rail model
 - Make Sonic model
 - Make HUD w/ rail times, etc

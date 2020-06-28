@@ -179,7 +179,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncsPerSecond: 1
   name: Frederic Fred McFred Freddie Jr
-  lookVerticalAngle: 0
+  playerId: 0
+  clientId: 0
   input:
     moveHorizontalAxis: 0
     moveVerticalAxis: 0
@@ -194,11 +195,14 @@ MonoBehaviour:
     verticalAim: 0
     btnJump: 0
     btnFire: 0
-  playerId: 0
-  clientId: 0
-  movement: {fileID: 0}
   numRings: 0
+  droppedRingPrefab: {fileID: 1152841599159748358, guid: 317c876dc6b60cf4ab9e2b16896200a5, type: 3}
+  maxDroppableRings: 20
+  ringDropCloseVerticalVelocity: 3.8
+  ringDropFarVerticalVelocity: 4.5
+  ringDropHorizontalVelocity: 8
   aimForward: {x: 0, y: 0, z: 0}
+  movement: {fileID: 0}
 --- !u!114 &7352825796714013435
 MonoBehaviour:
   m_ObjectHideFlags: 0

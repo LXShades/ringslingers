@@ -36,7 +36,9 @@ public class GameManager : MonoBehaviour
     [Tooltip("How long until items respawn, in seconds")]
     public float itemRespawnTime = 20;
 
-    [Header("Scaling")]
+    [Header("Physics")]
+    public float gravity = 0.2734375f;
+
     public float fracunitsPerM = 64;
 
     /// <summary>
