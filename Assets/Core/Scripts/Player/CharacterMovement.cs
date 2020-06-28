@@ -92,13 +92,13 @@ public class CharacterMovement : SyncedObject
         ApplyRunAcceleration();
 
         // Gravity
-        velocity += new Vector3(0, -1, 0) * (gravity * 35f * Frame.local.deltaTime);
+        velocity += new Vector3(0, -1, 0) * (gravity * 35f / GameManager.singleton.fracunitsPerM * Frame.local.deltaTime);
 
         // Top speed clamp
         ApplyTopSpeedLimit(lastHorizontalSpeed);
 
         // Stop speed
-        if (inputRunDirection.sqrMagnitude == 0 && velocity.Horizontal().magnitude < stopSpeed)
+        if (inputRunDirection.sqrMagnitude == 0 && velocity.Horizontal().magnitude < stopSpeed / GameManager.singleton.fracunitsPerM)
             velocity.SetHorizontal(Vector3.zero);
 
         // Jump button
@@ -119,14 +119,26 @@ public class CharacterMovement : SyncedObject
         // Perform final movement and collision
         if (debugDisableCollision)
         {
-            transform.position += velocity * (35 * Frame.local.deltaTime / GameManager.singleton.fracunitsPerM);
+            transform.position += velocity * (35 * Frame.local.deltaTime);
         }
         else
         {
-            controller.Move(velocity * (35 * Frame.local.deltaTime / GameManager.singleton.fracunitsPerM));
+            controller.Move(velocity * (35 * Frame.local.deltaTime));
             Physics.SyncTransforms();
         }
+
+        if (velocity.Horizontal().sqrMagnitude < 0.001f)
+        {
+            lastZeroSpeedTime = Time.time;
+        }
+        else if (velocity.Horizontal().magnitude >= topSpeed * 0.99f / GameManager.singleton.fracunitsPerM && lastZeroSpeedTime > 0)
+        {
+            Debug.Log($"Took {Time.time - lastZeroSpeedTime}s to accelerate");
+            lastZeroSpeedTime = 0;
+        }
     }
+
+    float lastZeroSpeedTime = 0;
 
     public bool debugDisableCollision = true;
 
@@ -162,19 +174,19 @@ public class CharacterMovement : SyncedObject
             inputRunDirection.Normalize();
 
         float speed = velocity.Horizontal().magnitude; // todo: use rmomentum
-        float currentAcceleration = accelStart + speed * acceleration * Mathf.Pow(1, Frame.local.deltaTime * 35f); // divide by scale in the real game
+        float currentAcceleration = accelStart + speed * GameManager.singleton.fracunitsPerM * acceleration * Mathf.Pow(1, Frame.local.deltaTime * 35f); // divide by scale in the real game
 
         if (!isOnGround)
             currentAcceleration *= airAccelerationMultiplier;
 
-        velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration * 35f / 65536f * Frame.local.deltaTime);
+        velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration * 35f / 65536f / GameManager.singleton.fracunitsPerM * Frame.local.deltaTime);
     }
 
     private void ApplyTopSpeedLimit(float lastHorizontalSpeed)
     {
         float speedToClamp = velocity.Horizontal().magnitude;
 
-        if (speedToClamp > topSpeed && speedToClamp > lastHorizontalSpeed)
+        if (speedToClamp > topSpeed / GameManager.singleton.fracunitsPerM && speedToClamp > lastHorizontalSpeed)
             velocity.SetHorizontal(velocity.Horizontal() * lastHorizontalSpeed / speedToClamp);
     }
 
@@ -194,14 +206,14 @@ public class CharacterMovement : SyncedObject
             if (isOnGround && !state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
                 // Jump
-                velocity.y = jumpSpeed * jumpFactor;
+                velocity.y = jumpSpeed * jumpFactor / GameManager.singleton.fracunitsPerM;
                 GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
                 // Thok
-                velocity.SetHorizontal(player.aimForward.Horizontal().normalized * actionSpeed);
+                velocity.SetHorizontal(player.aimForward.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM));
                 GameSounds.PlaySound(gameObject, thokSound);
                 state |= State.Thokked;
             }

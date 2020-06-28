@@ -16,7 +16,7 @@
     + Set the dropped rings to use a trigger collider and let them be picked up that way
 + Add ring hits by other players
  + Red rings should collide with other players
-- Optimize physics step
++ Optimize physics step
 - Add knockback on hit
 - Add score on hit
 - Add client-side prediction and optimise
@@ -27,6 +27,8 @@
 - Make Sonic model
 - Make HUD w/ rail times, etc
 - Add loop de loop
+- Add camera reset button
+- Add camera speed config
 - Add spin
 
 Rail refire: 0.673
@@ -39,6 +41,7 @@ Normal refire: 4.375‬
 
 Technical refinements in the future:
 - Imrpove ring collisions by not using triggers
+- Interpolate thrown rings
 
 Additional touches:
 - Fireworks when hitting someone in the air
