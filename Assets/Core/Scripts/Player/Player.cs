@@ -37,10 +37,14 @@ public class Player : SyncedObject
     [HideInInspector] public int numRings = 0;
 
     [Header("Ring drop")]
+    public GameSound dropSound = new GameSound();
+
     public GameObject droppedRingPrefab;
+    public Transform droppedRingSpawnPoint;
 
     public int maxDroppableRings = 20;
 
+    public int ringDropLayers = 3;
     public float ringDropCloseVerticalVelocity = 3.8f;
     public float ringDropFarVerticalVelocity = 5;
 
@@ -101,26 +105,30 @@ public class Player : SyncedObject
 
         numToDrop = 20;
 
-        int numRingLayers = 2;
+        int numRingLayers = ringDropLayers;
         for (int ringLayer = 0; ringLayer < numRingLayers; ringLayer++)
         {
             float horizontalVelocity = (ringLayer + 1) * ringDropHorizontalVelocity / (numRingLayers);
             float verticalVelocity = Mathf.Lerp(ringDropCloseVerticalVelocity, ringDropFarVerticalVelocity, (float)(ringLayer + 1) / numRingLayers);
 
-            Debug.Log($"vert velo: {verticalVelocity}");
-
             // Inner ring
             int currentNumToDrop = (ringLayer < numRingLayers - 1 ? numToDrop / numRingLayers : numToDrop - numDropped);
+            float angleOffset = currentNumToDrop > 0 ? Mathf.PI * 2f / currentNumToDrop * ringLayer / (float)numRingLayers : 0;
 
             for (int i = 0; i < currentNumToDrop; i++)
             {
-                float horizontalAngle = i * Mathf.PI * 2f / Mathf.Max(currentNumToDrop - 1, 1);
-                Movement ringMovement = Instantiate(droppedRingPrefab, transform.position + Vector3.up * 1.5f, Quaternion.identity).GetComponent<Movement>();
+                float horizontalAngle = i * Mathf.PI * 2f / Mathf.Max(currentNumToDrop - 1, 1) + angleOffset;
+                Movement ringMovement = Instantiate(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
 
                 Debug.Assert(ringMovement);
                 ringMovement.velocity = new Vector3(Mathf.Sin(horizontalAngle) * horizontalVelocity, verticalVelocity, Mathf.Cos(horizontalAngle) * horizontalVelocity);
                 numDropped++;
             }
+        }
+
+        if (numToDrop > 0)
+        {
+            GameSounds.PlaySound(gameObject, dropSound);
         }
     }
 }

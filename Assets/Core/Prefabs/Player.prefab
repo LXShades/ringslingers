@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3310946930297574031}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: RingSpawnPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -41,7 +41,7 @@ GameObject:
   - component: {fileID: 701023802387300388}
   - component: {fileID: 5915951472997903985}
   - component: {fileID: 1572081588652468190}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Cylinder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -124,7 +124,7 @@ GameObject:
   - component: {fileID: 7352825796714013433}
   - component: {fileID: 7352825796714013435}
   - component: {fileID: 1227556274159782272}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -196,11 +196,18 @@ MonoBehaviour:
     btnJump: 0
     btnFire: 0
   numRings: 0
+  dropSound:
+    clip: {fileID: 8300000, guid: eb3b92045251f434fab489da0cf93319, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
   droppedRingPrefab: {fileID: 1152841599159748358, guid: 317c876dc6b60cf4ab9e2b16896200a5, type: 3}
+  droppedRingSpawnPoint: {fileID: 3310946930297574031}
   maxDroppableRings: 20
-  ringDropCloseVerticalVelocity: 3.8
+  ringDropLayers: 3
+  ringDropCloseVerticalVelocity: 4
   ringDropFarVerticalVelocity: 4.5
-  ringDropHorizontalVelocity: 8
+  ringDropHorizontalVelocity: 3
   aimForward: {x: 0, y: 0, z: 0}
   movement: {fileID: 0}
 --- !u!114 &7352825796714013435

@@ -12,7 +12,7 @@ public class Movement : SyncedObject
     public Collider[] colliders = new Collider[0];
 
     [Tooltip("List of collision layers to interact with")]
-    LayerMask blockingCollisionLayers = ~0;
+    public LayerMask blockingCollisionLayers = ~0;
 
     [Header("Physics")]
     [Tooltip("If selected, this component will not move the object but will supply the Move function")]
@@ -20,6 +20,9 @@ public class Movement : SyncedObject
 
     [Range(0, 1)]
     public float bounceFactor = 0f;
+
+    [Range(0, 1)]
+    public float bounceFriction = 0;
 
     public float gravityMultiplier = 1f;
 
@@ -41,8 +44,11 @@ public class Movement : SyncedObject
             if (Move(velocity * Frame.local.deltaTime, out hit))
             {
                 Vector3 resistanceVector = hit.normal * (-Vector3.Dot(hit.normal, velocity) * (1f + bounceFactor));
+                Vector3 frictionVector = -velocity * bounceFriction;
 
-                velocity += resistanceVector;
+                frictionVector -= hit.normal * Vector3.Dot(hit.normal, frictionVector);
+
+                velocity += resistanceVector + frictionVector;
             }
         }
     }
