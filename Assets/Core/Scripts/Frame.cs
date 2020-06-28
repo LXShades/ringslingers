@@ -50,7 +50,7 @@ public class Frame
     /// <summary>
     /// Time to tick between each physics simulation
     /// </summary>
-    public float physicsFixedDeltaTime = 0.01f;
+    public float physicsFixedDeltaTime = 0.04f;
 
     /// <summary>
     /// Maximum number of missed physics sims to catch up on before the remainder are discarded
@@ -103,14 +103,13 @@ public class Frame
         {
             Physics.autoSimulation = false;
             Physics.autoSyncTransforms = true;
+            //todo:move
         }
 
-        physicsFixedDeltaTime = 1 / 60f;
         for (int i = 0; i < maxAccumulatedPhysicsSims; i++)
         {
             if (time - lastPhysicsSimTime >= physicsFixedDeltaTime)
             {
-                //Physics.SyncTransforms();
                 Physics.Simulate(physicsFixedDeltaTime);
 
                 lastPhysicsSimTime += physicsFixedDeltaTime;

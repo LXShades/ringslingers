@@ -34,14 +34,18 @@ public class CharacterMovement : SyncedObject
 
     // States
     [Flags]
-    enum State
+    public enum State
     {
         Jumped   = 1,
         Rolling  = 2,
         Thokked  = 4,
-        CanceledJump = 8
+        CanceledJump = 8,
+        Pained = 16
     };
-    private State state;
+    public State state
+    {
+        get; private set;
+    }
 
     /// <summary>
     /// Speed of the player right now
@@ -71,6 +75,15 @@ public class CharacterMovement : SyncedObject
 
         // Point towards relevent direction
         transform.rotation = Quaternion.Euler(0, player.input.horizontalAim, 0);
+
+        // Add/remove states depending on whether isOnGround
+        if (isOnGround)
+        {
+            if (state.HasFlag(State.Pained))
+                player.StartInvincibilityTime();
+
+            state &= ~State.Pained;
+        }
 
         // Friction
         ApplyFriction();
@@ -140,6 +153,9 @@ public class CharacterMovement : SyncedObject
 
     private void ApplyRunAcceleration()
     {
+        if (state.HasFlag(State.Pained))
+            return; // cannot accelerate while in pain
+
         inputRunDirection = transform.forward.Horizontal().normalized * player.input.moveVerticalAxis + transform.right.Horizontal().normalized * player.input.moveHorizontalAxis;
 
         if (inputRunDirection.magnitude > 1)
@@ -162,8 +178,17 @@ public class CharacterMovement : SyncedObject
             velocity.SetHorizontal(velocity.Horizontal() * lastHorizontalSpeed / speedToClamp);
     }
 
+    public void ApplyHitKnockback(Vector3 force)
+    {
+        state |= State.Pained;
+        velocity = force;
+    }
+
     private void HandleJumpAbilities()
     {
+        if (state.HasFlag(State.Pained))
+            return;
+
         if (player.input.btnJump)
         {
             if (isOnGround && !state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
@@ -193,7 +218,7 @@ public class CharacterMovement : SyncedObject
 
     public void SpringUp(float force, Vector3 direction)
     {
-        state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
+        state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
         velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
     }
 

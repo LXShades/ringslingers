@@ -50,6 +50,16 @@ public class Player : SyncedObject
 
     public float ringDropHorizontalVelocity = 10;
 
+    [Header("Hurt")]
+    public float hurtDefaultHorizontalKnockback = 5;
+    public float hurtDefaultVerticalKnockback = 5;
+
+    [Header("I-frames")]
+    public float hitInvincibilityDuration = 1.5f;
+
+    public float hitInvincibilityBlinkRate = 25f;
+    private float invincibilityTimeRemaining;
+
     /// <summary>
     /// Forward vector representing where we're aiming
     /// </summary>
@@ -68,10 +78,24 @@ public class Player : SyncedObject
 
     public override void FrameUpdate()
     {
+        // Update aim
         float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
 
         aimForward = new Vector3(Mathf.Sin(horizontalRads) * Mathf.Cos(verticalRads), -Mathf.Sin(verticalRads), Mathf.Cos(horizontalRads) * Mathf.Cos(verticalRads));
 
+        // Invincibility blinky
+        if (invincibilityTimeRemaining > 0)
+        {
+            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - Frame.local.deltaTime, 0);
+
+            Renderer renderer = GetComponentInChildren<Renderer>();
+            if (renderer && invincibilityTimeRemaining >= 0)
+                renderer.enabled = ((int)(Frame.local.time * hitInvincibilityBlinkRate) & 1) == 0;
+            else
+                renderer.enabled = true; // we finished blinky blinkying
+        }
+
+        // Debug
         if (Input.GetKeyDown(KeyCode.R))
         {
             Hurt(null);
@@ -100,7 +124,17 @@ public class Player : SyncedObject
 
     public void Hurt(GameObject instigator)
     {
+        if (invincibilityTimeRemaining > 0 || movement.state.HasFlag(CharacterMovement.State.Pained))
+            return; // can't touch this
+
+        movement.ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0));
+
         DropRings();
+    }
+
+    public void StartInvincibilityTime()
+    {
+        invincibilityTimeRemaining = hitInvincibilityDuration;
     }
 
     public void DropRings()
