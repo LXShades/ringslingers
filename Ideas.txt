@@ -10,8 +10,18 @@
  + Rings should despawn after a while
  + Rings should have some friction when bouncing
  + Ring drop sound should play when hit
- - Players should be able to pick up rings
-- Add ring hits by other players
+ + Players should be able to pick up rings
+   Current options:
+    - Use custom movement for players and detect, but selectively ignore rings
+    + Set the dropped rings to use a trigger collider and let them be picked up that way
++ Add ring hits by other players
+ + Red rings should collide with other players
+- Optimize physics step
+- Add knockback on hit
+- Add score on hit
+- Add client-side prediction and optimise
+- Add Tab to view scores?
+- Add name ability
 - Flags should be serializable
 - Make Rail model
 - Make Sonic model
@@ -27,9 +37,13 @@ Grenade refire: 3
 Scatter refire: 1.5
 Normal refire: 4.375‬
 
+Technical refinements in the future:
+- Imrpove ring collisions by not using triggers
+
 Additional touches:
 - Fireworks when hitting someone in the air
 
 Gameplay ideas
 - Bounce shield - has a cooldown, returns you to the height from whence you came
 - Character ability: jump directly onto walls and/or ceilings
+- Subterranean ring: When fired, travels underground. Firing again makes it spike out of the ground hitting anyone above it

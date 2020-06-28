@@ -13,6 +13,9 @@ public class DespawnAfterDuration : SyncedObject
     private float despawnTimeRemaining;
     private float perBlinkTimer = 0;
 
+    [Header("Sounds")]
+    public GameSound despawnSound = new GameSound();
+
     // Components
     private Renderer renderer;
 
@@ -50,6 +53,11 @@ public class DespawnAfterDuration : SyncedObject
 
         // Destroy! (eventually)
         if (despawnTimeRemaining <= 0)
+        {
+            if (despawnSound.clip)
+                GameSounds.PlaySound(gameObject, despawnSound);
+
             Destroy(gameObject);
+        }
     }
 }

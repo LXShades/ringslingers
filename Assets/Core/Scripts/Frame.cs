@@ -48,6 +48,18 @@ public class Frame
     public InputCmds[] playerInputs = new InputCmds[Netplay.maxPlayers];
 
     /// <summary>
+    /// Time to tick between each physics simulation
+    /// </summary>
+    public float physicsFixedDeltaTime = 0.01f;
+
+    /// <summary>
+    /// Maximum number of missed physics sims to catch up on before the remainder are discarded
+    /// </summary>
+    public int maxAccumulatedPhysicsSims = 4;
+
+    public float lastPhysicsSimTime;
+
+    /// <summary>
     /// Advances the game by the given delta time
     /// </summary>
     /// <param name="deltaTime"></param>
@@ -85,6 +97,27 @@ public class Frame
                 syncedObjects[i].FrameLateUpdate();
             }
         }
+
+        // Simulate physics
+        if (Physics.autoSimulation)
+        {
+            Physics.autoSimulation = false;
+            Physics.autoSyncTransforms = true;
+        }
+
+        physicsFixedDeltaTime = 1 / 60f;
+        for (int i = 0; i < maxAccumulatedPhysicsSims; i++)
+        {
+            if (time - lastPhysicsSimTime >= physicsFixedDeltaTime)
+            {
+                //Physics.SyncTransforms();
+                Physics.Simulate(physicsFixedDeltaTime);
+
+                lastPhysicsSimTime += physicsFixedDeltaTime;
+            }
+        }
+
+        lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime, time - physicsFixedDeltaTime, time);
 
         // Cleanup missing synced objects
         //syncedObjects.RemoveAll(a => a == null);

@@ -69,6 +69,9 @@ public class GameSounds : MonoBehaviour
 
     private void InternalPlaySound(GameObject source, GameSound sound)
     {
+        if (sound.clip == null || sound.volume <= 0)
+            return;
+
         currentChannel = (currentChannel + 1) % sources.Length;
 
         for (int i = 0; i < sources.Length; i++)
@@ -88,6 +91,8 @@ public class GameSounds : MonoBehaviour
         sources[currentChannel].pitch = sound.pitch + Random.Range(-sound.pitchVariance, sound.pitchVariance);
         sources[currentChannel].Play();
         sourceAttachments[currentChannel] = source;
+        if (source)
+            sources[currentChannel].transform.position = source.transform.position;
     }
 }
 

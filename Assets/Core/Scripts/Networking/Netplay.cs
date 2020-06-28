@@ -142,7 +142,7 @@ public class Netplay : MonoBehaviour
         // Tick the game
         if (net.IsServer)
             TickServer();
-        else
+        else if (net.IsClient)
             TickClient();
 
         // Do debug stuff

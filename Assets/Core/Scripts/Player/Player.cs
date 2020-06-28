@@ -74,7 +74,7 @@ public class Player : SyncedObject
 
         if (Input.GetKeyDown(KeyCode.R))
         {
-            DropRings();
+            Hurt(null);
         }
     }
 
@@ -98,12 +98,15 @@ public class Player : SyncedObject
         }
     }
 
+    public void Hurt(GameObject instigator)
+    {
+        DropRings();
+    }
+
     public void DropRings()
     {
         int numToDrop = Mathf.Min(numRings, maxDroppableRings);
         int numDropped = 0;
-
-        numToDrop = 20;
 
         int numRingLayers = ringDropLayers;
         for (int ringLayer = 0; ringLayer < numRingLayers; ringLayer++)
@@ -130,5 +133,7 @@ public class Player : SyncedObject
         {
             GameSounds.PlaySound(gameObject, dropSound);
         }
+
+        numRings = 0;
     }
 }

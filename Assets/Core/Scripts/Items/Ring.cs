@@ -8,6 +8,11 @@ public class Ring : SyncedObject
     [Tooltip("Speed that this ring spins at, in degrees per second")] public float spinSpeed = 180;
     public float hoverHeight = 0.375f;
 
+    [Header("Dropped rings")]
+    public bool isDroppedRing = false;
+
+    public float pickupWarmupDuration = 0.75f;
+
     [Header("Hierarchy")]
     public GameObject pickupParticles;
 
@@ -16,9 +21,12 @@ public class Ring : SyncedObject
     // Components
     private RespawnableItem respawnableItem;
 
+    private float awakeTime;
+
     public override void FrameAwake()
     {
         respawnableItem = GetComponent<RespawnableItem>();
+        awakeTime = Frame.local.time;
     }
 
     public override void FrameStart()
@@ -41,7 +49,7 @@ public class Ring : SyncedObject
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.GetComponent<Player>())
+        if (other.GetComponent<Player>() && (!isDroppedRing || Frame.local.time - awakeTime >= pickupWarmupDuration))
         {
             other.GetComponent<Player>().numRings++;
             pickupParticles.SetActive(true);
@@ -49,7 +57,10 @@ public class Ring : SyncedObject
 
             GameSounds.PlaySound(other.gameObject, pickupSound);
 
-            respawnableItem.Pickup();
+            if (!isDroppedRing)
+                respawnableItem.Pickup();
+            else
+                Destroy(gameObject); // we aren't going to respawn (although rewinding stuff might need to... uh... ah we'll work it out)
         }
     }
 }

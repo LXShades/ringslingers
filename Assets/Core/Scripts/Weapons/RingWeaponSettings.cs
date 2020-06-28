@@ -22,6 +22,11 @@ public class RingWeaponSettings : ScriptableObject
     public GameSound fireSound;
 
     /// <summary>
+    /// Sound effect to play when hitting a wall or player and despawning
+    /// </summary>
+    public GameSound despawnSound;
+
+    /// <summary>
     /// Maximum ammunition that can be held for this ring
     /// </summary>
     public int maxAmmo = 99;

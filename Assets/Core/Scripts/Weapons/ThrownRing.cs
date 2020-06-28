@@ -13,6 +13,12 @@ public class ThrownRing : SyncedObject
     private float spawnTime = 0;
 
     private Player owner;
+    private Rigidbody rb;
+
+    public override void FrameAwake()
+    {
+        rb = GetComponent<Rigidbody>();
+    }
 
     public override void FrameStart()
     {
@@ -30,17 +36,36 @@ public class ThrownRing : SyncedObject
         transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * Frame.local.deltaTime, spinAxis);
 
         // Move
-        transform.position += velocity * Frame.local.deltaTime;
+        //transform.position += velocity * Frame.local.deltaTime;
 
-        // Despawn after a while
-        if (Frame.local.time - spawnTime >= settings.projectileLifetime)
+        // Improves collisions, kinda annoying but it be that way
+        rb.velocity = velocity;
+    }
+
+    public void OnCollisionEnter(Collision collision)
+    {
+        // Play despawn sound
+        GameSounds.PlaySound(gameObject, settings.despawnSound);
+
+        // Hurt any players we collided with
+        Player otherPlayer = collision.collider.GetComponent<Player>();
+        if (otherPlayer)
         {
-            Destroy(gameObject);
+            otherPlayer.Hurt(owner.gameObject);
         }
+
+        // Bye-bye!
+        Destroy(gameObject);
     }
 
     public void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
     {
+        foreach (Collider collider in GetComponentsInChildren<Collider>())
+        {
+            foreach (Collider ownerCollider in owner.GetComponentsInChildren<Collider>())
+                Physics.IgnoreCollision(collider, ownerCollider);
+        }
+
         this.owner = owner;
         velocity = direction.normalized * settings.projectileSpeed;
         transform.position = spawnPosition;
