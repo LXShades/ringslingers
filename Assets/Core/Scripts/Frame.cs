@@ -127,29 +127,29 @@ public class Frame
     {
         MemoryStream stream = new MemoryStream(1024 * 1024);
 
-        for (int id = 0; id < Netplay.singleton.syncedObjects.Count; id++)
+        using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
         {
-            SyncedObject obj = Netplay.singleton.syncedObjects[id];
+            for (int id = 0; id < Netplay.singleton.syncedObjects.Count; id++)
+            {
+                SyncedObject obj = Netplay.singleton.syncedObjects[id];
 
-            if (obj == null)
-                continue;
+                if (obj == null)
+                    continue;
 
-            stream.WriteByte((byte)(id & 255));
-            stream.WriteByte((byte)((id >> 8) & 255));
-            long sizePos = stream.Position;
-            stream.WriteByte(0);
-            stream.WriteByte(0);
+                writer.Write((ushort)id);
+                long sizePos = stream.Position;
+                writer.Write((ushort)0);
 
-            obj.Serialize(stream);
+                obj.Serialize(writer);
 
-            long endPos = stream.Position;
-            stream.Position = sizePos;
-            stream.WriteByte((byte)((endPos - sizePos - 2) & 255));
-            stream.WriteByte((byte)(((endPos - sizePos - 2) >> 8) & 255));
-            stream.Position = endPos;
+                long endPos = stream.Position;
+                stream.Position = sizePos;
+                writer.Write((ushort)(endPos - sizePos - 2));
+                stream.Position = stream.Length;
+            }
+
+            writer.Write((ushort)65535);
         }
-        stream.WriteByte(255);
-        stream.WriteByte(255);
 
         return stream;
     }
@@ -159,16 +159,19 @@ public class Frame
         if (stream.Length <= stream.Position)
             return false;
 
-        for (int objId = stream.ReadByte() | (stream.ReadByte() << 8); objId != -1 && objId != 65535; objId = stream.ReadByte() | (stream.ReadByte() << 8))
+        using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true))
         {
-            int size = stream.ReadByte() | (stream.ReadByte() << 8);
-
-            if (Netplay.singleton.syncedObjects[objId])
+            for (ushort objId = reader.ReadUInt16(); objId != 65535; objId = reader.ReadUInt16())
             {
-                Netplay.singleton.syncedObjects[objId].Deserialize(stream);
+                int size = reader.ReadInt16();
+
+                if (Netplay.singleton.syncedObjects[objId])
+                {
+                    Netplay.singleton.syncedObjects[objId].Deserialize(reader);
+                }
+                else
+                    stream.Position += size;
             }
-            else
-                stream.Position += size;
         }
 
         return true;

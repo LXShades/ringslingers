@@ -51,6 +51,7 @@ Technical refinements in the future:
 - Imrpove ring collisions by not using triggers
 - Interpolate thrown rings
 - Refine acceleration, this currently varies by frame rate
+- Reuse BinaryWriters in SyncedObject.Serialize
 
 Additional touches:
 - Fireworks when hitting someone in the air

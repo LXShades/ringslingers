@@ -124,7 +124,10 @@ public class GameManager : MonoBehaviour
 
         // Press F1 to save a state
         if (Input.GetKeyDown(KeyCode.F1))
+        {
             tempSave = Frame.local.Serialize();
+            Debug.Log($"Serialized {tempSave.Length} bytes!");
+        }
 
         if (Input.GetKeyDown(KeyCode.F2) && tempSave != null)
         {

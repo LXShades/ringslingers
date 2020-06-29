@@ -6,6 +6,10 @@ using UnityEngine;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Linq.Expressions;
+using System.Dynamic;
+using JetBrains.Annotations;
 
 public abstract class SyncedObjectBase : MonoBehaviour
 {
@@ -74,150 +78,192 @@ public abstract class SyncedObject : SyncedObjectBase
 
     public virtual void ReadSyncer(System.IO.Stream stream) { return; }
 
-    public virtual void Serialize(Stream data)
+    private static Dictionary<string, Action<object, BinaryWriter>> serializerByType = new Dictionary<string, Action<object, BinaryWriter>>();
+
+    private static Dictionary<string, Action<object, BinaryReader>> deserializerByType = new Dictionary<string, Action<object, BinaryReader>>();
+
+    private static MethodCallExpression CallStreamWriterForType(Expression instance, Expression value, Type type)
     {
-        Type objType = GetType();
-        FieldInfo[] fields = objType.GetFields();
-        PropertyInfo[] properties = objType.GetProperties(BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-        BinaryFormatter formatter = new BinaryFormatter();
+        TypeCode code = Type.GetTypeCode(type);
 
-        using (BinaryWriter stream = new BinaryWriter(data, System.Text.Encoding.UTF8, true))
+        switch (code)
         {
-            object val;
-            Type valType;
-
-            for (int i = 0; i < fields.Length + properties.Length; i++)
-            {
-                if (i < fields.Length)
-                {
-                    val = fields[i].GetValue(this);
-                    valType = fields[i].FieldType;
-                }
+            case TypeCode.Int32:
+            case TypeCode.Int16:
+            case TypeCode.UInt32:
+            case TypeCode.UInt16:
+            case TypeCode.Single:
+            case TypeCode.Double:
+            case TypeCode.String:
+            case TypeCode.Boolean:
+                Type closestSystemType = Type.GetType($"System.{code}");
+                if (type == closestSystemType)
+                    return Expression.Call(instance, typeof(BinaryWriter).GetMethod("Write", new Type[] { type }), value);
                 else
-                {
-                    val = properties[i - fields.Length].GetValue(this);
-                    valType = properties[i - fields.Length].PropertyType;
-                }
-
-                switch (Type.GetTypeCode(valType))
-                {
-                    case TypeCode.Int32:
-                        stream.Write((int)val);
-                        break;
-                    case TypeCode.UInt32:
-                        stream.Write((uint)val);
-                        break;
-                    case TypeCode.Single:
-                        unsafe // apparently floats cause allocations which we don't want or need during this process
-                        {
-                            int valAsInt = 0;
-                            *((float*)&valAsInt) = (float)val;
-                            stream.Write(valAsInt);
-                        }
-                        break;
-                    case TypeCode.Double:
-                        unsafe // apparently floats cause allocations which we don't want or need during this process
-                        {
-                            long valAsLong = 0;
-                            *((double*)&valAsLong) = (double)val;
-                            stream.Write(valAsLong);
-                        }
-                        break;
-                    case TypeCode.String:
-                        stream.Write((string)val);
-                        break;
-                    case TypeCode.Boolean:
-                        stream.Write((bool)val);
-                        break;
-                    default:
-                        // Non-numeric type
-                        if (valType == typeof(Vector3))
-                        {
-                            Vector3 asVec = (Vector3)val;
-                            stream.Write(asVec.x);
-                            stream.Write(asVec.y);
-                            stream.Write(asVec.z);
-                        }
-                        break;
-                }
-            }
-
-            // Write transform
-            stream.Write(transform.position.x);
-            stream.Write(transform.position.y);
-            stream.Write(transform.position.z);
+                    return Expression.Call(instance, typeof(BinaryWriter).GetMethod("Write", new Type[] { closestSystemType }), Expression.Convert(value, closestSystemType));
+            default:
+                return null;
         }
     }
 
-    public virtual void Deserialize(Stream data)
+    private static BinaryExpression CallStreamReaderForType(Expression instance, Expression target, Type type)
     {
-        Type objType = GetType();
-        FieldInfo[] fields = objType.GetFields();
-        PropertyInfo[] properties = objType.GetProperties(BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-        BinaryFormatter formatter = new BinaryFormatter();
+        return Expression.Assign(target, CallStreamReaderForType(instance, type));
+    }
 
-        using (BinaryReader stream = new BinaryReader(data, System.Text.Encoding.UTF8, true))
+    private static Expression CallStreamReaderForType(Expression instance, Type type)
+    {
+        TypeCode code = Type.GetTypeCode(type);
+        switch (code)
         {
-            Type valType;
-            dynamic fieldOrProperty;
-
-            for (int i = 0; i < fields.Length + properties.Length; i++)
-            {
-                if (i < fields.Length)
-                {
-                    valType = fields[i].FieldType;
-                    fieldOrProperty = fields[i];
-                }
+            case TypeCode.Int32:
+            case TypeCode.Int16:
+            case TypeCode.UInt32:
+            case TypeCode.UInt16:
+            case TypeCode.Single:
+            case TypeCode.Double:
+            case TypeCode.String:
+            case TypeCode.Boolean:
+                if (Type.GetType($"System.{code}") == type)
+                    return Expression.Call(instance, typeof(BinaryReader).GetMethod($"Read{code}"));
                 else
                 {
-                    valType = properties[i - fields.Length].PropertyType;
-                    fieldOrProperty = properties[i - fields.Length];
+                    var converted = Expression.Convert(Expression.Call(instance, typeof(BinaryReader).GetMethod($"Read{code}")), type);
+                    return converted;
                 }
-
-                switch (Type.GetTypeCode(valType))
-                {
-                    case TypeCode.Int32:
-                        fieldOrProperty.SetValue(this, stream.ReadInt32());
-                        break;
-                    case TypeCode.UInt32:
-                        fieldOrProperty.SetValue(this, stream.ReadUInt32());
-                        break;
-                    case TypeCode.Single:
-                        fieldOrProperty.SetValue(this, stream.ReadSingle());
-                        break;
-                    case TypeCode.Double:
-                        fieldOrProperty.SetValue(this, stream.ReadDouble());
-                        break;
-                    case TypeCode.String:
-                        fieldOrProperty.SetValue(this, stream.ReadString());
-                        break;
-                    case TypeCode.Boolean:
-                        fieldOrProperty.SetValue(this, stream.ReadBoolean());
-                        break;
-                    default:
-                        // Non-numeric type
-                        if (valType == typeof(Vector3))
-                        {
-                            Vector3 asVec;
-                            asVec.x = stream.ReadSingle();
-                            asVec.y = stream.ReadSingle();
-                            asVec.z = stream.ReadSingle();
-                            fieldOrProperty.SetValue(this, asVec);
-                        }
-                        break;
-                }
-            }
-
-            // Write transform
-            Vector3 position;
-            position.x = stream.ReadSingle();
-            position.y = stream.ReadSingle();
-            position.z = stream.ReadSingle();
-            transform.position = position;
+            default:
+                return null; // lmao i dunno what to do haha
         }
+    }
+
+    public virtual void Serialize(BinaryWriter stream)
+    {
+        Type objType = GetType();
+
+        // Try to run the serializer for this object
+        Action<object, BinaryWriter> serializer;
+        if (!serializerByType.TryGetValue(objType.Name, out serializer))
+        {
+            GenerateSerializers(objType);
+            serializer = serializerByType[objType.Name];
+        }
+
+        // And run it
+        serializerByType[objType.Name].Invoke(this, stream);
+    }
+
+    public virtual void Deserialize(BinaryReader stream)
+    {
+        Type objType = GetType();
+
+        // Try to run the serializer for this object
+        Action<object, BinaryReader> deserializer;
+        if (deserializerByType.TryGetValue(objType.Name, out deserializer))
+        {
+            deserializer.Invoke(this, stream);
+            return;
+        }
+        else
+        {
+            GenerateSerializers(objType);
+            deserializerByType[objType.Name].Invoke(this, stream);
+        }
+
+        // And run it
+        deserializerByType[objType.Name].Invoke(this, stream);
 
         // Positions have changed
         Physics.SyncTransforms();
+    }
+
+    public static void GenerateSerializers(Type objType)
+    {
+        List<Expression> serializer = new List<Expression>(50);
+        List<Expression> deserializer = new List<Expression>(50);
+
+        // Retrieve parameters
+        ParameterExpression genericTargetParam = Expression.Parameter(typeof(object), "genericTarget");
+        ParameterExpression writer = Expression.Parameter(typeof(BinaryWriter), "writer");
+        ParameterExpression reader = Expression.Parameter(typeof(BinaryReader), "reader");
+        UnaryExpression convert = Expression.Convert(genericTargetParam, objType);
+        ParameterExpression target = Expression.Variable(objType, "target");
+
+        serializer.Add(Expression.Assign(target, convert));
+        deserializer.Add(Expression.Assign(target, convert));
+
+        MemberInfo[] members = objType.GetMembers(BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+        foreach (MemberInfo member in members)
+        {
+            if (member.MemberType != MemberTypes.Field && member.MemberType != MemberTypes.Property)
+                continue;
+
+            MemberExpression getValue = Expression.MakeMemberAccess(target, member);
+            Type variableType = (member.MemberType == MemberTypes.Field ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType);
+
+            switch (Type.GetTypeCode(variableType))
+            {
+                case TypeCode.Int32:
+                case TypeCode.Int16:
+                case TypeCode.UInt32:
+                case TypeCode.UInt16:
+                case TypeCode.Single:
+                case TypeCode.Double:
+                case TypeCode.String:
+                case TypeCode.Boolean:
+                    serializer.Add(CallStreamWriterForType(writer, getValue, variableType));
+                    deserializer.Add(CallStreamReaderForType(reader, getValue, variableType)); // um, this function does it automatically I guess
+                    break;
+                default:
+                    if (variableType == typeof(Vector3))
+                    {
+                        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getValue, typeof(Vector3).GetMember("x")[0]), typeof(float)));
+                        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getValue, typeof(Vector3).GetMember("y")[0]), typeof(float)));
+                        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getValue, typeof(Vector3).GetMember("z")[0]), typeof(float)));
+
+                        if (member.MemberType == MemberTypes.Field)
+                        {
+                            // assign each element of the vector and call it a day
+                            deserializer.Add(CallStreamReaderForType(reader, Expression.MakeMemberAccess(getValue, typeof(Vector3).GetMember("x")[0]), typeof(float)));
+                            deserializer.Add(CallStreamReaderForType(reader, Expression.MakeMemberAccess(getValue, typeof(Vector3).GetMember("y")[0]), typeof(float)));
+                            deserializer.Add(CallStreamReaderForType(reader, Expression.MakeMemberAccess(getValue, typeof(Vector3).GetMember("z")[0]), typeof(float)));
+                        }
+                        else
+                        {
+                            // can't assign individual elements of a property struct
+                            Expression newVector = Expression.New(typeof(Vector3).GetConstructor(new Type[] { typeof(float), typeof(float), typeof(float) }), new Expression[] {
+                                CallStreamReaderForType(reader, typeof(float)),
+                                CallStreamReaderForType(reader, typeof(float)),
+                                CallStreamReaderForType(reader, typeof(float))
+                            });
+
+                            deserializer.Add(Expression.Assign(getValue, newVector));
+                        }
+                    }
+                    break;
+            }
+        }
+
+        // Also write transform
+        var getTransform = Expression.MakeMemberAccess(target, objType.GetProperty("transform"));
+        var getPosition = Expression.MakeMemberAccess(getTransform, typeof(Transform).GetProperty("position"));
+
+        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getPosition, typeof(Vector3).GetField("x")), typeof(float)));
+        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getPosition, typeof(Vector3).GetField("y")), typeof(float)));
+        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getPosition, typeof(Vector3).GetField("z")), typeof(float)));
+
+        Expression newPosition = Expression.New(typeof(Vector3).GetConstructor(new Type[] { typeof(float), typeof(float), typeof(float) }), new Expression[] {
+                                CallStreamReaderForType(reader, typeof(float)),
+                                CallStreamReaderForType(reader, typeof(float)),
+                                CallStreamReaderForType(reader, typeof(float))
+                            });
+        deserializer.Add(Expression.Assign(getPosition, newPosition));
+
+        // Compile the new function
+        BlockExpression serializerBlock = Expression.Block(new ParameterExpression[] { target }, serializer);
+        BlockExpression deserializerBlock = Expression.Block(new ParameterExpression[] { target }, deserializer);
+
+        serializerByType.Add(objType.Name, Expression.Lambda<Action<object, BinaryWriter>>(serializerBlock, genericTargetParam, writer).Compile());
+        deserializerByType.Add(objType.Name, Expression.Lambda<Action<object, BinaryReader>>(deserializerBlock, genericTargetParam, reader).Compile());
     }
 
     public void TriggerStartIfCreated()
