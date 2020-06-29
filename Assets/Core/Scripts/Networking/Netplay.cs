@@ -73,10 +73,31 @@ public class Netplay : MonoBehaviour
         }
     }
 
+    [Header("Simulation")]
+    public float maxSimTime = 0.5f;
+
+    [Tooltip("Should be higher than or equal to maxSimTime")]
+    public float maxTickHistoryTime = 1.0f;
+
+    public bool doDebugSelfSimulate = false;
+
+    private struct TickState
+    {
+        /// <summary>
+        /// Actual tick
+        /// </summary>
+        public MsgServerTick tick;
+
+        /// <summary>
+        /// Snapshot of the game after execution of this tick (?)
+        /// </summary>
+        public Stream snapshot;
+    }
+
     /// <summary>
-    /// Server ticks that have been received but not processed
+    /// Server ticks that have either a) been received in the last maxTickHistoryTime or b) not been processed yet (these can be older if that happens)
     /// </summary>
-    private List<MsgServerTick> pendingServerTicks = new List<MsgServerTick>();
+    private List<TickState> serverTickHistory = new List<TickState>();
 
     /// <summary>
     /// Client ticks received but not yet processed
@@ -133,6 +154,13 @@ public class Netplay : MonoBehaviour
                 return;
         }
 
+        if (Input.GetKey(KeyCode.F3))
+        {
+            Frame.local.Serialize();
+            UpdateNetStat();
+            return;
+        }
+
         // There's a lot todo here, don't worry if it doesn't make much sense
         bool doServerTick = net.IsServer;
 
@@ -152,42 +180,59 @@ public class Netplay : MonoBehaviour
     void TickClient()
     {
         bool doClientTick = true;
+
         // Send local inputs
         if (doClientTick)
             ClientSendTick();
 
         // Run received ticks
-        pendingServerTicks.Sort((a, b) => (int)(a.time - b.time >= 0 ? 1 : -1));
-
-        foreach (MsgServerTick tick in pendingServerTicks)
+        for (int i = serverTickHistory.Count - 1; i >= 0; i--)
         {
+            TickState tickState = serverTickHistory[i];
+
+            if (tickState.tick.time < Frame.local.time)
+                continue;
+
             // Copy tick to local frame
-            tick.playerInputs.CopyTo(Frame.local.playerInputs, 0);
-            Frame.local.time = tick.time;
+            tickState.tick.playerInputs.CopyTo(Frame.local.playerInputs, 0);
+            Frame.local.time = tickState.tick.time;
 
             // Spawn players who aren't in the game (kinda hacky and temporary-y)
-            for (int i = 0; i < players.Length; i++)
+            for (int p = 0; p < players.Length; p++)
             {
-                if (players[i] == null && tick.isPlayerInGame[i])
-                    AddPlayer(i);
+                if (players[p] == null && tickState.tick.isPlayerInGame[p])
+                    AddPlayer(p);
             }
 
             // Read syncers
-            if (tick.syncers.Length > 0)
+            if (tickState.tick.syncers.Length > 0)
             {
-                tick.syncers.Position = 0;
-                while (tick.syncers.Position < tick.syncers.Length)
+                tickState.tick.syncers.Position = 0;
+                while (tickState.tick.syncers.Position < tickState.tick.syncers.Length)
                 {
-                    int player = tick.syncers.ReadByte();
-                    players[player].movement.ReadSyncer(tick.syncers);
+                    int player = tickState.tick.syncers.ReadByte();
+                    players[player].movement.ReadSyncer(tickState.tick.syncers);
                 }
             }
 
             // Tick!
-            Frame.local.Tick(tick.deltaTime);
+            Frame.local.Tick(tickState.tick.deltaTime);
         }
 
-        pendingServerTicks.Clear();
+        // Take snapshot
+        if (serverTickHistory.Count > 0)
+        {
+            TickState state = serverTickHistory[0];
+            state.snapshot = Frame.local.Serialize();
+            serverTickHistory[0] = state;
+        }
+
+        // Cleanup tick history
+        for (int i = 0; i < serverTickHistory.Count; i++)
+        {
+            if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
+                serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
+        }
     }
 
     void TickServer()
@@ -228,9 +273,7 @@ public class Netplay : MonoBehaviour
             for (id = 0; id < maxPlayers; id++)
             {
                 if (players[id] == null)
-                {
                     break;
-                }
             }
         }
 
@@ -245,6 +288,8 @@ public class Netplay : MonoBehaviour
 
         player.playerId = id;
         players[id] = player;
+
+        player.Rename($"Fred");
 
         player.Respawn();
 
@@ -410,8 +455,21 @@ public class Netplay : MonoBehaviour
     {
         if (!net.IsServer)
         {
-            pendingServerTicks.Add(new MsgServerTick(payload));
+            // Insert the tick into our history
+            MsgServerTick tick = new MsgServerTick(payload);
+            int insertIndex = 0;
+            for (insertIndex = 0; insertIndex < serverTickHistory.Count - 1; insertIndex++)
+            {
+                if (serverTickHistory[insertIndex].tick.time < tick.time)
+                    break;
+            }
 
+            serverTickHistory.Insert(insertIndex, new TickState {
+                tick = tick,
+                snapshot = null
+            });
+
+            // Record STATS!
             numTicksPerFrame[Mathf.Min(netStatFrameNum, numTicksPerFrame.Length - 1)]++;
             numReceivedTicks++;
             numReceivedBytes += (int)payload.Length;

@@ -8,17 +8,22 @@ using UnityEngine.UI;
 /// </summary>
 public class GameHUD : MonoBehaviour
 {
-    [Header("Hierarchy")]
+    [Header("Main")]
     public Text ringsText;
     public Text scoreText;
     public Text timeText;
-    public Text connectStatusText;
 
+    [Header("Scoreboard")]
+    public GameObject scoreboard;
+    public Text scoreboardNames;
+    public Text scoreboardScores;
+
+    [Header("Debug")]
+    public Text connectStatusText;
     public Text debugText;
     public Text debugLogText;
 
-    [Header("Debug")]
-    public int numLogLines = 8;
+    public int numLogLines = 6;
     public bool showHarmlessLogs = true;
 
     private void Start()
@@ -43,11 +48,36 @@ public class GameHUD : MonoBehaviour
         if (player)
         {
             ringsText.text = player.numRings.ToString();
+            scoreText.text = player.score.ToString();
 
             debugText.text = $"Run Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}\n"
                 + Netplay.singleton.netStat;
         }
 
+        // Scoreboard stuff
+        scoreboard.SetActive(Input.GetButton("Scoreboard")); // normally we don't use Input, but the HUD is completely client-side so it's fine here
+
+        if (scoreboard.activeSelf)
+        {
+            // Refresh scoreboard info
+            Player[] orderedPlayers = (Player[])Netplay.singleton.players.Clone();
+
+            System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : 0) - (b ? b.score : 0) > 0 ? -1 : 1);
+
+            scoreboardNames.text = "";
+            scoreboardScores.text = "";
+
+            foreach (Player scoreboardPlayer in orderedPlayers)
+            {
+                if (scoreboardPlayer == null)
+                    break;
+
+                scoreboardNames.text += $"{scoreboardPlayer.name}\n";
+                scoreboardScores.text += $"{scoreboardPlayer.score}\n";
+            }
+        }
+
+        // Connection stuff
         if (Netplay.singleton.connectionStatus != Netplay.ConnectionStatus.Ready)
         {
             connectStatusText.enabled = true;
@@ -55,7 +85,7 @@ public class GameHUD : MonoBehaviour
             switch (Netplay.singleton.connectionStatus)
             {
                 case Netplay.ConnectionStatus.Disconnected:
-                    connectStatusText.text = "Disconnected from server";
+                    connectStatusText.text = "DISCONNECTED";
                     break;
                 case Netplay.ConnectionStatus.Connecting:
                     connectStatusText.text = "Connecting...";

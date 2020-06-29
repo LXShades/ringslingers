@@ -31,10 +31,13 @@ public class Player : SyncedObject
     /// </summary>
     [HideInInspector] public InputCmds lastInput;
 
+    [Header("Shinies")]
+    public int score = 0;
+
     /// <summary>
     /// Number of rings picked up
     /// </summary>
-    [HideInInspector] public int numRings = 0;
+    public int numRings = 0;
 
     [Header("Ring drop")]
     public GameSound dropSound = new GameSound();
@@ -89,7 +92,7 @@ public class Player : SyncedObject
             invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - Frame.local.deltaTime, 0);
 
             Renderer renderer = GetComponentInChildren<Renderer>();
-            if (renderer && invincibilityTimeRemaining >= 0)
+            if (renderer && invincibilityTimeRemaining > 0)
                 renderer.enabled = ((int)(Frame.local.time * hitInvincibilityBlinkRate) & 1) == 0;
             else
                 renderer.enabled = true; // we finished blinky blinkying
@@ -126,6 +129,12 @@ public class Player : SyncedObject
     {
         if (invincibilityTimeRemaining > 0 || movement.state.HasFlag(CharacterMovement.State.Pained))
             return; // can't touch this
+
+        // Give score to the attacker if possible
+        Player attackerAsPlayer = instigator.GetComponent<Player>();
+
+        if (attackerAsPlayer)
+            attackerAsPlayer.score += 50;
 
         movement.ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0));
 
@@ -164,10 +173,25 @@ public class Player : SyncedObject
         }
 
         if (numToDrop > 0)
-        {
             GameSounds.PlaySound(gameObject, dropSound);
-        }
 
         numRings = 0;
+    }
+
+    private static readonly string[] nameSuffices = { " and Knuckles", " Jr", " Sr", " Classic", " Modern", " Esquire", " Ph.d", " Squared" }; // ive done my best
+    public void Rename(string newName)
+    {
+        string updatedName = newName;
+        int currentSuffix = 0;
+
+        while (System.Array.Exists(Netplay.singleton.players, a => a != null && a != this && a.name == updatedName))
+        {
+            if (currentSuffix < nameSuffices.Length)
+                updatedName = newName + nameSuffices[currentSuffix++];
+            else
+                updatedName = newName + nameSuffices[currentSuffix / nameSuffices.Length] + nameSuffices[currentSuffix % nameSuffices.Length]; // crap lol itll be fine ok
+        }
+
+        name = updatedName;
     }
 }

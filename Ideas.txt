@@ -17,18 +17,26 @@
 + Add ring hits by other players
  + Red rings should collide with other players
 + Optimize physics step
-- Add knockback on hit
-- Add score on hit
++ Add knockback on hit
+ + Normalize player speeds
+ - Adjust speeds
++ Add score on hit
++ Add Tab to view scores
++ Add default player names
++ Flags should be serializable - they already seem to be
 - Add client-side prediction and optimise
-- Add Tab to view scores?
-- Add name ability
-- Flags should be serializable
+ + Implement tick history
+ - Take snapshot on each tick
+ - Every frame, rewind 0.2 seconds and execute 0.2 seconds
 - Make Rail model
-- Make Sonic model
 - Make HUD w/ rail times, etc
-- Add loop de loop
 - Add camera reset button
 - Add camera speed config
+
+Post-playtest:
+- Add rename ability
+- Make Sonic model
+- Add loop de loop
 - Add spin
 
 Rail refire: 0.673
@@ -42,6 +50,7 @@ Normal refire: 4.375‬
 Technical refinements in the future:
 - Imrpove ring collisions by not using triggers
 - Interpolate thrown rings
+- Refine acceleration, this currently varies by frame rate
 
 Additional touches:
 - Fireworks when hitting someone in the air
