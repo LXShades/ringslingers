@@ -4,7 +4,9 @@ using UnityEngine;
 using MLAPI;
 using MLAPI.Messaging;
 using System.IO;
-using Ruffles.Connections;
+using UnityEngine.Audio;
+using System.Linq.Expressions;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Netplay is a manager that holds information on players and synced objects, and handles synchronisation
@@ -80,6 +82,7 @@ public class Netplay : MonoBehaviour
     public float maxTickHistoryTime = 1.0f;
 
     public bool doDebugSelfSimulate = false;
+    public float debugSelfSimulateAmount = 0.1f;
 
     private struct TickState
     {
@@ -89,7 +92,7 @@ public class Netplay : MonoBehaviour
         public MsgServerTick tick;
 
         /// <summary>
-        /// Snapshot of the game after execution of this tick (?)
+        /// Snapshot of the game BEFORE execution of this tick
         /// </summary>
         public Stream snapshot;
     }
@@ -154,16 +157,6 @@ public class Netplay : MonoBehaviour
                 return;
         }
 
-        if (Input.GetKey(KeyCode.F3))
-        {
-            Frame.local.Serialize();
-            UpdateNetStat();
-            return;
-        }
-
-        // There's a lot todo here, don't worry if it doesn't make much sense
-        bool doServerTick = net.IsServer;
-
         // Generate local inputs
         localInputCmds = InputCmds.FromLocalInput(localInputCmds);
 
@@ -219,14 +212,6 @@ public class Netplay : MonoBehaviour
             Frame.local.Tick(tickState.tick.deltaTime);
         }
 
-        // Take snapshot
-        if (serverTickHistory.Count > 0)
-        {
-            TickState state = serverTickHistory[0];
-            state.snapshot = Frame.local.Serialize();
-            serverTickHistory[0] = state;
-        }
-
         // Cleanup tick history
         for (int i = 0; i < serverTickHistory.Count; i++)
         {
@@ -257,10 +242,44 @@ public class Netplay : MonoBehaviour
         // Run tick locally
         if (doServerTick)
         {
+            MsgServerTick tick = MakeServerTick(Time.deltaTime);
+
             // Send server inputs
-            ServerSendTick(Time.deltaTime);
+            ServerSendTick(tick);
+
+            // Take a snapshot of this tick and add to the server tick history
+            serverTickHistory.Insert(0, new TickState() { tick = tick, snapshot = Frame.local.Serialize() });
 
             Frame.local.Tick(Time.deltaTime);
+
+            // Cleanup tick history
+            for (int i = 0; i < serverTickHistory.Count; i++)
+            {
+                if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
+                    serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
+            }
+
+            if (doDebugSelfSimulate)
+            {
+                for (int i = 0; i < 1/*serverTickHistory.Count*/; i++)
+                {
+                    /*if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - debugSelfSimulateAmount)*/
+                    {
+                        // Rewind to this time
+                        serverTickHistory[i].snapshot.Position = 0;
+                        Frame.local.Deserialize(serverTickHistory[i].snapshot);
+
+                        for (int j = i; j >= 0; j--)
+                        {
+                            Frame.local.time = serverTickHistory[j].tick.time;
+                            Frame.local.playerInputs = serverTickHistory[j].tick.playerInputs;
+                            Frame.local.Tick(serverTickHistory[j].tick.deltaTime);
+                        }
+                        Debug.Log($"Simulated {i + 1} ticks");
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -417,10 +436,22 @@ public class Netplay : MonoBehaviour
     #endregion
 
     #region Messaging
-    void ServerSendTick(float deltaTime)
+    void ServerSendTick(MsgServerTick tick)
     {
         // Make a server tick
         MemoryStream output = new MemoryStream();
+
+        tick.ToStream(output);
+
+        // Send it to all clients
+        foreach (var client in net.ConnectedClientsList)
+            CustomMessagingManager.SendNamedMessage("servertick", client.ClientId, output, "Unreliable");
+
+        numSentTicks++;
+    }
+
+    private MsgServerTick MakeServerTick(float deltaTime)
+    {
         MsgServerTick tick = new MsgServerTick()
         {
             deltaTime = deltaTime,
@@ -442,13 +473,7 @@ public class Netplay : MonoBehaviour
             }
         }
 
-        tick.ToStream(output);
-
-        // Send it to all clients
-        foreach (var client in net.ConnectedClientsList)
-            CustomMessagingManager.SendNamedMessage("servertick", client.ClientId, output, "Unreliable");
-
-        numSentTicks++;
+        return tick;
     }
 
     private void OnReceivedServerTick(ulong sender, Stream payload)

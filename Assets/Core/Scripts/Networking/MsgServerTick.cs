@@ -5,9 +5,13 @@ using System.IO;
 
 public class MsgServerTick
 {
+    // Frame time before this tick is executed
     public float time;
+
+    // DeltaTime the server will tick from here
     public float deltaTime;
 
+    // PlayerInputs during execution of this tick
     public InputCmds[] playerInputs = new InputCmds[Netplay.maxPlayers];
     public bool[] isPlayerInGame = new bool[Netplay.maxPlayers];
 

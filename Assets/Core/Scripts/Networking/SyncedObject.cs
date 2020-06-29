@@ -136,41 +136,70 @@ public abstract class SyncedObject : SyncedObjectBase
         }
     }
 
+    static byte[] structBytes = new byte[4096];
+
+    private static System.IntPtr structPtr
+    {
+        get
+        {
+            if (_structPtr.ToInt32() == 0)
+                _structPtr = System.Runtime.InteropServices.Marshal.AllocHGlobal(4096);
+            return _structPtr;
+        }
+    }
+    private static System.IntPtr _structPtr;
+
+    public static void WriteStruct(BinaryWriter writer, object structure, Type type)
+    {
+        int structSize = System.Runtime.InteropServices.Marshal.SizeOf(type);
+        System.Runtime.InteropServices.Marshal.StructureToPtr(structure, structPtr, false);
+        System.Runtime.InteropServices.Marshal.Copy(structPtr, structBytes, 0, structSize);
+        writer.Write(structBytes, 0, structSize);
+    }
+
+    public static object ReadStruct(BinaryReader reader, Type type)
+    {
+        int structSize = System.Runtime.InteropServices.Marshal.SizeOf(type);
+        reader.Read(structBytes, 0, structSize);
+        System.Runtime.InteropServices.Marshal.Copy(structBytes, 0, structPtr, structSize);
+        return System.Runtime.InteropServices.Marshal.PtrToStructure(structPtr, type);
+    }
+
+    private Action<object, BinaryWriter> mySerializer;
+    private Action<object, BinaryReader> myDeserializer;
+
     public virtual void Serialize(BinaryWriter stream)
     {
-        Type objType = GetType();
-
         // Try to run the serializer for this object
-        Action<object, BinaryWriter> serializer;
-        if (!serializerByType.TryGetValue(objType.Name, out serializer))
+        if (mySerializer == null)
         {
-            GenerateSerializers(objType);
-            serializer = serializerByType[objType.Name];
+            Type objType = GetType();
+            if (!serializerByType.TryGetValue(objType.Name, out mySerializer))
+            {
+                GenerateSerializers(objType);
+                mySerializer = serializerByType[objType.Name];
+            }
         }
 
         // And run it
-        serializerByType[objType.Name].Invoke(this, stream);
+        mySerializer.Invoke(this, stream);
     }
 
     public virtual void Deserialize(BinaryReader stream)
     {
-        Type objType = GetType();
-
         // Try to run the serializer for this object
-        Action<object, BinaryReader> deserializer;
-        if (deserializerByType.TryGetValue(objType.Name, out deserializer))
+        if (myDeserializer == null)
         {
-            deserializer.Invoke(this, stream);
-            return;
-        }
-        else
-        {
-            GenerateSerializers(objType);
-            deserializerByType[objType.Name].Invoke(this, stream);
+            Type objType = GetType();
+            if (!deserializerByType.TryGetValue(objType.Name, out myDeserializer))
+            {
+                GenerateSerializers(objType);
+                myDeserializer = deserializerByType[objType.Name];
+            }
         }
 
         // And run it
-        deserializerByType[objType.Name].Invoke(this, stream);
+        myDeserializer.Invoke(this, stream);
 
         // Positions have changed
         Physics.SyncTransforms();
@@ -187,6 +216,8 @@ public abstract class SyncedObject : SyncedObjectBase
         ParameterExpression reader = Expression.Parameter(typeof(BinaryReader), "reader");
         UnaryExpression convert = Expression.Convert(genericTargetParam, objType);
         ParameterExpression target = Expression.Variable(objType, "target");
+        MethodInfo writeStructFunc = typeof(SyncedObject).GetMethod("WriteStruct");
+        MethodInfo readStructFunc = typeof(SyncedObject).GetMethod("ReadStruct");
 
         serializer.Add(Expression.Assign(target, convert));
         deserializer.Add(Expression.Assign(target, convert));
@@ -238,6 +269,12 @@ public abstract class SyncedObject : SyncedObjectBase
 
                             deserializer.Add(Expression.Assign(getValue, newVector));
                         }
+                    }
+                    else if (variableType.IsValueType && Type.GetTypeCode(variableType) == TypeCode.Object)
+                    {
+                        serializer.Add(Expression.Call(writeStructFunc, new Expression[] { writer, Expression.Convert(getValue, typeof(object)), Expression.Constant(variableType) }));
+                        deserializer.Add(Expression.Assign(getValue, Expression.Convert(Expression.Call(readStructFunc, new Expression[] { reader, Expression.Constant(variableType) }), variableType)));
+                     //   serializer.Add(CallStreamWriterForType(writer, Expression.Call(typeof(SyncedObject).GetMethod("WriteStruct"), new Expression[] { getValue }, new Expression[] { writer, getValue })));
                     }
                     break;
             }

@@ -166,9 +166,7 @@ public class Frame
                 int size = reader.ReadInt16();
 
                 if (Netplay.singleton.syncedObjects[objId])
-                {
                     Netplay.singleton.syncedObjects[objId].Deserialize(reader);
-                }
                 else
                     stream.Position += size;
             }

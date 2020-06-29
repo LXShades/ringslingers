@@ -24,10 +24,12 @@
 + Add Tab to view scores
 + Add default player names
 + Flags should be serializable - they already seem to be
++ Added FPS counter
 - Add client-side prediction and optimise
  + Implement tick history
- - Take snapshot on each tick
- - Every frame, rewind 0.2 seconds and execute 0.2 seconds
+ + Take snapshot on each tick
+ + Every frame, rewind 0.2 seconds and execute 0.2 seconds
+ - Player input needs to be serialized btw, or does it? They don't need serializing as long as Tick sets them
 - Make Rail model
 - Make HUD w/ rail times, etc
 - Add camera reset button

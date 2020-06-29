@@ -26,6 +26,9 @@ public class GameHUD : MonoBehaviour
     public int numLogLines = 6;
     public bool showHarmlessLogs = true;
 
+    private int numFramesThisSecond = 0;
+    private int lastFps = 0;
+
     private void Start()
     {
         Application.logMessageReceived += OnLogMessageReceived;
@@ -40,6 +43,8 @@ public class GameHUD : MonoBehaviour
     {
         Player player = GameManager.singleton.camera.currentPlayer;
 
+        numFramesThisSecond++;
+
         // Player stuff
         ringsText.text = "0";
         scoreText.text = "0";
@@ -50,8 +55,14 @@ public class GameHUD : MonoBehaviour
             ringsText.text = player.numRings.ToString();
             scoreText.text = player.score.ToString();
 
-            debugText.text = $"Run Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}\n"
-                + Netplay.singleton.netStat;
+            // Debug stuff
+            if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
+            {
+                lastFps = numFramesThisSecond;
+                numFramesThisSecond = 0;
+            }
+
+            debugText.text = $"Local frame: {Frame.local.time.ToString("#.00")}\nFPS: {lastFps}\nRun Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}\n" + Netplay.singleton.netStat;
         }
 
         // Scoreboard stuff
