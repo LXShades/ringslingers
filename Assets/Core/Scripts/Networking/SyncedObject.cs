@@ -220,9 +220,6 @@ public abstract class SyncedObject : SyncedObjectBase
         // And run it
         hasCalledStart = stream.ReadByte() > 0;
         myDeserializer.Invoke(this, stream);
-
-        // Positions have changed
-        Physics.SyncTransforms();
     }
 
     public static void GenerateSerializers(Type objType)

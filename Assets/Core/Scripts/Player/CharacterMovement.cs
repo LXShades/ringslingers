@@ -123,8 +123,8 @@ public class CharacterMovement : SyncedObject
         }
         else
         {
-            controller.Move(velocity * Frame.local.deltaTime);
             Physics.SyncTransforms();
+            controller.Move(velocity * Frame.local.deltaTime);
         }
     }
 
@@ -241,7 +241,6 @@ public class CharacterMovement : SyncedObject
             velocity.z = reader.ReadSingle();
 
             transform.position = position;
-            Physics.SyncTransforms();
         }
 
         if (originalPosition != transform.position || originalVelocity != velocity)

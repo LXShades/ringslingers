@@ -66,9 +66,7 @@ public class Frame
     public void Tick(MsgServerTick tick)
     {
         // Update timing
-        this.time = tick.time;
-        this.deltaTime = tick.deltaTime;
-        time = time + deltaTime;
+        deltaTime = tick.deltaTime;
 
         // Apply player inputs
         for (int i = 0; i < Netplay.maxPlayers; i++)
@@ -79,25 +77,6 @@ public class Frame
                 Netplay.singleton.players[i].input = tick.playerInputs[i];
             }
         }
-
-        // Simulate physics
-        if (Physics.autoSimulation)
-        {
-            Physics.autoSimulation = false;
-            Physics.autoSyncTransforms = true;
-            //todo:move
-        }
-
-        for (int i = 0; i < maxAccumulatedPhysicsSims; i++)
-        {
-            if (time - lastPhysicsSimTime >= physicsFixedDeltaTime)
-            {
-                Physics.Simulate(physicsFixedDeltaTime);
-                lastPhysicsSimTime += physicsFixedDeltaTime;
-            }
-        }
-
-        lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime, time - physicsFixedDeltaTime, time);
 
         // Update game objects
         List<SyncedObject> syncedObjects = Netplay.singleton.syncedObjects;
@@ -113,10 +92,29 @@ public class Frame
         for (int i = 0; i < syncedObjects.Count; i++)
         {
             if (syncedObjects[i])
-            {
                 syncedObjects[i].FrameLateUpdate();
+        }
+
+        // Simulate physics
+        if (Physics.autoSimulation)
+        {
+            Physics.autoSimulation = false;
+            Physics.autoSyncTransforms = true;
+            //todo:move
+        }
+
+        for (int i = 0; i < maxAccumulatedPhysicsSims; i++)
+        {
+            if (time - lastPhysicsSimTime >= physicsFixedDeltaTime)
+            {
+                Debug.Log($"PHYSX@{time.ToString("#.00")} last {lastPhysicsSimTime.ToString("#.00")}");
+                Physics.Simulate(physicsFixedDeltaTime);
+                lastPhysicsSimTime += physicsFixedDeltaTime;
             }
         }
+
+        lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime, time - physicsFixedDeltaTime, time);
+        time = tick.time + deltaTime;
     }
 
     #region Serialization

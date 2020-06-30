@@ -115,9 +115,6 @@ public class Player : SyncedObject
 
             transform.position = spawnPoint.transform.position;
             transform.forward = spawnPoint.transform.forward.Horizontal(); // todo
-
-            // meh...charactercontroller bugs
-            Physics.SyncTransforms();
         }
         else
         {

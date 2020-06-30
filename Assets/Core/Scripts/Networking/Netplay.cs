@@ -169,14 +169,21 @@ public class Netplay : MonoBehaviour
 
             serverTickHistory[startTick].snapshot.Position = 0;
             Frame.local.Deserialize(serverTickHistory[startTick].snapshot);
+            FindObjectOfType<GameHUD>().ClearLog();
+            Debug.Log($"SIM@{serverTickHistory[startTick].tick.time.ToString("#.00")}->" +
+                $"{(serverTickHistory[endTick].tick.time+serverTickHistory[endTick].tick.deltaTime).ToString("#.00")}");
 
             Frame.local.isResimulation = true;
             for (int i = startTick; i >= endTick; i--)
+            {
+                Debug.Log($"PlayerPos{players[0].transform.position}");
                 Frame.local.Tick(serverTickHistory[i].tick);
+            }
             Frame.local.isResimulation = false;
 
             if (freezeReplay)
                 return;
+            Debug.Log($"TICK@{Frame.local.time}->{Frame.local.time + Time.deltaTime}");
         }
 
         // Generate local inputs

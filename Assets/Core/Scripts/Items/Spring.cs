@@ -18,7 +18,7 @@ public class Spring : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerStay(Collider other)
     {
         CharacterMovement movement = other.GetComponent<CharacterMovement>();
 
@@ -26,6 +26,10 @@ public class Spring : MonoBehaviour
         {
             movement.SpringUp(springForce, transform.up);
             animator.SetTrigger("DoSpring");
+
+            Debug.Log($"SPRING@{Frame.local.time.ToString("#.00")}");
+            //if (!Netplay.singleton.freezeReplay || !Netplay.singleton.replayMode)
+            //   Debug.Break();
 
             GameSounds.PlaySound(gameObject, springSound);
         }

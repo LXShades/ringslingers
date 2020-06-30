@@ -47,7 +47,7 @@ public class Ring : SyncedObject
         transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * Frame.local.deltaTime, 0));
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerStay(Collider other)
     {
         if (other.GetComponent<Player>() && (!isDroppedRing || Frame.local.time - awakeTime >= pickupWarmupDuration))
         {

@@ -126,4 +126,9 @@ public class GameHUD : MonoBehaviour
 
         debugLogText.text = string.Join("\n", debugLog);
     }
+
+    public void ClearLog()
+    {
+        debugLogText.text = "";
+    }
 }
