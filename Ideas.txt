@@ -31,8 +31,9 @@
  + Every frame, rewind 0.2 seconds and execute 0.2 seconds
  + Player input needs to be serialized
  + SyncedObject references are now serialized
- - Objects should be cleaned up when reverted to a state where they don't exist
+ + Objects should be cleaned up when reverted to a state where they don't exist
  - FrameAwake needs to be called on objects that previously didn't exist (i.e. serialize startWasCalled) (should probably also serialize existence and erase objects as necessary)
+- Things are breaking so make a Replay Mode to see frame-by-frame what's happening
 - Make Rail model
 - Make HUD w/ rail times, etc
 - Add camera reset button

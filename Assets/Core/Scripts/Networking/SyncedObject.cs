@@ -24,6 +24,7 @@ public abstract class SyncedObjectBase : MonoBehaviour
 public abstract class SyncedObject : SyncedObjectBase
 {
     private bool hasCalledStart = false;
+    private bool hasCalledDestroy = false;
 
     private int _id;
 
@@ -42,6 +43,9 @@ public abstract class SyncedObject : SyncedObjectBase
     protected override sealed void Update() { }
     protected override sealed void LateUpdate() { }
 
+    /// <summary>
+    /// Initial setup on creation
+    /// </summary>
     protected virtual void Awake()
     {
         _id = nextId++;
@@ -52,6 +56,15 @@ public abstract class SyncedObject : SyncedObjectBase
 
         // Call Awake proper real-like
         FrameAwake();
+    }
+
+    private void OnDestroy()
+    {
+        if (!hasCalledDestroy && GameManager.singleton) // GameManager.singleton indicates whether the game is ending
+        {
+            Debug.LogError("Synced objects should be destroyed with GameManager.DestroyObject");
+            Debug.Break();
+        }
     }
 
     /// <summary>
@@ -187,6 +200,7 @@ public abstract class SyncedObject : SyncedObjectBase
         }
 
         // And run it
+        stream.Write((byte)(hasCalledStart ? 1 : 0));
         mySerializer.Invoke(this, stream);
     }
 
@@ -204,6 +218,7 @@ public abstract class SyncedObject : SyncedObjectBase
         }
 
         // And run it
+        hasCalledStart = stream.ReadByte() > 0;
         myDeserializer.Invoke(this, stream);
 
         // Positions have changed
@@ -320,10 +335,16 @@ public abstract class SyncedObject : SyncedObjectBase
         // Also write transform
         var getTransform = Expression.MakeMemberAccess(target, objType.GetProperty("transform"));
         var getPosition = Expression.MakeMemberAccess(getTransform, typeof(Transform).GetProperty("position"));
+        var getRotation = Expression.MakeMemberAccess(getTransform, typeof(Transform).GetProperty("rotation"));
 
         serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getPosition, typeof(Vector3).GetField("x")), typeof(float)));
         serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getPosition, typeof(Vector3).GetField("y")), typeof(float)));
         serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getPosition, typeof(Vector3).GetField("z")), typeof(float)));
+
+        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getRotation, typeof(Quaternion).GetField("x")), typeof(float)));
+        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getRotation, typeof(Quaternion).GetField("y")), typeof(float)));
+        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getRotation, typeof(Quaternion).GetField("z")), typeof(float)));
+        serializer.Add(CallStreamWriterForType(writer, Expression.MakeMemberAccess(getRotation, typeof(Quaternion).GetField("w")), typeof(float)));
 
         Expression newPosition = Expression.New(typeof(Vector3).GetConstructor(new Type[] { typeof(float), typeof(float), typeof(float) }), new Expression[] {
                                 CallStreamReaderForType(reader, typeof(float)),
@@ -331,6 +352,14 @@ public abstract class SyncedObject : SyncedObjectBase
                                 CallStreamReaderForType(reader, typeof(float))
                             });
         deserializer.Add(Expression.Assign(getPosition, newPosition));
+
+        Expression newRotation = Expression.New(typeof(Quaternion).GetConstructor(new Type[] { typeof(float), typeof(float), typeof(float), typeof(float) }), new Expression[] {
+                                CallStreamReaderForType(reader, typeof(float)),
+                                CallStreamReaderForType(reader, typeof(float)),
+                                CallStreamReaderForType(reader, typeof(float)),
+                                CallStreamReaderForType(reader, typeof(float))
+                            });
+        deserializer.Add(Expression.Assign(getRotation, newRotation));
 
         // Compile the new function
         BlockExpression serializerBlock = Expression.Block(new ParameterExpression[] { target, tempInt }, serializer);
@@ -349,10 +378,14 @@ public abstract class SyncedObject : SyncedObjectBase
         }
     }
 
-    private void OnDestroy()
+    public void FlagAsCreated()
     {
-        if (Netplay.singleton)
-            Netplay.singleton.UnregisterSyncedObject(this);
+        hasCalledStart = false;
+    }
+
+    public void FlagAsDestroyed()
+    {
+        hasCalledDestroy = true;
     }
 
     /// <summary>

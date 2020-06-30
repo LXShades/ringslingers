@@ -60,7 +60,7 @@ public class Ring : SyncedObject
             if (!isDroppedRing)
                 respawnableItem.Pickup();
             else
-                Destroy(gameObject); // we aren't going to respawn (although rewinding stuff might need to... uh... ah we'll work it out)
+                GameManager.DestroyObject(gameObject); // we aren't going to respawn here
         }
     }
 }

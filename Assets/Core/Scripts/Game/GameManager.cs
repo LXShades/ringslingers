@@ -97,6 +97,17 @@ public class GameManager : MonoBehaviour
         RunDebugCommands();
     }
 
+    public static void DestroyObject(GameObject obj)
+    {
+        foreach (SyncedObject synced in obj.GetComponentsInChildren<SyncedObject>())
+        {
+            Netplay.singleton.UnregisterSyncedObject(synced);
+            synced.FlagAsDestroyed();
+        }
+
+        Destroy(obj);
+    }
+
     #region Debug
     Stream tempSave;
 

@@ -55,7 +55,7 @@ public class ThrownRing : SyncedObject
         }
 
         // Bye-bye!
-        Destroy(gameObject);
+        GameManager.DestroyObject(gameObject);
     }
 
     public void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)

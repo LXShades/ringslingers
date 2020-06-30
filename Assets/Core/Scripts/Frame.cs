@@ -43,11 +43,6 @@ public class Frame
     public float time;
 
     /// <summary>
-    /// Player inputs by ID at the beginning of this frame
-    /// </summary>
-    public InputCmds[] playerInputs = new InputCmds[Netplay.maxPlayers];
-
-    /// <summary>
     /// Time to tick between each physics simulation
     /// </summary>
     public float physicsFixedDeltaTime = 0.04f;
@@ -60,13 +55,19 @@ public class Frame
     public float lastPhysicsSimTime;
 
     /// <summary>
+    /// Whether the current tick is a re-run of past events, often used for sound culling
+    /// </summary>
+    public bool isResimulation = false;
+
+    /// <summary>
     /// Advances the game by the given delta time
     /// </summary>
     /// <param name="deltaTime"></param>
-    public void Tick(float deltaTime)
+    public void Tick(MsgServerTick tick)
     {
         // Update timing
-        this.deltaTime = deltaTime;
+        this.time = tick.time;
+        this.deltaTime = tick.deltaTime;
         time = time + deltaTime;
 
         // Apply player inputs
@@ -75,26 +76,7 @@ public class Frame
             if (Netplay.singleton.players[i])
             {
                 Netplay.singleton.players[i].lastInput = Netplay.singleton.players[i].input;
-                Netplay.singleton.players[i].input = playerInputs[i];
-            }
-        }
-
-        // Update game objects
-        List<SyncedObject> syncedObjects = Netplay.singleton.syncedObjects;
-        for (int i = 0; i < syncedObjects.Count; i++)
-        {
-            if (syncedObjects[i])
-            {
-                syncedObjects[i].TriggerStartIfCreated();
-                syncedObjects[i].FrameUpdate();
-            }
-        }
-
-        for (int i = 0; i < syncedObjects.Count; i++)
-        {
-            if (syncedObjects[i])
-            {
-                syncedObjects[i].FrameLateUpdate();
+                Netplay.singleton.players[i].input = tick.playerInputs[i];
             }
         }
 
@@ -117,8 +99,24 @@ public class Frame
 
         lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime, time - physicsFixedDeltaTime, time);
 
-        // Cleanup missing synced objects
-        //syncedObjects.RemoveAll(a => a == null);
+        // Update game objects
+        List<SyncedObject> syncedObjects = Netplay.singleton.syncedObjects;
+        for (int i = 0; i < syncedObjects.Count; i++)
+        {
+            if (syncedObjects[i])
+            {
+                syncedObjects[i].TriggerStartIfCreated();
+                syncedObjects[i].FrameUpdate();
+            }
+        }
+
+        for (int i = 0; i < syncedObjects.Count; i++)
+        {
+            if (syncedObjects[i])
+            {
+                syncedObjects[i].FrameLateUpdate();
+            }
+        }
     }
 
     #region Serialization
@@ -128,7 +126,8 @@ public class Frame
 
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
         {
-            // temp, probably
+            // temp, probably, or to move. this stuff is needed
+            writer.Write(time);
             writer.Write(lastPhysicsSimTime);
             writer.Write(SyncedObject.GetNextId());
 
@@ -166,6 +165,7 @@ public class Frame
         {
             int oldNextId = SyncedObject.GetNextId();
 
+            time = reader.ReadSingle();
             lastPhysicsSimTime = reader.ReadSingle();
             SyncedObject.RevertNextId(reader.ReadInt32());
 
@@ -179,10 +179,10 @@ public class Frame
                     stream.Position += size;
             }
 
-            for (int i = oldNextId; i < SyncedObject.GetNextId(); i++)
+            for (int i = SyncedObject.GetNextId(); i < oldNextId; i++)
             {
                 if (Netplay.singleton.syncedObjects[i])
-                    GameObject.Destroy(Netplay.singleton.syncedObjects[i].gameObject);
+                    GameManager.DestroyObject(Netplay.singleton.syncedObjects[i].gameObject);
             }
         }
 

@@ -7,6 +7,7 @@ using System.IO;
 using UnityEngine.Audio;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 
 /// <summary>
 /// Netplay is a manager that holds information on players and synced objects, and handles synchronisation
@@ -81,8 +82,12 @@ public class Netplay : MonoBehaviour
     [Tooltip("Should be higher than or equal to maxSimTime")]
     public float maxTickHistoryTime = 1.0f;
 
-    public bool doDebugSelfSimulate = false;
-    public float debugSelfSimulateAmount = 0.1f;
+    [Tooltip("Debug replay")]
+    public bool replayMode = false;
+    public bool freezeReplay = false;
+
+    public int replayStart;
+    public int replayEnd;
 
     private struct TickState
     {
@@ -157,6 +162,23 @@ public class Netplay : MonoBehaviour
                 return;
         }
 
+        if (replayMode && serverTickHistory.Count > 0)
+        {
+            int startTick = Mathf.Clamp(replayStart, 0, serverTickHistory.Count - 1);
+            int endTick = Mathf.Clamp(replayEnd, 0, startTick);
+
+            serverTickHistory[startTick].snapshot.Position = 0;
+            Frame.local.Deserialize(serverTickHistory[startTick].snapshot);
+
+            Frame.local.isResimulation = true;
+            for (int i = startTick; i >= endTick; i--)
+                Frame.local.Tick(serverTickHistory[i].tick);
+            Frame.local.isResimulation = false;
+
+            if (freezeReplay)
+                return;
+        }
+
         // Generate local inputs
         localInputCmds = InputCmds.FromLocalInput(localInputCmds);
 
@@ -186,10 +208,6 @@ public class Netplay : MonoBehaviour
             if (tickState.tick.time < Frame.local.time)
                 continue;
 
-            // Copy tick to local frame
-            tickState.tick.playerInputs.CopyTo(Frame.local.playerInputs, 0);
-            Frame.local.time = tickState.tick.time;
-
             // Spawn players who aren't in the game (kinda hacky and temporary-y)
             for (int p = 0; p < players.Length; p++)
             {
@@ -209,7 +227,7 @@ public class Netplay : MonoBehaviour
             }
 
             // Tick!
-            Frame.local.Tick(tickState.tick.deltaTime);
+            Frame.local.Tick(tickState.tick);
         }
 
         // Cleanup tick history
@@ -224,62 +242,41 @@ public class Netplay : MonoBehaviour
     {
         bool doServerTick = true;
 
-        // Receive player inputs
-        for (int i = 0; i < maxPlayers; i++)
-        {
-            pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
-
-            foreach (MsgClientTick tick in pendingClientTicks[i])
-                Frame.local.playerInputs[i] = tick.playerInputs;
-
-            pendingClientTicks[i].Clear();
-        }
-
-        // Set local inputs
-        if (localPlayerId >= 0)
-            Frame.local.playerInputs[localPlayerId] = localInputCmds;
-
         // Run tick locally
         if (doServerTick)
         {
+            // Create a new tick
             MsgServerTick tick = MakeServerTick(Time.deltaTime);
 
-            // Send server inputs
+            // Receive player inputs into the tick
+            for (int i = 0; i < maxPlayers; i++)
+            {
+                pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
+
+                foreach (MsgClientTick clientTick in pendingClientTicks[i])
+                    tick.playerInputs[i] = clientTick.playerInputs;
+
+                pendingClientTicks[i].Clear();
+            }
+
+            // Set local inputs in the tick
+            if (localPlayerId >= 0)
+                tick.playerInputs[localPlayerId] = localInputCmds;
+
+            // Send tick to other players
             ServerSendTick(tick);
 
             // Take a snapshot of this tick and add to the server tick history
-            if (Time.time >= 0.1f) // hack: some things aren't fully initialized and Awakes aren't called yet
-                serverTickHistory.Insert(0, new TickState() { tick = tick, snapshot = Frame.local.Serialize() });
+            serverTickHistory.Insert(0, new TickState() { tick = tick, snapshot = Frame.local.Serialize() });
 
-            Frame.local.Tick(Time.deltaTime);
+            // Run the tick locally
+            Frame.local.Tick(tick);
 
             // Cleanup tick history
             for (int i = 0; i < serverTickHistory.Count; i++)
             {
                 if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
                     serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
-            }
-
-            if (doDebugSelfSimulate)
-            {
-                for (int i = 0; i < 1 && i < serverTickHistory.Count; i++)
-                {
-                    /*if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - debugSelfSimulateAmount)*/
-                    {
-                        // Rewind to this time
-                        serverTickHistory[i].snapshot.Position = 0;
-                        Frame.local.Deserialize(serverTickHistory[i].snapshot);
-
-                        for (int j = i; j >= 0; j--)
-                        {
-                            Frame.local.time = serverTickHistory[j].tick.time;
-                            Frame.local.playerInputs = serverTickHistory[j].tick.playerInputs;
-                            Frame.local.Tick(serverTickHistory[j].tick.deltaTime);
-                        }
-                        
-                        break;
-                    }
-                }
             }
         }
     }
@@ -320,7 +317,7 @@ public class Netplay : MonoBehaviour
     {
         if (players[id] != null)
         {
-            Destroy(players[id].gameObject);
+            GameManager.DestroyObject(players[id].gameObject);
             players[id] = null;
         }
     }
@@ -337,11 +334,14 @@ public class Netplay : MonoBehaviour
         while (obj.syncedId >= syncedObjects.Count)
             syncedObjects.Add(null);
 
+        //Debug.Log($"Registered obj {obj} id {obj.syncedId} tick {Frame.local.time}");
+        Debug.Assert(syncedObjects[obj.syncedId] == null);
         syncedObjects[obj.syncedId] = obj;
     }
 
     public void UnregisterSyncedObject(SyncedObject obj)
     {
+        //Debug.Log($"Unregistering obj {obj} id {obj.syncedId} tick {Frame.local.time}");
         Debug.Assert(syncedObjects.Count > obj.syncedId);
         Debug.Assert(syncedObjects[obj.syncedId] == obj);
         syncedObjects[obj.syncedId] = null;
@@ -453,7 +453,6 @@ public class Netplay : MonoBehaviour
         {
             deltaTime = deltaTime,
             time = Frame.local.time,
-            playerInputs = Frame.local.playerInputs,
             isPlayerInGame = System.Array.ConvertAll<Player, bool>(Netplay.singleton.players, a => a != null)
         };
 

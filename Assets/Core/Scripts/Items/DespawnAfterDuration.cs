@@ -57,7 +57,7 @@ public class DespawnAfterDuration : SyncedObject
             if (despawnSound.clip)
                 GameSounds.PlaySound(gameObject, despawnSound);
 
-            Destroy(gameObject);
+            GameManager.DestroyObject(gameObject);
         }
     }
 }
