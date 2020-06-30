@@ -68,6 +68,15 @@ public class Frame
         // Update timing
         deltaTime = tick.deltaTime;
 
+        // Spawn players who are pending a join
+        for (int p = 0; p < Netplay.singleton.players.Length; p++)
+        {
+            if (Netplay.singleton.players[p] == null && tick.isPlayerInGame[p])
+                Netplay.singleton.AddPlayer(p);
+            else if (Netplay.singleton.players[p] != null && !tick.isPlayerInGame[p])
+                Netplay.singleton.RemovePlayer(p);
+        }
+
         // Apply player inputs
         for (int i = 0; i < Netplay.maxPlayers; i++)
         {
@@ -100,7 +109,6 @@ public class Frame
         {
             Physics.autoSimulation = false;
             Physics.autoSyncTransforms = true;
-            //todo:move
         }
 
         for (int i = 0; i < maxAccumulatedPhysicsSims; i++)
@@ -180,7 +188,11 @@ public class Frame
             for (int i = SyncedObject.GetNextId(); i < oldNextId; i++)
             {
                 if (Netplay.singleton.syncedObjects[i])
+                {
+                    if (Netplay.singleton.syncedObjects[i].GetComponent<Player>() != null)
+                        continue; // don't delete players now
                     GameManager.DestroyObject(Netplay.singleton.syncedObjects[i].gameObject);
+                }
             }
         }
 

@@ -15,11 +15,6 @@ public class Player : SyncedObject
     /// </summary>
     public int playerId;
 
-    /// <summary>
-    /// Associated Client ID
-    /// </summary>
-    public ulong clientId;
-
     [Header("Player control")]
     /// <summary>
     /// Current inputs of this player

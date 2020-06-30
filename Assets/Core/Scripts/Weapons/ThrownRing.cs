@@ -51,6 +51,9 @@ public class ThrownRing : SyncedObject
         Player otherPlayer = collision.collider.GetComponent<Player>();
         if (otherPlayer)
         {
+            if (otherPlayer == owner)
+                return; // actually we're fine here
+
             otherPlayer.Hurt(owner.gameObject);
         }
 

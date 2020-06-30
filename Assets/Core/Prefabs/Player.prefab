@@ -125,6 +125,7 @@ GameObject:
   - component: {fileID: 1227556274159782272}
   - component: {fileID: 4451384450655814514}
   - component: {fileID: 4408426014098253173}
+  - component: {fileID: 1784313262649898792}
   - component: {fileID: 2222083882362034574}
   m_Layer: 8
   m_Name: Player
@@ -266,10 +267,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncsPerSecond: 0
   colliders:
-  - {fileID: 4408426014098253173}
+  - {fileID: 1784313262649898792}
   blockingCollisionLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 311
   useManualPhysics: 1
   bounceFactor: 0
   bounceFriction: 0
@@ -288,6 +289,19 @@ CapsuleCollider:
   m_Radius: 0.37
   m_Height: 1
   m_Direction: 1
+  m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!135 &1784313262649898792
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5
   m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!54 &2222083882362034574
 Rigidbody:

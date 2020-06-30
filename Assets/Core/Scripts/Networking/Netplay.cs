@@ -112,6 +112,11 @@ public class Netplay : MonoBehaviour
     /// </summary>
     private List<MsgClientTick>[] pendingClientTicks = new List<MsgClientTick>[maxPlayers];
 
+    /// <summary>
+    /// Used by the server. Used to defer new player creation
+    /// </summary>
+    private ulong[] playerClientIds = new ulong[maxPlayers];
+
     private NetworkingManager net;
 
     public string netStat
@@ -123,6 +128,8 @@ public class Netplay : MonoBehaviour
     {
         for (int i = 0; i < pendingClientTicks.Length; i++)
             pendingClientTicks[i] = new List<MsgClientTick>();
+        for (int i = 0; i < playerClientIds.Length; i++)
+            playerClientIds[i] = ulong.MaxValue;
     }
 
     private bool InitNet()
@@ -223,13 +230,6 @@ public class Netplay : MonoBehaviour
             if (tickState.tick.time < Frame.local.time)
                 continue;
 
-            // Spawn players who aren't in the game (kinda hacky and temporary-y)
-            for (int p = 0; p < players.Length; p++)
-            {
-                if (players[p] == null && tickState.tick.isPlayerInGame[p])
-                    AddPlayer(p);
-            }
-
             // Read syncers
             if (tickState.tick.syncers.Length > 0)
             {
@@ -246,6 +246,8 @@ public class Netplay : MonoBehaviour
         }
     }
 
+    private InputCmds[] nextServerTickInputs;
+
     void TickServer()
     {
         float timeUntilNextServerTick = 0;
@@ -255,7 +257,7 @@ public class Netplay : MonoBehaviour
             timeUntilNextServerTick = (1f/serverTickRate) - (desiredTime - (serverTickHistory[0].tick.time + serverTickHistory[0].tick.deltaTime));
 
         // Check server tick if possible
-        if (timeUntilNextServerTick <= 0)
+        for (int iterations = 0; iterations < 3 && timeUntilNextServerTick <= 0; iterations++ )
         {
             // Rewind to the last server tick if it exists
             if (serverTickHistory.Count > 0)
@@ -265,50 +267,53 @@ public class Netplay : MonoBehaviour
             }
 
             // Make the next server tick with the fixed delta time
-            MsgTick serverTick = MakeTick(1f / serverTickRate);
+            MsgTick serverTick = MakeTick(Frame.local.time, 1f / serverTickRate, true);
 
             // Give it our commands (psst, player commands as well?)
-            if (localPlayerId >= 0)
-                serverTick.playerInputs[localPlayerId] = localInputCmds;
+            if (nextServerTickInputs != null)
+                serverTick.playerInputs = nextServerTickInputs;
 
             // Send this exact tick to other players
             ServerSendTick(serverTick);
 
             // Tick it locally
-            Frame.local.isResimulation = true;
             Frame.local.Tick(serverTick);
-            Frame.local.isResimulation = false;
 
             // Take a snapshot of this tick and add to the server tick history
             serverTickHistory.Insert(0, new TickState() { tick = serverTick, snapshot = Frame.local.Serialize() });
+
+            timeUntilNextServerTick += 1f / serverTickRate;
+
+            // Record inputs to occur during this next tick
+            nextServerTickInputs = (InputCmds[])serverTick.playerInputs.Clone();
+
+            if (localPlayerId >= 0)
+                nextServerTickInputs[localPlayerId] = localInputCmds;
+
+            // Receive player inputs into the tick
+            for (int i = 0; i < maxPlayers; i++)
+            {
+                pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
+
+                foreach (MsgClientTick clientTick in pendingClientTicks[i])
+                    nextServerTickInputs[i] = clientTick.playerInputs;
+
+                pendingClientTicks[i].Clear();
+            }
         }
 
-        // Now run the local tick
-        Debug.Assert(desiredTime - Frame.local.time > 0 && desiredTime - Frame.local.time < 1);
+        // Now run a local tick for smoothy smoothy movey
+        Debug.Assert(desiredTime - Frame.local.time >= 0 && desiredTime - Frame.local.time < 1);
+        MsgTick tick = MakeTick(Frame.local.time, desiredTime - Frame.local.time, false);
 
-        // Create a new tick
-        MsgTick tick = MakeTick(desiredTime - Frame.local.time);
-
-        // Receive player inputs into the tick
-        for (int i = 0; i < maxPlayers; i++)
-        {
-            pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
-
-            foreach (MsgClientTick clientTick in pendingClientTicks[i])
-                tick.playerInputs[i] = clientTick.playerInputs;
-
-            pendingClientTicks[i].Clear();
-        }
-
-        // Set local inputs in the tick
-        if (localPlayerId >= 0)
-            tick.playerInputs[localPlayerId] = localInputCmds;
-
-        // Send tick to other players
-        ServerSendTick(tick);
+        // For now use the inputs at the server tickrate
+        // in the future, I'd prefer to have an instant response
+        tick.playerInputs = nextServerTickInputs; // NVM lol
 
         // Run the tick locally
+        Frame.local.isResimulation = true;
         Frame.local.Tick(tick);
+        Frame.local.isResimulation = false;
     }
 
     #region Players
@@ -354,7 +359,8 @@ public class Netplay : MonoBehaviour
 
     public Player GetPlayerFromClient(ulong clientId)
     {
-        return System.Array.Find(players, a => a != null && a.clientId == clientId);
+        int index = System.Array.IndexOf(playerClientIds, clientId);
+        return index >= 0 ? players[index] : null;
     }
     #endregion
 
@@ -421,13 +427,15 @@ public class Netplay : MonoBehaviour
         {
             Debug.Log("A client has connected!");
 
-            // Create their player
-            Player player = AddPlayer();
-
-            player.clientId = clientId;
-
-            // Send them the intro packet
-            ServerSendIntro(clientId);
+            for (int i = 0; i < maxPlayers; i++)
+            {
+                if (i != localPlayerId && playerClientIds[i] == ulong.MaxValue)
+                {
+                    playerClientIds[i] = clientId;
+                    ServerSendIntro(clientId);
+                    break;
+                }
+            }
         }
         else if (net.IsClient)
         {
@@ -443,8 +451,11 @@ public class Netplay : MonoBehaviour
         {
             Debug.Log("A client has disconnected");
 
-            int playerId = GetPlayerFromClient(clientId).playerId;
-            RemovePlayer(playerId);
+            for (int i = 0; i < maxPlayers; i++)
+            {
+                if (playerClientIds[i] == clientId)
+                    playerClientIds[i] = ulong.MaxValue;
+            }
         }
         else if (net.IsClient)
         {
@@ -477,24 +488,30 @@ public class Netplay : MonoBehaviour
         numSentTicks++;
     }
 
-    private MsgTick MakeTick(float deltaTime)
+    private MsgTick MakeTick(float time, float deltaTime, bool includeSyncers)
     {
         MsgTick tick = new MsgTick()
         {
             deltaTime = deltaTime,
-            time = Frame.local.time,
-            isPlayerInGame = System.Array.ConvertAll<Player, bool>(Netplay.singleton.players, a => a != null)
+            time = time,
+            isPlayerInGame = System.Array.ConvertAll<ulong, bool>(playerClientIds, a => a != ulong.MaxValue)
         };
 
+        if (localPlayerId >= 0)
+            tick.isPlayerInGame[localPlayerId] = true;
+
         // Add syncers
-        foreach (Player player in players)
+        if (includeSyncers)
         {
-            if (player)
+            foreach (Player player in players)
             {
-                if ((int)((Frame.local.time - Frame.local.deltaTime) * player.movement.syncsPerSecond) != (int)(Frame.local.time * player.movement.syncsPerSecond))
+                if (player)
                 {
-                    tick.syncers.WriteByte((byte)player.playerId);
-                    player.movement.WriteSyncer(tick.syncers);
+                    if ((int)((tick.time + deltaTime) * player.movement.syncsPerSecond) != (int)(tick.time * player.movement.syncsPerSecond))
+                    {
+                        tick.syncers.WriteByte((byte)player.playerId);
+                        player.movement.WriteSyncer(tick.syncers);
+                    }
                 }
             }
         }
@@ -531,7 +548,14 @@ public class Netplay : MonoBehaviour
     {
         MemoryStream introStream = new MemoryStream(10);
 
-        introStream.WriteByte((byte)GetPlayerFromClient(clientId).playerId);
+        for (int i = 0; i < maxPlayers; i++)
+        {
+            if (playerClientIds[i] == clientId)
+            {
+                introStream.WriteByte((byte)i);
+                break;
+            }
+        }
 
         CustomMessagingManager.SendNamedMessage("serverintro", clientId, introStream, "Reliable");
     }

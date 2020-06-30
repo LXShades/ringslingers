@@ -105,6 +105,11 @@ public class GameManager : MonoBehaviour
             synced.FlagAsDestroyed();
         }
 
+        foreach (Collider collider in obj.GetComponentsInChildren<Collider>())
+        {
+            collider.enabled = false; // collisions can occur with destroyed objects during resimulation
+        }
+
         Destroy(obj);
     }
 

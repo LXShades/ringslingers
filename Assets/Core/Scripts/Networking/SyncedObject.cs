@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using System.Linq.Expressions;
 using System.Dynamic;
 using JetBrains.Annotations;
+using System.Linq;
 
 public abstract class SyncedObjectBase : MonoBehaviour
 {
@@ -226,6 +227,7 @@ public abstract class SyncedObject : SyncedObjectBase
     {
         List<Expression> serializer = new List<Expression>(50);
         List<Expression> deserializer = new List<Expression>(50);
+        bool isDebug = true;
 
         // Retrieve parameters
         ParameterExpression genericTargetParam = Expression.Parameter(typeof(object), "genericTarget");
@@ -234,6 +236,7 @@ public abstract class SyncedObject : SyncedObjectBase
         UnaryExpression convert = Expression.Convert(genericTargetParam, objType);
         ParameterExpression target = Expression.Variable(objType, "target");
         ParameterExpression tempInt = Expression.Variable(typeof(int), "tempInt");
+        ParameterExpression debugMemberName = isDebug ? Expression.Variable(typeof(string), "debugMemberName") : null;
         MethodInfo writeStructFunc = typeof(SyncedObject).GetMethod("WriteStruct");
         MethodInfo readStructFunc = typeof(SyncedObject).GetMethod("ReadStruct");
 
@@ -248,6 +251,12 @@ public abstract class SyncedObject : SyncedObjectBase
 
             MemberExpression getValue = Expression.PropertyOrField(target, member.Name);
             Type variableType = (member.MemberType == MemberTypes.Field ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType);
+
+            if (isDebug)
+            {
+                serializer.Add(Expression.Assign(debugMemberName, Expression.Constant(member.Name)));
+                deserializer.Add(Expression.Assign(debugMemberName, Expression.Constant(member.Name)));
+            }
 
             switch (Type.GetTypeCode(variableType))
             {
@@ -312,9 +321,12 @@ public abstract class SyncedObject : SyncedObjectBase
                                 Expression.Condition(
                                     Expression.Equal(tempInt, Expression.Constant(-1)),
                                     Expression.Constant(null, variableType),
-                                    Expression.Convert(
-                                        Expression.Property(Expression.Field(netplaySingleton, "syncedObjects"), "Item", tempInt),
-                                        variableType
+                                    Expression.Condition(Expression.LessThan(tempInt, Expression.Property(Expression.Field(netplaySingleton, "syncedObjects"), "Count")),
+                                        Expression.Convert(
+                                           Expression.Property(Expression.Field(netplaySingleton, "syncedObjects"), "Item", tempInt),
+                                           variableType
+                                        ),
+                                        Expression.Constant(null, variableType)
                                     )
                                 )
                             )
@@ -358,9 +370,68 @@ public abstract class SyncedObject : SyncedObjectBase
                             });
         deserializer.Add(Expression.Assign(getRotation, newRotation));
 
+        // Add debugging info
+
         // Compile the new function
-        BlockExpression serializerBlock = Expression.Block(new ParameterExpression[] { target, tempInt }, serializer);
-        BlockExpression deserializerBlock = Expression.Block(new ParameterExpression[] { target, tempInt }, deserializer);
+        BlockExpression serializerBlock, deserializerBlock;
+
+        if (isDebug)
+        {
+            // Add try/catch blocks to isolate issues de/serializing specific members
+            serializerBlock = Expression.Block(
+                new ParameterExpression[] { target, tempInt, debugMemberName },
+                Expression.TryCatch(
+                    Expression.Block(
+                        typeof(void),
+                        serializer
+                    ),
+                    Expression.Catch(
+                        typeof(Exception),
+                        Expression.Block(
+                        CallDebugLog(Expression.Constant("oh no")),
+                        CallDebugLog(
+                            Expression.Call(
+                                typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string), typeof(string) }),
+                                Expression.Constant("Exception serializing object "),
+                                Expression.Call(target, typeof(object).GetMethod("ToString")),
+                                Expression.Constant(": "),
+                                debugMemberName
+                            )
+                        ))
+                    )
+                )
+            );
+            deserializerBlock = Expression.Block(
+                new ParameterExpression[] { target, tempInt, debugMemberName },
+                Expression.TryCatch(
+                    Expression.Block(
+                        typeof(void),
+                        deserializer
+                    ),
+                    Expression.Catch(
+                        typeof(Exception),
+                        Expression.Block(
+                        CallDebugLog(Expression.Constant("oh no")),
+                        CallDebugLog(
+                            Expression.Call(
+                                typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string), typeof(string) }),
+                                Expression.Constant("Exception deserializing object "),
+                                Expression.Call(target, typeof(object).GetMethod("ToString")),
+                                Expression.Constant(": "),
+                                debugMemberName
+                            )
+                        ))
+                    )
+                )
+            );
+        }
+        else
+        {
+            // Just add the code
+            serializerBlock = Expression.Block(new ParameterExpression[] { target, tempInt }, serializer);
+            deserializerBlock = Expression.Block(new ParameterExpression[] { target, tempInt }, deserializer);
+        }
+
 
         serializerByType.Add(objType.Name, Expression.Lambda<Action<object, BinaryWriter>>(serializerBlock, genericTargetParam, writer).Compile());
         deserializerByType.Add(objType.Name, Expression.Lambda<Action<object, BinaryReader>>(deserializerBlock, genericTargetParam, reader).Compile());
