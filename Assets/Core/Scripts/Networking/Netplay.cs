@@ -248,7 +248,8 @@ public class Netplay : MonoBehaviour
             ServerSendTick(tick);
 
             // Take a snapshot of this tick and add to the server tick history
-            serverTickHistory.Insert(0, new TickState() { tick = tick, snapshot = Frame.local.Serialize() });
+            if (Time.time >= 0.1f) // hack: some things aren't fully initialized and Awakes aren't called yet
+                serverTickHistory.Insert(0, new TickState() { tick = tick, snapshot = Frame.local.Serialize() });
 
             Frame.local.Tick(Time.deltaTime);
 
@@ -261,7 +262,7 @@ public class Netplay : MonoBehaviour
 
             if (doDebugSelfSimulate)
             {
-                for (int i = 0; i < 1/*serverTickHistory.Count*/; i++)
+                for (int i = 0; i < 1 && i < serverTickHistory.Count; i++)
                 {
                     /*if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - debugSelfSimulateAmount)*/
                     {
@@ -275,7 +276,7 @@ public class Netplay : MonoBehaviour
                             Frame.local.playerInputs = serverTickHistory[j].tick.playerInputs;
                             Frame.local.Tick(serverTickHistory[j].tick.deltaTime);
                         }
-                        Debug.Log($"Simulated {i + 1} ticks");
+                        
                         break;
                     }
                 }
@@ -333,21 +334,17 @@ public class Netplay : MonoBehaviour
     #region SyncedObjects
     public void RegisterSyncedObject(SyncedObject obj)
     {
-        syncedObjects.Add(obj);
+        while (obj.syncedId >= syncedObjects.Count)
+            syncedObjects.Add(null);
+
+        syncedObjects[obj.syncedId] = obj;
     }
 
     public void UnregisterSyncedObject(SyncedObject obj)
     {
-        int index = syncedObjects.IndexOf(obj);
-
-        if (index >= 0)
-        {
-            syncedObjects[index] = null;
-        }
-        else
-        {
-            Debug.LogWarning("Couldn't unregister synced object: obj not found");
-        }
+        Debug.Assert(syncedObjects.Count > obj.syncedId);
+        Debug.Assert(syncedObjects[obj.syncedId] == obj);
+        syncedObjects[obj.syncedId] = null;
     }
     #endregion
 

@@ -111,7 +111,6 @@ public class Frame
             if (time - lastPhysicsSimTime >= physicsFixedDeltaTime)
             {
                 Physics.Simulate(physicsFixedDeltaTime);
-
                 lastPhysicsSimTime += physicsFixedDeltaTime;
             }
         }
@@ -129,6 +128,10 @@ public class Frame
 
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
         {
+            // temp, probably
+            writer.Write(lastPhysicsSimTime);
+            writer.Write(SyncedObject.GetNextId());
+
             for (int id = 0; id < Netplay.singleton.syncedObjects.Count; id++)
             {
                 SyncedObject obj = Netplay.singleton.syncedObjects[id];
@@ -161,6 +164,11 @@ public class Frame
 
         using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true))
         {
+            int oldNextId = SyncedObject.GetNextId();
+
+            lastPhysicsSimTime = reader.ReadSingle();
+            SyncedObject.RevertNextId(reader.ReadInt32());
+
             for (ushort objId = reader.ReadUInt16(); objId != 65535; objId = reader.ReadUInt16())
             {
                 int size = reader.ReadInt16();
@@ -169,6 +177,12 @@ public class Frame
                     Netplay.singleton.syncedObjects[objId].Deserialize(reader);
                 else
                     stream.Position += size;
+            }
+
+            for (int i = oldNextId; i < SyncedObject.GetNextId(); i++)
+            {
+                if (Netplay.singleton.syncedObjects[i])
+                    GameObject.Destroy(Netplay.singleton.syncedObjects[i].gameObject);
             }
         }
 

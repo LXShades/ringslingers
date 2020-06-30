@@ -27,9 +27,9 @@ public abstract class SyncedObject : SyncedObjectBase
 
     private int _id;
 
-    public int id => _id;
+    public int syncedId => _id;
 
-    private static int nextId = 1;
+    private static int nextId = 0;
 
     /// <summary>
     /// How many sync packets will be sent for this object, per second
@@ -44,11 +44,11 @@ public abstract class SyncedObject : SyncedObjectBase
 
     protected virtual void Awake()
     {
+        _id = nextId++;
+
         // Register the object to the thingy thing
         if (Netplay.singleton)
             Netplay.singleton.RegisterSyncedObject(this);
-
-        _id = nextId++;
 
         // Call Awake proper real-like
         FrameAwake();
@@ -165,6 +165,11 @@ public abstract class SyncedObject : SyncedObjectBase
         return System.Runtime.InteropServices.Marshal.PtrToStructure(structPtr, type);
     }
 
+    private static Expression CallDebugLog(Expression text)
+    {
+        return Expression.Call(typeof(Debug).GetMethod("Log", new Type[] { typeof(object) }), new Expression[] { Expression.Call(text, typeof(object).GetMethod("ToString")) });
+    }
+
     private Action<object, BinaryWriter> mySerializer;
     private Action<object, BinaryReader> myDeserializer;
 
@@ -216,6 +221,7 @@ public abstract class SyncedObject : SyncedObjectBase
         ParameterExpression reader = Expression.Parameter(typeof(BinaryReader), "reader");
         UnaryExpression convert = Expression.Convert(genericTargetParam, objType);
         ParameterExpression target = Expression.Variable(objType, "target");
+        ParameterExpression tempInt = Expression.Variable(typeof(int), "tempInt");
         MethodInfo writeStructFunc = typeof(SyncedObject).GetMethod("WriteStruct");
         MethodInfo readStructFunc = typeof(SyncedObject).GetMethod("ReadStruct");
 
@@ -228,7 +234,7 @@ public abstract class SyncedObject : SyncedObjectBase
             if (member.MemberType != MemberTypes.Field && member.MemberType != MemberTypes.Property)
                 continue;
 
-            MemberExpression getValue = Expression.MakeMemberAccess(target, member);
+            MemberExpression getValue = Expression.PropertyOrField(target, member.Name);
             Type variableType = (member.MemberType == MemberTypes.Field ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType);
 
             switch (Type.GetTypeCode(variableType))
@@ -270,11 +276,42 @@ public abstract class SyncedObject : SyncedObjectBase
                             deserializer.Add(Expression.Assign(getValue, newVector));
                         }
                     }
+                    else if (variableType.IsSubclassOf(typeof(SyncedObject)))
+                    {
+                        // Write the syncedobject ID
+                        serializer.Add(
+                            Expression.Condition(
+                                Expression.Equal(getValue, Expression.Constant(null, variableType)),
+                                CallStreamWriterForType(writer, Expression.Constant(-1), typeof(int)),
+                                CallStreamWriterForType(writer, Expression.Property(getValue, "syncedId"), typeof(int))
+                            )
+                        );
+                        
+                        // read the syncedobject and look it up in Netplay.singleton.syncedObjects
+                        deserializer.Add(
+                            CallStreamReaderForType(reader, tempInt, typeof(int))
+                        );
+
+                        var netplaySingleton = Expression.Property(null, typeof(Netplay).GetProperty("singleton"));
+
+                        deserializer.Add(
+                            Expression.Assign(
+                                getValue,
+                                Expression.Condition(
+                                    Expression.Equal(tempInt, Expression.Constant(-1)),
+                                    Expression.Constant(null, variableType),
+                                    Expression.Convert(
+                                        Expression.Property(Expression.Field(netplaySingleton, "syncedObjects"), "Item", tempInt),
+                                        variableType
+                                    )
+                                )
+                            )
+                        );
+                    }
                     else if (variableType.IsValueType && Type.GetTypeCode(variableType) == TypeCode.Object)
                     {
                         serializer.Add(Expression.Call(writeStructFunc, new Expression[] { writer, Expression.Convert(getValue, typeof(object)), Expression.Constant(variableType) }));
                         deserializer.Add(Expression.Assign(getValue, Expression.Convert(Expression.Call(readStructFunc, new Expression[] { reader, Expression.Constant(variableType) }), variableType)));
-                     //   serializer.Add(CallStreamWriterForType(writer, Expression.Call(typeof(SyncedObject).GetMethod("WriteStruct"), new Expression[] { getValue }, new Expression[] { writer, getValue })));
                     }
                     break;
             }
@@ -296,8 +333,8 @@ public abstract class SyncedObject : SyncedObjectBase
         deserializer.Add(Expression.Assign(getPosition, newPosition));
 
         // Compile the new function
-        BlockExpression serializerBlock = Expression.Block(new ParameterExpression[] { target }, serializer);
-        BlockExpression deserializerBlock = Expression.Block(new ParameterExpression[] { target }, deserializer);
+        BlockExpression serializerBlock = Expression.Block(new ParameterExpression[] { target, tempInt }, serializer);
+        BlockExpression deserializerBlock = Expression.Block(new ParameterExpression[] { target, tempInt }, deserializer);
 
         serializerByType.Add(objType.Name, Expression.Lambda<Action<object, BinaryWriter>>(serializerBlock, genericTargetParam, writer).Compile());
         deserializerByType.Add(objType.Name, Expression.Lambda<Action<object, BinaryReader>>(deserializerBlock, genericTargetParam, reader).Compile());
@@ -316,5 +353,21 @@ public abstract class SyncedObject : SyncedObjectBase
     {
         if (Netplay.singleton)
             Netplay.singleton.UnregisterSyncedObject(this);
+    }
+
+    /// <summary>
+    /// Reverts the nextId to a given value
+    /// Please don't call this unless you know what you're doing
+    /// </summary>
+    /// <param name="newNextId"></param>
+    public static void RevertNextId(int newNextId)
+    {
+        Debug.Assert(newNextId <= nextId);
+        nextId = newNextId;
+    }
+
+    public static int GetNextId()
+    {
+        return nextId;
     }
 }
