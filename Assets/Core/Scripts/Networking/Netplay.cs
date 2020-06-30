@@ -223,26 +223,29 @@ public class Netplay : MonoBehaviour
             ClientSendTick();
 
         // Run received ticks
-        for (int i = serverTickHistory.Count - 1; i >= 0; i--)
+        if (serverTickHistory.Count > 0)
         {
-            TickState tickState = serverTickHistory[i];
-
-            if (tickState.tick.time < Frame.local.time)
-                continue;
-
-            // Read syncers
-            if (tickState.tick.syncers.Length > 0)
+            for (int i = serverTickHistory.Count - 1; i >= 0; i--)
             {
-                tickState.tick.syncers.Position = 0;
-                while (tickState.tick.syncers.Position < tickState.tick.syncers.Length)
-                {
-                    int player = tickState.tick.syncers.ReadByte();
-                    players[player].movement.ReadSyncer(tickState.tick.syncers);
-                }
-            }
+                TickState tickState = serverTickHistory[i];
 
-            // Tick!
-            Frame.local.Tick(tickState.tick);
+                if (tickState.tick.time < Frame.local.time)
+                    continue;
+
+                // Read syncers
+                if (tickState.tick.syncers.Length > 0)
+                {
+                    tickState.tick.syncers.Position = 0;
+                    while (tickState.tick.syncers.Position < tickState.tick.syncers.Length)
+                    {
+                        int player = tickState.tick.syncers.ReadByte();
+                        players[player].movement.ReadSyncer(tickState.tick.syncers);
+                    }
+                }
+
+                // Tick!
+                Frame.local.Tick(tickState.tick);
+            }
         }
     }
 
@@ -293,7 +296,7 @@ public class Netplay : MonoBehaviour
             // Receive player inputs into the tick
             for (int i = 0; i < maxPlayers; i++)
             {
-                pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
+                pendingClientTicks[i].Sort((a, b) => (a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
 
                 foreach (MsgClientTick clientTick in pendingClientTicks[i])
                     nextServerTickInputs[i] = clientTick.playerInputs;
@@ -371,15 +374,15 @@ public class Netplay : MonoBehaviour
             syncedObjects.Add(null);
 
         //Debug.Log($"Registered obj {obj} id {obj.syncedId} tick {Frame.local.time}");
-        Debug.Assert(syncedObjects[obj.syncedId] == null);
+        //Debug.Assert(syncedObjects[obj.syncedId] == null);
         syncedObjects[obj.syncedId] = obj;
     }
 
     public void UnregisterSyncedObject(SyncedObject obj)
     {
         //Debug.Log($"Unregistering obj {obj} id {obj.syncedId} tick {Frame.local.time}");
-        Debug.Assert(syncedObjects.Count > obj.syncedId);
-        Debug.Assert(syncedObjects[obj.syncedId] == obj);
+        //Debug.Assert(syncedObjects.Count > obj.syncedId);
+        //Debug.Assert(syncedObjects[obj.syncedId] == obj);
         syncedObjects[obj.syncedId] = null;
     }
     #endregion

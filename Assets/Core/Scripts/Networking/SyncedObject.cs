@@ -25,13 +25,17 @@ public abstract class SyncedObjectBase : MonoBehaviour
 public abstract class SyncedObject : SyncedObjectBase
 {
     private bool hasCalledStart = false;
-    private bool hasCalledDestroy = false;
 
     private int _id;
 
     public int syncedId => _id;
 
     private static int nextId = 0;
+
+    public bool isDead
+    {
+        get; private set;
+    }
 
     /// <summary>
     /// How many sync packets will be sent for this object, per second
@@ -61,7 +65,7 @@ public abstract class SyncedObject : SyncedObjectBase
 
     private void OnDestroy()
     {
-        if (!hasCalledDestroy && GameManager.singleton) // GameManager.singleton indicates whether the game is ending
+        if (!isDead && GameManager.singleton) // GameManager.singleton indicates whether the game is ending
         {
             Debug.LogError("Synced objects should be destroyed with GameManager.DestroyObject");
             Debug.Break();
@@ -453,7 +457,12 @@ public abstract class SyncedObject : SyncedObjectBase
 
     public void FlagAsDestroyed()
     {
-        hasCalledDestroy = true;
+        isDead  = true;
+    }
+
+    public void FlagAsRestored()
+    {
+        isDead = false;
     }
 
     /// <summary>

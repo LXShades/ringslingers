@@ -101,16 +101,27 @@ public class GameManager : MonoBehaviour
     {
         foreach (SyncedObject synced in obj.GetComponentsInChildren<SyncedObject>())
         {
-            Netplay.singleton.UnregisterSyncedObject(synced);
+            //Netplay.singleton.UnregisterSyncedObject(synced);
             synced.FlagAsDestroyed();
         }
 
-        foreach (Collider collider in obj.GetComponentsInChildren<Collider>())
+        /*foreach (Collider collider in obj.GetComponentsInChildren<Collider>())
         {
-            collider.enabled = false; // collisions can occur with destroyed objects during resimulation
+            collider.enabled = false; // collisions can occur with destroyed objects! during resimulation
+        }*/
+
+        obj.SetActive(false);
+    }
+
+    public static void RestoreObject(GameObject obj)
+    {
+        foreach (SyncedObject synced in obj.GetComponentsInChildren<SyncedObject>())
+        {
+            //Netplay.singleton.UnregisterSyncedObject(synced);
+            synced.FlagAsRestored();
         }
 
-        Destroy(obj);
+        obj.SetActive(true);
     }
 
     #region Debug

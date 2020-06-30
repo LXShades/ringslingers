@@ -141,7 +141,7 @@ public class Frame
             {
                 SyncedObject obj = Netplay.singleton.syncedObjects[id];
 
-                if (obj == null)
+                if (obj == null || obj.isDead)
                     continue;
 
                 writer.Write((ushort)id);
@@ -169,28 +169,43 @@ public class Frame
 
         using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true))
         {
+            // Read in the objects
             int oldNextId = SyncedObject.GetNextId();
 
             time = reader.ReadSingle();
             lastPhysicsSimTime = reader.ReadSingle();
             SyncedObject.RevertNextId(reader.ReadInt32());
 
+            int lastObjId = -1;
             for (ushort objId = reader.ReadUInt16(); objId != 65535; objId = reader.ReadUInt16())
             {
                 int size = reader.ReadInt16();
+
+                if (Netplay.singleton.syncedObjects[objId].isDead)
+                    GameManager.RestoreObject(Netplay.singleton.syncedObjects[objId].gameObject);
+                for (ushort cleanup = (ushort)(lastObjId + 1); cleanup < objId; cleanup++)
+                {
+                    if (Netplay.singleton.syncedObjects[objId] && !Netplay.singleton.syncedObjects[objId].isDead)
+                        GameManager.DestroyObject(Netplay.singleton.syncedObjects[objId].gameObject);
+                }
 
                 if (Netplay.singleton.syncedObjects[objId])
                     Netplay.singleton.syncedObjects[objId].Deserialize(reader);
                 else
                     stream.Position += size;
+
+                lastObjId = objId;
             }
 
+            // Delete objects that didn't exist yet (with a cheap deactivate/activate hack)
             for (int i = SyncedObject.GetNextId(); i < oldNextId; i++)
             {
-                if (Netplay.singleton.syncedObjects[i])
+                Debug.Assert(Netplay.singleton.syncedObjects[i]);
+                if (!Netplay.singleton.syncedObjects[i].isDead)
                 {
                     if (Netplay.singleton.syncedObjects[i].GetComponent<Player>() != null)
                         continue; // don't delete players now
+
                     GameManager.DestroyObject(Netplay.singleton.syncedObjects[i].gameObject);
                 }
             }
