@@ -62,7 +62,11 @@ public class GameHUD : MonoBehaviour
                 numFramesThisSecond = 0;
             }
 
-            debugText.text = $"Local frame: {Frame.local.time.ToString("#.00")}\nFPS: {lastFps}\nRun Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}\n" + Netplay.singleton.netStat;
+            debugText.text = $"Local frame: {Frame.local.time.ToString("#.00")}" +
+                $"\nServer frame: {Netplay.singleton.serverTickHistory[0].tick.time.ToString("#.00")}" +
+                $"\nFPS: {lastFps}" +
+                $"\nRun Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}" +
+                $"\n{Netplay.singleton.netStat}";
         }
 
         // Scoreboard stuff

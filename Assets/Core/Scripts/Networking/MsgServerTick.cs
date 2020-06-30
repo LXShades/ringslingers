@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
-public class MsgServerTick
+public class MsgTick
 {
     // Frame time before this tick is executed
     public float time;
@@ -17,9 +17,9 @@ public class MsgServerTick
 
     public MemoryStream syncers = new MemoryStream();
 
-    public MsgServerTick() { }
+    public MsgTick() { }
 
-    public MsgServerTick(Stream source)
+    public MsgTick(Stream source)
     {
         FromStream(source);
     }

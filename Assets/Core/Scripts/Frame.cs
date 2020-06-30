@@ -63,7 +63,7 @@ public class Frame
     /// Advances the game by the given delta time
     /// </summary>
     /// <param name="deltaTime"></param>
-    public void Tick(MsgServerTick tick)
+    public void Tick(MsgTick tick)
     {
         // Update timing
         deltaTime = tick.deltaTime;
@@ -107,7 +107,7 @@ public class Frame
         {
             if (time - lastPhysicsSimTime >= physicsFixedDeltaTime)
             {
-                Debug.Log($"PHYSX@{time.ToString("#.00")} last {lastPhysicsSimTime.ToString("#.00")}");
+                //Debug.Log($"PHYSX@{time.ToString("#.00")} last {lastPhysicsSimTime.ToString("#.00")}");
                 Physics.Simulate(physicsFixedDeltaTime);
                 lastPhysicsSimTime += physicsFixedDeltaTime;
             }

@@ -89,12 +89,12 @@ public class Netplay : MonoBehaviour
     public int replayStart;
     public int replayEnd;
 
-    private struct TickState
+    public struct TickState
     {
         /// <summary>
         /// Actual tick
         /// </summary>
-        public MsgServerTick tick;
+        public MsgTick tick;
 
         /// <summary>
         /// Snapshot of the game BEFORE execution of this tick
@@ -105,7 +105,7 @@ public class Netplay : MonoBehaviour
     /// <summary>
     /// Server ticks that have either a) been received in the last maxTickHistoryTime or b) not been processed yet (these can be older if that happens)
     /// </summary>
-    private List<TickState> serverTickHistory = new List<TickState>();
+    public List<TickState> serverTickHistory = new List<TickState>();
 
     /// <summary>
     /// Client ticks received but not yet processed
@@ -162,28 +162,28 @@ public class Netplay : MonoBehaviour
                 return;
         }
 
-        if (replayMode && serverTickHistory.Count > 0)
+        if (replayMode && serverTickHistory.Count > 0 && false)
         {
             int startTick = Mathf.Clamp(replayStart, 0, serverTickHistory.Count - 1);
             int endTick = Mathf.Clamp(replayEnd, 0, startTick);
 
             serverTickHistory[startTick].snapshot.Position = 0;
             Frame.local.Deserialize(serverTickHistory[startTick].snapshot);
-            FindObjectOfType<GameHUD>().ClearLog();
-            Debug.Log($"SIM@{serverTickHistory[startTick].tick.time.ToString("#.00")}->" +
-                $"{(serverTickHistory[endTick].tick.time+serverTickHistory[endTick].tick.deltaTime).ToString("#.00")}");
+
+//            Debug.Log($"SIM@{serverTickHistory[startTick].tick.time.ToString("#.00")}->" +
+//                $"{(serverTickHistory[endTick].tick.time+serverTickHistory[endTick].tick.deltaTime).ToString("#.00")}");
 
             Frame.local.isResimulation = true;
             for (int i = startTick; i >= endTick; i--)
             {
-                Debug.Log($"PlayerPos{players[0].transform.position}");
+//                Debug.Log($"PlayerPos{players[0].transform.position}");
                 Frame.local.Tick(serverTickHistory[i].tick);
             }
             Frame.local.isResimulation = false;
 
             if (freezeReplay)
                 return;
-            Debug.Log($"TICK@{Frame.local.time}->{Frame.local.time + Time.deltaTime}");
+//            Debug.Log($"TICK@{Frame.local.time}->{Frame.local.time + Time.deltaTime}");
         }
 
         // Generate local inputs
@@ -194,6 +194,14 @@ public class Netplay : MonoBehaviour
             TickServer();
         else if (net.IsClient)
             TickClient();
+
+        // Cleanup tick history
+        // server should always store the last tick hence i=1
+        for (int i = 1; i < serverTickHistory.Count; i++)
+        {
+            if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
+                serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
+        }
 
         // Do debug stuff
         UpdateNetStat();
@@ -236,56 +244,71 @@ public class Netplay : MonoBehaviour
             // Tick!
             Frame.local.Tick(tickState.tick);
         }
-
-        // Cleanup tick history
-        for (int i = 0; i < serverTickHistory.Count; i++)
-        {
-            if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
-                serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
-        }
     }
 
     void TickServer()
     {
-        bool doServerTick = true;
+        float timeUntilNextServerTick = 0;
+        float desiredTime = Frame.local.time + Time.deltaTime;
 
-        // Run tick locally
-        if (doServerTick)
+        if (serverTickHistory.Count > 0)
+            timeUntilNextServerTick = (1f/serverTickRate) - (desiredTime - (serverTickHistory[0].tick.time + serverTickHistory[0].tick.deltaTime));
+
+        // Check server tick if possible
+        if (timeUntilNextServerTick <= 0)
         {
-            // Create a new tick
-            MsgServerTick tick = MakeServerTick(Time.deltaTime);
-
-            // Receive player inputs into the tick
-            for (int i = 0; i < maxPlayers; i++)
+            // Rewind to the last server tick if it exists
+            if (serverTickHistory.Count > 0)
             {
-                pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
-
-                foreach (MsgClientTick clientTick in pendingClientTicks[i])
-                    tick.playerInputs[i] = clientTick.playerInputs;
-
-                pendingClientTicks[i].Clear();
+                serverTickHistory[0].snapshot.Position = 0;
+                Frame.local.Deserialize(serverTickHistory[0].snapshot);
             }
 
-            // Set local inputs in the tick
-            if (localPlayerId >= 0)
-                tick.playerInputs[localPlayerId] = localInputCmds;
+            // Make the next server tick with the fixed delta time
+            MsgTick serverTick = MakeTick(1f / serverTickRate);
 
-            // Send tick to other players
-            ServerSendTick(tick);
+            // Give it our commands (psst, player commands as well?)
+            if (localPlayerId >= 0)
+                serverTick.playerInputs[localPlayerId] = localInputCmds;
+
+            // Send this exact tick to other players
+            ServerSendTick(serverTick);
+
+            // Tick it locally
+            Frame.local.isResimulation = true;
+            Frame.local.Tick(serverTick);
+            Frame.local.isResimulation = false;
 
             // Take a snapshot of this tick and add to the server tick history
-            serverTickHistory.Insert(0, new TickState() { tick = tick, snapshot = Frame.local.Serialize() });
-
-            // Run the tick locally
-            Frame.local.Tick(tick);
-
-            // Cleanup tick history
-            for (int i = 0; i < serverTickHistory.Count; i++)
-            {
-                if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
-                    serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
-            }
+            serverTickHistory.Insert(0, new TickState() { tick = serverTick, snapshot = Frame.local.Serialize() });
         }
+
+        // Now run the local tick
+        Debug.Assert(desiredTime - Frame.local.time > 0 && desiredTime - Frame.local.time < 1);
+
+        // Create a new tick
+        MsgTick tick = MakeTick(desiredTime - Frame.local.time);
+
+        // Receive player inputs into the tick
+        for (int i = 0; i < maxPlayers; i++)
+        {
+            pendingClientTicks[i].Sort((a, b) => (int)(a.deltaTime - b.deltaTime >= 0 ? 1 : -1));
+
+            foreach (MsgClientTick clientTick in pendingClientTicks[i])
+                tick.playerInputs[i] = clientTick.playerInputs;
+
+            pendingClientTicks[i].Clear();
+        }
+
+        // Set local inputs in the tick
+        if (localPlayerId >= 0)
+            tick.playerInputs[localPlayerId] = localInputCmds;
+
+        // Send tick to other players
+        ServerSendTick(tick);
+
+        // Run the tick locally
+        Frame.local.Tick(tick);
     }
 
     #region Players
@@ -440,7 +463,7 @@ public class Netplay : MonoBehaviour
     #endregion
 
     #region Messaging
-    void ServerSendTick(MsgServerTick tick)
+    void ServerSendTick(MsgTick tick)
     {
         // Make a server tick
         MemoryStream output = new MemoryStream();
@@ -454,9 +477,9 @@ public class Netplay : MonoBehaviour
         numSentTicks++;
     }
 
-    private MsgServerTick MakeServerTick(float deltaTime)
+    private MsgTick MakeTick(float deltaTime)
     {
-        MsgServerTick tick = new MsgServerTick()
+        MsgTick tick = new MsgTick()
         {
             deltaTime = deltaTime,
             time = Frame.local.time,
@@ -484,7 +507,7 @@ public class Netplay : MonoBehaviour
         if (!net.IsServer)
         {
             // Insert the tick into our history
-            MsgServerTick tick = new MsgServerTick(payload);
+            MsgTick tick = new MsgTick(payload);
             int insertIndex = 0;
             for (insertIndex = 0; insertIndex < serverTickHistory.Count - 1; insertIndex++)
             {
