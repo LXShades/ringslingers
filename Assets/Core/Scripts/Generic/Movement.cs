@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Animations;
 
 public class Movement : SyncedObject
 {
@@ -84,6 +85,20 @@ public class Movement : SyncedObject
                     hits = Physics.SphereCastAll(
                         transform.TransformPoint(sphere.center),
                         sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
+                        currentMovement,
+                        movementMagnitude + 0.0001f,
+                        blockingCollisionLayers,
+                        QueryTriggerInteraction.Ignore);
+                }
+                else if (collider.GetType() == typeof(CapsuleCollider))
+                {
+                    CapsuleCollider capsule = collider as CapsuleCollider;
+                    Vector3 up = (capsule.direction == 0 ? transform.right : (capsule.direction == 1 ? transform.up : transform.forward)) * (Mathf.Max(capsule.height * 0.5f - capsule.radius, 0));
+                    Vector3 center = transform.TransformPoint(capsule.center);
+
+                    hits = Physics.CapsuleCastAll(
+                        center + up, center - up,
+                        capsule.radius * 0.5f * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
                         currentMovement,
                         movementMagnitude + 0.0001f,
                         blockingCollisionLayers,

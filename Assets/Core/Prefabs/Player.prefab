@@ -120,10 +120,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7352825796714013432}
-  - component: {fileID: 7352825796714013434}
   - component: {fileID: 7352825796714013433}
   - component: {fileID: 7352825796714013435}
   - component: {fileID: 1227556274159782272}
+  - component: {fileID: 4451384450655814514}
   - component: {fileID: 4408426014098253173}
   - component: {fileID: 2222083882362034574}
   m_Layer: 8
@@ -149,24 +149,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!143 &7352825796714013434
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7352825796714013436}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Height: 1
-  m_Radius: 0.37
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.00001
-  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!114 &7352825796714013433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,6 +252,29 @@ MonoBehaviour:
   currentWeapon: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
   spawnPosition: {fileID: 3310946930297574031}
   spawnNudge: 0.469
+--- !u!114 &4451384450655814514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ec020f51922bab4f8a92a38ac34e8c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncsPerSecond: 0
+  colliders:
+  - {fileID: 4408426014098253173}
+  blockingCollisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  useManualPhysics: 1
+  bounceFactor: 0
+  bounceFriction: 0
+  gravityMultiplier: 1
+  velocity: {x: 0, y: 0, z: 0}
 --- !u!136 &4408426014098253173
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -280,10 +285,10 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.38
-  m_Height: 1.03
+  m_Radius: 0.37
+  m_Height: 1
   m_Direction: 1
-  m_Center: {x: 0, y: 0.51, z: 0}
+  m_Center: {x: 0, y: 0.5, z: 0}
 --- !u!54 &2222083882362034574
 Rigidbody:
   m_ObjectHideFlags: 0

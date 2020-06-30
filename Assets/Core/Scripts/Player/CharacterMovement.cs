@@ -4,11 +4,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(CharacterController), typeof(Player))]
+[RequireComponent(typeof(Movement), typeof(Player))]
 public class CharacterMovement : SyncedObject
 {
     private Player player;
-    private CharacterController controller;
+    private Movement move;
 
     [Header("Movement (all FRACUNITS)")]
     public float accelStart = 96;
@@ -64,8 +64,8 @@ public class CharacterMovement : SyncedObject
 
     public override void FrameStart()
     {
-        controller = GetComponent<CharacterController>();
         player = GetComponent<Player>();
+        move = GetComponent<Movement>();
     }
 
     public override void FrameUpdate()
@@ -123,8 +123,8 @@ public class CharacterMovement : SyncedObject
         }
         else
         {
-            Physics.SyncTransforms();
-            controller.Move(velocity * Frame.local.deltaTime);
+            RaycastHit hit;
+            move.Move(velocity * Frame.local.deltaTime, out hit);
         }
     }
 
