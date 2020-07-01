@@ -48,13 +48,6 @@ public class Netplay : MonoBehaviour
     public Player[] players = new Player[maxPlayers];
 
     /// <summary>
-    /// Local player ID
-    /// </summary>
-    public int localPlayerId = -1;
-
-    private InputCmds localInputCmds;
-
-    /// <summary>
     /// Prefab used to spawn players
     /// </summary>
     public GameObject playerPrefab;
@@ -101,6 +94,21 @@ public class Netplay : MonoBehaviour
         /// </summary>
         public Stream snapshot;
     }
+
+    /// <summary>
+    /// Local player ID
+    /// </summary>
+    public int localPlayerId = -1;
+
+    /// <summary>
+    /// Current local input commands
+    /// </summary>
+    private InputCmds localInputCmds;
+
+    /// <summary>
+    /// Current player times. Valid on server. For clients only localPlayerId has a valid value
+    /// </summary>
+    private float[] localPlayerTimes = new float[maxPlayers];
 
     /// <summary>
     /// Server ticks that have either a) been received in the last maxTickHistoryTime or b) not been processed yet (these can be older if that happens)
@@ -169,32 +177,17 @@ public class Netplay : MonoBehaviour
                 return;
         }
 
-        if (replayMode && serverTickHistory.Count > 0 && false)
+        if (TryReplayMode())
         {
-            int startTick = Mathf.Clamp(replayStart, 0, serverTickHistory.Count - 1);
-            int endTick = Mathf.Clamp(replayEnd, 0, startTick);
-
-            serverTickHistory[startTick].snapshot.Position = 0;
-            Frame.local.Deserialize(serverTickHistory[startTick].snapshot);
-
-//            Debug.Log($"SIM@{serverTickHistory[startTick].tick.time.ToString("#.00")}->" +
-//                $"{(serverTickHistory[endTick].tick.time+serverTickHistory[endTick].tick.deltaTime).ToString("#.00")}");
-
-            Frame.local.isResimulation = true;
-            for (int i = startTick; i >= endTick; i--)
-            {
-//                Debug.Log($"PlayerPos{players[0].transform.position}");
-                Frame.local.Tick(serverTickHistory[i].tick);
-            }
-            Frame.local.isResimulation = false;
-
-            if (freezeReplay)
-                return;
-//            Debug.Log($"TICK@{Frame.local.time}->{Frame.local.time + Time.deltaTime}");
+            return;
         }
 
         // Generate local inputs
         localInputCmds = InputCmds.FromLocalInput(localInputCmds);
+
+        // Update local time
+        if (localPlayerId >= 0)
+            localPlayerTimes[localPlayerId] += Time.deltaTime;
 
         // Tick the game
         if (net.IsServer)
@@ -259,7 +252,7 @@ public class Netplay : MonoBehaviour
         if (serverTickHistory.Count > 0)
             timeUntilNextServerTick = (1f/serverTickRate) - (desiredTime - (serverTickHistory[0].tick.time + serverTickHistory[0].tick.deltaTime));
 
-        // Check server tick if possible
+        // Make server tick(s) if possible
         for (int iterations = 0; iterations < 3 && timeUntilNextServerTick <= 0; iterations++ )
         {
             // Rewind to the last server tick if it exists
@@ -364,6 +357,12 @@ public class Netplay : MonoBehaviour
     {
         int index = System.Array.IndexOf(playerClientIds, clientId);
         return index >= 0 ? players[index] : null;
+    }
+
+    public int GetPlayerIdFromClient(ulong clientId)
+    {
+        int index = System.Array.IndexOf(playerClientIds, clientId);
+        return index;
     }
     #endregion
 
@@ -482,11 +481,17 @@ public class Netplay : MonoBehaviour
         // Make a server tick
         MemoryStream output = new MemoryStream();
 
-        tick.ToStream(output);
-
         // Send it to all clients
         foreach (var client in net.ConnectedClientsList)
+        {
+            if (GetPlayerIdFromClient(client.ClientId) == -1)
+                continue; // some client IDs are invalid, why? is it myself? then why can I send messages to myself but not receive them?
+
+            output.Position = 0;
+            tick.localTime = localPlayerTimes[GetPlayerIdFromClient(client.ClientId)];
+            tick.ToStream(output);
             CustomMessagingManager.SendNamedMessage("servertick", client.ClientId, output, "Unreliable");
+        }
 
         numSentTicks++;
     }
@@ -524,11 +529,12 @@ public class Netplay : MonoBehaviour
 
     private void OnReceivedServerTick(ulong sender, Stream payload)
     {
+        Debug.Log("I received it");
         if (!net.IsServer)
         {
             // Insert the tick into our history
             MsgTick tick = new MsgTick(payload);
-            int insertIndex = 0;
+            int insertIndex;
             for (insertIndex = 0; insertIndex < serverTickHistory.Count - 1; insertIndex++)
             {
                 if (serverTickHistory[insertIndex].tick.time < tick.time)
@@ -582,7 +588,8 @@ public class Netplay : MonoBehaviour
             {
                 deltaTime = Frame.local.deltaTime,
                 playerInputs = localInputCmds,
-                serverTime = Frame.local.time
+                serverTime = Frame.local.time,
+                localTime = localPlayerTimes[localPlayerId]
             };
 
             clientTick.ToStream(inputs);
@@ -596,10 +603,15 @@ public class Netplay : MonoBehaviour
     {
         Player player = GetPlayerFromClient(sender);
 
-        // Add this tick to pending list
         if (player != null)
-            pendingClientTicks[player.playerId].Add(new MsgClientTick(payload));
+        {
+            // Add this tick to pending list
+            MsgClientTick tick = new MsgClientTick(payload);
+            pendingClientTicks[player.playerId].Add(tick);
+            localPlayerTimes[player.playerId] = tick.localTime;
+        }
 
+        // Update stats
         numTicksPerFrame[Mathf.Min(netStatFrameNum, numTicksPerFrame.Length - 1)]++;
         numReceivedBytes += (int)payload.Length;
         numReceivedTicks++;
@@ -607,8 +619,6 @@ public class Netplay : MonoBehaviour
     #endregion
 
     #region Debugging
-    private float lastClientTickTime = 0;
-
     private int netStatFrameNum = 0;
     private int[] numTicksPerFrame = new int[500];
     private int numReceivedTicks = 0;
@@ -646,6 +656,41 @@ public class Netplay : MonoBehaviour
 
             System.Array.Clear(numTicksPerFrame, 0, numTicksPerFrame.Length);
         }
+    }
+
+    bool TryReplayMode()
+    {
+        if (!replayMode || serverTickHistory.Count <= 0)
+            return false;
+
+        int startTick = Mathf.Clamp(replayStart, 0, serverTickHistory.Count - 1);
+        int endTick = Mathf.Clamp(replayEnd, 0, startTick);
+
+        serverTickHistory[startTick].snapshot.Position = 0;
+        Frame.local.Deserialize(serverTickHistory[startTick].snapshot);
+
+        //            Debug.Log($"SIM@{serverTickHistory[startTick].tick.time.ToString("#.00")}->" +
+        //                $"{(serverTickHistory[endTick].tick.time+serverTickHistory[endTick].tick.deltaTime).ToString("#.00")}");
+
+        Frame.local.isResimulation = true;
+        for (int i = startTick; i >= endTick; i--)
+        {
+            //                Debug.Log($"PlayerPos{players[0].transform.position}");
+            Frame.local.Tick(serverTickHistory[i].tick);
+        }
+        Frame.local.isResimulation = false;
+
+        return freezeReplay;
+        //            Debug.Log($"TICK@{Frame.local.time}->{Frame.local.time + Time.deltaTime}");
+    }
+
+    public float GetPing()
+    {
+        if (serverTickHistory.Count > 0 && localPlayerId >= 0)
+        {
+            return localPlayerTimes[localPlayerId] - serverTickHistory[0].tick.localTime;
+        }
+        return -1;
     }
     #endregion
 }

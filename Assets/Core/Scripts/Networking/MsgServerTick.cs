@@ -11,6 +11,9 @@ public class MsgTick
     // DeltaTime the server will tick from here
     public float deltaTime;
 
+    // Local time of the receiving player, as currently known to the server, as of the last tick
+    public float localTime;
+
     // PlayerInputs during execution of this tick
     public InputCmds[] playerInputs = new InputCmds[Netplay.maxPlayers];
     public bool[] isPlayerInGame = new bool[Netplay.maxPlayers];
@@ -34,6 +37,7 @@ public class MsgTick
             {
                 time = reader.ReadSingle();
                 deltaTime = reader.ReadSingle();
+                localTime = reader.ReadSingle();
                 syncersLength = reader.ReadInt32();
             }
 
@@ -67,6 +71,7 @@ public class MsgTick
         {
             writer.Write(time);
             writer.Write(deltaTime);
+            writer.Write(localTime);
             writer.Write((int)syncers.Length);
         }
 
