@@ -15,9 +15,9 @@ using MLAPI.Serialization.Pooled;
 public class Frame
 {
     /// <summary>
-    /// The current game frame according to current simulations
+    /// The game frame running in the current tick
     /// </summary>
-    public static Frame local
+    public static Frame current
     {
         get
         {
@@ -31,16 +31,16 @@ public class Frame
     }
     private static Frame _current;
 
+    /// <summary>
+    /// The time at the current tick
+    /// </summary>
+    public float time;
+
     // Game time
     /// <summary>
     /// The delta time of the current tick
     /// </summary>
     public float deltaTime;
-
-    /// <summary>
-    /// The time at the current tick
-    /// </summary>
-    public float time;
 
     /// <summary>
     /// Time to tick between each physics simulation
@@ -165,7 +165,10 @@ public class Frame
     public bool Deserialize(Stream stream)
     {
         if (stream.Length <= stream.Position)
+        {
+            Debug.LogWarning("Stream has ended before Frame.Deserialize - forgot to reset position?");
             return false;
+        }
 
         using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true))
         {

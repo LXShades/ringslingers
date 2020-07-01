@@ -27,13 +27,13 @@ public class ThrownRing : SyncedObject
         spinAxis = Vector3.up + Vector3.right * Random.Range(-axisWobble, axisWobble) + Vector3.forward * Random.Range(-axisWobble, axisWobble);
         spinAxis.Normalize();
 
-        spawnTime = Frame.local.time;
+        spawnTime = Frame.current.time;
     }
 
     public override void FrameUpdate()
     {
         // Spin
-        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * Frame.local.deltaTime, spinAxis);
+        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * Frame.current.deltaTime, spinAxis);
 
         // Move
         //transform.position += velocity * Frame.local.deltaTime;

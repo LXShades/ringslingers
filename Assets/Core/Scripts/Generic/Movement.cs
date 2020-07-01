@@ -37,12 +37,12 @@ public class Movement : SyncedObject
         if (!useManualPhysics)
         {
             // Do le gravity
-            velocity.y -= GameManager.singleton.gravity * Frame.local.deltaTime * gravityMultiplier;
+            velocity.y -= GameManager.singleton.gravity * Frame.current.deltaTime * gravityMultiplier;
 
             // Do le move
             RaycastHit hit;
 
-            if (Move(velocity * Frame.local.deltaTime, out hit))
+            if (Move(velocity * Frame.current.deltaTime, out hit))
             {
                 Vector3 resistanceVector = hit.normal * (-Vector3.Dot(hit.normal, velocity) * (1f + bounceFactor));
                 Vector3 frictionVector = -velocity * bounceFriction;

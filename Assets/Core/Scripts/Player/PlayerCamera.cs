@@ -73,10 +73,10 @@ public class PlayerCamera : SyncedObject
                 {
                     float landProgress = 1 - (landBobTimer / landBobDuration);
                     transform.position += Vector3.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
-                    landBobTimer = Mathf.Max(landBobTimer - Frame.local.deltaTime, 0);
+                    landBobTimer = Mathf.Max(landBobTimer - Frame.current.deltaTime, 0);
                 }
 
-                transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * Frame.local.time * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
+                transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * Frame.current.time * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
             }
 
             lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);

@@ -29,7 +29,7 @@ public class RespawnableItem : SyncedObject
     {
         if (respawnCountdownTimer > 0)
         {
-            respawnCountdownTimer = Mathf.Max(respawnCountdownTimer - Frame.local.deltaTime, 0);
+            respawnCountdownTimer = Mathf.Max(respawnCountdownTimer - Frame.current.deltaTime, 0);
 
             if (respawnCountdownTimer <= 0)
                 Respawn();
