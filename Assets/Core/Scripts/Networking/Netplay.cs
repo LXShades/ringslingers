@@ -258,26 +258,17 @@ public class Netplay : MonoBehaviour
             tickState.snapshot = Frame.current.Serialize();
             serverTickHistory[i] = tickState;
 
-            // We can use a fake realtime aim because we'll rewind to this tick later
-            float oldHorizontalAim = tickState.tick.playerInputs[localPlayerId].horizontalAim;
-            float oldVerticalAim = tickState.tick.playerInputs[localPlayerId].verticalAim;
-            tickState.tick.playerInputs[localPlayerId].horizontalAim = localInputCmds.horizontalAim;
-            tickState.tick.playerInputs[localPlayerId].verticalAim = localInputCmds.verticalAim;
-
             // Tick it!
             Frame.current.Tick(tickState.tick);
             lastProcessedServerTickTime = tickState.tick.time;
-
-            tickState.tick.playerInputs[localPlayerId].horizontalAim = oldHorizontalAim;
-            tickState.tick.playerInputs[localPlayerId].verticalAim = oldVerticalAim;
         }
 
         // Simulate up to realtime
         if (localPlayerId >= 0)
         {
-            float desiredTime = Mathf.Min(serverTickHistory[0].tick.time + localPlayerTimes[localPlayerId] - serverTickHistory[0].tick.localTime, serverTickHistory[0].tick.time + maxSimTime);
+            float desiredTime = Mathf.Clamp(serverTickHistory[0].tick.time + localPlayerTimes[localPlayerId] - serverTickHistory[0].tick.localTime, 0, serverTickHistory[0].tick.time + maxSimTime);
 
-            if (desiredTime > Frame.current.time)
+            if (desiredTime >= Frame.current.time)
             {
                 // Make our own fake tick to pass the time~
                 MsgTick tick = MakeTick(Frame.current.time, desiredTime - Frame.current.time, false, false);
