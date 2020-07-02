@@ -26,7 +26,7 @@ public class Ring : SyncedObject
     public override void FrameAwake()
     {
         respawnableItem = GetComponent<RespawnableItem>();
-        awakeTime = Frame.current.time;
+        awakeTime = GameState.live.time;
     }
 
     public override void FrameStart()
@@ -44,12 +44,12 @@ public class Ring : SyncedObject
         base.FrameUpdate();
 
         // Spinny spin
-        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * Frame.current.deltaTime, 0));
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * GameState.live.deltaTime, 0));
     }
 
     private void OnTriggerStay(Collider other)
     {
-        if (other.GetComponent<Player>() && (!isDroppedRing || Frame.current.time - awakeTime >= pickupWarmupDuration))
+        if (other.GetComponent<Player>() && (!isDroppedRing || GameState.live.time - awakeTime >= pickupWarmupDuration))
         {
             other.GetComponent<Player>().numRings++;
             pickupParticles.SetActive(true);

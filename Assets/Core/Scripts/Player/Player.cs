@@ -84,11 +84,11 @@ public class Player : SyncedObject
         // Invincibility blinky
         if (invincibilityTimeRemaining > 0)
         {
-            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - Frame.current.deltaTime, 0);
+            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - GameState.live.deltaTime, 0);
 
             Renderer renderer = GetComponentInChildren<Renderer>();
             if (renderer && invincibilityTimeRemaining > 0)
-                renderer.enabled = ((int)(Frame.current.time * hitInvincibilityBlinkRate) & 1) == 0;
+                renderer.enabled = ((int)(GameState.live.time * hitInvincibilityBlinkRate) & 1) == 0;
             else
                 renderer.enabled = true; // we finished blinky blinkying
         }

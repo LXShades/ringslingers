@@ -28,14 +28,14 @@ public class DespawnAfterDuration : SyncedObject
     public override void FrameUpdate()
     {
         // Countdown!
-        despawnTimeRemaining -= Frame.current.deltaTime;
+        despawnTimeRemaining -= GameState.live.deltaTime;
 
         // Blink!
         if (renderer)
         {
             float rate = blinkRateOverTime.Evaluate(timeUntilDespawn - despawnTimeRemaining);
 
-            perBlinkTimer += Frame.current.deltaTime;
+            perBlinkTimer += GameState.live.deltaTime;
 
             if (rate > 0)
             {

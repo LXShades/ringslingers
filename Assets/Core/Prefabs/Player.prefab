@@ -122,8 +122,8 @@ GameObject:
   - component: {fileID: 7352825796714013432}
   - component: {fileID: 7352825796714013433}
   - component: {fileID: 7352825796714013435}
-  - component: {fileID: 1227556274159782272}
   - component: {fileID: 4451384450655814514}
+  - component: {fileID: 1227556274159782272}
   - component: {fileID: 4408426014098253173}
   - component: {fileID: 1784313262649898792}
   - component: {fileID: 2222083882362034574}
@@ -165,7 +165,6 @@ MonoBehaviour:
   syncsPerSecond: 1
   name: Frederic Fred McFred Freddie Jr
   playerId: 0
-  clientId: 0
   input:
     moveHorizontalAxis: 0
     moveVerticalAxis: 0
@@ -237,22 +236,6 @@ MonoBehaviour:
   velocity: {x: 0, y: 0, z: 0}
   isOnGround: 0
   debugDisableCollision: 0
---- !u!114 &1227556274159782272
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7352825796714013436}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25d19b786be947a4a876fe24e175a23e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncsPerSecond: 0
-  currentWeapon: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
-  spawnPosition: {fileID: 3310946930297574031}
-  spawnNudge: 0.469
 --- !u!114 &4451384450655814514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -276,6 +259,22 @@ MonoBehaviour:
   bounceFriction: 0
   gravityMultiplier: 1
   velocity: {x: 0, y: 0, z: 0}
+--- !u!114 &1227556274159782272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25d19b786be947a4a876fe24e175a23e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncsPerSecond: 0
+  currentWeapon: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
+  spawnPosition: {fileID: 3310946930297574031}
+  spawnNudge: 0.469
 --- !u!136 &4408426014098253173
 CapsuleCollider:
   m_ObjectHideFlags: 0

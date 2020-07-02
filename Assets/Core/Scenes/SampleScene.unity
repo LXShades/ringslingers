@@ -17826,7 +17826,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
-  serverTickRate: 30
+  serverTickRate: 20
   maxSimTime: 0.5
   maxTickHistoryTime: 1
   replayMode: 0
@@ -17834,6 +17834,7 @@ MonoBehaviour:
   replayStart: 5
   replayEnd: 0
   localPlayerId: -1
+  serverTickHistory: []
 --- !u!4 &1700270206
 Transform:
   m_ObjectHideFlags: 0

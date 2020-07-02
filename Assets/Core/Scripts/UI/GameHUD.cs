@@ -64,7 +64,7 @@ public class GameHUD : MonoBehaviour
                 numFramesThisSecond = 0;
             }
 
-            debugText.text = $"Local frame: {Frame.current.time.ToString("#.00")}" +
+            debugText.text = $"Local frame: {GameState.live.time.ToString("#.00")}" +
                 $"\nServer frame: {Netplay.singleton.serverTickHistory[0].tick.time.ToString("#.00")}" +
                 $"\nPing: {(int)(lastPing * 1000)}ms" +
                 $"\nFPS: {lastFps}" +

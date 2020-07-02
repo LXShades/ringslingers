@@ -92,7 +92,7 @@ public class CharacterMovement : SyncedObject
         ApplyRunAcceleration();
 
         // Gravity
-        velocity += new Vector3(0, -1, 0) * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * Frame.current.deltaTime);
+        velocity += new Vector3(0, -1, 0) * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * GameState.live.deltaTime);
 
         // Top speed clamp
         ApplyTopSpeedLimit(lastHorizontalSpeed);
@@ -119,12 +119,12 @@ public class CharacterMovement : SyncedObject
         // Perform final movement and collision
         if (debugDisableCollision)
         {
-            transform.position += velocity * Frame.current.deltaTime;
+            transform.position += velocity * GameState.live.deltaTime;
         }
         else
         {
             RaycastHit hit;
-            move.Move(velocity * Frame.current.deltaTime, out hit);
+            move.Move(velocity * GameState.live.deltaTime, out hit);
         }
     }
 
@@ -148,7 +148,7 @@ public class CharacterMovement : SyncedObject
     {
         // Friction
         if (velocity.Horizontal().magnitude > 0 && isOnGround)
-            velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, Frame.current.deltaTime * 35f));
+            velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, GameState.live.deltaTime * 35f));
     }
 
     private void ApplyRunAcceleration()
@@ -168,7 +168,7 @@ public class CharacterMovement : SyncedObject
         if (!isOnGround)
             currentAcceleration *= airAccelerationMultiplier;
 
-        velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration / 65536f * Frame.current.deltaTime * 35f);
+        velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration / 65536f * GameState.live.deltaTime * 35f);
         velocity /= GameManager.singleton.fracunitsPerM / 35f;
     }
 
@@ -244,7 +244,7 @@ public class CharacterMovement : SyncedObject
         }
 
         if (originalPosition != transform.position || originalVelocity != velocity)
-            Debug.Log($"Resync {player.playerId}@{Frame.current.time.ToString("0.0")}");
+            Debug.Log($"Resync {player.playerId}@{GameState.live.time.ToString("0.0")}");
     }
 
     public override void WriteSyncer(System.IO.Stream stream)

@@ -125,7 +125,7 @@ public class GameManager : MonoBehaviour
     }
 
     #region Debug
-    Stream tempSave;
+    GameState tempSave;
 
     void RunDebugCommands()
     {
@@ -153,14 +153,13 @@ public class GameManager : MonoBehaviour
         // Press F1 to save a state
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            tempSave = Frame.current.Serialize();
-            Debug.Log($"Serialized {tempSave.Length} bytes!");
+            tempSave = GameState.SaveState();
+            Debug.Log($"Serialized {tempSave.preSnapshot.Length} bytes!");
         }
 
         if (Input.GetKeyDown(KeyCode.F2) && tempSave != null)
         {
-            tempSave.Position = 0;
-            Frame.current.Deserialize(tempSave);
+            GameState.LoadState(tempSave);
         }
     }
     #endregion

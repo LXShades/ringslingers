@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 using System.IO;
 using System;
 using MLAPI.Serialization.Pooled;
+using System.Runtime.CompilerServices;
+using UnityEditorInternal;
 
 /// <summary>
 /// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).
@@ -12,61 +14,100 @@ using MLAPI.Serialization.Pooled;
 /// A caveat is that a Tick will run in the real game rather than inside the frame. This means the frame won't always be synced with the live game state.
 /// Deserializing syncs the frame to the game state while serializing syncs the game state to the frame.
 /// </summary>
-public class Frame
+[System.Serializable] // for debugging
+public class GameState
 {
-    /// <summary>
-    /// The game frame running in the current tick
-    /// </summary>
-    public static Frame current
-    {
-        get
-        {
-            if (_current == null)
-            {
-                _current = new Frame();
-            }
-
-            return _current;
-        }
-    }
-    private static Frame _current;
-
-    /// <summary>
-    /// The time at the current tick
-    /// </summary>
-    public float time;
-
-    // Game time
-    /// <summary>
-    /// The delta time of the current tick
-    /// </summary>
-    public float deltaTime;
-
     /// <summary>
     /// Time to tick between each physics simulation
     /// </summary>
-    public float physicsFixedDeltaTime = 0.04f;
+    public const float physicsFixedDeltaTime = 0.04f;
 
     /// <summary>
     /// Maximum number of missed physics sims to catch up on before the remainder are discarded
     /// </summary>
-    public int maxAccumulatedPhysicsSims = 4;
+    public const int maxPhysicsSimsPerTick = 4;
 
-    public float lastPhysicsSimTime;
-
-    /// <summary>
-    /// Whether the current tick is a re-run of past events, often used for sound culling
-    /// </summary>
-    public bool isResimulation = false;
+    private float lastPhysicsSimTime;
 
     /// <summary>
-    /// Advances the game by the given delta time
+    /// The current state of the game (gameObjects) in GameState form
+    /// A snapshot is taken as each new GameState is created, reflecting the pre-tick beginning of the new state
+    /// Changes that occur outside of ticks may not be correctly represented. Be mindful.
     /// </summary>
-    /// <param name="deltaTime"></param>
-    public void Tick(MsgTick tick)
+    public static GameState live
     {
+        get
+        {
+            if (_live == null)
+                _live = new GameState();
+
+            return _live;
+        }
+    }
+    private static GameState _live;
+
+    /// <summary>
+    /// The accumulated game time at the beginning of this tick
+    /// </summary>
+    public float time
+    {
+        get; private set;
+    }
+
+    // Game time
+    /// <summary>
+    /// The delta time of the GameState, valid while ticking, adding up to the game time of the next GameState
+    /// </summary>
+    public float deltaTime
+    {
+        get; private set;
+    }
+
+    /// <summary>
+    /// Whether this is a re-run of past events, valid while ticking. Uses include hiding sounds and console messages during replays of past states
+    /// </summary>
+    public bool isResimulation
+    {
+        get; private set;
+    }
+
+    /// <summary>
+    /// Snapshot of the gamestate before the controls were executed. plz no modify.
+    /// </summary>
+    public Stream preSnapshot
+    {
+        get; private set;
+    }
+
+    /// <summary>
+    /// Constructs a new empty GameState
+    /// </summary>
+    private GameState()
+    {
+    }
+
+    /// <summary>
+    /// Constructs a new state with a loose copy of another state
+    /// </summary>
+    /// <param name="previousState"></param>
+    private GameState(GameState source)
+    {
+        time = source.time;
+        lastPhysicsSimTime = source.lastPhysicsSimTime;
+        preSnapshot = null;
+    }
+
+    /// <summary>
+    /// Advances the game by the given delta time and returns the new tick representing the resulting game state
+    /// This causes GameState.live to be replaced with the new state, and may affect all in-game synced objects
+    /// </summary>
+    public static GameState Tick(MsgTick tick, bool isResimulation, bool takeSnapshot)
+    {
+        GameState currentState = _live;
+
         // Update timing
-        deltaTime = tick.deltaTime;
+        currentState.deltaTime = tick.deltaTime;
+        currentState.isResimulation = isResimulation;
 
         // Spawn players who are pending a join
         for (int p = 0; p < Netplay.singleton.players.Length; p++)
@@ -75,6 +116,17 @@ public class Frame
                 Netplay.singleton.AddPlayer(p);
             else if (Netplay.singleton.players[p] != null && !tick.isPlayerInGame[p])
                 Netplay.singleton.RemovePlayer(p);
+        }
+
+        // Read syncers
+        if (tick.syncers.Length > 0)
+        {
+            tick.syncers.Position = 0;
+            while (tick.syncers.Position < tick.syncers.Length)
+            {
+                int player = tick.syncers.ReadByte();
+                Netplay.singleton.players[player].movement.ReadSyncer(tick.syncers);
+            }
         }
 
         // Apply player inputs
@@ -111,30 +163,71 @@ public class Frame
             Physics.autoSyncTransforms = true;
         }
 
-        for (int i = 0; i < maxAccumulatedPhysicsSims; i++)
+        int numPhysicsSimsOccurred = 0;
+        for (int i = 1; i <= maxPhysicsSimsPerTick; i++)
         {
-            if (time - lastPhysicsSimTime >= physicsFixedDeltaTime)
+            if (currentState.time + tick.deltaTime - currentState.lastPhysicsSimTime >= physicsFixedDeltaTime * i)
             {
-                //Debug.Log($"PHYSX@{time.ToString("#.00")} last {lastPhysicsSimTime.ToString("#.00")}");
                 Physics.Simulate(physicsFixedDeltaTime);
-                lastPhysicsSimTime += physicsFixedDeltaTime;
+                numPhysicsSimsOccurred++;
             }
         }
 
-        lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime, time - physicsFixedDeltaTime, time);
-        time = tick.time + deltaTime;
+        // Transfer information into the next GameState
+        GameState nextState = new GameState(currentState);
+
+        nextState.time = /*currentState.time + tick.deltaTime*/tick.time + tick.deltaTime;
+        nextState.lastPhysicsSimTime = Mathf.Clamp(currentState.lastPhysicsSimTime + physicsFixedDeltaTime * numPhysicsSimsOccurred, // prevent buffering too many sims
+                                                    nextState.time - physicsFixedDeltaTime, nextState.time);
+        _live = nextState;
+        _live.preSnapshot = SerializeFromWorld();
+
+        return nextState;
     }
 
     #region Serialization
-    public MemoryStream Serialize()
+    /// <summary>
+    /// Loads a new state into GameState.live
+    /// </summary>
+    public static bool LoadState(GameState state)
+    {
+        if (state.preSnapshot != null)
+        {
+            _live = state;
+            state.preSnapshot.Position = 0;
+            DeserializeToWorld();
+
+            return true;
+        }
+        else
+        {
+            Debug.LogWarning("Cannot deserialize state with no snapshot");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Saves a new state from GameState.live
+    /// </summary>
+    /// <returns></returns>
+    public static GameState SaveState()
+    {
+        GameState newState = new GameState(_live);
+
+        newState.preSnapshot = SerializeFromWorld();
+
+        return newState;
+    }
+
+    private static MemoryStream SerializeFromWorld()
     {
         MemoryStream stream = new MemoryStream(1024 * 1024);
 
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
         {
             // temp, probably, or to move. this stuff is needed
-            writer.Write(time);
-            writer.Write(lastPhysicsSimTime);
+            writer.Write(_live.time);
+            writer.Write(_live.lastPhysicsSimTime);
             writer.Write(SyncedObject.GetNextId());
 
             for (int id = 0; id < Netplay.singleton.syncedObjects.Count; id++)
@@ -162,9 +255,11 @@ public class Frame
         return stream;
     }
 
-    public bool Deserialize(Stream stream)
+    private static bool DeserializeToWorld()
     {
-        if (stream.Length <= stream.Position)
+        Stream stream = _live.preSnapshot;
+
+        if (stream == null || stream.Length <= stream.Position)
         {
             Debug.LogWarning("Stream has ended before Frame.Deserialize - forgot to reset position?");
             return false;
@@ -175,8 +270,8 @@ public class Frame
             // Read in the objects
             int oldNextId = SyncedObject.GetNextId();
 
-            time = reader.ReadSingle();
-            lastPhysicsSimTime = reader.ReadSingle();
+            _live.time = reader.ReadSingle();
+            _live.lastPhysicsSimTime = reader.ReadSingle();
             SyncedObject.RevertNextId(reader.ReadInt32());
 
             int lastObjId = -1;

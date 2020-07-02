@@ -45,7 +45,7 @@ public class RingShooting : SyncedObject
             Debug.Assert(currentWeapon.shotsPerSecond != 0); // division by zero otherwise
             
             // Fire if we can
-            if (Frame.current.time - lastFiredRingTime >= 1f / currentWeapon.shotsPerSecond && player.numRings > 0)
+            if (GameState.live.time - lastFiredRingTime >= 1f / currentWeapon.shotsPerSecond && player.numRings > 0)
             {
                 GameObject ring = Instantiate(currentWeapon.prefab, spawnPosition.position, Quaternion.identity);
                 ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
@@ -56,7 +56,7 @@ public class RingShooting : SyncedObject
 
                 GameSounds.PlaySound(gameObject, currentWeapon.fireSound);
 
-                lastFiredRingTime = Frame.current.time;
+                lastFiredRingTime = GameState.live.time;
                 player.numRings--;
 
                 hasFiredOnThisClick = true;
