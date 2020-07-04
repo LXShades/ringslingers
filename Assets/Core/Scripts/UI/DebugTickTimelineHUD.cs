@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,13 +17,26 @@ public class DebugTickTimelineHUD : MonoBehaviour
 
     public float timePeriod = 5;
 
+    float timeOffset;
+
     // Update is called once per frame
     void Update()
     {
+        if (Netplay.singleton.serverTickHistory.Count == 0)
+            return;
+
         float maxTime = Mathf.Max(Netplay.singleton.serverTickHistory[0].tick.time, GameState.live.time), minTime = 0;
 
         minTime = Mathf.Floor(maxTime / timePeriod) * timePeriod;
         maxTime = Mathf.Ceil(maxTime / timePeriod) * timePeriod;
+
+        minTime = Time.time + timeOffset - timePeriod / 2;
+        maxTime = Time.time + timeOffset + timePeriod / 2;
+
+        if ((int)(Time.time/2) != (int)((Time.time - Time.deltaTime)/2))
+        {
+            timeOffset = GameState.live.time - Time.time;
+        }
 
         earlyTime.text = minTime.ToString();
         lateTime.text = maxTime.ToString();
