@@ -35,7 +35,9 @@
  + FrameAwake needs to be called on objects that previously didn't exist (i.e. serialize startWasCalled) (should probably also serialize existence and erase objects as necessary)
 + Things are breaking so make a Replay Mode to see frame-by-frame what's happening
 + Fix springs causing weird stuff
-- Make Rail model
++ Make Rail model
++ Verify game works with multiple players without causing errors/breaks/etc
++ Add Rail powerup
 - Make HUD w/ rail times, etc
 - Add camera reset button
 - Add camera speed config

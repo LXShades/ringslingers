@@ -10,9 +10,7 @@ public class ThrownRing : SyncedObject
 
     private Vector3 velocity;
 
-    private float spawnTime = 0;
-
-    private Player owner;
+    protected Player owner;
     private Rigidbody rb;
 
     public override void FrameAwake()
@@ -26,8 +24,6 @@ public class ThrownRing : SyncedObject
 
         spinAxis = Vector3.up + Vector3.right * Random.Range(-axisWobble, axisWobble) + Vector3.forward * Random.Range(-axisWobble, axisWobble);
         spinAxis.Normalize();
-
-        spawnTime = GameState.live.time;
     }
 
     public override void FrameUpdate()
@@ -61,7 +57,7 @@ public class ThrownRing : SyncedObject
         GameManager.DestroyObject(gameObject);
     }
 
-    public void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
+    public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
     {
         foreach (Collider collider in GetComponentsInChildren<Collider>())
         {
