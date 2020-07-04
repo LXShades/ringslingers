@@ -3,10 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.InteropServices;
 using System.IO;
-using System;
 using MLAPI.Serialization.Pooled;
-using System.Runtime.CompilerServices;
-using UnityEditorInternal;
 
 /// <summary>
 /// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).

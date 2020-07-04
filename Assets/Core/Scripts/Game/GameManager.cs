@@ -132,12 +132,14 @@ public class GameManager : MonoBehaviour
         // Debug controls
         QualitySettings.vSyncCount = 0;
         if (Input.GetKeyDown(KeyCode.Alpha1))
-            Application.targetFrameRate = 35;
-
+            Application.targetFrameRate = 10;
         if (Input.GetKeyDown(KeyCode.Alpha2))
-            Application.targetFrameRate = 60;
+            Application.targetFrameRate = 30;
 
         if (Input.GetKeyDown(KeyCode.Alpha3))
+            Application.targetFrameRate = 60;
+
+        if (Input.GetKeyDown(KeyCode.Alpha4))
             Application.targetFrameRate = 144;
 
         if (Input.GetKeyDown(KeyCode.Escape))
