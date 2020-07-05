@@ -27,7 +27,6 @@ public class Spring : MonoBehaviour
             movement.SpringUp(springForce, transform.up);
             animator.SetTrigger("DoSpring");
 
-            Debug.Log($"SPRING@{GameState.live.time.ToString("#.00")}");
             //if (!Netplay.singleton.freezeReplay || !Netplay.singleton.replayMode)
             //   Debug.Break();
 

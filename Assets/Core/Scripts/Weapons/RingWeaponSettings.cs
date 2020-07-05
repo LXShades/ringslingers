@@ -12,6 +12,11 @@ public class RingWeaponSettings : ScriptableObject
     public GameObject prefab;
 
     /// <summary>
+    /// Image representing the weapon in the in-game HUD
+    /// </summary>
+    public Sprite uiIcon;
+
+    /// <summary>
     /// Refire rate of this weapon ring
     /// </summary>
     public float shotsPerSecond = 3f;
@@ -27,14 +32,19 @@ public class RingWeaponSettings : ScriptableObject
     public GameSound despawnSound;
 
     /// <summary>
-    /// Maximum ammunition that can be held for this ring
+    /// How much ammunition should be granted when this weapon is picked up
     /// </summary>
-    public int maxAmmo = 99;
+    public float ammoOnPickup = 10;
 
     /// <summary>
-    /// Maximum time that can be held for this weapon ring, in seconds
+    /// Maximum ammunition that can be held for this weapon ring
     /// </summary>
-    public float maxTime = 99;
+    public float maxAmmo = 99;
+
+    /// <summary>
+    /// If true, ammo is a timer that counts down while the weapon is held
+    /// </summary>
+    public bool ammoIsTime = true;
 
     /// <summary>
     /// Speed of the ring projectile

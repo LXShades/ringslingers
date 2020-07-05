@@ -21,6 +21,9 @@ public class Ring : SyncedObject
     // Components
     private RespawnableItem respawnableItem;
 
+    public delegate void OnPickup(Player player);
+    public OnPickup onPickup;
+
     private float awakeTime;
 
     public override void FrameAwake()
@@ -49,9 +52,10 @@ public class Ring : SyncedObject
 
     private void OnTriggerStay(Collider other)
     {
-        if (other.GetComponent<Player>() && (!isDroppedRing || GameState.live.time - awakeTime >= pickupWarmupDuration))
+        Player otherPlayer = other.GetComponent<Player>();
+        if (otherPlayer && (!isDroppedRing || GameState.live.time - awakeTime >= pickupWarmupDuration))
         {
-            other.GetComponent<Player>().numRings++;
+            otherPlayer.numRings++;
             pickupParticles.SetActive(true);
             pickupParticles.transform.SetParent(null);
 
@@ -61,6 +65,8 @@ public class Ring : SyncedObject
                 respawnableItem.Pickup();
             else
                 GameManager.DestroyObject(gameObject); // we aren't going to respawn here
+
+            onPickup?.Invoke(otherPlayer);
         }
     }
 }

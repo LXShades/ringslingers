@@ -12,6 +12,7 @@ public class GameHUD : MonoBehaviour
     public Text ringsText;
     public Text scoreText;
     public Text timeText;
+    public WeaponSlotUI[] weaponSlots = new WeaponSlotUI[0];
 
     [Header("Scoreboard")]
     public GameObject scoreboard;
@@ -55,6 +56,13 @@ public class GameHUD : MonoBehaviour
         {
             ringsText.text = player.numRings.ToString();
             scoreText.text = player.score.ToString();
+
+            // Weapon stuff
+            RingShooting ringShooting = player.GetComponent<RingShooting>();
+            for (int i = 0; i < ringShooting.equippedWeapons.Count && i < weaponSlots.Length; i++)
+                weaponSlots[i].weapon = ringShooting.equippedWeapons[i];
+            for (int j = ringShooting.equippedWeapons.Count; j < weaponSlots.Length; j++)
+                weaponSlots[j].weapon = null;
 
             // Debug stuff
             if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))

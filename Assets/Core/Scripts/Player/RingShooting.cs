@@ -7,7 +7,17 @@ public class RingShooting : SyncedObject
     /// <summary>
     /// The default weapon to fire
     /// </summary>
-    public RingWeaponSettings currentWeapon;
+    public EquippedRingWeapon defaultWeapon;
+
+    /// <summary>
+    /// The weapon currently equipped to fire
+    /// </summary>
+    public EquippedRingWeapon currentWeapon;
+
+    /// <summary>
+    /// List of weapons that have been picked up
+    /// </summary>
+    public List<EquippedRingWeapon> equippedWeapons = new List<EquippedRingWeapon>();
 
     [Header("Hierarchy")]
     /// <summary>
@@ -40,29 +50,66 @@ public class RingShooting : SyncedObject
 
     public override void FrameUpdate()
     {
-        if (player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.isAutomatic))
+        if (equippedWeapons.Count > 0)
+            currentWeapon = equippedWeapons[equippedWeapons.Count - 1];
+        else
+            currentWeapon = defaultWeapon;
+
+        // Fire weapons if we can
+        if (player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.weaponType.isAutomatic))
         {
-            Debug.Assert(currentWeapon.shotsPerSecond != 0); // division by zero otherwise
+            Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
             
-            // Fire if we can
-            if (GameState.live.time - lastFiredRingTime >= 1f / currentWeapon.shotsPerSecond && player.numRings > 0)
+            if (GameState.live.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
             {
-                GameObject ring = Instantiate(currentWeapon.prefab, spawnPosition.position, Quaternion.identity);
+                GameObject ring = Instantiate(currentWeapon.weaponType.prefab, spawnPosition.position, Quaternion.identity);
                 ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
 
                 Debug.Assert(ringAsThrownRing);
-                ringAsThrownRing.settings = currentWeapon;
+                ringAsThrownRing.settings = currentWeapon.weaponType;
                 ringAsThrownRing.Throw(player, spawnPosition.position, player.aimForward);
 
-                GameSounds.PlaySound(gameObject, currentWeapon.fireSound);
+                GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
                 lastFiredRingTime = GameState.live.time;
+
                 player.numRings--;
+                if (!currentWeapon.weaponType.ammoIsTime)
+                    currentWeapon.ammo--;
 
                 hasFiredOnThisClick = true;
             }
         }
 
+        // Deplete timer-based weapon ammo
+        for (int i = 0; i < equippedWeapons.Count; i++)
+        {
+            if (equippedWeapons[i].weaponType.ammoIsTime)
+                equippedWeapons[i].ammo -= GameState.live.deltaTime;
+        }
+
+        // Remove weapons with no ammo remaining
+        for (int i = 0; i < equippedWeapons.Count; i++)
+        {
+            if (equippedWeapons[i].ammo <= 0)
+                equippedWeapons.RemoveAt(i--);
+        }
+   
         hasFiredOnThisClick &= player.input.btnFire;
+    }
+
+    public void AddWeapon(RingWeaponSettings weaponType)
+    {
+        foreach (EquippedRingWeapon weapon in equippedWeapons)
+        {
+            if (weapon.weaponType == weaponType)
+            {
+                weapon.ammo = Mathf.Min(weapon.ammo + weaponType.ammoOnPickup, weaponType.maxAmmo);
+                return;
+            }
+        }
+
+        // no weapon was found - add to our list
+        equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
     }
 }

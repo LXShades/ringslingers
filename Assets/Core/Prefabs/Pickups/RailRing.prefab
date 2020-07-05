@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 339010217050480060}
   - component: {fileID: 233868881636913150}
   - component: {fileID: 233868881636913151}
+  - component: {fileID: 770095200667727062}
   - component: {fileID: 8745252381286273571}
   - component: {fileID: 233868881636913148}
   m_Layer: 0
@@ -73,6 +74,19 @@ MonoBehaviour:
     volume: 0.3
     pitch: 1
     pitchVariance: 0
+--- !u!114 &770095200667727062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152841599159748358}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b10abaffbd8310f4b86587e6b32bf11b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponType: {fileID: 11400000, guid: 7e46de247a2c11641a827c2545ab70eb, type: 2}
 --- !u!114 &8745252381286273571
 MonoBehaviour:
   m_ObjectHideFlags: 0
