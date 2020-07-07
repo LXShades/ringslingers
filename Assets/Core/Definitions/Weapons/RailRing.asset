@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: RailRing
   m_EditorClassIdentifier: 
   prefab: {fileID: 6167014272590406206, guid: 0f103a358d266f343bae03cac2c1b896, type: 3}
+  uiIcon: {fileID: 21300000, guid: 5ad56314ac868bf47b00391efcc2d7a1, type: 3}
   shotsPerSecond: 0.67
   fireSound:
     clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
@@ -24,8 +25,9 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     pitchVariance: 0
+  ammoOnPickup: 10
   maxAmmo: 99
-  maxTime: 99
+  ammoIsTime: 1
   projectileSpeed: 32.81
   projectileSpinSpeed: 800
   projectileLifetime: 10

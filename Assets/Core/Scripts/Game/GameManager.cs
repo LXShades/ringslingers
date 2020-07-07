@@ -4,6 +4,7 @@ using UnityEngine;
 using MLAPI;
 using System.IO;
 using System;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Game Manager handles references to key local objects and other non-networking stuff
