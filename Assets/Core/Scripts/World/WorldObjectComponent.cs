@@ -113,4 +113,13 @@ public abstract class WorldObjectComponent : SyncedObjectBase
         myDeserializer.Invoke(this, stream);
     }
     #endregion
+
+    public void CloneFrom(WorldObjectComponent source)
+    {
+        Action<object, object> cloner = ClonerGenerator.GetOrCreateCloner(GetType());
+        if (cloner != null)
+        {
+            cloner.Invoke(this, source);
+        }
+    }
 }

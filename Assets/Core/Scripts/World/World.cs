@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.IO;
 using MLAPI.Serialization.Pooled;
 using System;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).
@@ -104,22 +105,20 @@ public class World : MonoBehaviour
         get; private set;
     }
 
-    /// <summary>
-    /// Constructs a new empty World
-    /// </summary>
-    private World()
+    public PhysicsScene physics
     {
+        get; private set;
     }
 
     /// <summary>
-    /// Constructs a new world with a loose copy of another state (TODO) (might not need this tho)
+    /// Constructs a new empty World
     /// </summary>
-    /// <param name="previousState"></param>
-    private World(World source)
+    void Awake()
     {
-        time = source.time;
-        lastPhysicsSimTime = source.lastPhysicsSimTime;
-        preSnapshot = null;
+        Scene myScene = SceneManager.CreateScene($"{gameObject.name}_Scene", new CreateSceneParameters() { localPhysicsMode = LocalPhysicsMode.Physics3D });
+        physics = myScene.GetPhysicsScene();
+
+        SceneManager.MoveGameObjectToScene(gameObject, myScene);
     }
 
     /// <summary>
@@ -355,13 +354,35 @@ public class World : MonoBehaviour
     }
     #endregion
 
-    public void CloneFrom(World other)
+    public void CloneFrom(World source)
     {
         // todo: replace objects of incorrect types
         // todo: remove objects we have that the original doesn't
 
         // Spawn new object we don't have
+        for (int i = worldObjects.Count; i < source.worldObjects.Count; i++)
+        {
+            GameObject obj = Instantiate(source.worldObjects[i].gameObject);
 
+            obj.GetComponent<WorldObject>()._OnCreatedByWorld(this, i);
+            worldObjects.Add(obj.GetComponent<WorldObject>());
+
+            obj.transform.parent = transform;
+
+            // hack
+            Camera cam = obj.GetComponent<Camera>();
+            AudioListener listener = obj.GetComponent<AudioListener>();
+            if (cam && this != World.server)
+                cam.pixelRect = new Rect(Screen.width * 0.75f, Screen.height * 0.75f, Screen.width * 0.25f, Screen.height * 0.25f);
+            if (listener && this != World.server)
+                Destroy(listener);
+        }
+
+        // Copy the object's old state(s)
+        for (int i = 0; i < source.worldObjects.Count; i++)
+        {
+            worldObjects[i].CloneFrom(source.worldObjects[i]);
+        }
     }
 }
 

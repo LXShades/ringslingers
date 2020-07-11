@@ -249,6 +249,9 @@ public class Netplay : MonoBehaviour
 
                 // Tick it locally here for now cuz we want the game to up and do something yknow
                 World.server.Tick(serverTickHistory[0].tick, false);
+
+                //if ((int)(Time.time - Time.deltaTime) != (int)Time.time)
+                    World.simulation.CloneFrom(World.server);
             }
         }
 

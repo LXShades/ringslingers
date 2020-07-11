@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -150,6 +151,19 @@ public class WorldObject : MonoBehaviour
 
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
             objComponent.Deserialize(stream);
+    }
+    #endregion
+
+    #region Cloning
+    public void CloneFrom(WorldObject source)
+    {
+        Debug.Assert(source.worldObjectComponents.Count == worldObjectComponents.Count);
+
+        for (int i = 0; i < worldObjectComponents.Count; i++)
+        {
+            Debug.Assert(worldObjectComponents[i].GetType() == source.worldObjectComponents[i].GetType());
+            worldObjectComponents[i].CloneFrom(source.worldObjectComponents[i]);
+        }
     }
     #endregion
 }

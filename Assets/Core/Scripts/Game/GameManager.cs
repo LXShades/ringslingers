@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            return FindObjectOfType<PlayerCamera>(); // prototyping
+            return System.Array.Find(FindObjectsOfType<PlayerCamera>(), a => a.worldObject.world == World.server); // prototyping
         }
     }
 
