@@ -140,7 +140,7 @@ public class GameState
         List<SyncedObject> syncedObjects = Netplay.singleton.syncedObjects;
         for (int i = 0; i < syncedObjects.Count; i++)
         {
-            if (syncedObjects[i])
+            if (syncedObjects[i] && syncedObjects[i].gameObject.activeInHierarchy && syncedObjects[i].enabled)
             {
                 syncedObjects[i].TriggerStartIfCreated();
                 syncedObjects[i].FrameUpdate();
@@ -149,7 +149,7 @@ public class GameState
 
         for (int i = 0; i < syncedObjects.Count; i++)
         {
-            if (syncedObjects[i])
+            if (syncedObjects[i] && syncedObjects[i].gameObject.activeInHierarchy && syncedObjects[i].enabled)
                 syncedObjects[i].FrameLateUpdate();
         }
 
@@ -173,7 +173,7 @@ public class GameState
         // Transfer information into the next GameState
         GameState nextState = new GameState(currentState);
 
-        nextState.time = /*currentState.time + tick.deltaTime*/tick.time + tick.deltaTime;
+        nextState.time = tick.time + tick.deltaTime;
         nextState.lastPhysicsSimTime = Mathf.Clamp(currentState.lastPhysicsSimTime + physicsFixedDeltaTime * numPhysicsSimsOccurred, // prevent buffering too many sims
                                                     nextState.time - physicsFixedDeltaTime, nextState.time);
         _live = nextState;
@@ -231,7 +231,7 @@ public class GameState
             {
                 SyncedObject obj = Netplay.singleton.syncedObjects[id];
 
-                if (obj == null || obj.isDead)
+                if (obj == null || obj.isDead || !obj.isActiveAndEnabled)
                     continue;
 
                 writer.Write((ushort)id);
