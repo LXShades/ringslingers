@@ -113,12 +113,37 @@ public class World : MonoBehaviour
     /// <summary>
     /// Constructs a new empty World
     /// </summary>
-    void Awake()
+    void Start()
     {
         Scene myScene = SceneManager.CreateScene($"{gameObject.name}_Scene", new CreateSceneParameters() { localPhysicsMode = LocalPhysicsMode.Physics3D });
         physics = myScene.GetPhysicsScene();
 
         SceneManager.MoveGameObjectToScene(gameObject, myScene);
+
+        if (GameManager.singleton.localObjects)
+        {
+            GameObject worldClone = Instantiate(GameManager.singleton.localObjects);
+
+            if (worldClone)
+            {
+                var children = worldClone.GetComponentsInChildren<Component>();
+
+                for (int i = 0; i < children.Length; i++)
+                {
+                    if (children[i] as WorldObject != null)
+                    {
+                        Debug.LogWarning($"Found WorldObject in local object {children[i].gameObject.name}");
+                    }
+
+                    if (children[i] as Renderer != null || children[i] as Light != null || children[i] as ReflectionProbe != null)
+                    {
+                        Destroy(children[i]);
+                    }
+                }
+
+                SceneManager.MoveGameObjectToScene(worldClone, myScene);
+            }
+        }
     }
 
     /// <summary>
@@ -213,7 +238,7 @@ public class World : MonoBehaviour
         {
             if (time - lastPhysicsSimTime >= physicsFixedDeltaTime * i)
             {
-                Physics.Simulate(physicsFixedDeltaTime);
+                physics.Simulate(physicsFixedDeltaTime);
                 numPhysicsSimsOccurred++;
             }
         }
@@ -325,7 +350,7 @@ public class World : MonoBehaviour
     }
     #endregion
 
-    #region SyncedObjects
+    #region WorldObjects
     public GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         GameObject obj = GameObject.Instantiate(prefab, position, rotation);
@@ -334,6 +359,7 @@ public class World : MonoBehaviour
         Debug.Assert(worldObj);
         worldObj._OnCreatedByWorld(this, worldObjects.Count);
         worldObjects.Add(worldObj);
+        worldObj.transform.parent = transform;
         
         return obj;
     }

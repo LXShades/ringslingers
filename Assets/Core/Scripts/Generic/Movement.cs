@@ -68,11 +68,12 @@ public class Movement : WorldObjectComponent
         int numIterations = 2;
         Vector3 currentMovement = offset;
         bool hasHitOccurred = false;
+        PhysicsScene physics = World.live.physics;
 
         for (int iteration = 0; iteration < numIterations; iteration++)
         {
             RaycastHit hit = new RaycastHit();
-            RaycastHit[] hits;
+            RaycastHit[] hits = new RaycastHit[10];
             float movementMagnitude = currentMovement.magnitude;
             float lowestDist = float.MaxValue;
             int lowestHitId = -1;
@@ -82,10 +83,11 @@ public class Movement : WorldObjectComponent
                 if (collider.GetType() == typeof(SphereCollider))
                 {
                     SphereCollider sphere = collider as SphereCollider;
-                    hits = Physics.SphereCastAll(
+                    physics.SphereCast(
                         transform.TransformPoint(sphere.center),
                         sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
-                        currentMovement,
+                        currentMovement.normalized,
+                        hits,
                         movementMagnitude + 0.0001f,
                         blockingCollisionLayers,
                         QueryTriggerInteraction.Ignore);
@@ -96,10 +98,11 @@ public class Movement : WorldObjectComponent
                     Vector3 up = (capsule.direction == 0 ? transform.right : (capsule.direction == 1 ? transform.up : transform.forward)) * (Mathf.Max(capsule.height * 0.5f - capsule.radius, 0));
                     Vector3 center = transform.TransformPoint(capsule.center);
 
-                    hits = Physics.CapsuleCastAll(
+                    physics.CapsuleCast(
                         center + up, center - up,
                         capsule.radius * 0.5f * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
-                        currentMovement,
+                        currentMovement.normalized,
+                        hits,
                         movementMagnitude + 0.0001f,
                         blockingCollisionLayers,
                         QueryTriggerInteraction.Ignore);

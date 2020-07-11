@@ -135,9 +135,12 @@ public class CharacterMovement : WorldObjectComponent
         if (debugDisableCollision)
             return transform.position.y <= 0;
 
-        foreach (var hit in Physics.RaycastAll(transform.position + Vector3.up * 0.1f, -Vector3.up, 0.199f, ~0, QueryTriggerInteraction.Ignore))
+        RaycastHit[] hits = new RaycastHit[10];
+        int numHits = World.live.physics.Raycast(transform.position + Vector3.up * 0.1f, -Vector3.up.normalized, hits, 0.199f, ~0, QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < numHits; i++)
         {
-            if (!hit.collider.GetComponentInParent<Player>())
+            if (!hits[i].collider.GetComponentInParent<Player>())
                 return true;
         }
 

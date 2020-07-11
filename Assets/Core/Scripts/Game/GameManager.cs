@@ -41,6 +41,8 @@ public class GameManager : MonoBehaviour
 
     public float fracunitsPerM = 64;
 
+    public GameObject localObjects;
+
     /// <summary>
     /// The currently active in-game camera
     /// </summary>
