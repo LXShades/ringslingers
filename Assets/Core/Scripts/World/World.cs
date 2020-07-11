@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Runtime.InteropServices;
 using System.IO;
 using MLAPI.Serialization.Pooled;
+using System;
 
 /// <summary>
 /// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).
@@ -12,7 +13,7 @@ using MLAPI.Serialization.Pooled;
 /// Deserializing syncs the frame to the game state while serializing syncs the game state to the frame.
 /// </summary>
 [System.Serializable] // for debugging
-public class GameState
+public class World : MonoBehaviour
 {
     /// <summary>
     /// Time to tick between each physics simulation
@@ -24,24 +25,51 @@ public class GameState
     /// </summary>
     public const int maxPhysicsSimsPerTick = 4;
 
+    /// <summary>
+    /// Last time that a physics sim occurred
+    /// </summary>
     private float lastPhysicsSimTime;
 
     /// <summary>
-    /// The current state of the game (gameObjects) in GameState form
-    /// A snapshot is taken as each new GameState is created, reflecting the pre-tick beginning of the new state
-    /// Changes that occur outside of ticks may not be correctly represented. Be mindful.
+    /// The current state of the game (gameObjects) as simulated. This may switch between server and simulation during ticks
     /// </summary>
-    public static GameState live
+    public static World live { get; private set; }
+
+    /// <summary>
+    /// The current real state of the game according to the server
+    /// </summary>
+    public static World server
     {
         get
         {
-            if (_live == null)
-                _live = new GameState();
+            if (_server == null)
+                _server = new GameObject("WorldServer").AddComponent<World>();
 
-            return _live;
+            return _server;
         }
     }
-    private static GameState _live;
+    private static World _server;
+
+    /// <summary>
+    /// The current simulated state of the game with ping compensation
+    /// </summary>
+    public static World simulation
+    {
+        get
+        {
+            if (_simulation == null)
+                _simulation = new GameObject("WorldSim").AddComponent<World>();
+
+            return _simulation;
+        }
+    }
+    private static World _simulation;
+
+    [Header("Object management")]
+    /// <summary>
+    /// Complete list of syncedObjects in the active scene
+    /// </summary>
+    public List<WorldObject> worldObjects = new List<WorldObject>();
 
     /// <summary>
     /// The accumulated game time at the beginning of this tick
@@ -77,17 +105,17 @@ public class GameState
     }
 
     /// <summary>
-    /// Constructs a new empty GameState
+    /// Constructs a new empty World
     /// </summary>
-    private GameState()
+    private World()
     {
     }
 
     /// <summary>
-    /// Constructs a new state with a loose copy of another state
+    /// Constructs a new world with a loose copy of another state (TODO) (might not need this tho)
     /// </summary>
     /// <param name="previousState"></param>
-    private GameState(GameState source)
+    private World(World source)
     {
         time = source.time;
         lastPhysicsSimTime = source.lastPhysicsSimTime;
@@ -95,16 +123,36 @@ public class GameState
     }
 
     /// <summary>
+    /// Called early on. Initialises stray WorldObjects and attaches them to this world
+    /// </summary>
+    public void CaptureSceneObjects()
+    {
+        World.live = this;
+
+        foreach (WorldObject worldObj in GameObject.FindObjectsOfType<WorldObject>())
+        {
+            if (worldObj.world == null)
+            {
+                worldObj._OnCreatedByWorld(this, worldObjects.Count);
+                worldObjects.Add(worldObj);
+
+                worldObj.transform.SetParent(transform);
+            }
+        }
+    }
+
+    /// <summary>
     /// Advances the game by the given delta time and returns the new tick representing the resulting game state
     /// This causes GameState.live to be replaced with the new state, and may affect all in-game synced objects
     /// </summary>
-    public static GameState Tick(MsgTick tick, bool isResimulation, bool takeSnapshot)
+    public void Tick(MsgTick tick, bool isResimulation)
     {
-        GameState currentState = _live;
+        World.live = this;
 
         // Update timing
-        currentState.deltaTime = tick.deltaTime;
-        currentState.isResimulation = isResimulation;
+        time = tick.time + tick.deltaTime;
+        deltaTime = tick.deltaTime;
+        this.isResimulation = isResimulation;
 
         // Spawn players who are pending a join
         for (int p = 0; p < Netplay.singleton.players.Length; p++)
@@ -137,20 +185,21 @@ public class GameState
         }
 
         // Update game objects
-        List<SyncedObject> syncedObjects = Netplay.singleton.syncedObjects;
-        for (int i = 0; i < syncedObjects.Count; i++)
+        for (int i = 0; i < worldObjects.Count; i++)
         {
-            if (syncedObjects[i] && syncedObjects[i].gameObject.activeInHierarchy && syncedObjects[i].enabled)
+            if (worldObjects[i] && worldObjects[i].gameObject.activeInHierarchy && worldObjects[i].enabled)
             {
-                syncedObjects[i].TriggerStartIfCreated();
-                syncedObjects[i].FrameUpdate();
+                if (worldObjects[i].creationTime == time)
+                    worldObjects[i].FrameStart();
+
+                worldObjects[i].FrameUpdate();
             }
         }
 
-        for (int i = 0; i < syncedObjects.Count; i++)
+        for (int i = 0; i < worldObjects.Count; i++)
         {
-            if (syncedObjects[i] && syncedObjects[i].gameObject.activeInHierarchy && syncedObjects[i].enabled)
-                syncedObjects[i].FrameLateUpdate();
+            if (worldObjects[i] && worldObjects[i].gameObject.activeInHierarchy && worldObjects[i].enabled)
+                worldObjects[i].FrameLateUpdate();
         }
 
         // Simulate physics
@@ -163,73 +212,34 @@ public class GameState
         int numPhysicsSimsOccurred = 0;
         for (int i = 1; i <= maxPhysicsSimsPerTick; i++)
         {
-            if (currentState.time + tick.deltaTime - currentState.lastPhysicsSimTime >= physicsFixedDeltaTime * i)
+            if (time - lastPhysicsSimTime >= physicsFixedDeltaTime * i)
             {
                 Physics.Simulate(physicsFixedDeltaTime);
                 numPhysicsSimsOccurred++;
             }
         }
 
-        // Transfer information into the next GameState
-        GameState nextState = new GameState(currentState);
-
-        nextState.time = tick.time + tick.deltaTime;
-        nextState.lastPhysicsSimTime = Mathf.Clamp(currentState.lastPhysicsSimTime + physicsFixedDeltaTime * numPhysicsSimsOccurred, // prevent buffering too many sims
-                                                    nextState.time - physicsFixedDeltaTime, nextState.time);
-        _live = nextState;
-        _live.preSnapshot = SerializeFromWorld();
-
-        return nextState;
+        lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime + physicsFixedDeltaTime * numPhysicsSimsOccurred, time - physicsFixedDeltaTime*2, time);
     }
 
     #region Serialization
     /// <summary>
-    /// Loads a new state into GameState.live
+    /// Serializes the world and stuff
     /// </summary>
-    public static bool LoadState(GameState state)
-    {
-        if (state.preSnapshot != null)
-        {
-            _live = state;
-            state.preSnapshot.Position = 0;
-            DeserializeToWorld();
-
-            return true;
-        }
-        else
-        {
-            Debug.LogWarning("Cannot deserialize state with no snapshot");
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// Saves a new state from GameState.live
-    /// </summary>
-    /// <returns></returns>
-    public static GameState SaveState()
-    {
-        GameState newState = new GameState(_live);
-
-        newState.preSnapshot = SerializeFromWorld();
-
-        return newState;
-    }
-
-    private static MemoryStream SerializeFromWorld()
+    public MemoryStream Serialize()
     {
         MemoryStream stream = new MemoryStream(1024 * 1024);
 
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
         {
             // temp, probably, or to move. this stuff is needed
-            writer.Write(_live.time);
-            writer.Write(_live.lastPhysicsSimTime);
-            writer.Write(SyncedObject.GetNextId());
+            writer.Write(time);
+            writer.Write(lastPhysicsSimTime);
+            writer.Write(worldObjects.Count);
 
-            for (int id = 0; id < Netplay.singleton.syncedObjects.Count; id++)
+            for (int id = 0; id < worldObjects.Count; id++)
             {
-                SyncedObject obj = Netplay.singleton.syncedObjects[id];
+                WorldObject obj = worldObjects[id];
 
                 if (obj == null || obj.isDead || !obj.isActiveAndEnabled)
                     continue;
@@ -252,63 +262,107 @@ public class GameState
         return stream;
     }
 
-    private static bool DeserializeToWorld()
+    /// <summary>
+    /// Deserializes the world and magic etc
+    /// </summary>
+    /// <param name="stream"></param>
+    /// <returns></returns>
+    public bool Deserialize(Stream stream)
     {
-        Stream stream = _live.preSnapshot;
-
-        if (stream == null || stream.Length <= stream.Position)
+        if (stream == null || stream.Position >= stream.Length)
         {
-            Debug.LogWarning("Stream has ended before Frame.Deserialize - forgot to reset position?");
+            Debug.LogWarning("Stream is zero - did you forget to reset position?");
             return false;
         }
 
         using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.UTF8, true))
         {
             // Read in the objects
-            int oldNextId = SyncedObject.GetNextId();
+            int objCount;
+            time = reader.ReadSingle();
+            lastPhysicsSimTime = reader.ReadSingle();
+            objCount = reader.ReadInt32();
 
-            _live.time = reader.ReadSingle();
-            _live.lastPhysicsSimTime = reader.ReadSingle();
-            SyncedObject.RevertNextId(reader.ReadInt32());
+            if (objCount < worldObjects.Count)
+            {
+                // Destroy objects that didn't exist yet I guessssss
+                for (int i = objCount; i < worldObjects.Count; i++)
+                {
+                    if (!worldObjects[i].isDead)
+                    {
+                        if (worldObjects[i].GetComponent<Player>() != null)
+                            continue; // don't delete players now
+
+                        DestroyObject(worldObjects[i].gameObject);
+                    }
+                }
+
+                worldObjects.RemoveRange(objCount, worldObjects.Count - objCount);
+            }
 
             int lastObjId = -1;
             for (ushort objId = reader.ReadUInt16(); objId != 65535; objId = reader.ReadUInt16())
             {
                 int size = reader.ReadInt16();
 
-                if (Netplay.singleton.syncedObjects[objId].isDead)
-                    GameManager.RestoreObject(Netplay.singleton.syncedObjects[objId].gameObject);
+                if (worldObjects[objId].isDead)
+                    RestoreObject(worldObjects[objId].gameObject);
                 for (ushort cleanup = (ushort)(lastObjId + 1); cleanup < objId; cleanup++)
                 {
-                    if (Netplay.singleton.syncedObjects[objId] && !Netplay.singleton.syncedObjects[objId].isDead)
-                        GameManager.DestroyObject(Netplay.singleton.syncedObjects[objId].gameObject);
+                    if (worldObjects[objId] && !worldObjects[objId].isDead)
+                        DestroyObject(worldObjects[objId].gameObject);
                 }
 
-                if (Netplay.singleton.syncedObjects[objId])
-                    Netplay.singleton.syncedObjects[objId].Deserialize(reader);
+                if (worldObjects[objId])
+                    worldObjects[objId].Deserialize(reader);
                 else
                     stream.Position += size;
 
                 lastObjId = objId;
-            }
-
-            // Delete objects that didn't exist yet (with a cheap deactivate/activate hack)
-            for (int i = SyncedObject.GetNextId(); i < oldNextId; i++)
-            {
-                Debug.Assert(Netplay.singleton.syncedObjects[i]);
-                if (!Netplay.singleton.syncedObjects[i].isDead)
-                {
-                    if (Netplay.singleton.syncedObjects[i].GetComponent<Player>() != null)
-                        continue; // don't delete players now
-
-                    GameManager.DestroyObject(Netplay.singleton.syncedObjects[i].gameObject);
-                }
             }
         }
 
         return true;
     }
     #endregion
+
+    #region SyncedObjects
+    public GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation)
+    {
+        GameObject obj = GameObject.Instantiate(prefab, position, rotation);
+        WorldObject worldObj = obj.GetComponent<WorldObject>();
+
+        Debug.Assert(worldObj);
+        worldObj._OnCreatedByWorld(this, worldObjects.Count);
+        worldObjects.Add(worldObj);
+        
+        return obj;
+    }
+
+    public void DestroyObject(GameObject obj)
+    {
+        WorldObject worldObj = obj.GetComponent<WorldObject>();
+
+        worldObj._OnDestroyedByWorld(this);
+        worldObjects[worldObj.objId] = null;
+    }
+
+    public void RestoreObject(GameObject obj)
+    {
+        WorldObject worldObj = obj.GetComponent<WorldObject>();
+
+        worldObj._OnRestoredByWorld(this);
+    }
+    #endregion
+
+    public void CloneFrom(World other)
+    {
+        // todo: replace objects of incorrect types
+        // todo: remove objects we have that the original doesn't
+
+        // Spawn new object we don't have
+
+    }
 }
 
 [System.Serializable]

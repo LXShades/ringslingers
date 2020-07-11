@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RingShooting : SyncedObject
+public class RingShooting : WorldObjectComponent
 {
     /// <summary>
     /// The default weapon to fire
@@ -60,9 +60,9 @@ public class RingShooting : SyncedObject
         {
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
             
-            if (GameState.live.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
+            if (World.live.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
             {
-                GameObject ring = Instantiate(currentWeapon.weaponType.prefab, spawnPosition.position, Quaternion.identity);
+                GameObject ring = GameManager.SpawnObject(currentWeapon.weaponType.prefab, spawnPosition.position, Quaternion.identity);
                 ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
 
                 Debug.Assert(ringAsThrownRing);
@@ -71,7 +71,7 @@ public class RingShooting : SyncedObject
 
                 GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
-                lastFiredRingTime = GameState.live.time;
+                lastFiredRingTime = World.live.time;
 
                 player.numRings--;
                 if (!currentWeapon.weaponType.ammoIsTime)
@@ -85,7 +85,7 @@ public class RingShooting : SyncedObject
         for (int i = 0; i < equippedWeapons.Count; i++)
         {
             if (equippedWeapons[i].weaponType.ammoIsTime)
-                equippedWeapons[i].ammo -= GameState.live.deltaTime;
+                equippedWeapons[i].ammo -= World.live.deltaTime;
         }
 
         // Remove weapons with no ammo remaining

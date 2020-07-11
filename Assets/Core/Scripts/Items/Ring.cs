@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Ring : SyncedObject
+public class Ring : WorldObjectComponent
 {
     [Header("Ring")]
     [Tooltip("Speed that this ring spins at, in degrees per second")] public float spinSpeed = 180;
@@ -29,7 +29,7 @@ public class Ring : SyncedObject
     public override void FrameAwake()
     {
         respawnableItem = GetComponent<RespawnableItem>();
-        awakeTime = GameState.live.time;
+        awakeTime = World.live.time;
     }
 
     public override void FrameStart()
@@ -47,13 +47,13 @@ public class Ring : SyncedObject
         base.FrameUpdate();
 
         // Spinny spin
-        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * GameState.live.deltaTime, 0));
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * World.live.deltaTime, 0));
     }
 
     private void OnTriggerStay(Collider other)
     {
         Player otherPlayer = other.GetComponent<Player>();
-        if (otherPlayer && (!isDroppedRing || GameState.live.time - awakeTime >= pickupWarmupDuration))
+        if (otherPlayer && (!isDroppedRing || World.live.time - awakeTime >= pickupWarmupDuration))
         {
             otherPlayer.numRings++;
             pickupParticles.SetActive(true);

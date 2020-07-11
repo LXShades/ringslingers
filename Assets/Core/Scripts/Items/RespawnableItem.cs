@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using UnityEngine;
 
-public class RespawnableItem : SyncedObject
+public class RespawnableItem : WorldObjectComponent
 {
     public float respawnCountdownTimer
     {
@@ -29,7 +29,7 @@ public class RespawnableItem : SyncedObject
     {
         if (respawnCountdownTimer > 0)
         {
-            respawnCountdownTimer = Mathf.Max(respawnCountdownTimer - GameState.live.deltaTime, 0);
+            respawnCountdownTimer = Mathf.Max(respawnCountdownTimer - World.live.deltaTime, 0);
 
             if (respawnCountdownTimer <= 0)
                 Respawn();

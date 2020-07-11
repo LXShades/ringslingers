@@ -87,6 +87,11 @@ public class GameManager : MonoBehaviour
             Netplay.singleton.ConnectToServer(commandLine[connectIndex + 1]);
         else
             Netplay.singleton.CreateServer();
+
+        // Setup the main world with the scene objects
+        World.server.CaptureSceneObjects();
+
+        World.simulation.CloneFrom(World.server);
     }
 
     void Update()
@@ -98,35 +103,46 @@ public class GameManager : MonoBehaviour
         RunDebugCommands();
     }
 
+    #region ObjectManagement
+    public static GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation)
+    {
+        if (World.live != null)
+        {
+            return World.live.SpawnObject(prefab, position, rotation);
+        }
+        else
+        {
+            return Instantiate(prefab, position, rotation);
+        }
+    }
+
+    public static GameObject SpawnObject(GameObject prefab)
+    {
+        if (World.live != null)
+        {
+            return World.live.SpawnObject(prefab, Vector3.zero, Quaternion.identity);
+        }
+        else
+        {
+            return Instantiate(prefab, Vector3.zero, Quaternion.identity);
+        }
+    }
+
     public static void DestroyObject(GameObject obj)
     {
-        foreach (SyncedObject synced in obj.GetComponentsInChildren<SyncedObject>())
+        if (World.live != null)
         {
-            //Netplay.singleton.UnregisterSyncedObject(synced);
-            synced.FlagAsDestroyed();
+            World.live.DestroyObject(obj);
         }
-
-        /*foreach (Collider collider in obj.GetComponentsInChildren<Collider>())
+        else
         {
-            collider.enabled = false; // collisions can occur with destroyed objects! during resimulation
-        }*/
-
-        obj.SetActive(false);
-    }
-
-    public static void RestoreObject(GameObject obj)
-    {
-        foreach (SyncedObject synced in obj.GetComponentsInChildren<SyncedObject>())
-        {
-            //Netplay.singleton.UnregisterSyncedObject(synced);
-            synced.FlagAsRestored();
+            Destroy(obj); // todo
         }
-
-        obj.SetActive(true);
     }
+    #endregion
 
     #region Debug
-    GameState tempSave;
+    MemoryStream tempSave;
 
     void RunDebugCommands()
     {
@@ -156,13 +172,14 @@ public class GameManager : MonoBehaviour
         // Press F1 to save a state
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            tempSave = GameState.SaveState();
-            Debug.Log($"Serialized {tempSave.preSnapshot.Length} bytes!");
+            tempSave = World.server.Serialize();
+            Debug.Log($"Serialized {tempSave.Length} bytes!");
         }
 
         if (Input.GetKeyDown(KeyCode.F2) && tempSave != null)
         {
-            GameState.LoadState(tempSave);
+            tempSave.Position = 0;
+            World.server.Deserialize(tempSave);
         }
     }
     #endregion

@@ -45,7 +45,7 @@ public class ThrownRingRail : ThrownRing
             closestPlayer.Hurt(owner.gameObject);
         }
 
-        if (!GameState.live.isResimulation)
+        if (!World.live.isResimulation)
         {
             // release the particles so they won't be despawned
             particles.transform.SetParent(null, true);

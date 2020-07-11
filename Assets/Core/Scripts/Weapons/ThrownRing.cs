@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ThrownRing : SyncedObject
+public class ThrownRing : WorldObjectComponent
 {
     [HideInInspector] public RingWeaponSettings settings;
 
@@ -29,7 +29,7 @@ public class ThrownRing : SyncedObject
     public override void FrameUpdate()
     {
         // Spin
-        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * GameState.live.deltaTime, spinAxis);
+        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * World.live.deltaTime, spinAxis);
 
         // Move
         //transform.position += velocity * Frame.local.deltaTime;

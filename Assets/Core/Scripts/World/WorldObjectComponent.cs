@@ -15,6 +15,8 @@ using System.Runtime.CompilerServices;
 
 public abstract class SyncedObjectBase : MonoBehaviour
 {
+    protected virtual void Awake() { }
+
     protected virtual void Start() { }
 
     protected virtual void Update() { }
@@ -23,23 +25,18 @@ public abstract class SyncedObjectBase : MonoBehaviour
 
 }
 
-public abstract class SyncedObject : SyncedObjectBase
+/// <summary>
+/// A WorldObject component is a part of a worldobject that can be ticked and rewinded
+/// </summary>
+public abstract class WorldObjectComponent : SyncedObjectBase
 {
-    private bool hasCalledStart = false;
-
-    private int _id;
-
-    public int syncedId => _id;
-
-    private static int nextId = 0;
-
-    public bool isDead
-    {
-        get; private set;
-    }
-
     private Action<object, BinaryWriter> mySerializer;
     private Action<object, BinaryReader> myDeserializer;
+
+    /// <summary>
+    /// The WorldObject that this is a part of
+    /// </summary>
+    public WorldObject worldObject {get; private set;}
 
     /// <summary>
     /// How many sync packets will be sent for this object, per second
@@ -51,32 +48,13 @@ public abstract class SyncedObject : SyncedObjectBase
     protected override sealed void Start() { }
     protected override sealed void Update() { }
     protected override sealed void LateUpdate() { }
-
-    #region UnityFuncs
-    /// <summary>
-    /// Initial setup on creation
-    /// </summary>
-    protected virtual void Awake()
+    protected override sealed void Awake()
     {
-        _id = nextId++;
+        worldObject = GetComponentInParent<WorldObject>();
 
-        // Register the object to the thingy thing
-        if (Netplay.singleton)
-            Netplay.singleton.RegisterSyncedObject(this);
-
-        // Call Awake proper real-like
-        FrameAwake();
+        if (worldObject == null)
+            Debug.LogError($"WorldObjectComponent needs a WorldObject parent! {name}");
     }
-
-    private void OnDestroy()
-    {
-        if (!isDead && GameManager.singleton) // GameManager.singleton indicates whether the game is ending
-        {
-            Debug.LogError("Synced objects should be destroyed with GameManager.DestroyObject");
-            Debug.Break();
-        }
-    }
-    #endregion
 
     #region EventFunctions
     /// <summary>
@@ -110,32 +88,6 @@ public abstract class SyncedObject : SyncedObjectBase
     public virtual void ReadSyncer(System.IO.Stream stream) { return; }
     #endregion
 
-    #region CreationFlags
-    public void TriggerStartIfCreated()
-    { 
-        if (!hasCalledStart)
-        {
-            FrameStart();
-            hasCalledStart = true;
-        }
-    }
-
-    public void FlagAsCreated()
-    {
-        hasCalledStart = false;
-    }
-
-    public void FlagAsDestroyed()
-    {
-        isDead  = true;
-    }
-
-    public void FlagAsRestored()
-    {
-        isDead = false;
-    }
-    #endregion
-
     #region Serialization
     public virtual void Serialize(BinaryWriter stream)
     {
@@ -146,7 +98,6 @@ public abstract class SyncedObject : SyncedObjectBase
         }
 
         // And run it
-        stream.Write((byte)(hasCalledStart ? 1 : 0));
         mySerializer.Invoke(this, stream);
     }
 
@@ -159,24 +110,7 @@ public abstract class SyncedObject : SyncedObjectBase
         }
 
         // And run it
-        hasCalledStart = stream.ReadByte() > 0;
         myDeserializer.Invoke(this, stream);
     }
     #endregion
-
-    /// <summary>
-    /// Reverts the nextId to a given value
-    /// Please don't call this unless you know what you're doing
-    /// </summary>
-    /// <param name="newNextId"></param>
-    public static void RevertNextId(int newNextId)
-    {
-        Debug.Assert(newNextId <= nextId);
-        nextId = newNextId;
-    }
-
-    public static int GetNextId()
-    {
-        return nextId;
-    }
 }

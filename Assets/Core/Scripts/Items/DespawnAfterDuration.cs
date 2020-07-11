@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DespawnAfterDuration : SyncedObject
+public class DespawnAfterDuration : WorldObjectComponent
 {
     [Header("Despawn timing")]
     public float timeUntilDespawn = 1f;
@@ -28,14 +28,14 @@ public class DespawnAfterDuration : SyncedObject
     public override void FrameUpdate()
     {
         // Countdown!
-        despawnTimeRemaining -= GameState.live.deltaTime;
+        despawnTimeRemaining -= World.live.deltaTime;
 
         // Blink!
         if (renderer)
         {
             float rate = blinkRateOverTime.Evaluate(timeUntilDespawn - despawnTimeRemaining);
 
-            perBlinkTimer += GameState.live.deltaTime;
+            perBlinkTimer += World.live.deltaTime;
 
             if (rate > 0)
             {

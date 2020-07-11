@@ -91,7 +91,7 @@ public class SerializerGenerator
                         GenerateStreamWriterForType(stream, Expression.Field(value, "w"), typeof(float))
                     );
                 }
-                else if (type.IsSubclassOf(typeof(SyncedObject)))
+                else if (type.IsSubclassOf(typeof(WorldObjectComponent)))
                 {
                     // Write the syncedobject ID
                     return Expression.Condition(
@@ -160,7 +160,7 @@ public class SerializerGenerator
                                 );
                     }
                 }
-                else if (type.IsSubclassOf(typeof(SyncedObject)))
+                else if (type.IsSubclassOf(typeof(WorldObjectComponent)))
                 {
                     // read the syncedobject and look it up in Netplay.singleton.syncedObjects
                     ParameterExpression objId = Expression.Variable(typeof(int));

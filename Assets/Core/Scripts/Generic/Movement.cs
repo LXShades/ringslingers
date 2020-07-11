@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Animations;
 
-public class Movement : SyncedObject
+public class Movement : WorldObjectComponent
 {
     [Header("Collision")]
     [Header("Note: Colliders cannot currently rotate")]
@@ -37,12 +37,12 @@ public class Movement : SyncedObject
         if (!useManualPhysics)
         {
             // Do le gravity
-            velocity.y -= GameManager.singleton.gravity * GameState.live.deltaTime * gravityMultiplier;
+            velocity.y -= GameManager.singleton.gravity * World.live.deltaTime * gravityMultiplier;
 
             // Do le move
             RaycastHit hit;
 
-            if (Move(velocity * GameState.live.deltaTime, out hit))
+            if (Move(velocity * World.live.deltaTime, out hit))
             {
                 Vector3 resistanceVector = hit.normal * (-Vector3.Dot(hit.normal, velocity) * (1f + bounceFactor));
                 Vector3 frictionVector = -velocity * bounceFriction;

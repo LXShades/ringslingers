@@ -25,7 +25,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
         if (Netplay.singleton.serverTickHistory.Count == 0)
             return;
 
-        float maxTime = Mathf.Max(Netplay.singleton.serverTickHistory[0].tick.time, GameState.live.time), minTime = 0;
+        float maxTime = Mathf.Max(Netplay.singleton.serverTickHistory[0].tick.time, World.live.time), minTime = 0;
 
         minTime = Mathf.Floor(maxTime / timePeriod) * timePeriod;
         maxTime = Mathf.Ceil(maxTime / timePeriod) * timePeriod;
@@ -35,14 +35,14 @@ public class DebugTickTimelineHUD : MonoBehaviour
 
         if ((int)(Time.time/2) != (int)((Time.time - Time.deltaTime)/2))
         {
-            timeOffset = GameState.live.time - Time.time;
+            timeOffset = World.live.time - Time.time;
         }
 
         earlyTime.text = minTime.ToString();
         lateTime.text = maxTime.ToString();
 
         serverTick.rectTransform.anchorMin = serverTick.rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, Netplay.singleton.lastProcessedServerTick.time + Netplay.singleton.lastProcessedServerTick.deltaTime), serverTick.rectTransform.anchorMin.y);
-        liveTick.rectTransform.anchorMin = liveTick.rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, GameState.live.time), liveTick.rectTransform.anchorMin.y);
+        liveTick.rectTransform.anchorMin = liveTick.rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, World.live.time), liveTick.rectTransform.anchorMin.y);
 
         if (allServerTicks.Count < Netplay.singleton.serverTickHistory.Count)
         {

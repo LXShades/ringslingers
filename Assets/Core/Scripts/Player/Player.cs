@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Player : SyncedObject
+public class Player : WorldObjectComponent
 {
     [Header("Player info")]
     /// <summary>
@@ -84,11 +84,11 @@ public class Player : SyncedObject
         // Invincibility blinky
         if (invincibilityTimeRemaining > 0)
         {
-            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - GameState.live.deltaTime, 0);
+            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - World.live.deltaTime, 0);
 
             Renderer renderer = GetComponentInChildren<Renderer>();
             if (renderer && invincibilityTimeRemaining > 0)
-                renderer.enabled = ((int)(GameState.live.time * hitInvincibilityBlinkRate) & 1) == 0;
+                renderer.enabled = ((int)(World.live.time * hitInvincibilityBlinkRate) & 1) == 0;
             else
                 renderer.enabled = true; // we finished blinky blinkying
         }
@@ -156,7 +156,7 @@ public class Player : SyncedObject
             for (int i = 0; i < currentNumToDrop; i++)
             {
                 float horizontalAngle = i * Mathf.PI * 2f / Mathf.Max(currentNumToDrop - 1, 1) + angleOffset;
-                Movement ringMovement = Instantiate(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
+                Movement ringMovement = GameManager.SpawnObject(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
 
                 Debug.Assert(ringMovement);
                 ringMovement.velocity = new Vector3(Mathf.Sin(horizontalAngle) * horizontalVelocity, verticalVelocity, Mathf.Cos(horizontalAngle) * horizontalVelocity);
