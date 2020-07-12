@@ -16,13 +16,13 @@ public class Ring : WorldObjectComponent
     [Header("Hierarchy")]
     public GameObject pickupParticles;
 
-    public GameSound pickupSound = new GameSound();
+    [WorldIgnoreReference] public GameSound pickupSound = new GameSound();
 
     // Components
     private RespawnableItem respawnableItem;
 
     public delegate void OnPickup(Player player);
-    public OnPickup onPickup;
+    [WorldIgnoreReference] public OnPickup onPickup;
 
     private float awakeTime;
 

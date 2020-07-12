@@ -14,11 +14,87 @@ public static class ClonerGenerator
 
     private static Dictionary<string, string> clonerInfoByType = new Dictionary<string, string>();
 
-    public static Expression CloneMember(Expression target, Expression source, Expression targetWorld, Expression sourceWorld, Type type)
+    [System.NonSerialized] public static Dictionary<object, object> sourceToTargetReference = new Dictionary<object, object>(97 /* prime */);
+
+    public static void CloneReference<T>(T target, T source) where T : class, new()
+    {
+        object existingInstance;
+
+        if (sourceToTargetReference.TryGetValue(source, out existingInstance))
+            target = (T)existingInstance;
+        else
+        {
+            target = new T();
+
+            sourceToTargetReference[source] = target;
+            GetOrCreateCloner(typeof(T)).Invoke(target, source);
+        }
+    }
+
+    /// <summary>
+    /// Performs a value type-style clone of source to target. Assumes both to be non-null because null lists are kind of _evil_ anyway
+    /// </summary>
+    public static void CloneList<T>(List<T> target, List<T> source) where T: class, new()
+    {
+        Debug.Assert(target != null && source != null);
+
+        if (target.Count > source.Count)
+        {
+            target.RemoveRange(source.Count, target.Count - source.Count);
+        }
+        else if (source.Count > target.Count)
+        {
+            if (target.Capacity < source.Count)
+                target.Capacity = source.Count;
+
+            for (int i = target.Count, e = source.Count; i < e; i++)
+                target.Add(default(T));
+        }
+
+        if (typeof(T).IsValueType) // this won't happen yet, todo
+        {
+            for (int i = 0; i < source.Count; i++)
+            {
+                target[i] = source[i];
+            }
+        }
+        else
+        {
+            for (int i = 0; i < source.Count; i++)
+            {
+                if (source[i] != null)
+                {
+                    object newTarget;
+                    if (sourceToTargetReference.TryGetValue(source[i], out newTarget))
+                    {
+                        // reuse the instance we created earlier
+                        target[i] = (T)newTarget;
+                    }
+                    else
+                    {
+                        // instantiate and clone the class
+                        if (target[i] == null)
+                            target[i] = new T();
+
+                        sourceToTargetReference[source[i]] = target[i];
+                        GetOrCreateCloner(typeof(T)).Invoke(target[i], source[i]);
+                    }
+                }
+                else
+                    target[i] = null;
+            }
+        }
+    }
+
+    public static Expression CloneMember(Expression target, Expression source, Expression targetWorld, Expression sourceWorld, Type type, MemberInfo owner = null)
     {
         Expression output = null;
 
         if (type.IsValueType)
+        {
+            output = Expression.Assign(target, source);
+        }
+        else if (type == typeof(string))
         {
             output = Expression.Assign(target, source);
         }
@@ -75,6 +151,31 @@ public static class ClonerGenerator
                 ) // if (targetAsWorldObject != null) target = targetAsWorldObject.gameObject else target = source
             );
         }
+        else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            output = Expression.Call(typeof(ClonerGenerator).GetMethod("CloneList").MakeGenericMethod(type.GenericTypeArguments[0]), target, source);
+        }
+        else if (type.IsClass)
+        {
+            if (owner != null && owner.CustomAttributes.Any(a => a.AttributeType == typeof(WorldSharedReferenceAttribute)))
+            {
+                // share the reference
+                output = Expression.Assign(target, source);
+            }
+            else if (owner != null && owner.CustomAttributes.Any(a => a.AttributeType == typeof(WorldIgnoreReferenceAttribute)))
+            {
+                // ignore it
+            }
+            else if (type.GetCustomAttribute(typeof(WorldClonableAttribute)) != null)
+            {
+                // clone it :)
+                output = Expression.Call(typeof(ClonerGenerator).GetMethod("CloneReference").MakeGenericMethod(type), target, source);
+            }
+            else
+            {
+                Debug.LogWarning($"Class reference {owner?.DeclaringType.Name}.{owner?.Name} does not specify a cloning action. Use WorldSharedReference, WorldIgnoreReference, or make the class WorldClonable.");
+            }
+        }
 
         return output;
     }
@@ -90,8 +191,14 @@ public static class ClonerGenerator
         Expression sourceWorld = null;
         Expression targetWorld = null;
 
+        // cache some conversions
         function.Add(Expression.Assign(source, Expression.Convert(sourceGeneric, type)));
         function.Add(Expression.Assign(target, Expression.Convert(targetGeneric, type)));
+        
+        // clear class instance dictionary
+        function.Add(Expression.Call(
+            Expression.MakeMemberAccess(null, typeof(ClonerGenerator).GetField("sourceToTargetReference")), typeof(Dictionary<object, object>).GetMethod("Clear")
+        ));
 
         if (type.IsSubclassOf(typeof(WorldObjectComponent)))
         {
@@ -99,6 +206,8 @@ public static class ClonerGenerator
             targetWorld = Expression.PropertyOrField(Expression.PropertyOrField(target, "worldObject"), "world");
         }
 
+        // copy members
+        // todo: things with 'new' override keyword are ignored
         MemberInfo[] members = type.GetMembers(BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
         foreach (MemberInfo member in members)
@@ -108,7 +217,7 @@ public static class ClonerGenerator
 
             Type memberType = (member.MemberType == MemberTypes.Field ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType);
 
-            Expression cloner = CloneMember(Expression.PropertyOrField(target, member.Name), Expression.PropertyOrField(source, member.Name), targetWorld, sourceWorld, memberType);
+            Expression cloner = CloneMember(Expression.PropertyOrField(target, member.Name), Expression.PropertyOrField(source, member.Name), targetWorld, sourceWorld, memberType, member);
 
             if (cloner != null)
             {
@@ -117,16 +226,20 @@ public static class ClonerGenerator
             }
         }
 
-        function.Add(Expression.Assign(
-            Expression.PropertyOrField(Expression.PropertyOrField(target, "transform"), "position"),
-            Expression.PropertyOrField(Expression.PropertyOrField(source, "transform"), "position")
-            )
-        );
-        function.Add(Expression.Assign(
-            Expression.PropertyOrField(Expression.PropertyOrField(target, "transform"), "rotation"),
-            Expression.PropertyOrField(Expression.PropertyOrField(source, "transform"), "rotation")
-            )
-        );
+        // copy transform
+        if (type.IsSubclassOf(typeof(WorldObjectComponent)))
+        {
+            function.Add(Expression.Assign(
+                Expression.PropertyOrField(Expression.PropertyOrField(target, "transform"), "position"),
+                Expression.PropertyOrField(Expression.PropertyOrField(source, "transform"), "position")
+                )
+            );
+            function.Add(Expression.Assign(
+                Expression.PropertyOrField(Expression.PropertyOrField(target, "transform"), "rotation"),
+                Expression.PropertyOrField(Expression.PropertyOrField(source, "transform"), "rotation")
+                )
+            );
+        }
 
         clonerInfoByType[type.Name] = string.Join(", ", affectedVariables);
 

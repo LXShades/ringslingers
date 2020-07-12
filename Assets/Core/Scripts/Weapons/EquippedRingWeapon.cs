@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
+[System.Serializable, WorldClonable]
 public class EquippedRingWeapon
 {
     /// <summary>
     /// The type of weapon this is an instance of
     /// </summary>
-    public RingWeaponSettings weaponType;
+    [WorldSharedReference] public RingWeaponSettings weaponType;
 
     /// <summary>
     /// Current ammo or time remaining for this weapon

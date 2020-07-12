@@ -98,7 +98,7 @@ public class GameHUD : MonoBehaviour
                 if (scoreboardPlayer == null)
                     break;
 
-                scoreboardNames.text += $"{scoreboardPlayer.name}\n";
+                scoreboardNames.text += $"{scoreboardPlayer.playerName}\n";
                 scoreboardScores.text += $"{scoreboardPlayer.score}\n";
             }
         }

@@ -17,12 +17,12 @@ public class DespawnAfterDuration : WorldObjectComponent
     public GameSound despawnSound = new GameSound();
 
     // Components
-    private Renderer renderer;
+    private Renderer myRenderer;
 
     public override void FrameAwake()
     {
         despawnTimeRemaining = timeUntilDespawn;
-        renderer = GetComponent<Renderer>();
+        myRenderer = GetComponent<Renderer>();
     }
 
     public override void FrameUpdate()
@@ -31,7 +31,7 @@ public class DespawnAfterDuration : WorldObjectComponent
         despawnTimeRemaining -= World.live.deltaTime;
 
         // Blink!
-        if (renderer)
+        if (myRenderer)
         {
             float rate = blinkRateOverTime.Evaluate(timeUntilDespawn - despawnTimeRemaining);
 
@@ -41,13 +41,13 @@ public class DespawnAfterDuration : WorldObjectComponent
             {
                 if (perBlinkTimer >= 1f / rate)
                 {
-                    renderer.enabled = !renderer.enabled;
+                    myRenderer.enabled = !myRenderer.enabled;
                     perBlinkTimer = 0f;
                 }
             }
             else
             {
-                renderer.enabled = true;
+                myRenderer.enabled = true;
             }
         }
 

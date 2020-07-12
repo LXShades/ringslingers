@@ -8,7 +8,7 @@ public class Player : WorldObjectComponent
     /// <summary>
     /// Name of this player. By default, all players are Fred.
     /// </summary>
-    public new string name = "Fred";
+    public string playerName = "Fred";
 
     /// <summary>
     /// Player ID
@@ -176,7 +176,7 @@ public class Player : WorldObjectComponent
         string updatedName = newName;
         int currentSuffix = 0;
 
-        while (System.Array.Exists(worldObject.world.players, a => a != null && a != this && a.name == updatedName))
+        while (System.Array.Exists(worldObject.world.players, a => a != null && a != this && a.playerName == updatedName))
         {
             if (currentSuffix < nameSuffices.Length)
                 updatedName = newName + nameSuffices[currentSuffix++];
@@ -184,6 +184,6 @@ public class Player : WorldObjectComponent
                 updatedName = newName + nameSuffices[currentSuffix / nameSuffices.Length] + nameSuffices[currentSuffix % nameSuffices.Length]; // crap lol itll be fine ok
         }
 
-        name = updatedName;
+        playerName = updatedName;
     }
 }
