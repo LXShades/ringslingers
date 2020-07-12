@@ -397,10 +397,27 @@ public class World : MonoBehaviour
     /// </summary>
     public WorldObject FindEquivalentWorldObject(WorldObject obj)
     {
-        if (obj.objId >= 0 && obj.objId < worldObjects.Count)
+        int id = obj.objId;
+        if (id >= 0 && id < worldObjects.Count && worldObjects[id] && !worldObjects[id].isDead)
             return worldObjects[obj.objId];
         else
             return null;
+    }
+
+    public WorldObjectComponent FindEquivalentWorldObjectComponent(WorldObjectComponent obj)
+    {
+        int id = obj.worldObject.objId;
+        if (id >= 0 && id < worldObjects.Count && worldObjects[id] && !worldObjects[id].isDead)
+        {
+            int componentIndex = obj.worldObject.worldObjectComponents.IndexOf(obj);
+
+            Debug.Assert(componentIndex != -1);
+            return worldObjects[id].worldObjectComponents[componentIndex];
+        }
+        else
+        {
+            return null;
+        }
     }
     #endregion
 
@@ -448,28 +465,54 @@ public class World : MonoBehaviour
 
     public void CloneFrom(World source)
     {
-        // todo: replace objects of incorrect types
-        // todo: remove objects we have that the original doesn't
-
-        // Spawn new object we don't have
-        for (int i = worldObjects.Count; i < source.worldObjects.Count; i++)
-        {
-            GameObject obj = Instantiate(source.worldObjects[i].gameObject);
-
-            obj.GetComponent<WorldObject>()._OnCreatedByWorld(this, i);
-            worldObjects.Add(obj.GetComponent<WorldObject>());
-
-            obj.transform.parent = transform;
-
-            Player player = obj.GetComponent<Player>();
-            if (player)
-                players[player.playerId] = player;
-        }
-
-        // Copy the object's old state(s)
+        // Spawn new objects we don't have (do this for all objects first so that references can be resolved when CloneFrom is called)
         for (int i = 0; i < source.worldObjects.Count; i++)
         {
-            worldObjects[i].CloneFrom(source.worldObjects[i]);
+            if ((i >= worldObjects.Count || worldObjects[i] == null) && source.worldObjects[i])
+            {
+                GameObject obj = Instantiate(source.worldObjects[i].gameObject);
+                WorldObject worldObj = obj.GetComponent<WorldObject>();
+
+                worldObj._OnCreatedByWorld(this, i);
+                obj.transform.parent = transform;
+
+                // add to the list
+                if (i == worldObjects.Count)
+                    worldObjects.Add(obj.GetComponent<WorldObject>());
+                else
+                    worldObjects[i] = worldObj;
+
+                // Relink player references
+                Player player = obj.GetComponent<Player>();
+                if (player)
+                    players[player.playerId] = player;
+            }
+        }
+
+        // Copy the object's state(s)
+        for (int i = 0; i < source.worldObjects.Count; i++)
+        {
+            if (source.worldObjects[i] && !source.worldObjects[i].isDead)
+                worldObjects[i].CloneFrom(source.worldObjects[i]);
+        }
+
+        // Remove objects that we have that the original doesn't
+        for (int i = 0; i < worldObjects.Count; i++)
+        {
+            if (worldObjects[i])
+            {
+                if (i >= source.worldObjects.Count || source.worldObjects[i] == null)
+                {
+                    DestroyObject(worldObjects[i].gameObject);
+                    Destroy(worldObjects[i].gameObject);
+                    worldObjects[i] = null;
+                }
+                else if (!source.worldObjects[i].isDead && worldObjects[i].isDead)
+                {
+                    DestroyObject(worldObjects[i].gameObject);
+                }
+                // todo: also, check if it's the right prefab and replace it if it isn't
+            }
         }
 
         time = source.time;

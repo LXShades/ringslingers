@@ -32,6 +32,19 @@ public static class ClonerGenerator
                 )
             );
         }
+        else if (type.IsSubclassOf(typeof(WorldObjectComponent)) && sourceWorld != null && targetWorld != null)
+        {
+            output = Expression.Assign(target,
+                Expression.Condition(
+                    Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, type)),
+                    Expression.Convert(
+                        Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObjectComponent"), source),
+                        type
+                    ),
+                    Expression.Constant(null, type)
+                )
+            );
+        }
         else if (type == typeof(GameObject) && sourceWorld != null && targetWorld != null)
         {
             // If the GameObject reference has a WorldObject, get its WorldObject in its new world

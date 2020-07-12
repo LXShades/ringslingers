@@ -40,7 +40,8 @@ public class WorldObject : MonoBehaviour
         get; private set;
     }
 
-    private List<WorldObjectComponent> worldObjectComponents = new List<WorldObjectComponent>();
+    [System.NonSerialized]
+    public List<WorldObjectComponent> worldObjectComponents = new List<WorldObjectComponent>();
 
     #region Initialisation
     private void Start()

@@ -6743,7 +6743,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   syncsPerSecond: 0
-  clonerInfo: 
+  clonerInfo: 'eyeHeight
+
+    eyeBobHeight
+
+    eyeBobSpeed
+
+    maxPlayerVelocityForEyeBob
+
+    landEyeBobHeight
+
+    maxPlayerLandForEyeBob
+
+    lastPlayerFallSpeed
+
+    landBobTimer
+
+    landBobMagnitude
+
+    landBobDuration'
   currentPlayer: {fileID: 0}
   eyeHeight: 0.54
   eyeBobHeight: 0.15
@@ -13289,7 +13307,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   connectionStatus: 0
   playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
-  serverTickRate: 30
+  serverTickRate: 20
   maxSimTime: 0.5
   maxTickHistoryTime: 1
   replayMode: 0
@@ -13400,7 +13418,6 @@ MonoBehaviour:
       btnFire: 0
     isPlayerInGame: 00000000000000000000000000000000
   serverTickHistory: []
-  testServerPrediction: 10
 --- !u!4 &1700270206
 Transform:
   m_ObjectHideFlags: 0

@@ -121,8 +121,6 @@ public class Netplay : MonoBehaviour
     /// </summary>
     private ulong[] playerClientIds = new ulong[maxPlayers];
 
-    public int testServerPrediction = 10;
-
     private NetworkingManager net;
 
     public string netStat
@@ -217,48 +215,47 @@ public class Netplay : MonoBehaviour
                     World.server.Tick(serverTickHistory[i].tick, false);
                     lastProcessedServerTick = serverTickHistory[i].tick;
                 }
+
+                World.simulation.CloneFrom(World.server);
             }
         }
         // ==== SERVER ====
         else if (net.IsServer)
         {
-            desiredLocalTickTime = World.live.time + Time.deltaTime;
+            desiredLocalTickTime = localPlayerTime;
 
             // Should we make a new tick?
-            float closestServerTick = /*(int)(desiredLocalTickTime / serverDeltaTime) * serverDeltaTime*/ serverTickHistory.Count > 0 ? serverTickHistory[0].tick.time : 0;
+            float closestServerTick = (int)(desiredLocalTickTime / serverDeltaTime) * serverDeltaTime;
+            float lastServerTickTime = serverTickHistory.Count > 0 ? serverTickHistory[0].tick.time : closestServerTick - serverDeltaTime;
 
-            if (serverTickHistory.Count == 0 || serverTickHistory[0].tick.time < closestServerTick || true)
+            // WARNING: ticks are currently skipped, is that ok?
+            if (closestServerTick > lastServerTickTime)
             {
                 // The next tick will begin at the latest created tick, advanced by serverDeltaTime
                 // MakeTick will include the latest controls, etc
-                MsgTick nextServerTick = MakeTick(closestServerTick + Time.deltaTime, Time.deltaTime/*serverDeltaTime*/, (testServerPrediction <= 0), true);
+                MsgTick nextServerTick = MakeTick(closestServerTick, serverDeltaTime, true, true);
 
                 // Send this tick to other players
                 ServerSendTick(nextServerTick);
-
-                //Debug.Log($"Generate {nextServerTick.time}");
 
                 // Insert the new tick
                 serverTickHistory.Insert(0, new TickState() { tick = nextServerTick, state = World.live });
 
                 lastProcessedServerTick = serverTickHistory[0].tick;
 
-                // Tick it locally here for now cuz we want the game to up and do something yknow
-                int serverTick = Mathf.Min(serverTickHistory.Count - 1, testServerPrediction);
-
-                World.server.Tick(serverTickHistory[serverTick].tick, false);
-
+                // Copy it to the simulated tick
                 World.simulation.CloneFrom(World.server);
-                for (int i = serverTick - 1; i >= 0; i--)
-                    World.simulation.Tick(serverTickHistory[i].tick, i != 0);
+
+                // Tick it locally here for now cuz we want the game to up and do something yknow
+                World.server.Tick(serverTickHistory[0].tick, false);
             }
         }
 
         // Simulate local ticks for real-time response
-        /*if (desiredLocalTickTime > World.live.time && serverTickHistory.Count > 0)
+        if (desiredLocalTickTime > World.simulation.time && serverTickHistory.Count > 0)
         {
             // Make our own fake tick to pass the time
-            MsgTick tick = MakeTick(World.live.time, desiredLocalTickTime - World.live.time, false, false);
+            MsgTick tick = MakeTick(World.simulation.time, desiredLocalTickTime - World.simulation.time, false, false);
 
             //Debug.Log($"Sim {GameState.live.time}->{desiredLocalTickTime}");
             if (net.IsServer && lastProcessedServerTick != null)
@@ -269,11 +266,12 @@ public class Netplay : MonoBehaviour
             {
                 //tick.playerInputs = (InputCmds[])lastProcessedServerTick.playerInputs.Clone();
             }
+
             tick.playerInputs[localPlayerId].horizontalAim = localInputCmds.horizontalAim;
             tick.playerInputs[localPlayerId].verticalAim = localInputCmds.verticalAim;
 
-            World.Tick(tick, true, false);
-        }*/
+            World.simulation.Tick(tick, true);
+        }
 
         // Cleanup tick history
         CleanupOldServerTicks();
