@@ -250,9 +250,7 @@ public class Netplay : MonoBehaviour
 
                 World.simulation.CloneFrom(World.server);
                 for (int i = serverTick - 1; i >= 0; i--)
-                {
                     World.simulation.Tick(serverTickHistory[i].tick, i != 0);
-                }
             }
         }
 

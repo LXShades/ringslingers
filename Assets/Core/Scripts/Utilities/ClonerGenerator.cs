@@ -18,7 +18,7 @@ public static class ClonerGenerator
     {
         Expression output = null;
 
-        if (type.IsValueType && Type.GetTypeCode(type) == TypeCode.Object)
+        if (type.IsValueType)
         {
             output = Expression.Assign(target, source);
         }

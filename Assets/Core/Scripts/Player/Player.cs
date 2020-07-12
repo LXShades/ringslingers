@@ -19,12 +19,12 @@ public class Player : WorldObjectComponent
     /// <summary>
     /// Current inputs of this player
     /// </summary>
-    [HideInInspector] public InputCmds input;
+    public InputCmds input;
 
     /// <summary>
     /// Previous inputs of this player
     /// </summary>
-    [HideInInspector] public InputCmds lastInput;
+    public InputCmds lastInput;
 
     [Header("Shinies")]
     public int score = 0;

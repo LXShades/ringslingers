@@ -47,6 +47,15 @@ public class WorldObject : MonoBehaviour
     {
         if (_world == null)
             Debug.LogError($"WorldObject {gameObject.name} was not instantiated via GameManager.SpawnObject or World.live.SpawnObject. Errors may occur.");
+
+        if (world != World.simulation)
+        {
+            // kinda hacky... don't render objects in the server world
+            foreach (Renderer renderer in GetComponentsInChildren<Renderer>())
+            {
+                renderer.enabled = false;
+            }
+        }
     }
     #endregion
 

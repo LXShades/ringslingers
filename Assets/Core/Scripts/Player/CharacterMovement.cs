@@ -7,9 +7,6 @@ using UnityEngine;
 [RequireComponent(typeof(Movement), typeof(Player))]
 public class CharacterMovement : WorldObjectComponent
 {
-    public GameObject testSceneObject;
-    public WorldObject testWorldObject;
-
     private Player player;
     private Movement move;
 

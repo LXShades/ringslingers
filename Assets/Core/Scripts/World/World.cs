@@ -140,9 +140,17 @@ public class World : MonoBehaviour
                         Debug.LogWarning($"Found WorldObject in local object {children[i].gameObject.name}");
                     }
 
-                    if (children[i] as Renderer != null || children[i] as Light != null || children[i] as ReflectionProbe != null)
+                    if (children[i] as Renderer != null)
                     {
-                        Destroy(children[i]);
+                        (children[i] as Renderer).enabled = false;
+                    }
+                    else if (children[i] as Light != null)
+                    {
+                        (children[i] as Light).enabled = false;
+                    }
+                    else if (children[i] as ReflectionProbe != null)
+                    {
+                        (children[i] as ReflectionProbe).enabled = false;
                     }
                 }
 
@@ -455,9 +463,7 @@ public class World : MonoBehaviour
 
             Player player = obj.GetComponent<Player>();
             if (player)
-            {
                 players[player.playerId] = player;
-            }
         }
 
         // Copy the object's old state(s)
@@ -465,6 +471,9 @@ public class World : MonoBehaviour
         {
             worldObjects[i].CloneFrom(source.worldObjects[i]);
         }
+
+        time = source.time;
+        lastPhysicsSimTime = source.lastPhysicsSimTime;
     }
 }
 
