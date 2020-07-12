@@ -45,12 +45,23 @@ public class PlayerCamera : WorldObjectComponent
     private float landBobMagnitude = 0;
     private float landBobDuration = 0;
 
+    public override void FrameAwake()
+    {
+        Camera cam = GetComponent<Camera>();
+        AudioListener listener = GetComponent<AudioListener>();
+        if (worldObject.world != World.server)
+        {
+            cam.pixelRect = new Rect(Screen.width * 0.5f, Screen.height * 0f, Screen.width * 0.5f, Screen.height * 1f);
+            Destroy(listener);
+        }
+    }
+
     public override void FrameLateUpdate()
     {
         if (currentPlayer == null)
         {
             if (Netplay.singleton.localPlayerId >= 0)
-                currentPlayer = Netplay.singleton.players[Netplay.singleton.localPlayerId];
+                currentPlayer = worldObject.world.players[Netplay.singleton.localPlayerId]; // follow the player in this world
         }
 
         if (currentPlayer)

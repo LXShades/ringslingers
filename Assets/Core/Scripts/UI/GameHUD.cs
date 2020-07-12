@@ -86,7 +86,7 @@ public class GameHUD : MonoBehaviour
         if (scoreboard.activeSelf)
         {
             // Refresh scoreboard info
-            Player[] orderedPlayers = (Player[])Netplay.singleton.players.Clone();
+            Player[] orderedPlayers = (Player[])World.server.players.Clone();
 
             System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : 0) - (b ? b.score : 0) > 0 ? -1 : 1);
 

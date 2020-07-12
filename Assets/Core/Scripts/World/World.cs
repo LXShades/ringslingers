@@ -66,11 +66,16 @@ public class World : MonoBehaviour
     }
     private static World _simulation;
 
-    [Header("Object management")]
+    [Header("World objects")]
     /// <summary>
     /// Complete list of syncedObjects in the active scene
     /// </summary>
     public List<WorldObject> worldObjects = new List<WorldObject>();
+
+    /// <summary>
+    /// Players by ID. Contains null gaps
+    /// </summary>
+    public Player[] players = new Player[Netplay.maxPlayers];
 
     /// <summary>
     /// The accumulated game time at the beginning of this tick
@@ -179,12 +184,12 @@ public class World : MonoBehaviour
         this.isResimulation = isResimulation;
 
         // Spawn players who are pending a join
-        for (int p = 0; p < Netplay.singleton.players.Length; p++)
+        for (int p = 0; p < players.Length; p++)
         {
-            if (Netplay.singleton.players[p] == null && tick.isPlayerInGame[p])
-                Netplay.singleton.AddPlayer(p);
-            else if (Netplay.singleton.players[p] != null && !tick.isPlayerInGame[p])
-                Netplay.singleton.RemovePlayer(p);
+            if (players[p] == null && tick.isPlayerInGame[p])
+                AddPlayer(p);
+            else if (players[p] != null && !tick.isPlayerInGame[p])
+                RemovePlayer(p);
         }
 
         // Read syncers
@@ -194,17 +199,17 @@ public class World : MonoBehaviour
             while (tick.syncers.Position < tick.syncers.Length)
             {
                 int player = tick.syncers.ReadByte();
-                Netplay.singleton.players[player].movement.ReadSyncer(tick.syncers);
+                players[player].movement.ReadSyncer(tick.syncers);
             }
         }
 
         // Apply player inputs
         for (int i = 0; i < Netplay.maxPlayers; i++)
         {
-            if (Netplay.singleton.players[i])
+            if (players[i])
             {
-                Netplay.singleton.players[i].lastInput = Netplay.singleton.players[i].input;
-                Netplay.singleton.players[i].input = tick.playerInputs[i];
+                players[i].lastInput = players[i].input;
+                players[i].input = tick.playerInputs[i];
             }
         }
 
@@ -213,7 +218,7 @@ public class World : MonoBehaviour
         {
             if (worldObjects[i] && worldObjects[i].gameObject.activeInHierarchy && worldObjects[i].enabled)
             {
-                if (worldObjects[i].creationTime == time)
+                if (!worldObjects[i].hasStarted)
                     worldObjects[i].FrameStart();
 
                 worldObjects[i].FrameUpdate();
@@ -380,6 +385,48 @@ public class World : MonoBehaviour
     }
     #endregion
 
+    #region Players
+    public Player AddPlayer(int id = -1)
+    {
+        if (id == -1)
+        {
+            // Find the appropriate ID for this player
+            for (id = 0; id < players.Length; id++)
+            {
+                if (players[id] == null)
+                    break;
+            }
+        }
+
+        if (id == players.Length)
+        {
+            Debug.LogWarning("Can't add new player - too many!");
+            return null;
+        }
+
+        // Spawn the player
+        Player player = GameManager.SpawnObject(Netplay.singleton.playerPrefab).GetComponent<Player>();
+
+        player.playerId = id;
+        players[id] = player;
+
+        player.Rename($"Fred");
+
+        player.Respawn();
+
+        return player;
+    }
+
+    public void RemovePlayer(int id)
+    {
+        if (players[id] != null)
+        {
+            World.live.DestroyObject(players[id].gameObject);
+            players[id] = null;
+        }
+    }
+    #endregion
+
     public void CloneFrom(World source)
     {
         // todo: replace objects of incorrect types
@@ -395,13 +442,11 @@ public class World : MonoBehaviour
 
             obj.transform.parent = transform;
 
-            // hack
-            Camera cam = obj.GetComponent<Camera>();
-            AudioListener listener = obj.GetComponent<AudioListener>();
-            if (cam && this != World.server)
-                cam.pixelRect = new Rect(Screen.width * 0.75f, Screen.height * 0.75f, Screen.width * 0.25f, Screen.height * 0.25f);
-            if (listener && this != World.server)
-                Destroy(listener);
+            Player player = obj.GetComponent<Player>();
+            if (player)
+            {
+                players[player.playerId] = player;
+            }
         }
 
         // Copy the object's old state(s)

@@ -33,11 +33,6 @@ public class Netplay : MonoBehaviour
 
     [Header("Players")]
     /// <summary>
-    /// Players by ID. Contains null gaps
-    /// </summary>
-    public Player[] players = new Player[maxPlayers];
-
-    /// <summary>
     /// Prefab used to spawn players
     /// </summary>
     public GameObject playerPrefab;
@@ -125,6 +120,8 @@ public class Netplay : MonoBehaviour
     /// Used by the server. Used to defer new player creation
     /// </summary>
     private ulong[] playerClientIds = new ulong[maxPlayers];
+
+    public int testServerPrediction = 10;
 
     private NetworkingManager net;
 
@@ -242,16 +239,20 @@ public class Netplay : MonoBehaviour
                 //Debug.Log($"Generate {nextServerTick.time}");
 
                 // Insert the new tick
-                serverTickHistory.Clear();
                 serverTickHistory.Insert(0, new TickState() { tick = nextServerTick, state = World.live });
 
                 lastProcessedServerTick = serverTickHistory[0].tick;
 
                 // Tick it locally here for now cuz we want the game to up and do something yknow
-                World.server.Tick(serverTickHistory[0].tick, false);
+                int serverTick = Mathf.Min(serverTickHistory.Count - 1, testServerPrediction);
 
-                //if ((int)(Time.time - Time.deltaTime) != (int)Time.time)
-                    World.simulation.CloneFrom(World.server);
+                World.server.Tick(serverTickHistory[serverTick].tick, false);
+
+                World.simulation.CloneFrom(World.server);
+                for (int i = serverTick - 1; i >= 0; i--)
+                {
+                    World.simulation.Tick(serverTickHistory[i].tick, i != 0);
+                }
             }
         }
 
@@ -293,52 +294,9 @@ public class Netplay : MonoBehaviour
     }
 
     #region Players
-    public Player AddPlayer(int id = -1)
-    {
-        if (id == -1)
-        {
-            // Find the appropriate ID for this player
-            for (id = 0; id < maxPlayers; id++)
-            {
-                if (players[id] == null)
-                    break;
-            }
-        }
-
-        if (id == maxPlayers)
-        {
-            Debug.LogWarning("Can't add new player - too many!");
-            return null;
-        }
-
-        // Spawn the player
-        Player player = GameManager.SpawnObject(playerPrefab).GetComponent<Player>();
-
-        player.playerId = id;
-        players[id] = player;
-
-        player.Rename($"Fred");
-
-        player.Respawn();
-
-        return player;
-    }
-
-    public void RemovePlayer(int id)
-    {
-        if (players[id] != null)
-        {
-            World.live.DestroyObject(players[id].gameObject);
-            players[id] = null;
-        }
-    }
-
-    public Player GetPlayerFromClient(ulong clientId)
-    {
-        int index = System.Array.IndexOf(playerClientIds, clientId);
-        return index >= 0 ? players[index] : null;
-    }
-
+    /// <summary>
+    /// Gets the player ID from a client ID. Returns -1 if not found
+    /// </summary>
     public int GetPlayerIdFromClient(ulong clientId)
     {
         int index = System.Array.IndexOf(playerClientIds, clientId);
@@ -426,12 +384,6 @@ public class Netplay : MonoBehaviour
         {
             Debug.Log("Disconnected from server");
 
-            for (int i = 0; i < maxPlayers; i++)
-            {
-                if (i != localPlayerId && players[i] != null)
-                    RemovePlayer(i);
-            }
-
             net.StopClient();
             connectionStatus = ConnectionStatus.Disconnected;
         }
@@ -465,7 +417,7 @@ public class Netplay : MonoBehaviour
         {
             deltaTime = deltaTime,
             time = time,
-            isPlayerInGame = isServer ? System.Array.ConvertAll<ulong, bool>(playerClientIds, a => a != ulong.MaxValue) : System.Array.ConvertAll<Player, bool>(players, a => a != null)
+            isPlayerInGame = isServer ? System.Array.ConvertAll<ulong, bool>(playerClientIds, a => a != ulong.MaxValue) : System.Array.ConvertAll<Player, bool>(World.server.players, a => a != null)
         };
 
         if (localPlayerId >= 0 && isServer)
@@ -496,7 +448,7 @@ public class Netplay : MonoBehaviour
         // Add syncers
         if (includeSyncers)
         {
-            foreach (Player player in players)
+            foreach (Player player in World.server.players)
             {
                 if (player)
                 {
@@ -564,7 +516,7 @@ public class Netplay : MonoBehaviour
 
     void ClientSendTick()
     {
-        if (localPlayerId >= 0 && players[localPlayerId])
+        if (localPlayerId >= 0)
         {
             Stream inputs = new MemoryStream();
             MsgClientTick clientTick = new MsgClientTick()
@@ -584,14 +536,14 @@ public class Netplay : MonoBehaviour
 
     void OnReceivedClientTick(ulong sender, Stream payload)
     {
-        Player player = GetPlayerFromClient(sender);
+        int playerId = GetPlayerIdFromClient(sender);
 
-        if (player != null)
+        if (playerId != -1)
         {
             // Add this tick to pending list
             MsgClientTick tick = new MsgClientTick(payload);
-            pendingClientTicks[player.playerId].Add(tick);
-            playerLocalTimes[player.playerId] = tick.localTime;
+            pendingClientTicks[playerId].Add(tick);
+            playerLocalTimes[playerId] = tick.localTime;
         }
 
         // Update stats

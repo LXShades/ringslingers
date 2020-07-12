@@ -15,6 +15,8 @@ public class WorldObject : MonoBehaviour
     private int _id = -1;
     private World _world = null;
 
+    public bool hasStarted { get; private set; } = false;
+
     /// <summary>
     /// Locally owned unique ID for this component
     /// </summary>
@@ -57,6 +59,8 @@ public class WorldObject : MonoBehaviour
 
     public void FrameStart()
     {
+        hasStarted = true;
+
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
             objComponent.FrameStart();
     }
@@ -83,6 +87,7 @@ public class WorldObject : MonoBehaviour
         _id = id;
         _world = parent;
         creationTime = parent.time;
+        hasStarted = false;
 
         foreach (WorldObjectComponent objComponent in GetComponentsInChildren<WorldObjectComponent>())
             worldObjectComponents.Add(objComponent);

@@ -176,7 +176,7 @@ public class Player : WorldObjectComponent
         string updatedName = newName;
         int currentSuffix = 0;
 
-        while (System.Array.Exists(Netplay.singleton.players, a => a != null && a != this && a.name == updatedName))
+        while (System.Array.Exists(worldObject.world.players, a => a != null && a != this && a.name == updatedName))
         {
             if (currentSuffix < nameSuffices.Length)
                 updatedName = newName + nameSuffices[currentSuffix++];
