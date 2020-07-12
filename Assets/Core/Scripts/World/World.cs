@@ -383,6 +383,17 @@ public class World : MonoBehaviour
 
         worldObj._OnRestoredByWorld(this);
     }
+
+    /// <summary>
+    /// Takes an object reference from another world and tries to find and return this world's version of the object
+    /// </summary>
+    public WorldObject FindEquivalentWorldObject(WorldObject obj)
+    {
+        if (obj.objId >= 0 && obj.objId < worldObjects.Count)
+            return worldObjects[obj.objId];
+        else
+            return null;
+    }
     #endregion
 
     #region Players

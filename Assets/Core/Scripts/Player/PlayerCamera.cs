@@ -54,6 +54,10 @@ public class PlayerCamera : WorldObjectComponent
             cam.pixelRect = new Rect(Screen.width * 0.5f, Screen.height * 0f, Screen.width * 0.5f, Screen.height * 1f);
             Destroy(listener);
         }
+        else
+        {
+            cam.pixelRect = new Rect(0, Screen.height * 0f, Screen.width * 0.5f, Screen.height * 1f);
+        }
     }
 
     public override void FrameLateUpdate()

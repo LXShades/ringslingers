@@ -231,7 +231,7 @@ public class Netplay : MonoBehaviour
             {
                 // The next tick will begin at the latest created tick, advanced by serverDeltaTime
                 // MakeTick will include the latest controls, etc
-                MsgTick nextServerTick = MakeTick(closestServerTick + Time.deltaTime, Time.deltaTime/*serverDeltaTime*/, true, true);
+                MsgTick nextServerTick = MakeTick(closestServerTick + Time.deltaTime, Time.deltaTime/*serverDeltaTime*/, (testServerPrediction <= 0), true);
 
                 // Send this tick to other players
                 ServerSendTick(nextServerTick);

@@ -14,13 +14,53 @@ public static class ClonerGenerator
 
     private static Dictionary<string, string> clonerInfoByType = new Dictionary<string, string>();
 
-    public static Expression CloneMember(Expression target, Expression source, Type type)
+    public static Expression CloneMember(Expression target, Expression source, Expression targetWorld, Expression sourceWorld, Type type)
     {
         Expression output = null;
 
         if (type.IsValueType && Type.GetTypeCode(type) == TypeCode.Object)
         {
             output = Expression.Assign(target, source);
+        }
+        else if (type == typeof(WorldObject) && sourceWorld != null && targetWorld != null)
+        {
+            output = Expression.Assign(target, 
+                Expression.Condition(
+                    Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, typeof(WorldObject))),
+                    Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObject"), source),
+                    Expression.Constant(null, typeof(WorldObject))
+                )
+            );
+        }
+        else if (type == typeof(GameObject) && sourceWorld != null && targetWorld != null)
+        {
+            // If the GameObject reference has a WorldObject, get its WorldObject in its new world
+            ParameterExpression sourceAsWorldObject = Expression.Variable(typeof(WorldObject));
+            ParameterExpression targetAsWorldObject = Expression.Variable(typeof(WorldObject));
+
+            output = Expression.Block(
+                new[] { sourceAsWorldObject, targetAsWorldObject },
+                Expression.Assign(
+                    sourceAsWorldObject,
+                    Expression.Condition(
+                        Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, typeof(GameObject))),
+                        Expression.Call(source, typeof(GameObject).GetMethod("GetComponent", new Type[0]).MakeGenericMethod(typeof(WorldObject))),
+                        Expression.Constant(null, typeof(WorldObject))
+                    )
+                ), // worldObject = (source != null ? source.GetComponent<WorldObject>() : null)
+                Expression.Assign(targetAsWorldObject,
+                    Expression.Condition(
+                        Expression.NotEqual(sourceAsWorldObject, Expression.Constant(null, typeof(WorldObject))),
+                        Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObject"), sourceAsWorldObject),
+                        Expression.Constant(null, typeof(WorldObject))
+                    )
+                ), // targetAsWorldObject = worldObject != null ? target.world.GetObjectById(worldObject.objId) : null
+                Expression.IfThenElse(
+                    Expression.NotEqual(targetAsWorldObject, Expression.Constant(null, typeof(WorldObject))),
+                    Expression.Assign(target, Expression.PropertyOrField(targetAsWorldObject, "gameObject")),
+                    Expression.Assign(target, source)
+                ) // if (targetAsWorldObject != null) target = targetAsWorldObject.gameObject else target = source
+            );
         }
 
         return output;
@@ -34,9 +74,17 @@ public static class ClonerGenerator
         ParameterExpression targetGeneric = Expression.Parameter(typeof(object));
         ParameterExpression source = Expression.Variable(type);
         ParameterExpression target = Expression.Variable(type);
+        Expression sourceWorld = null;
+        Expression targetWorld = null;
 
         function.Add(Expression.Assign(source, Expression.Convert(sourceGeneric, type)));
         function.Add(Expression.Assign(target, Expression.Convert(targetGeneric, type)));
+
+        if (type.IsSubclassOf(typeof(WorldObjectComponent)))
+        {
+            sourceWorld = Expression.PropertyOrField(Expression.PropertyOrField(source, "worldObject"), "world");
+            targetWorld = Expression.PropertyOrField(Expression.PropertyOrField(target, "worldObject"), "world");
+        }
 
         MemberInfo[] members = type.GetMembers(BindingFlags.GetProperty | BindingFlags.SetProperty | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly);
 
@@ -47,7 +95,7 @@ public static class ClonerGenerator
 
             Type memberType = (member.MemberType == MemberTypes.Field ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType);
 
-            Expression cloner = CloneMember(Expression.PropertyOrField(target, member.Name), Expression.PropertyOrField(source, member.Name), memberType);
+            Expression cloner = CloneMember(Expression.PropertyOrField(target, member.Name), Expression.PropertyOrField(source, member.Name), targetWorld, sourceWorld, memberType);
 
             if (cloner != null)
             {
