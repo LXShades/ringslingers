@@ -128,10 +128,18 @@ public static class ClonerGenerator
         {
             cloner = GenerateCloner(type);
             clonerByType.Add(type.Name, cloner);
-
-            Debug.Log($"{type.Name} cloner info: {clonerInfoByType[type.Name]}");
         }
 
         return cloner;
+    }
+
+    public static string GetClonerInfo(Type type)
+    {
+        if (!clonerByType.ContainsKey(type.Name))
+        {
+            GetOrCreateCloner(type);
+        }
+
+        return clonerInfoByType[type.Name];
     }
 }

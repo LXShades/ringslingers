@@ -28,6 +28,7 @@ public abstract class SyncedObjectBase : MonoBehaviour
 /// <summary>
 /// A WorldObject component is a part of a worldobject that can be ticked and rewinded
 /// </summary>
+[ExecuteInEditMode]
 public abstract class WorldObjectComponent : SyncedObjectBase
 {
     private Action<object, BinaryWriter> mySerializer;
@@ -41,8 +42,18 @@ public abstract class WorldObjectComponent : SyncedObjectBase
     /// <summary>
     /// How many sync packets will be sent for this object, per second
     /// </summary>
-    [Header("SyncedObject")]
+    [Header("WorldObject")]
     public float syncsPerSecond = 0f;
+#if UNITY_EDITOR
+    [SerializeField, TextArea] private string clonerInfo;
+#endif
+
+#if UNITY_EDITOR
+    public void OnEnable()
+    {
+        clonerInfo = ClonerGenerator.GetClonerInfo(GetType()).Replace(", ", "\n");
+    }
+#endif
 
     // The following Unity functions are disabled to prevent idiot programmers, such as myself, from causing synchronisation errors.
     protected override sealed void Start() { }
