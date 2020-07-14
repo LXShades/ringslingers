@@ -44,10 +44,11 @@ public class Ring : WorldObjectComponent
 
     public override void FrameUpdate()
     {
-        base.FrameUpdate();
-
-        // Spinny spin
-        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * World.live.deltaTime, 0));
+        if (respawnableItem.isSpawned)
+        {
+            // Spinny spin
+            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * World.live.deltaTime, 0));
+        }
     }
 
     private void OnTriggerStay(Collider other)

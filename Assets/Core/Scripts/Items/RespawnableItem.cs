@@ -5,6 +5,11 @@ using UnityEngine;
 
 public class RespawnableItem : WorldObjectComponent
 {
+    private int originalLayer;
+    private int despawnedLayer;
+
+    private Vector3 originalPosition;
+
     public float respawnCountdownTimer
     {
         get; private set;
@@ -14,15 +19,33 @@ public class RespawnableItem : WorldObjectComponent
     {
         get
         {
-            return gameObject.activeSelf;
+            return gameObject.layer != despawnedLayer;
         }
         set
         {
-            gameObject.SetActive(value);
+            if (value != isSpawned)
+            {
+                gameObject.layer = value ? originalLayer : despawnedLayer;
 
-            if (value)
-                respawnCountdownTimer = 0;
+                if (value)
+                {
+                    respawnCountdownTimer = 0;
+                    transform.position = originalPosition;
+                }
+                else
+                {
+                    gameObject.SetActive(false); // Unity bug: physics scene won't update unless we do something fun
+                    gameObject.SetActive(true);
+                }
+            }
         }
+    }
+
+    public override void FrameAwake()
+    {
+        originalLayer = gameObject.layer;
+        despawnedLayer = LayerMask.NameToLayer("Despawned");
+        originalPosition = transform.position;
     }
 
     public override void FrameUpdate()

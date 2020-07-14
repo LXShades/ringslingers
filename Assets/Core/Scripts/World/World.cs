@@ -251,6 +251,7 @@ public class World : MonoBehaviour
         {
             if (time - lastPhysicsSimTime >= physicsFixedDeltaTime * i)
             {
+                Physics.SyncTransforms();
                 physics.Simulate(physicsFixedDeltaTime);
                 numPhysicsSimsOccurred++;
             }
