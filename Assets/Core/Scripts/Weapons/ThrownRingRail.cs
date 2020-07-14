@@ -10,7 +10,7 @@ public class ThrownRingRail : ThrownRing
 
     public LayerMask collisionLayers;
 
-    public GameObject particles;
+    [WorldSharedReference] public GameObject particles;
 
     public override void FrameUpdate()
     {
@@ -29,19 +29,22 @@ public class ThrownRingRail : ThrownRing
         endPoint.transform.position = spawnPosition + direction * maxRange;
         endPoint.transform.up = -direction;
 
-        foreach (RaycastHit hit in Physics.RaycastAll(spawnPosition, direction, maxRange, collisionLayers, QueryTriggerInteraction.Ignore))
+        RaycastHit[] hits = new RaycastHit[10];
+        int numHits = worldObject.world.physics.Raycast(spawnPosition, direction, hits, maxRange, collisionLayers, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < numHits; i++)
         {
-            Player player = hit.collider.GetComponentInParent<Player>();
-            if (player != owner && hit.distance < closestDistance)
+            Player player = hits[i].collider.GetComponentInParent<Player>();
+            if (player != owner && hits[i].distance < closestDistance)
             {
-                closestDistance = hit.distance;
+                closestDistance = hits[i].distance;
                 closestPlayer = player;
-                endPoint.transform.position = hit.point;
+                endPoint.transform.position = hits[i].point;
             }
         }
 
         if (closestPlayer)
         {
+            Debug.Log($"Trying to hurt player {closestPlayer}");
             closestPlayer.Hurt(owner.gameObject);
         }
 

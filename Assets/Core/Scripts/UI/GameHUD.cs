@@ -24,12 +24,14 @@ public class GameHUD : MonoBehaviour
     public Text debugText;
     public Text debugLogText;
 
-    public int numLogLines = 6;
+    public int numLogLines = 5;
     public bool showHarmlessLogs = true;
 
     private int numFramesThisSecond = 0;
     private int lastFps = 0;
     private float lastPing = 0;
+
+    bool doRefreshLog = false;
 
     private void Start()
     {
@@ -122,6 +124,18 @@ public class GameHUD : MonoBehaviour
         {
             connectStatusText.enabled = false;
         }
+
+        if (doRefreshLog)
+        {
+            Canvas.ForceUpdateCanvases();
+            if (debugLogText.cachedTextGenerator.lineCount > numLogLines)
+            {
+                debugLogText.text = debugLogText.text.Substring(debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lineCount - numLogLines].startCharIdx);
+            }
+            Canvas.ForceUpdateCanvases();
+
+            doRefreshLog = false;
+        }
     }
 
     private void OnLogMessageReceived(string condition, string stackTrace, LogType type)
@@ -132,14 +146,9 @@ public class GameHUD : MonoBehaviour
         List<string> debugLog = new List<string>(debugLogText.text.Split('\n'));
         string[] trace = stackTrace.Split('\n');
 
-        debugLog.Add(condition + ": " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : ""));
+        debugLogText.text += condition + ": " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "");
 
-        if (debugLog.Count > numLogLines)
-        {
-            debugLog.RemoveAt(0);
-        }
-
-        debugLogText.text = string.Join("\n", debugLog);
+        doRefreshLog = true;
     }
 
     public void ClearLog()

@@ -112,6 +112,11 @@ public class Netplay : MonoBehaviour
     public List<TickState> serverTickHistory = new List<TickState>();
 
     /// <summary>
+    /// Recorded ticks from a backlog of local simulations
+    /// </summary>
+    public List<TickState> localTickHistory = new List<TickState>();
+
+    /// <summary>
     /// Client ticks received but not yet processed
     /// </summary>
     private List<MsgClientTick>[] pendingClientTicks = new List<MsgClientTick>[maxPlayers];
@@ -216,7 +221,41 @@ public class Netplay : MonoBehaviour
                     lastProcessedServerTick = serverTickHistory[i].tick;
                 }
 
+                float oldSimTime = World.simulation.time;
                 World.simulation.CloneFrom(World.server);
+
+                // Replay ticks up to this point (send the player back to the future!)
+                int startReplayTick = -1;
+                for (int i = 0; i < localTickHistory.Count; i++)
+                {
+                    if (localTickHistory[i].tick.localTime >= lastProcessedServerTick.localTime)
+                        startReplayTick = i;
+                }
+
+                if (startReplayTick != -1)
+                {
+                    if (startReplayTick + 1 < localTickHistory.Count)
+                    {
+                        MsgTick tick = localTickHistory[startReplayTick + 1].tick;
+                        float oldDeltaTime = tick.deltaTime;
+                        float oldTime = tick.time;
+
+                        // bridge between the server tick and the startReplayTick, using previous inputs
+                        tick.deltaTime = localTickHistory[startReplayTick].tick.localTime - lastProcessedServerTick.localTime;
+                        tick.time = lastProcessedServerTick.time;
+
+                        World.simulation.Tick(tick, true);
+                        tick.deltaTime = oldDeltaTime;
+                        tick.time = oldTime;
+                    }
+
+                    for (int i = startReplayTick; i >= 0; i--)
+                    {
+                        World.simulation.Tick(localTickHistory[i].tick, true);
+                    }
+                }
+
+                Debug.Log($"Time diff: {World.simulation.time - oldSimTime}");
             }
         }
         // ==== SERVER ====
@@ -269,23 +308,36 @@ public class Netplay : MonoBehaviour
 
             tick.playerInputs[localPlayerId].horizontalAim = localInputCmds.horizontalAim;
             tick.playerInputs[localPlayerId].verticalAim = localInputCmds.verticalAim;
+            tick.localTime = localPlayerTime;
+            localTickHistory.Insert(0, new TickState()
+            {
+                tick = tick
+            });
 
             World.simulation.Tick(tick, true);
         }
 
-        // Cleanup tick history
-        CleanupOldServerTicks();
+        // Cleanup old ticks
+        CleanupOutdatedTickHistory();
 
         // Do debug stuff
         UpdateNetStat();
     }
 
-    void CleanupOldServerTicks()
+    void CleanupOutdatedTickHistory()
     {
         for (int i = 1; i < serverTickHistory.Count; i++)
         {
             if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
                 serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
+        }
+
+        for (int i = 0; i < localTickHistory.Count; i++)
+        {
+            if (localTickHistory[i].tick.localTime < localPlayerTime - maxSimTime || localTickHistory[i].tick.localTime > localPlayerTime /* i mean this should never happen but */)
+            {
+                localTickHistory.RemoveAt(i--);
+            }
         }
     }
 
@@ -614,9 +666,9 @@ public class Netplay : MonoBehaviour
 
     public float GetPing()
     {
-        if (serverTickHistory.Count > 0 && localPlayerId >= 0)
+        if (serverTickHistory.Count > 0)
         {
-            return playerLocalTimes[localPlayerId] - serverTickHistory[0].tick.localTime;
+            return localPlayerTime - serverTickHistory[0].tick.localTime;
         }
         return -1;
     }

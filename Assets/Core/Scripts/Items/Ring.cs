@@ -44,7 +44,7 @@ public class Ring : WorldObjectComponent
 
     public override void FrameUpdate()
     {
-        if (respawnableItem.isSpawned)
+        if (isDroppedRing || respawnableItem.isSpawned)
         {
             // Spinny spin
             transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * World.live.deltaTime, 0));

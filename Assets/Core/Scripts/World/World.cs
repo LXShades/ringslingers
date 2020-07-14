@@ -508,7 +508,6 @@ public class World : MonoBehaviour
                 if (i >= source.worldObjects.Count || source.worldObjects[i] == null)
                 {
                     Debug.Log($"Object deletion {source.name}->{name}/{(worldObjects[i] ? worldObjects[i].name : "[deleted]")} ({(worldObjects[i] ? worldObjects[i].objId : 0)})");
-                    //DestroyObject(worldObjects[i].gameObject);
                     worldObjects[i]._OnDestroyedByWorld(this);
                     Destroy(worldObjects[i].gameObject);
                     worldObjects[i] = null;

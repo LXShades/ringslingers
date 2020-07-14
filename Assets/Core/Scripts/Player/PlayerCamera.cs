@@ -39,6 +39,8 @@ public class PlayerCamera : WorldObjectComponent
     /// </summary>
     public float maxPlayerLandForEyeBob = 30;
 
+    public float debugDualCamSize = 0f;
+
     private float lastPlayerFallSpeed = 0;
 
     private float landBobTimer = 0;
@@ -51,12 +53,12 @@ public class PlayerCamera : WorldObjectComponent
         AudioListener listener = GetComponent<AudioListener>();
         if (worldObject.world != World.server)
         {
-            cam.pixelRect = new Rect(Screen.width * 0.5f, Screen.height * 0f, Screen.width * 0.5f, Screen.height * 1f);
-            Destroy(listener);
+            cam.pixelRect = new Rect(Screen.width * (debugDualCamSize), 0, Screen.width * (1 - debugDualCamSize), Screen.height);
         }
         else
         {
-            cam.pixelRect = new Rect(0, Screen.height * 0f, Screen.width * 0.5f, Screen.height * 1f);
+            cam.pixelRect = new Rect(Screen.width * (1 - debugDualCamSize), 0, Screen.width * debugDualCamSize, Screen.height * debugDualCamSize);
+            //Destroy(listener); aff...this causes the destroyed listener to be replicated to the simulation....
         }
     }
 

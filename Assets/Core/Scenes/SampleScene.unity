@@ -6757,6 +6757,8 @@ MonoBehaviour:
 
     maxPlayerLandForEyeBob
 
+    debugDualCamSize
+
     lastPlayerFallSpeed
 
     landBobTimer
@@ -6771,6 +6773,7 @@ MonoBehaviour:
   maxPlayerVelocityForEyeBob: 8.7
   landEyeBobHeight: 0.5
   maxPlayerLandForEyeBob: 40
+  debugDualCamSize: 0
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13420,6 +13423,7 @@ MonoBehaviour:
       btnFire: 0
     isPlayerInGame: 00000000000000000000000000000000
   serverTickHistory: []
+  localTickHistory: []
 --- !u!4 &1700270206
 Transform:
   m_ObjectHideFlags: 0
@@ -16733,7 +16737,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2820117323117607084, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 9087393328249493369, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Name
