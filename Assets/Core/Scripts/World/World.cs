@@ -471,6 +471,9 @@ public class World : MonoBehaviour
         {
             if ((i >= worldObjects.Count || worldObjects[i] == null) && source.worldObjects[i])
             {
+                Debug.Log($"Object restore {source.name}/{source.worldObjects[i].name} ({source.worldObjects[i].objId}) -> {name}");
+
+                // instantiate missing object
                 GameObject obj = Instantiate(source.worldObjects[i].gameObject);
                 WorldObject worldObj = obj.GetComponent<WorldObject>();
 
@@ -504,12 +507,15 @@ public class World : MonoBehaviour
             {
                 if (i >= source.worldObjects.Count || source.worldObjects[i] == null)
                 {
-                    DestroyObject(worldObjects[i].gameObject);
+                    Debug.Log($"Object deletion {source.name}->{name}/{(worldObjects[i] ? worldObjects[i].name : "[deleted]")} ({(worldObjects[i] ? worldObjects[i].objId : 0)})");
+                    //DestroyObject(worldObjects[i].gameObject);
+                    worldObjects[i]._OnDestroyedByWorld(this);
                     Destroy(worldObjects[i].gameObject);
                     worldObjects[i] = null;
                 }
                 else if (!source.worldObjects[i].isDead && worldObjects[i].isDead)
                 {
+                    worldObjects[i]._OnDestroyedByWorld(this);
                     DestroyObject(worldObjects[i].gameObject);
                 }
                 // todo: also, check if it's the right prefab and replace it if it isn't
