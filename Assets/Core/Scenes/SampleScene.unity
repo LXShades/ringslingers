@@ -6773,7 +6773,7 @@ MonoBehaviour:
   maxPlayerVelocityForEyeBob: 8.7
   landEyeBobHeight: 0.5
   maxPlayerLandForEyeBob: 40
-  debugDualCamSize: 0
+  debugDualCamSize: 0.5
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13312,7 +13312,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   connectionStatus: 0
   playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
-  serverTickRate: 20
+  serverTickRate: 30
+  serverSimTime: 0.3
   maxSimTime: 0.5
   maxTickHistoryTime: 1
   replayMode: 0
@@ -13324,6 +13325,23 @@ MonoBehaviour:
     time: 0
     deltaTime: 0
     localTime: 0
+    playerPositions:
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
+    - {x: 0, y: 0, z: 0}
     playerInputs:
     - moveHorizontalAxis: 0
       moveVerticalAxis: 0
@@ -16737,7 +16755,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2820117323117607084, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9087393328249493369, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Name

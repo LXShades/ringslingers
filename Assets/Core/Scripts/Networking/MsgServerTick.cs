@@ -15,6 +15,9 @@ public class MsgTick
     // Local time of the receiving player, as currently known to the server, as of the last tick
     public float localTime;
 
+    // Position of all players at this time (prior to the tick), as currently known to the server
+    public Vector3[] playerPositions = new Vector3[Netplay.maxPlayers];
+
     // PlayerInputs during execution of this tick
     public InputCmds[] playerInputs = new InputCmds[Netplay.maxPlayers];
     public bool[] isPlayerInGame = new bool[Netplay.maxPlayers];
@@ -40,13 +43,14 @@ public class MsgTick
                 deltaTime = reader.ReadSingle();
                 localTime = reader.ReadSingle();
                 syncersLength = reader.ReadInt32();
-            }
 
-            // Read inputs
-            for (int player = stream.ReadByte(); player != 255 && player != -1; player = stream.ReadByte())
-            {
-                isPlayerInGame[player] = true;
-                playerInputs[player].FromStream(stream);
+                // Read inputs
+                for (int player = reader.ReadByte(); player != 255 && player != -1; player = reader.ReadByte())
+                {
+                    isPlayerInGame[player] = true;
+                    playerInputs[player].FromStream(stream);
+                    playerPositions[player] = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                }
             }
 
             // Read syncers
@@ -74,18 +78,21 @@ public class MsgTick
             writer.Write(deltaTime);
             writer.Write(localTime);
             writer.Write((int)syncers.Length);
-        }
 
-        // Write inputs
-        for (int i = 0; i < playerInputs.Length; i++)
-        {
-            if (isPlayerInGame[i])
+            // Write players
+            for (int i = 0; i < playerInputs.Length; i++)
             {
-                stream.WriteByte((byte)i);
-                playerInputs[i].ToStream(stream);
+                if (isPlayerInGame[i])
+                {
+                    writer.Write((byte)i);
+                    playerInputs[i].ToStream(stream);
+                    writer.Write(playerPositions[i].x);
+                    writer.Write(playerPositions[i].y);
+                    writer.Write(playerPositions[i].z);
+                }
             }
+            writer.Write((byte)255);
         }
-        stream.WriteByte(255);
 
         // Add syncers to the message
         syncers.WriteTo(stream);

@@ -146,7 +146,7 @@ public class GameHUD : MonoBehaviour
         List<string> debugLog = new List<string>(debugLogText.text.Split('\n'));
         string[] trace = stackTrace.Split('\n');
 
-        debugLogText.text += condition + ": " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "");
+        debugLogText.text += condition + ": " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
 
         doRefreshLog = true;
     }

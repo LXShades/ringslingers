@@ -102,6 +102,11 @@ public class World : MonoBehaviour
         get; private set;
     }
 
+    public bool isFinalResimulation
+    {
+        get; private set;
+    }
+
     /// <summary>
     /// Snapshot of the gamestate before the controls were executed. plz no modify.
     /// </summary>
@@ -182,7 +187,7 @@ public class World : MonoBehaviour
     /// Advances the game by the given delta time and returns the new tick representing the resulting game state
     /// This causes GameState.live to be replaced with the new state, and may affect all in-game synced objects
     /// </summary>
-    public void Tick(MsgTick tick, bool isResimulation)
+    public void Tick(MsgTick tick, bool isResimulation, bool isFinalResimulation = false)
     {
         World.live = this;
 
@@ -190,6 +195,7 @@ public class World : MonoBehaviour
         time = tick.time + tick.deltaTime;
         deltaTime = tick.deltaTime;
         this.isResimulation = isResimulation;
+        this.isFinalResimulation = isFinalResimulation;
 
         // Spawn players who are pending a join
         for (int p = 0; p < players.Length; p++)

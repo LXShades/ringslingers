@@ -71,7 +71,7 @@ public class GameSounds : MonoBehaviour
     {
         if (sound.clip == null || sound.volume <= 0)
             return;
-        if (World.live.isResimulation)
+        if (!World.live.isFinalResimulation)
             return; // avoid sound spam
 
         currentChannel = (currentChannel + 1) % sources.Length;

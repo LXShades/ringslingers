@@ -7,9 +7,10 @@ public class MsgClientTick
 {
     public float localTime;
     public float serverTime;
-    public float deltaTime;
 
     public InputCmds playerInputs;
+
+    public Vector3 localPosition; // position of the local player, used for adjustments
 
     public MsgClientTick() { }
 
@@ -25,7 +26,7 @@ public class MsgClientTick
         {
             localTime = reader.ReadSingle();
             serverTime = reader.ReadSingle();
-            deltaTime = reader.ReadSingle();
+            localPosition = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
         }
 
         // Read inputs
@@ -39,7 +40,9 @@ public class MsgClientTick
         {
             writer.Write(localTime);
             writer.Write(serverTime);
-            writer.Write(deltaTime);
+            writer.Write(localPosition.x);
+            writer.Write(localPosition.y);
+            writer.Write(localPosition.z);
         }
 
         // Write inputs

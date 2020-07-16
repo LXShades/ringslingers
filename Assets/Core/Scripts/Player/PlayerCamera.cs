@@ -51,14 +51,22 @@ public class PlayerCamera : WorldObjectComponent
     {
         Camera cam = GetComponent<Camera>();
         AudioListener listener = GetComponent<AudioListener>();
+        float camX = 1 - debugDualCamSize;
+        float camWidth = debugDualCamSize;
+
         if (worldObject.world != World.server)
         {
-            cam.pixelRect = new Rect(Screen.width * (debugDualCamSize), 0, Screen.width * (1 - debugDualCamSize), Screen.height);
+            cam.pixelRect = new Rect(Screen.width * debugDualCamSize, 0, Screen.width - Screen.width * debugDualCamSize, Screen.height);
+            if (!listener)
+            {
+                listener = gameObject.AddComponent<AudioListener>(); //aff...server's destroyed listener can be replicated to the simulation one
+            }
+            listener.enabled = true;
         }
         else
         {
-            cam.pixelRect = new Rect(Screen.width * (1 - debugDualCamSize), 0, Screen.width * debugDualCamSize, Screen.height * debugDualCamSize);
-            //Destroy(listener); aff...this causes the destroyed listener to be replicated to the simulation....
+            cam.pixelRect = new Rect(0, 0, Screen.width * debugDualCamSize, Screen.height);
+            Destroy(listener);
         }
     }
 
