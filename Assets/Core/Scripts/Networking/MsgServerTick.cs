@@ -9,9 +9,6 @@ public class MsgTick
     // Frame time before this tick is executed
     public float time;
 
-    // DeltaTime the server will tick from here
-    public float deltaTime;
-
     // Local time of the receiving player, as currently known to the server, as of the last tick
     public float localTime;
 
@@ -40,7 +37,6 @@ public class MsgTick
             using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.ASCII, true))
             {
                 time = reader.ReadSingle();
-                deltaTime = reader.ReadSingle();
                 localTime = reader.ReadSingle();
                 syncersLength = reader.ReadInt32();
 
@@ -64,7 +60,8 @@ public class MsgTick
                 syncers.Write(becauseCopyToJustDoesntWork, 0, syncersLength);
             }
         }
-        catch {
+        catch
+        {
             Debug.LogError("Could not read server tick");
         }
     }
@@ -75,7 +72,6 @@ public class MsgTick
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.ASCII, true))
         {
             writer.Write(time);
-            writer.Write(deltaTime);
             writer.Write(localTime);
             writer.Write((int)syncers.Length);
 

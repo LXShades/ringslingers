@@ -25,7 +25,7 @@ public class DespawnAfterDuration : WorldObjectComponent
         myRenderer = GetComponent<Renderer>();
     }
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
         // Countdown!
         despawnTimeRemaining -= World.live.deltaTime;
@@ -35,7 +35,7 @@ public class DespawnAfterDuration : WorldObjectComponent
         {
             float rate = blinkRateOverTime.Evaluate(timeUntilDespawn - despawnTimeRemaining);
 
-            perBlinkTimer += World.live.deltaTime;
+            perBlinkTimer += deltaTime;
 
             if (rate > 0)
             {

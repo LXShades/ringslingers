@@ -39,8 +39,6 @@ public class PlayerCamera : WorldObjectComponent
     /// </summary>
     public float maxPlayerLandForEyeBob = 30;
 
-    public float debugDualCamSize = 0f;
-
     private float lastPlayerFallSpeed = 0;
 
     private float landBobTimer = 0;
@@ -49,28 +47,9 @@ public class PlayerCamera : WorldObjectComponent
 
     public override void FrameAwake()
     {
-        Camera cam = GetComponent<Camera>();
-        AudioListener listener = GetComponent<AudioListener>();
-        float camX = 1 - debugDualCamSize;
-        float camWidth = debugDualCamSize;
-
-        if (worldObject.world != World.server)
-        {
-            cam.pixelRect = new Rect(Screen.width * debugDualCamSize, 0, Screen.width - Screen.width * debugDualCamSize, Screen.height);
-            if (!listener)
-            {
-                listener = gameObject.AddComponent<AudioListener>(); //aff...server's destroyed listener can be replicated to the simulation one
-            }
-            listener.enabled = true;
-        }
-        else
-        {
-            cam.pixelRect = new Rect(0, 0, Screen.width * debugDualCamSize, Screen.height);
-            Destroy(listener);
-        }
     }
 
-    public override void FrameLateUpdate()
+    public override void FrameLateUpdate(float deltaTime)
     {
         if (currentPlayer == null)
         {
@@ -98,7 +77,7 @@ public class PlayerCamera : WorldObjectComponent
                 {
                     float landProgress = 1 - (landBobTimer / landBobDuration);
                     transform.position += Vector3.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
-                    landBobTimer = Mathf.Max(landBobTimer - World.live.deltaTime, 0);
+                    landBobTimer = Mathf.Max(landBobTimer - deltaTime, 0);
                 }
 
                 transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * World.live.time * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));

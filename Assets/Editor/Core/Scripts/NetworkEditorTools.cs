@@ -7,13 +7,6 @@ using UnityEditor;
 [InitializeOnLoad]
 public class NetworkEditorTools : MonoBehaviour
 {
-    /** Stores whether the 'use editor testing' menu checkbox is checked */
-    public static bool useEditorTesting
-    {
-        get { return EditorPrefs.GetBool("netUseEditorTesting"); }
-        set { EditorPrefs.SetBool("netUseEditorTesting", value); }
-    }
-
     public static int numTestPlayers
     {
         get { return Mathf.Clamp(EditorPrefs.GetInt("netNumTestPlayers"), 1, 4); }
@@ -25,19 +18,13 @@ public class NetworkEditorTools : MonoBehaviour
         get { return $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/NetTest"; }
     }
 
-    public static bool editorIsClient
-    {
-        get { return EditorPrefs.GetBool("netEditorIsServer"); }
-        set { EditorPrefs.SetBool("netEditorIsServer", value); }
-    }
-
     static NetworkEditorTools()
     {
         EditorApplication.playModeStateChanged += OnPlayStateChanged;
     }
 
-    [MenuItem("NetTest/Build and Run", priority=1)]
-    public static void BuildAndRun()
+    [MenuItem("NetTest/Build", priority=1)]
+    public static bool Build()
     {
         List<string> levels = new List<string>();
         string activeScenePath = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path;
@@ -84,37 +71,96 @@ public class NetworkEditorTools : MonoBehaviour
         if (buildReport.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
         {
             EditorUtility.DisplayDialog("Someone goofed", $"Build failed ({buildReport.summary.totalErrors} errors)", "OK");
-            return;
+            return false;
         }
         else
         {
-            Run();
+            return true;
         }
     }
 
-    [MenuItem("NetTest/Run", priority = 2)]
-    public static void Run()
+    [MenuItem("NetTest/Build && Run as Server", priority = 2)]
+    public static void BuildAndRunServer()
     {
-        if (useEditorTesting)
-        {
-            // play an instance in the editor
-            if (editorIsClient)
-            {
-                GameManager.editorCommandLineArgs = new string[] { "connect", "127.0.0.1" };
-            }
+        Build();
+        RunAsServer();
+    }
 
-            EditorApplication.isPlaying = true;
-        }
+    [MenuItem("NetTest/Build && Run as Client", priority = 3)]
+    public static void BuildAndRunClient()
+    {
+        Build();
+        RunAsClient();
+    }
+
+    [MenuItem("NetTest/Run as Server", priority = 40)]
+    private static void RunAsServer()
+    {
+        GameManager.editorCommandLineArgs = new string[] { "server", "127.0.0.1" };
+        EditorApplication.isPlaying = true;
 
         // Run the builds
-        for (int i = 0; i < numTestPlayers - (useEditorTesting ? 1 : 0); i++)
+        for (int i = 0; i < numTestPlayers - 1; i++)
         {
-            if (i == 0 && (!useEditorTesting || editorIsClient))
+            RunBuild("connect 127.0.0.1");
+        }
+    }
+
+    [MenuItem("NetTest/Run as Client", priority = 41)]
+    private static void RunAsClient()
+    {
+        GameManager.editorCommandLineArgs = new string[] { "connect", "127.0.0.1" };
+        EditorApplication.isPlaying = true;
+
+        for (int i = 0; i < Mathf.Max(numTestPlayers - 1, 1); i++)
+        {
+            if (i == 0)
                 RunBuild("server");
             else
                 RunBuild("connect 127.0.0.1");
         }
     }
+
+
+    [MenuItem("NetTest/Run Standalone", priority = 42)]
+    public static void Run()
+    {
+        // Run the builds
+        for (int i = 0; i < numTestPlayers; i++)
+        {
+            if (i == 0)
+                RunBuild("server");
+            else
+                RunBuild("connect 127.0.0.1");
+        }
+    }
+
+    [MenuItem("NetTest/1 player", priority = 60)]
+    private static void OneTestPlayer() { numTestPlayers = 1; }
+
+    [MenuItem("NetTest/1 player", true)]
+    private static bool OneTestPlayerValidate() { Menu.SetChecked("NetTest/1 player", numTestPlayers == 1); return true; }
+
+
+    [MenuItem("NetTest/2 players", priority = 61)]
+    private static void TwoTestPlayers() { numTestPlayers = 2; }
+
+    [MenuItem("NetTest/2 players", true)]
+    private static bool TwoTestPlayersValidate() { Menu.SetChecked("NetTest/2 players", numTestPlayers == 2); return true; }
+
+
+    [MenuItem("NetTest/3 players", priority = 62)]
+    private static void ThreeTestPlayers() { numTestPlayers = 3; }
+
+    [MenuItem("NetTest/3 players", true)]
+    private static bool ThreeTestPlayersValidate() { Menu.SetChecked("NetTest/3 players", numTestPlayers == 3); return true; }
+
+
+    [MenuItem("NetTest/4 players", priority = 63)]
+    private static void FourTestPlayers() { numTestPlayers = 4; }
+
+    [MenuItem("NetTest/4 players", true)]
+    private static bool FourTestPlayersValidate() { Menu.SetChecked("NetTest/4 players", numTestPlayers == 4); return true; }
 
     private static void OnPlayStateChanged(PlayModeStateChange obj)
     {
@@ -123,60 +169,6 @@ public class NetworkEditorTools : MonoBehaviour
             GameManager.editorCommandLineArgs = new string[0];
         }
     }
-
-    [MenuItem("NetTest/Use editor for Player 1", priority = 20)]
-    private static void UseEditorTesting()
-    {
-        useEditorTesting = !useEditorTesting;
-    }
-
-    [MenuItem("NetTest/Use editor for Player 1", true)]
-    private static bool UseEditorTestingValidate()
-    {
-        Menu.SetChecked("NetTest/Use editor for Player 1", useEditorTesting);
-        return true;
-    }
-
-    [MenuItem("NetTest/Join as client", priority = 21)]
-    private static void EditorIsServer()
-    {
-        editorIsClient = !editorIsClient;
-    }
-
-    [MenuItem("NetTest/Join as client", true)]
-    private static bool EditorIsServerValidate()
-    {
-        Menu.SetChecked("NetTest/Join as client", editorIsClient);
-        return useEditorTesting;
-    }
-
-
-    [MenuItem("NetTest/1 player", priority = 40)]
-    private static void OneTestPlayer() { numTestPlayers = 1; }
-
-    [MenuItem("NetTest/1 player", true)]
-    private static bool OneTestPlayerValidate() { Menu.SetChecked("NetTest/1 player", numTestPlayers == 1); return true; }
-
-
-    [MenuItem("NetTest/2 players", priority = 41)]
-    private static void TwoTestPlayers() { numTestPlayers = 2; }
-
-    [MenuItem("NetTest/2 players", true)]
-    private static bool TwoTestPlayersValidate() { Menu.SetChecked("NetTest/2 players", numTestPlayers == 2); return true; }
-
-
-    [MenuItem("NetTest/3 players", priority = 42)]
-    private static void ThreeTestPlayers() { numTestPlayers = 3; }
-
-    [MenuItem("NetTest/3 players", true)]
-    private static bool ThreeTestPlayersValidate() { Menu.SetChecked("NetTest/3 players", numTestPlayers == 3); return true; }
-
-
-    [MenuItem("NetTest/4 players", priority = 43)]
-    private static void FourTestPlayers() { numTestPlayers = 4; }
-
-    [MenuItem("NetTest/4 players", true)]
-    private static bool FourTestPlayersValidate() { Menu.SetChecked("NetTest/4 players", numTestPlayers == 4); return true; }
 
     private static void RunBuild(string arguments = "")
     {

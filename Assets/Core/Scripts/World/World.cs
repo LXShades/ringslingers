@@ -34,7 +34,7 @@ public class World : MonoBehaviour
     /// <summary>
     /// The current state of the game (gameObjects) as simulated. This may switch between server and simulation during ticks
     /// </summary>
-    public static World live { get; private set; }
+    public static World live { get => _server; }
 
     /// <summary>
     /// The current real state of the game according to the server
@@ -50,21 +50,6 @@ public class World : MonoBehaviour
         }
     }
     private static World _server;
-
-    /// <summary>
-    /// The current simulated state of the game with ping compensation
-    /// </summary>
-    public static World simulation
-    {
-        get
-        {
-            if (_simulation == null)
-                _simulation = new GameObject("WorldSim").AddComponent<World>();
-
-            return _simulation;
-        }
-    }
-    private static World _simulation;
 
     [Header("World objects")]
     /// <summary>
@@ -169,8 +154,6 @@ public class World : MonoBehaviour
     /// </summary>
     public void CaptureSceneObjects()
     {
-        World.live = this;
-
         foreach (WorldObject worldObj in GameObject.FindObjectsOfType<WorldObject>())
         {
             if (worldObj.world == null)
@@ -187,15 +170,11 @@ public class World : MonoBehaviour
     /// Advances the game by the given delta time and returns the new tick representing the resulting game state
     /// This causes GameState.live to be replaced with the new state, and may affect all in-game synced objects
     /// </summary>
-    public void Tick(MsgTick tick, bool isResimulation, bool isFinalResimulation = false)
+    public void Tick(MsgTick tick, float deltaTime)
     {
-        World.live = this;
-
         // Update timing
-        time = tick.time + tick.deltaTime;
-        deltaTime = tick.deltaTime;
-        this.isResimulation = isResimulation;
-        this.isFinalResimulation = isFinalResimulation;
+        time = tick.time + deltaTime;
+        this.deltaTime = deltaTime;
 
         // Spawn players who are pending a join
         for (int p = 0; p < players.Length; p++)
@@ -206,24 +185,15 @@ public class World : MonoBehaviour
                 RemovePlayer(p);
         }
 
-        // Read syncers
-        if (tick.syncers.Length > 0)
-        {
-            tick.syncers.Position = 0;
-            while (tick.syncers.Position < tick.syncers.Length)
-            {
-                int player = tick.syncers.ReadByte();
-                players[player].movement.ReadSyncer(tick.syncers);
-            }
-        }
-
-        // Apply player inputs
+        // Apply player inputs and positions
         for (int i = 0; i < Netplay.maxPlayers; i++)
         {
             if (players[i])
             {
                 players[i].lastInput = players[i].input;
                 players[i].input = tick.playerInputs[i];
+
+                players[i].remotePosition = tick.playerPositions[i];
             }
         }
 
@@ -235,14 +205,14 @@ public class World : MonoBehaviour
                 if (!worldObjects[i].hasStarted)
                     worldObjects[i].FrameStart();
 
-                worldObjects[i].FrameUpdate();
+                worldObjects[i].FrameUpdate(deltaTime);
             }
         }
 
         for (int i = 0; i < worldObjects.Count; i++)
         {
             if (worldObjects[i] && worldObjects[i].gameObject.activeInHierarchy && worldObjects[i].enabled)
-                worldObjects[i].FrameLateUpdate();
+                worldObjects[i].FrameLateUpdate(deltaTime);
         }
 
         // Simulate physics
@@ -456,6 +426,8 @@ public class World : MonoBehaviour
         player.Rename($"Fred");
 
         player.Respawn();
+
+        Debug.Log($"{player.playerName} ({player.playerId}) has entered the game");
 
         return player;
     }

@@ -41,18 +41,18 @@ public class RespawnableItem : WorldObjectComponent
         }
     }
 
-    public override void FrameAwake()
+    public override void FrameStart()
     {
         originalLayer = gameObject.layer;
         despawnedLayer = LayerMask.NameToLayer("Despawned");
         originalPosition = transform.position;
     }
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
         if (respawnCountdownTimer > 0)
         {
-            respawnCountdownTimer = Mathf.Max(respawnCountdownTimer - World.live.deltaTime, 0);
+            respawnCountdownTimer = Mathf.Max(respawnCountdownTimer - deltaTime, 0);
 
             if (respawnCountdownTimer <= 0)
                 Respawn();

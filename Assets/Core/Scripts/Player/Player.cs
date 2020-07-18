@@ -26,6 +26,15 @@ public class Player : WorldObjectComponent
     /// </summary>
     public InputCmds lastInput;
 
+    public Vector3 remotePosition
+    {
+        get => _remotePosition;
+        set
+        { _remotePosition = value; if (playerId == 1) Debug.Log($"Remote position={value}"); }
+    }
+
+    private Vector3 _remotePosition;
+
     [Header("Shinies")]
     public int score = 0;
 
@@ -74,7 +83,7 @@ public class Player : WorldObjectComponent
         movement = GetComponent<CharacterMovement>();
     }
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
         // Update aim
         float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
@@ -84,7 +93,7 @@ public class Player : WorldObjectComponent
         // Invincibility blinky
         if (invincibilityTimeRemaining > 0)
         {
-            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - World.live.deltaTime, 0);
+            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - deltaTime, 0);
 
             Renderer renderer = GetComponentInChildren<Renderer>();
             if (renderer && invincibilityTimeRemaining > 0)

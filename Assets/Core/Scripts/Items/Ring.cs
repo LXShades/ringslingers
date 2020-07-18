@@ -42,12 +42,12 @@ public class Ring : WorldObjectComponent
         }
     }
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
         if (isDroppedRing || respawnableItem.isSpawned)
         {
             // Spinny spin
-            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * World.live.deltaTime, 0));
+            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * deltaTime, 0));
         }
     }
 

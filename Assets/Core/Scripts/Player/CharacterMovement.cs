@@ -2,6 +2,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.Remoting;
+using System.Xml;
 using UnityEngine;
 
 [RequireComponent(typeof(Movement), typeof(Player))]
@@ -62,14 +64,52 @@ public class CharacterMovement : WorldObjectComponent
     /// </summary>
     [HideInInspector] public bool isOnGround = false;
 
+    [Serializable]
+    private class TimePosition
+    {
+        public float time;
+        public Vector3 position;
+        public Vector3 velocity;
+        public InputCmds inputs;
+        public State state;
+
+        public TimePosition(CharacterMovement source)
+        {
+            time = 0;
+            position = source.transform.position;
+            velocity = source.velocity;
+            inputs = source.player.input;
+            state = source.state;
+        }
+
+        public void To(CharacterMovement target)
+        {
+            target.transform.position = position;
+            target.velocity = velocity;
+            target.player.input = inputs;
+            target.state = state;
+        }
+    }
+
+    private float maxMovementHistory = 1; // in seconds
+    private List<TimePosition> movementHistory = new List<TimePosition>();
+
+    private bool isResimmingMovement = false;
+
     public override void FrameStart()
     {
         player = GetComponent<Player>();
         move = GetComponent<Movement>();
     }
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
+        if (!isResimmingMovement)
+        {
+            // Update position/reconciliation etc
+            HandleServerMovement();
+        }
+
         // Check whether on ground
         isOnGround = DetectOnGround();
 
@@ -86,13 +126,13 @@ public class CharacterMovement : WorldObjectComponent
         }
 
         // Friction
-        ApplyFriction();
+        ApplyFriction(deltaTime);
         float lastHorizontalSpeed = velocity.Horizontal().magnitude; // this is our new max speed if our max speed was already exceeded
 
-        ApplyRunAcceleration();
+        ApplyRunAcceleration(deltaTime);
 
         // Gravity
-        velocity += new Vector3(0, -1, 0) * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * World.live.deltaTime);
+        velocity += new Vector3(0, -1, 0) * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime);
 
         // Top speed clamp
         ApplyTopSpeedLimit(lastHorizontalSpeed);
@@ -119,12 +159,12 @@ public class CharacterMovement : WorldObjectComponent
         // Perform final movement and collision
         if (debugDisableCollision)
         {
-            transform.position += velocity * World.live.deltaTime;
+            transform.position += velocity * deltaTime;
         }
         else
         {
             RaycastHit hit;
-            move.Move(velocity * World.live.deltaTime, out hit);
+            move.Move(velocity * deltaTime, out hit);
         }
     }
 
@@ -147,14 +187,14 @@ public class CharacterMovement : WorldObjectComponent
         return false;
     }
 
-    private void ApplyFriction()
+    private void ApplyFriction(float deltaTime)
     {
         // Friction
         if (velocity.Horizontal().magnitude > 0 && isOnGround)
-            velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, World.live.deltaTime * 35f));
+            velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, deltaTime * 35f));
     }
 
-    private void ApplyRunAcceleration()
+    private void ApplyRunAcceleration(float deltaTime)
     {
         if (state.HasFlag(State.Pained))
             return; // cannot accelerate while in pain
@@ -171,7 +211,7 @@ public class CharacterMovement : WorldObjectComponent
         if (!isOnGround)
             currentAcceleration *= airAccelerationMultiplier;
 
-        velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration / 65536f * World.live.deltaTime * 35f);
+        velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration / 65536f * deltaTime * 35f);
         velocity /= GameManager.singleton.fracunitsPerM / 35f;
     }
 
@@ -200,14 +240,18 @@ public class CharacterMovement : WorldObjectComponent
             {
                 // Jump
                 velocity.y = jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM;
-                GameSounds.PlaySound(gameObject, jumpSound);
+
+                if (!isResimmingMovement)
+                    GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
             {
                 // Thok
                 velocity.SetHorizontal(player.aimForward.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
-                GameSounds.PlaySound(gameObject, thokSound);
+
+                if (!isResimmingMovement)
+                    GameSounds.PlaySound(gameObject, thokSound);
                 state |= State.Thokked;
             }
         }
@@ -225,6 +269,84 @@ public class CharacterMovement : WorldObjectComponent
     {
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
         velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
+    }
+
+    private void HandleServerMovement()
+    {
+        // Add to movement history while removing old stuff
+        movementHistory.Insert(0, new TimePosition(this) { time = Netplay.singleton.localPlayerTime });
+        for (int i = 0; i < movementHistory.Count; i++)
+        {
+            if (movementHistory[i].time < Netplay.singleton.localPlayerTime - maxMovementHistory)
+            {
+                movementHistory.RemoveRange(i, movementHistory.Count - i);
+                break;
+            }
+        }
+
+        if (Netplay.singleton.isServer)
+        {
+            // move the player to the client's remote position - if it's valid. todo: check and resimulate
+            if (Vector3.Distance(player.remotePosition, transform.position) < 2)
+            {
+                transform.position = player.remotePosition;
+            }
+        }
+        else if (!Netplay.singleton.isServer)
+        {
+            if (player.playerId == Netplay.singleton.localPlayerId && Netplay.singleton.lastProcessedServerTick != null)
+            {
+                Vector3 serverPosition = player.remotePosition;
+                float serverLocalTime = Netplay.singleton.localPlayerTime - Netplay.singleton.GetPing();
+
+                isResimmingMovement = true;
+
+                try
+                {
+                    int tickHistoryIndex;
+                    for (tickHistoryIndex = 0; tickHistoryIndex < movementHistory.Count; tickHistoryIndex++)
+                    {
+                        if (movementHistory[tickHistoryIndex].time == serverLocalTime)
+                            break;
+                    }
+
+                    // Reconcile movement if it's not accurate
+                    if (tickHistoryIndex < movementHistory.Count - 1 /* && movementHistory[tickHistoryIndex].position != serverPosition */)
+                    {
+                        // rewind to the server position and resimulate from there
+                        movementHistory[tickHistoryIndex].To(this);
+                        transform.position = serverPosition;
+
+                        for (int i = tickHistoryIndex; i >= 1; i--)
+                        {
+                            movementHistory[tickHistoryIndex].position = transform.position;
+
+                            player.lastInput = movementHistory[i + 1].inputs;
+                            player.input = movementHistory[i].inputs;
+                            FrameUpdate(movementHistory[i - 1].time - movementHistory[i].time);
+                        }
+
+                        // restore inputs
+                        player.input = movementHistory[0].inputs;
+                        player.lastInput = movementHistory[1].inputs;
+                        movementHistory[0].position = transform.position;
+                    }
+                    else
+                        Debug.Log("Problem");
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"Exception occurred during resim: {e}. This was caught to avoid locking the player");
+                }
+
+                isResimmingMovement = false;
+            }
+            else if (player.playerId != Netplay.singleton.localPlayerId)
+            {
+                // other players just be movin
+                transform.position = player.remotePosition;
+            }
+        }
     }
 
     #region Networking

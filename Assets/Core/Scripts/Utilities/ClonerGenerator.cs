@@ -214,6 +214,8 @@ public static class ClonerGenerator
         {
             if (member.MemberType != MemberTypes.Field && member.MemberType != MemberTypes.Property)
                 continue;
+            if (member.MemberType == MemberTypes.Property && (!(member as PropertyInfo).CanWrite || !(member as PropertyInfo).CanRead))
+                continue;
 
             Type memberType = (member.MemberType == MemberTypes.Field ? (member as FieldInfo).FieldType : (member as PropertyInfo).PropertyType);
 

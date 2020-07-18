@@ -92,8 +92,6 @@ public class GameManager : MonoBehaviour
 
         // Setup the main world with the scene objects
         World.server.CaptureSceneObjects();
-
-        World.simulation.CloneFrom(World.server);
     }
 
     void Update()

@@ -26,10 +26,10 @@ public class ThrownRing : WorldObjectComponent
         spinAxis.Normalize();
     }
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
         // Spin
-        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * World.live.deltaTime, spinAxis);
+        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * deltaTime, spinAxis);
 
         // Move
         //transform.position += velocity * Frame.local.deltaTime;

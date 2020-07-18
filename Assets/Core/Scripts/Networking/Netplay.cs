@@ -46,6 +46,11 @@ public class Netplay : MonoBehaviour
     public float serverTickRate = 20;
 
     /// <summary>
+    /// How regularly clients send ticks
+    /// </summary>
+    public float clientTickRate = 20;
+
+    /// <summary>
     /// How far the server has simulated ahead
     /// </summary>
     public float serverSimTime = 0.3f;
@@ -72,15 +77,6 @@ public class Netplay : MonoBehaviour
     public int replayStart;
     public int replayEnd;
 
-    [System.Serializable]
-    public struct TickState
-    {
-        /// <summary>
-        /// Actual tick
-        /// </summary>
-        public MsgTick tick;
-    }
-
     /// <summary>
     /// Local player ID
     /// </summary>
@@ -94,7 +90,7 @@ public class Netplay : MonoBehaviour
     /// <summary>
     /// Current local player time since...uh...i dunno yet
     /// </summary>
-    private float localPlayerTime;
+    public float localPlayerTime;
 
     /// <summary>
     /// Current local player times for other players. Valid on server. For clients only localPlayerId has a valid value
@@ -109,12 +105,12 @@ public class Netplay : MonoBehaviour
     /// <summary>
     /// Server ticks that have either a) been received in the last maxTickHistoryTime or b) not been processed yet (these can be older if that happens)
     /// </summary>
-    public List<TickState> serverTickHistory = new List<TickState>();
+    public List<MsgTick> serverTickHistory = new List<MsgTick>();
 
     /// <summary>
     /// Recorded ticks from a backlog of local simulations
     /// </summary>
-    public List<TickState> localTickHistory = new List<TickState>();
+    public List<MsgTick> localTickHistory = new List<MsgTick>();
 
     /// <summary>
     /// Client ticks received but not yet processed
@@ -125,6 +121,17 @@ public class Netplay : MonoBehaviour
     /// Used by the server. Used to defer new player creation
     /// </summary>
     private ulong[] playerClientIds = new ulong[maxPlayers];
+
+    /// <summary>
+    /// Whether this is the server player
+    /// </summary>
+    public bool isServer
+    {
+        get
+        {
+            return net.IsServer;
+        }
+    }
 
     private NetworkingManager net;
 
@@ -187,148 +194,36 @@ public class Netplay : MonoBehaviour
         // Update local time
         localPlayerTime += Time.deltaTime;
 
-        // Send local inputs to the server, if we're a client
-        if (net.IsClient && !net.IsServer)
-            ClientSendTick();
+        // Run the next tick
+        MsgTick nextTick = MakeTick(World.live.time, net.IsServer);
 
-        // Run some ticks
-        int firstServerTick = -1;
-        float desiredLocalTickTime = 0;
-        int liveServerTickIndex = (int)Mathf.Round(serverTickRate * serverSimTime); // the index in our server history that we actually simulate the server locally from
-
-        // ==== CLIENT TICK ====
+        // ==== CLIENT RECEIVE TICK/SEND INPUTS ====
         if (!net.IsServer)
         {
-            float lastTickTime = lastProcessedServerTick != null ? lastProcessedServerTick.time : 0;
+            // Receive server ticks
+            if (serverTickHistory.Count > 0 && lastProcessedServerTick != serverTickHistory[0])
+                lastProcessedServerTick = serverTickHistory[0];
 
-            // Find first server tick to start running from
-            for (int i = 0; i < serverTickHistory.Count; i++)
-            {
-                if (serverTickHistory[i].tick.time > lastTickTime)
-                    firstServerTick = i;
-            }
-
-            // Run any unprocessed server ticks
-            if (firstServerTick != -1)
-            {
-                // Tick!
-                for (int i = firstServerTick; i >= 0; i--)
-                {
-                    World.server.Tick(serverTickHistory[i].tick, false);
-                    lastProcessedServerTick = serverTickHistory[i].tick;
-                }
-
-                World.simulation.CloneFrom(World.server);
-
-                // Replay ticks up to this point (send the player back to the future!)
-                int startReplayTick = -1;
-                for (int i = 0; i < localTickHistory.Count; i++)
-                {
-                    if (localTickHistory[i].tick.localTime >= lastProcessedServerTick.localTime + lastProcessedServerTick.deltaTime)
-                        startReplayTick = i;
-                }
-
-                if (startReplayTick != -1)
-                {
-                    if (startReplayTick + 1 < localTickHistory.Count)
-                    {
-                        MsgTick tick = localTickHistory[startReplayTick + 1].tick;
-                        float oldDeltaTime = tick.deltaTime;
-                        float oldTime = tick.time;
-
-                        // bridge between the server tick and the startReplayTick, using previous inputs
-                        tick.deltaTime = localTickHistory[startReplayTick].tick.localTime - lastProcessedServerTick.localTime;
-                        tick.time = lastProcessedServerTick.time;
-
-                        World.simulation.Tick(tick, true);
-                        tick.deltaTime = oldDeltaTime;
-                        tick.time = oldTime;
-                    }
-
-                    for (int i = startReplayTick; i >= 0; i--)
-                    {
-                        World.simulation.Tick(localTickHistory[i].tick, true);
-                    }
-                }
-            }
-
-            // Continue to simulation
-            if (lastProcessedServerTick != null)
-                desiredLocalTickTime = World.server.time + localPlayerTime - lastProcessedServerTick.localTime;
+            // Send local inputs to the server at the client tickrate
+            if ((int)(localPlayerTime * clientTickRate) != (int)((localPlayerTime - Time.deltaTime) * clientTickRate))
+                ClientSendTick();
         }
-        // ==== SERVER ====
+        // ==== SERVER SEND TICKS ====
         else if (net.IsServer)
         {
-            desiredLocalTickTime = localPlayerTime;
-
-            // Should we make a new tick?
-            float closestServerTick = (int)(desiredLocalTickTime / serverDeltaTime) * serverDeltaTime;
-            float lastServerTickTime = serverTickHistory.Count > 0 ? serverTickHistory[0].tick.time : closestServerTick - serverDeltaTime;
-
-            // WARNING: ticks are currently skipped, is that ok?
-            if (closestServerTick > lastServerTickTime)
+            float lastServerTickTime = lastProcessedServerTick != null ? lastProcessedServerTick.time : 0f;
+            if ((int)(localPlayerTime / serverDeltaTime) * serverDeltaTime > lastServerTickTime)
             {
-                // The next tick will begin at the latest created tick, advanced by serverDeltaTime
-                // MakeTick will include the latest controls, etc
-                MsgTick nextServerTick = MakeTick(closestServerTick, serverDeltaTime, true, true);
-
-                // Send this tick to other players
-                ServerSendTick(nextServerTick);
-
-                // Insert the new tick
-                serverTickHistory.Insert(0, new TickState() { tick = nextServerTick });
-
-                if (serverTickHistory.Count > liveServerTickIndex)
-                {
-                    lastProcessedServerTick = serverTickHistory[liveServerTickIndex].tick;
-
-                    // Tick the server
-                    World.server.Tick(serverTickHistory[liveServerTickIndex].tick, false);
-
-                    // Copy it to the simulated tick
-                    World.simulation.CloneFrom(World.server);
-
-                    for (int i = liveServerTickIndex - 1; i >= 1; i--)
-                    {
-                        World.simulation.Tick(serverTickHistory[i].tick, true);
-                    }
-                }
+                // Send server this tick to other players
+                ServerSendTick(nextTick);
+                serverTickHistory.Insert(0, nextTick);
             }
+
+            lastProcessedServerTick = nextTick;
         }
 
-        // Simulate local ticks for real-time response
-        if (desiredLocalTickTime > World.simulation.time && lastProcessedServerTick != null)
-        {
-            // Make our own fake tick to pass the time
-            MsgTick tick = MakeTick(World.simulation.time, desiredLocalTickTime - World.simulation.time, false, false);
-
-            //Debug.Log($"Sim {GameState.live.time}->{desiredLocalTickTime}");
-            if (net.IsServer && lastProcessedServerTick != null)
-            {
-                //tick.playerInputs = (InputCmds[])lastProcessedServerTick.playerInputs.Clone();
-                tick.playerInputs[localPlayerId] = localInputCmds;
-            }
-            else if (lastProcessedServerTick != null)
-            {
-                //tick.playerInputs = (InputCmds[])lastProcessedServerTick.playerInputs.Clone();
-            }
-
-            tick.playerInputs[localPlayerId].horizontalAim = localInputCmds.horizontalAim;
-            tick.playerInputs[localPlayerId].verticalAim = localInputCmds.verticalAim;
-            tick.localTime = localPlayerTime;
-            localTickHistory.Insert(0, new TickState()
-            {
-                tick = tick
-            });
-
-            World.simulation.Tick(tick, true, true);
-
-            /*Debug.Log($"Local-sim = {localPlayerTime - World.simulation.time} " +
-                $"sim-serv {World.simulation.time - World.server.time}" + 
-                $"local-serv = {localPlayerTime - World.server.time} " +
-                $"local-servlocal {localPlayerTime - lastProcessedServerTick.localTime} " +
-                $"local-simlocal = {localPlayerTime - lastProcessedServerTick.localTime - (World.simulation.time - World.server.time)}");*/
-        }
+        // Tick the game!
+        World.live.Tick(nextTick, Time.deltaTime);
 
         // Cleanup old ticks
         CleanupOutdatedTickHistory();
@@ -341,13 +236,13 @@ public class Netplay : MonoBehaviour
     {
         for (int i = 1; i < serverTickHistory.Count; i++)
         {
-            if (serverTickHistory[i].tick.time < serverTickHistory[0].tick.time - maxTickHistoryTime)
+            if (serverTickHistory[i].time < serverTickHistory[0].time - maxTickHistoryTime)
                 serverTickHistory.RemoveRange(i, serverTickHistory.Count - i);
         }
 
         for (int i = 0; i < localTickHistory.Count; i++)
         {
-            if (localTickHistory[i].tick.localTime < localPlayerTime - maxSimTime || localTickHistory[i].tick.localTime > localPlayerTime /* i mean this should never happen but */)
+            if (localTickHistory[i].localTime < localPlayerTime - maxSimTime || localTickHistory[i].localTime > localPlayerTime /* i mean this should never happen but */)
             {
                 localTickHistory.RemoveAt(i--);
             }
@@ -397,7 +292,7 @@ public class Netplay : MonoBehaviour
             net.StartHost();
 
             // Make the first tick
-            serverTickHistory.Add(new TickState() { tick = MakeTick(0, 1f / serverTickRate, false, true) });
+            serverTickHistory.Add(MakeTick(0, true));
         }
         else
         {
@@ -473,67 +368,79 @@ public class Netplay : MonoBehaviour
         numSentTicks++;
     }
 
-    private MsgTick MakeTick(float time, float deltaTime, bool includeSyncers, bool isServer)
+    private MsgTick MakeTick(float time, bool isServer)
     {
         MsgTick tick = new MsgTick()
         {
-            deltaTime = deltaTime,
             time = time,
             localTime = localPlayerTime, // this will be replaced before sending to each client
-            isPlayerInGame = isServer ? System.Array.ConvertAll<ulong, bool>(playerClientIds, a => a != ulong.MaxValue) : System.Array.ConvertAll<Player, bool>(World.server.players, a => a != null)
         };
 
-        if (localPlayerId >= 0 && isServer)
+        // insert previous server tick inputs into the local tick
+        for (int p = 0; p < maxPlayers; p++)
         {
-            tick.isPlayerInGame[localPlayerId] = true;
-            tick.playerPositions[localPlayerId] = World.server.players[localPlayerId] ? World.server.players[localPlayerId].transform.position : Vector3.zero;
+            if (!isServer)
+                tick.isPlayerInGame[p] = lastProcessedServerTick.isPlayerInGame[p];
+            else
+                tick.isPlayerInGame[p] = playerClientIds[p] != ulong.MaxValue || p == localPlayerId;
+
+            if (lastProcessedServerTick != null)
+            {
+                tick.playerInputs[p] = lastProcessedServerTick.playerInputs[p];
+                tick.playerPositions[p] = lastProcessedServerTick.playerPositions[p];
+            }
         }
 
-        // Receive player inputs into the tick
         if (isServer)
         {
+            // Receive new player inputs and local positions before ticking
             for (int p = 0; p < maxPlayers; p++)
             {
+                if (World.server.players[p])
+                    tick.playerPositions[p] = World.server.players[p].transform.position;
+
                 if (pendingClientTicks[p].Count > 0)
                 {
                     float highestTime = float.MinValue;
-                    MsgClientTick latestTick = null;
+                    MsgClientTick latestClientTick = null;
 
                     foreach (MsgClientTick clientTick in pendingClientTicks[p])
                     {
                         if (clientTick.localTime > highestTime)
                         {
-                            latestTick = clientTick;
+                            latestClientTick = clientTick;
                             highestTime = clientTick.localTime;
                         }
                     }
 
-                    tick.playerInputs[p] = latestTick.playerInputs;
-                    tick.playerPositions[p] = latestTick.localPosition;
+                    tick.playerInputs[p] = latestClientTick.playerInputs;
 
                     pendingClientTicks[p].Clear();
                 }
-                else if (serverTickHistory.Count > 0)
+                else if (lastProcessedServerTick != null)
                 {
                     // use previous tick's controls
-                    tick.playerInputs[p] = serverTickHistory[0].tick.playerInputs[p];
+                    tick.playerInputs[p] = lastProcessedServerTick.playerInputs[p];
                 }
             }
         }
-        tick.playerInputs[localPlayerId] = localInputCmds; // and our own!
+
+        // Add local inputs
+        if (localPlayerId >= 0)
+            tick.playerInputs[localPlayerId] = localInputCmds;
 
         // Add syncers
-        if (includeSyncers && false)
+        if (isServer && false)
         {
             foreach (Player player in World.server.players)
             {
                 if (player)
                 {
-                    if ((int)((tick.time + deltaTime) * player.movement.syncsPerSecond) != (int)(tick.time * player.movement.syncsPerSecond))
+                    /*if ((int)((tick.time + deltaTime) * player.movement.syncsPerSecond) != (int)(tick.time * player.movement.syncsPerSecond))
                     {
                         tick.syncers.WriteByte((byte)player.playerId);
                         player.movement.WriteSyncer(tick.syncers);
-                    }
+                    }*/
                 }
             }
         }
@@ -550,13 +457,11 @@ public class Netplay : MonoBehaviour
             int insertIndex;
             for (insertIndex = 0; insertIndex < serverTickHistory.Count - 1; insertIndex++)
             {
-                if (serverTickHistory[insertIndex].tick.time < tick.time)
+                if (serverTickHistory[insertIndex].time < tick.time)
                     break;
             }
 
-            serverTickHistory.Insert(insertIndex, new TickState {
-                tick = tick
-            });
+            serverTickHistory.Insert(insertIndex, tick);
 
             // Record STATS!
             numTicksPerFrame[Mathf.Min(netStatFrameNum, numTicksPerFrame.Length - 1)]++;
@@ -695,11 +600,14 @@ public class Netplay : MonoBehaviour
 
     public float GetPing()
     {
-        if (serverTickHistory.Count > 0)
+        if (lastProcessedServerTick != null && !net.IsServer)
         {
-            return localPlayerTime - serverTickHistory[0].tick.localTime;
+            return localPlayerTime - lastProcessedServerTick.localTime;
         }
-        return -1;
+        else
+        {
+            return 0f;
+        }
     }
     #endregion
 }

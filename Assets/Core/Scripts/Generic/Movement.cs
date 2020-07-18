@@ -32,7 +32,7 @@ public class Movement : WorldObjectComponent
     /// </summary>
     [HideInInspector] public Vector3 velocity;
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
         if (!useManualPhysics)
         {
@@ -42,7 +42,7 @@ public class Movement : WorldObjectComponent
             // Do le move
             RaycastHit hit;
 
-            if (Move(velocity * World.live.deltaTime, out hit))
+            if (Move(velocity * deltaTime, out hit))
             {
                 Vector3 resistanceVector = hit.normal * (-Vector3.Dot(hit.normal, velocity) * (1f + bounceFactor));
                 Vector3 frictionVector = -velocity * bounceFriction;

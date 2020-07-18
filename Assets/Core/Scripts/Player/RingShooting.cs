@@ -48,7 +48,7 @@ public class RingShooting : WorldObjectComponent
         player = GetComponent<Player>();
     }
 
-    public override void FrameUpdate()
+    public override void FrameUpdate(float deltaTime)
     {
         if (equippedWeapons.Count > 0)
             currentWeapon = equippedWeapons[equippedWeapons.Count - 1];
@@ -85,7 +85,7 @@ public class RingShooting : WorldObjectComponent
         for (int i = 0; i < equippedWeapons.Count; i++)
         {
             if (equippedWeapons[i].weaponType.ammoIsTime)
-                equippedWeapons[i].ammo -= World.live.deltaTime;
+                equippedWeapons[i].ammo -= deltaTime;
         }
 
         // Remove weapons with no ammo remaining

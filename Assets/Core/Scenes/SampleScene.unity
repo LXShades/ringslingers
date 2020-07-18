@@ -6757,8 +6757,6 @@ MonoBehaviour:
 
     maxPlayerLandForEyeBob
 
-    debugDualCamSize
-
     lastPlayerFallSpeed
 
     landBobTimer
@@ -6773,7 +6771,6 @@ MonoBehaviour:
   maxPlayerVelocityForEyeBob: 8.7
   landEyeBobHeight: 0.5
   maxPlayerLandForEyeBob: 40
-  debugDualCamSize: 0.5
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13312,7 +13309,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   connectionStatus: 0
   playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
-  serverTickRate: 30
+  serverTickRate: 2
+  clientTickRate: 20
   serverSimTime: 0.3
   maxSimTime: 0.5
   maxTickHistoryTime: 1
@@ -13321,9 +13319,9 @@ MonoBehaviour:
   replayStart: 5
   replayEnd: 0
   localPlayerId: -1
+  localPlayerTime: 0
   lastProcessedServerTick:
     time: 0
-    deltaTime: 0
     localTime: 0
     playerPositions:
     - {x: 0, y: 0, z: 0}

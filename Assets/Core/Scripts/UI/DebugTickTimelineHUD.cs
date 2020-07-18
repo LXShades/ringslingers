@@ -25,7 +25,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
         if (Netplay.singleton.serverTickHistory.Count == 0)
             return;
 
-        float maxTime = Mathf.Max(Netplay.singleton.serverTickHistory[0].tick.time, World.live.time), minTime = 0;
+        float maxTime = Mathf.Max(Netplay.singleton.serverTickHistory[0].time, World.live.time), minTime = 0;
 
         minTime = Mathf.Floor(maxTime / timePeriod) * timePeriod;
         maxTime = Mathf.Ceil(maxTime / timePeriod) * timePeriod;
@@ -41,7 +41,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
         earlyTime.text = minTime.ToString();
         lateTime.text = maxTime.ToString();
 
-        serverTick.rectTransform.anchorMin = serverTick.rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, Netplay.singleton.lastProcessedServerTick.time + Netplay.singleton.lastProcessedServerTick.deltaTime), serverTick.rectTransform.anchorMin.y);
+        //serverTick.rectTransform.anchorMin = serverTick.rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, Netplay.singleton.lastProcessedServerTick.time + Netplay.singleton.lastProcessedServerTick.deltaTime), serverTick.rectTransform.anchorMin.y);
         liveTick.rectTransform.anchorMin = liveTick.rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, World.live.time), liveTick.rectTransform.anchorMin.y);
 
         if (allServerTicks.Count < Netplay.singleton.serverTickHistory.Count)
@@ -62,7 +62,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
             {
                 allServerTicks[i].enabled = true;
 
-                allServerTicks[i].rectTransform.anchorMin = allServerTicks[i].rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, Netplay.singleton.serverTickHistory[i].tick.time), allServerTicks[i].rectTransform.anchorMin.y);
+                allServerTicks[i].rectTransform.anchorMin = allServerTicks[i].rectTransform.anchorMax = new Vector2(Mathf.InverseLerp(minTime, maxTime, Netplay.singleton.serverTickHistory[i].time), allServerTicks[i].rectTransform.anchorMin.y);
             }
         }
     }

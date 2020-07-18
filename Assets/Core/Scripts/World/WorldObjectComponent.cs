@@ -81,12 +81,12 @@ public abstract class WorldObjectComponent : SyncedObjectBase
     /// <summary>
     /// Called during a synchronised frame update
     /// </summary>
-    public virtual void FrameUpdate() { return; }
+    public virtual void FrameUpdate(float deltaTime) { return; }
 
     /// <summary>
     /// Called during a synchronised late frame update (after all other updates)
     /// </summary>
-    public virtual void FrameLateUpdate() { return; }
+    public virtual void FrameLateUpdate(float deltaTime) { return; }
 
     /// <summary>
     /// Called when a syncer is requested for this object

@@ -31,6 +31,8 @@ public class GameHUD : MonoBehaviour
     private int lastFps = 0;
     private float lastPing = 0;
 
+    private string debugLog;
+
     bool doRefreshLog = false;
 
     private void Start()
@@ -45,6 +47,10 @@ public class GameHUD : MonoBehaviour
 
     void Update()
     {
+        if (!GameManager.singleton || !GameManager.singleton.camera)
+        {
+            return;
+        }
         Player player = GameManager.singleton.camera.currentPlayer;
 
         numFramesThisSecond++;
@@ -75,7 +81,7 @@ public class GameHUD : MonoBehaviour
             }
 
             debugText.text = $"Local frame: {World.live.time.ToString("#.00")}" +
-                $"\nServer frame: {Netplay.singleton.serverTickHistory[0].tick.time.ToString("#.00")}" +
+                $"\nServer frame: {Netplay.singleton.lastProcessedServerTick?.time.ToString("#.00")}" +
                 $"\nPing: {(int)(lastPing * 1000)}ms" +
                 $"\nFPS: {lastFps}" +
                 $"\nRun Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}" +
@@ -127,12 +133,12 @@ public class GameHUD : MonoBehaviour
 
         if (doRefreshLog)
         {
+            debugLogText.text = debugLog;
             Canvas.ForceUpdateCanvases();
             if (debugLogText.cachedTextGenerator.lineCount > numLogLines)
             {
-                debugLogText.text = debugLogText.text.Substring(debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lineCount - numLogLines].startCharIdx);
+                debugLogText.text = debugLog = debugLogText.text.Substring(debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lineCount - numLogLines].startCharIdx);
             }
-            Canvas.ForceUpdateCanvases();
 
             doRefreshLog = false;
         }
@@ -143,10 +149,9 @@ public class GameHUD : MonoBehaviour
         if (type == LogType.Log && !showHarmlessLogs)
             return; // don't show everything
 
-        List<string> debugLog = new List<string>(debugLogText.text.Split('\n'));
         string[] trace = stackTrace.Split('\n');
 
-        debugLogText.text += condition + ": " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
+        debugLog += condition + ": " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
 
         doRefreshLog = true;
     }
