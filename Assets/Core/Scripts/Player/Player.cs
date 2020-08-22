@@ -21,27 +21,12 @@ public class Player : WorldObjectComponent
     /// <summary>
     /// Current inputs of this player
     /// </summary>
-    public InputCmds input;
+    public PlayerInput input;
 
     /// <summary>
     /// Previous inputs of this player
     /// </summary>
-    public InputCmds lastInput;
-
-    /// <summary>
-    /// The remote local time of the player
-    /// </summary>
-    public float serverTime;
-
-    public Vector3 remotePosition
-    {
-        get => _remotePosition;
-        set => _remotePosition = value;
-    }
-
-    private Vector3 _remotePosition;
-
-    public Vector3 serverVelocity;
+    public PlayerInput lastInput;
 
     [Header("Shinies")]
     public int score = 0;
@@ -208,18 +193,40 @@ public class Player : WorldObjectComponent
 
     public void PreLocalTick(PlayerTick tick)
     {
-        if (tick.localTime != localTime)
+        if (isLocalPlayer)
         {
-            localTime = tick.localTime;
-            movement.PreNewLocalTick(tick);
-        }
+            movement.SetInput(tick.localTime, tick.input);
 
-        lastInput = input;
-        input = tick.input;
+            lastInput = input;
+            input = tick.input;
+        }
+        else
+        {
+            if (tick.localTime != localTime)
+            {
+                localTime = tick.localTime;
+                movement.SetInput(tick.localTime, tick.input);
+            }
+        }
     }
 
     public void PreServerTick(PlayerTick tick)
     {
-        movement.PreServerTick(tick);
+        if (Netplay.singleton.isClient)
+        {
+            if (!isLocalPlayer)
+            {
+                movement.SetInput(tick.localTime, tick.input);
+            }
+            else if (isLocalPlayer && Netplay.singleton.isClient)
+            {
+                movement.Reconcile(new MovementMark2.Snapshot()
+                {
+                    position = tick.position,
+                    time = tick.localTime,
+                    velocity = tick.velocity
+                });
+            }
+        }
     }
 }

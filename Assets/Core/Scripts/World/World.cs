@@ -520,7 +520,7 @@ public class World : MonoBehaviour
 
 [System.Serializable]
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
-public struct InputCmds
+public struct PlayerInput
 {
     public float moveHorizontalAxis;
     public float moveVerticalAxis;
@@ -571,9 +571,9 @@ public struct InputCmds
     /// </summary>
     /// <param name="lastInput"></param>
     /// <returns></returns>
-    public static InputCmds FromLocalInput(InputCmds lastInput)
+    public static PlayerInput FromLocalInput(PlayerInput lastInput)
     {
-        InputCmds localInput;
+        PlayerInput localInput;
 
         localInput.moveHorizontalAxis = Input.GetAxisRaw("Horizontal");
         localInput.moveVerticalAxis = Input.GetAxisRaw("Vertical");

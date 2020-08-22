@@ -121,13 +121,12 @@ public class Netplay : MonoBehaviour
     /// <summary>
     /// Whether this is the server player
     /// </summary>
-    public bool isServer
-    {
-        get
-        {
-            return net.IsServer;
-        }
-    }
+    public bool isServer => net.IsServer;
+
+    /// <summary>
+    /// Whether this is not a server or host player
+    /// </summary>
+    public bool isClient => net.IsClient && !net.IsHost;
 
     private NetworkingManager net;
 
@@ -373,15 +372,10 @@ public class Netplay : MonoBehaviour
                     // this information is slightly out of date though. sigh...
                     if (World.live.players[p])
                     {
-                        CharacterMovement.Snapshot lastSnapshot = World.live.players[p].movement.movementHistory.Count > 0 ? World.live.players[p].movement.movementHistory[0] : null;
-
-                        if (lastSnapshot != null)
-                        {
-                            tick.playerTicks[p].localTime = lastSnapshot.time;
-                            tick.playerTicks[p].position = lastSnapshot.position;
-                            tick.playerTicks[p].velocity = lastSnapshot.velocity;
-                            tick.playerTicks[p].state = lastSnapshot.state;
-                        }
+                        tick.playerTicks[p].input = World.live.players[p].movement.inputHistory.Count > 0 ? World.live.players[p].movement.inputHistory[0] : new PlayerInput();
+                        tick.playerTicks[p].position = World.live.players[p].movement.serverPosition;
+                        tick.playerTicks[p].velocity = World.live.players[p].movement.serverVelocity;
+                        tick.playerTicks[p].localTime = World.live.players[p].movement.serverLocalTime;
                     }
                 }
                 else
@@ -409,7 +403,7 @@ public class Netplay : MonoBehaviour
         {
             return new PlayerTick()
             {
-                input = InputCmds.FromLocalInput(localPlayerTick.input),
+                input = PlayerInput.FromLocalInput(localPlayerTick.input),
                 localTime = World.live.localTime,
                 position = World.live.players[playerId] ? World.live.players[playerId].transform.position : Vector3.zero,
                 velocity = World.live.players[playerId] ? World.live.players[playerId].movement.velocity : Vector3.zero,

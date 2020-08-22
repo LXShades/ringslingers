@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
 [RequireComponent(typeof(Movement), typeof(Player))]
-public class CharacterMovement : WorldObjectComponent
+public class CharacterMovement : MovementMark2
 {
     private Player player;
     private Movement move;
@@ -65,48 +65,7 @@ public class CharacterMovement : WorldObjectComponent
     /// </summary>
     [HideInInspector] public bool isOnGround = false;
 
-    [Serializable]
-    public class Snapshot
-    {
-        public float time;
-        public Vector3 position;
-        public Vector3 velocity;
-        public InputCmds input;
-        public State state;
-
-        public Snapshot() { }
-
-        public Snapshot(CharacterMovement source)
-        {
-            time = 0;
-            From(source);
-        }
-
-        public void From(CharacterMovement source)
-        {
-            position = source.transform.position;
-            velocity = source.velocity;
-            input = source.player.input;
-            state = source.state;
-        }
-
-        public void To(CharacterMovement target)
-        {
-            target.transform.position = position;
-            target.velocity = velocity;
-            target.player.input = input;
-            target.state = state;
-        }
-    }
-
-    private float maxMovementHistoryAge = 1; // in seconds
-    public List<Snapshot> movementHistory = new List<Snapshot>();
-
     private bool isResimmingMovement = false;
-
-    // last known values as informed by the server (client-side)
-    private Snapshot serverSnapshot = new Snapshot();
-    private bool isServerDirty;
 
     public override void WorldAwake()
     {
@@ -114,31 +73,13 @@ public class CharacterMovement : WorldObjectComponent
         move = GetComponent<Movement>();
     }
 
-    public override void WorldUpdate(float deltaTime)
-    {
-        // Perform reconcilation if necessary
-        FlushServerReconcilations();
-
-        // Move!
-        TickMovementControls(deltaTime);
-
-        // Update our movement history
-        AddToMovementHistory();
-
-        for (int i = 0; i < movementHistory.Count; i++)
-        {
-            if (World.live.localTime - movementHistory[i].time >= maxMovementHistoryAge)
-                movementHistory.RemoveRange(i, movementHistory.Count - i); // trim old history
-        }
-    }
-
-    private void TickMovementControls(float deltaTime)
+    public override void TickMovement(float deltaTime, PlayerInput input, PlayerInput lastInput, bool isResimulated = false)
     {
         // Check whether on ground
         isOnGround = DetectOnGround();
 
         // Point towards relevent direction
-        transform.rotation = Quaternion.Euler(0, player.input.horizontalAim, 0);
+        transform.rotation = Quaternion.Euler(0, input.horizontalAim, 0);
 
         // Add/remove states depending on whether isOnGround
         if (isOnGround)
@@ -153,7 +94,7 @@ public class CharacterMovement : WorldObjectComponent
         ApplyFriction(deltaTime);
         float lastHorizontalSpeed = velocity.Horizontal().magnitude; // this is our new max speed if our max speed was already exceeded
 
-        ApplyRunAcceleration(deltaTime);
+        ApplyRunAcceleration(deltaTime, input, lastInput);
 
         // Gravity
         velocity += new Vector3(0, -1, 0) * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime);
@@ -166,7 +107,7 @@ public class CharacterMovement : WorldObjectComponent
             velocity.SetHorizontal(Vector3.zero);
 
         // Jump button
-        HandleJumpAbilities();
+        HandleJumpAbilities(input, lastInput);
 
         // Do not slip through the ground
         if (isOnGround)
@@ -218,12 +159,12 @@ public class CharacterMovement : WorldObjectComponent
             velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, deltaTime * 35f));
     }
 
-    private void ApplyRunAcceleration(float deltaTime)
+    private void ApplyRunAcceleration(float deltaTime, PlayerInput input, PlayerInput lastInput)
     {
         if (state.HasFlag(State.Pained))
             return; // cannot accelerate while in pain
 
-        inputRunDirection = transform.forward.Horizontal().normalized * player.input.moveVerticalAxis + transform.right.Horizontal().normalized * player.input.moveHorizontalAxis;
+        inputRunDirection = transform.forward.Horizontal().normalized * input.moveVerticalAxis + transform.right.Horizontal().normalized * input.moveHorizontalAxis;
 
         if (inputRunDirection.magnitude > 1)
             inputRunDirection.Normalize();
@@ -253,14 +194,14 @@ public class CharacterMovement : WorldObjectComponent
         velocity = force;
     }
 
-    private void HandleJumpAbilities()
+    private void HandleJumpAbilities(PlayerInput input, PlayerInput lastInput)
     {
         if (state.HasFlag(State.Pained))
             return;
 
-        if (player.input.btnJump)
+        if (input.btnJump)
         {
-            if (isOnGround && !state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
+            if (isOnGround && !state.HasFlag(State.Jumped) && !lastInput.btnJump)
             {
                 // Jump
                 velocity.y = jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM;
@@ -269,7 +210,7 @@ public class CharacterMovement : WorldObjectComponent
                     GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
-            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.lastInput.btnJump)
+            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !lastInput.btnJump)
             {
                 // Thok
                 velocity.SetHorizontal(player.aimForward.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
@@ -293,80 +234,6 @@ public class CharacterMovement : WorldObjectComponent
     {
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
         velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
-    }
-
-    private void AddToMovementHistory()
-    {
-        if (movementHistory.Count == 0 || movementHistory[0].time != player.localTime)
-            movementHistory.Insert(0, new Snapshot(this) { time = player.localTime });
-        else if (player.isLocalPlayer)
-            Debug.Log("Error...");
-    }
-
-    private void FlushServerReconcilations()
-    {
-        if (Netplay.singleton.isServer)
-            return; // the server doesn't do reconcilations
-
-        if (isServerDirty)
-        {
-            int localSnapshotIndex = player.isLocalPlayer ? movementHistory.FindIndex(a => a.time == serverSnapshot.time) : -1;
-
-            if (localSnapshotIndex != -1)
-            {
-                InputCmds originalInput = player.input;
-                Debug.Log($"Rewinding with snapshot {localSnapshotIndex}, resimulating.");
-
-                serverSnapshot.To(this); // return to server position
-
-                movementHistory[localSnapshotIndex] = serverSnapshot;
-                for (int i = localSnapshotIndex; i > 0; i--)
-                {
-                    player.lastInput = movementHistory[i].input;
-                    player.input = movementHistory[i - 1].input;
-
-                    TickMovementControls(movementHistory[i - 1].time - movementHistory[i].time);
-
-                    movementHistory[i - 1].From(this); // replace movement history with new result
-                }
-
-                player.input = originalInput;
-                player.lastInput = movementHistory[0].input;
-            }
-
-            // done, we're not longer dirty
-            isServerDirty = false;
-        }
-    }
-
-    public void PreNewLocalTick(PlayerTick tick)
-    {
-        if (Netplay.singleton.isServer && !player.isLocalPlayer)
-        {
-            // set the player position with some leniency, but if it's far off, don't
-            Debug.Log($"SERVER: Player {player.playerId} distance from predicted is {Vector3.Distance(tick.position, transform.position)}");
-        }
-    }
-
-    public void PreServerTick(PlayerTick tick)
-    {
-        isServerDirty = true;
-        serverSnapshot = new Snapshot()
-        {
-            input = tick.input,
-            velocity = tick.velocity,
-            position = tick.position,
-            time = tick.localTime,
-            state = tick.state
-        };
-
-        if (!Netplay.singleton.isServer && !player.isLocalPlayer)
-        {
-            // clients just receive player state and sets them
-            serverSnapshot.To(this);
-        }
-
-        Debug.Log($"Tick! Teleporting to {tick.position} from {transform.position}, ping {player.localTime - tick.localTime}");
     }
 
     #region Networking

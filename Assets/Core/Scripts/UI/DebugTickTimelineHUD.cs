@@ -51,26 +51,26 @@ public class DebugTickTimelineHUD : MonoBehaviour
         SetTickPosition(serverTick.rectTransform, Netplay.singleton.lastReceivedServerTick.playerTicks[Netplay.singleton.localPlayerId].localTime);
         SetTickPosition(liveTick.rectTransform, World.live.localTime);
 
-        if (World.live.players[Netplay.singleton.localPlayerId])
+        /*if (World.live.players[Netplay.singleton.localPlayerId])
         {
             SetTickPosition(serverTick.rectTransform, World.live.players[Netplay.singleton.localPlayerId].serverTime);
-        }
+        }*/
 
         int movementHistoryIndexAtServer = 0;
 
         Player player = World.live.players[Netplay.singleton.localPlayerId];
-        List<CharacterMovement.Snapshot> movementHistory = null;
+        History<PlayerInput> movementHistory = null;
         if (player)
         {
-            movementHistory = player.movement.movementHistory;
+            movementHistory = player.movement.inputHistory;
 
-            for (movementHistoryIndexAtServer = 0; movementHistoryIndexAtServer < player.movement.movementHistory.Count; movementHistoryIndexAtServer++)
+            for (movementHistoryIndexAtServer = 0; movementHistoryIndexAtServer < movementHistory.Count; movementHistoryIndexAtServer++)
             {
-                if (Netplay.singleton.lastReceivedServerTick.playerTicks[Netplay.singleton.localPlayerId].localTime == movementHistory[movementHistoryIndexAtServer].time)
+                if (Netplay.singleton.lastReceivedServerTick.playerTicks[Netplay.singleton.localPlayerId].localTime == movementHistory.TimeAt(movementHistoryIndexAtServer))
                     break;
             }
 
-            if (movementHistoryIndexAtServer == player.movement.movementHistory.Count)
+            if (movementHistoryIndexAtServer == movementHistory.Count)
                 movementHistoryIndexAtServer = 0;
 
             for (int i = 0; i < allLocalTicks.Count; i++)
@@ -80,7 +80,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
                 else
                 {
                     allLocalTicks[i].enabled = true;
-                    SetTickPosition(allLocalTicks[i].rectTransform, movementHistory[i].time);
+                    SetTickPosition(allLocalTicks[i].rectTransform, movementHistory.TimeAt(i));
                 }
             }
         }
