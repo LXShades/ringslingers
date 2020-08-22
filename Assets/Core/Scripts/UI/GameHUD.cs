@@ -80,11 +80,8 @@ public class GameHUD : MonoBehaviour
                 numFramesThisSecond = 0;
             }
 
-            debugText.text = $"Local frame: {World.live.time.ToString("#.00")}" +
-                $"\nServer frame: {Netplay.singleton.lastProcessedServerTick?.time.ToString("#.00")}" +
-                $"\nPing: {(int)(lastPing * 1000)}ms" +
+            debugText.text = $"\nPing: {(int)(lastPing * 1000)}ms" +
                 $"\nFPS: {lastFps}" +
-                $"\nRun Speed: {player.movement.velocity.Horizontal().magnitude.ToString("0.0")}" +
                 $"\n{Netplay.singleton.netStat}";
         }
 
@@ -94,7 +91,7 @@ public class GameHUD : MonoBehaviour
         if (scoreboard.activeSelf)
         {
             // Refresh scoreboard info
-            Player[] orderedPlayers = (Player[])World.server.players.Clone();
+            Player[] orderedPlayers = (Player[])World.live.players.Clone();
 
             System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : 0) - (b ? b.score : 0) > 0 ? -1 : 1);
 

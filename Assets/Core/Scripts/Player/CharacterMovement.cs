@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.Remoting;
 using System.Xml;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 [RequireComponent(typeof(Movement), typeof(Player))]
 public class CharacterMovement : WorldObjectComponent
@@ -65,20 +66,27 @@ public class CharacterMovement : WorldObjectComponent
     [HideInInspector] public bool isOnGround = false;
 
     [Serializable]
-    private class TimePosition
+    public class Snapshot
     {
         public float time;
         public Vector3 position;
         public Vector3 velocity;
-        public InputCmds inputs;
+        public InputCmds input;
         public State state;
 
-        public TimePosition(CharacterMovement source)
+        public Snapshot() { }
+
+        public Snapshot(CharacterMovement source)
         {
             time = 0;
+            From(source);
+        }
+
+        public void From(CharacterMovement source)
+        {
             position = source.transform.position;
             velocity = source.velocity;
-            inputs = source.player.input;
+            input = source.player.input;
             state = source.state;
         }
 
@@ -86,30 +94,46 @@ public class CharacterMovement : WorldObjectComponent
         {
             target.transform.position = position;
             target.velocity = velocity;
-            target.player.input = inputs;
+            target.player.input = input;
             target.state = state;
         }
     }
 
-    private float maxMovementHistory = 1; // in seconds
-    private List<TimePosition> movementHistory = new List<TimePosition>();
+    private float maxMovementHistoryAge = 1; // in seconds
+    public List<Snapshot> movementHistory = new List<Snapshot>();
 
     private bool isResimmingMovement = false;
 
-    public override void FrameStart()
+    // last known values as informed by the server (client-side)
+    private Snapshot serverSnapshot = new Snapshot();
+    private bool isServerDirty;
+
+    public override void WorldAwake()
     {
         player = GetComponent<Player>();
         move = GetComponent<Movement>();
     }
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
-        if (!isResimmingMovement)
-        {
-            // Update position/reconciliation etc
-            HandleServerMovement();
-        }
+        // Perform reconcilation if necessary
+        FlushServerReconcilations();
 
+        // Move!
+        TickMovementControls(deltaTime);
+
+        // Update our movement history
+        AddToMovementHistory();
+
+        for (int i = 0; i < movementHistory.Count; i++)
+        {
+            if (World.live.localTime - movementHistory[i].time >= maxMovementHistoryAge)
+                movementHistory.RemoveRange(i, movementHistory.Count - i); // trim old history
+        }
+    }
+
+    private void TickMovementControls(float deltaTime)
+    {
         // Check whether on ground
         isOnGround = DetectOnGround();
 
@@ -271,82 +295,78 @@ public class CharacterMovement : WorldObjectComponent
         velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
     }
 
-    private void HandleServerMovement()
+    private void AddToMovementHistory()
     {
-        // Add to movement history while removing old stuff
-        movementHistory.Insert(0, new TimePosition(this) { time = Netplay.singleton.localPlayerTime });
-        for (int i = 0; i < movementHistory.Count; i++)
-        {
-            if (movementHistory[i].time < Netplay.singleton.localPlayerTime - maxMovementHistory)
-            {
-                movementHistory.RemoveRange(i, movementHistory.Count - i);
-                break;
-            }
-        }
+        if (movementHistory.Count == 0 || movementHistory[0].time != player.localTime)
+            movementHistory.Insert(0, new Snapshot(this) { time = player.localTime });
+        else if (player.isLocalPlayer)
+            Debug.Log("Error...");
+    }
 
+    private void FlushServerReconcilations()
+    {
         if (Netplay.singleton.isServer)
+            return; // the server doesn't do reconcilations
+
+        if (isServerDirty)
         {
-            // move the player to the client's remote position - if it's valid. todo: check and resimulate
-            if (Vector3.Distance(player.remotePosition, transform.position) < 2)
+            int localSnapshotIndex = player.isLocalPlayer ? movementHistory.FindIndex(a => a.time == serverSnapshot.time) : -1;
+
+            if (localSnapshotIndex != -1)
             {
-                transform.position = player.remotePosition;
-            }
-        }
-        else if (!Netplay.singleton.isServer)
-        {
-            if (player.playerId == Netplay.singleton.localPlayerId && Netplay.singleton.lastProcessedServerTick != null)
-            {
-                Vector3 serverPosition = player.remotePosition;
-                float serverLocalTime = Netplay.singleton.localPlayerTime - Netplay.singleton.GetPing();
+                InputCmds originalInput = player.input;
+                Debug.Log($"Rewinding with snapshot {localSnapshotIndex}, resimulating.");
 
-                isResimmingMovement = true;
+                serverSnapshot.To(this); // return to server position
 
-                try
+                movementHistory[localSnapshotIndex] = serverSnapshot;
+                for (int i = localSnapshotIndex; i > 0; i--)
                 {
-                    int tickHistoryIndex;
-                    for (tickHistoryIndex = 0; tickHistoryIndex < movementHistory.Count; tickHistoryIndex++)
-                    {
-                        if (movementHistory[tickHistoryIndex].time == serverLocalTime)
-                            break;
-                    }
+                    player.lastInput = movementHistory[i].input;
+                    player.input = movementHistory[i - 1].input;
 
-                    // Reconcile movement if it's not accurate
-                    if (tickHistoryIndex < movementHistory.Count - 1 /* && movementHistory[tickHistoryIndex].position != serverPosition */)
-                    {
-                        // rewind to the server position and resimulate from there
-                        movementHistory[tickHistoryIndex].To(this);
-                        transform.position = serverPosition;
+                    TickMovementControls(movementHistory[i - 1].time - movementHistory[i].time);
 
-                        for (int i = tickHistoryIndex; i >= 1; i--)
-                        {
-                            movementHistory[tickHistoryIndex].position = transform.position;
-
-                            player.lastInput = movementHistory[i + 1].inputs;
-                            player.input = movementHistory[i].inputs;
-                            FrameUpdate(movementHistory[i - 1].time - movementHistory[i].time);
-                        }
-
-                        // restore inputs
-                        player.input = movementHistory[0].inputs;
-                        player.lastInput = movementHistory[1].inputs;
-                        movementHistory[0].position = transform.position;
-                    }
-                    else
-                        Debug.Log("Problem");
-                }
-                catch (Exception e)
-                {
-                    Debug.LogWarning($"Exception occurred during resim: {e}. This was caught to avoid locking the player");
+                    movementHistory[i - 1].From(this); // replace movement history with new result
                 }
 
-                isResimmingMovement = false;
+                player.input = originalInput;
+                player.lastInput = movementHistory[0].input;
             }
-            else if (player.playerId != Netplay.singleton.localPlayerId)
-            {
-                // other players just be movin
-                transform.position = player.remotePosition;
-            }
+
+            // done, we're not longer dirty
+            isServerDirty = false;
         }
+    }
+
+    public void PreNewLocalTick(PlayerTick tick)
+    {
+        if (Netplay.singleton.isServer && !player.isLocalPlayer)
+        {
+            // set the player position with some leniency, but if it's far off, don't
+            Debug.Log($"SERVER: Player {player.playerId} distance from predicted is {Vector3.Distance(tick.position, transform.position)}");
+        }
+    }
+
+    public void PreServerTick(PlayerTick tick)
+    {
+        isServerDirty = true;
+        serverSnapshot = new Snapshot()
+        {
+            input = tick.input,
+            velocity = tick.velocity,
+            position = tick.position,
+            time = tick.localTime,
+            state = tick.state
+        };
+
+        if (!Netplay.singleton.isServer && !player.isLocalPlayer)
+        {
+            // clients just receive player state and sets them
+            serverSnapshot.To(this);
+        }
+
+        Debug.Log($"Tick! Teleporting to {tick.position} from {transform.position}, ping {player.localTime - tick.localTime}");
     }
 
     #region Networking
@@ -369,7 +389,7 @@ public class CharacterMovement : WorldObjectComponent
         }
 
         if (originalPosition != transform.position || originalVelocity != velocity)
-            Debug.Log($"Resync {player.playerId}@{World.live.time.ToString("0.0")}");
+            Debug.Log($"Resync {player.playerId}@{World.live.gameTime.ToString("0.0")}");
     }
 
     public override void WriteSyncer(System.IO.Stream stream)

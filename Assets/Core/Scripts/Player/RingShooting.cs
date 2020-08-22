@@ -43,12 +43,12 @@ public class RingShooting : WorldObjectComponent
     // Components
     private Player player;
 
-    public override void FrameAwake()
+    public override void WorldAwake()
     {
         player = GetComponent<Player>();
     }
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
         if (equippedWeapons.Count > 0)
             currentWeapon = equippedWeapons[equippedWeapons.Count - 1];
@@ -60,7 +60,7 @@ public class RingShooting : WorldObjectComponent
         {
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
             
-            if (World.live.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
+            if (World.live.gameTime - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
             {
                 GameObject ring = GameManager.SpawnObject(currentWeapon.weaponType.prefab, spawnPosition.position, Quaternion.identity);
                 ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
@@ -71,7 +71,7 @@ public class RingShooting : WorldObjectComponent
 
                 GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
-                lastFiredRingTime = World.live.time;
+                lastFiredRingTime = World.live.gameTime;
 
                 player.numRings--;
                 if (!currentWeapon.weaponType.ammoIsTime)

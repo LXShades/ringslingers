@@ -13,12 +13,12 @@ public class ThrownRing : WorldObjectComponent
     protected Player owner;
     private Rigidbody rb;
 
-    public override void FrameAwake()
+    public override void WorldAwake()
     {
         rb = GetComponent<Rigidbody>();
     }
 
-    public override void FrameStart()
+    public override void WorldStart()
     {
         float axisWobble = 0.5f;
 
@@ -26,7 +26,7 @@ public class ThrownRing : WorldObjectComponent
         spinAxis.Normalize();
     }
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
         // Spin
         transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * deltaTime, spinAxis);

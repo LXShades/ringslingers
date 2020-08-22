@@ -15,6 +15,8 @@ public class Player : WorldObjectComponent
     /// </summary>
     public int playerId;
 
+    public bool isLocalPlayer => playerId == Netplay.singleton.localPlayerId;
+
     [Header("Player control")]
     /// <summary>
     /// Current inputs of this player
@@ -26,14 +28,20 @@ public class Player : WorldObjectComponent
     /// </summary>
     public InputCmds lastInput;
 
+    /// <summary>
+    /// The remote local time of the player
+    /// </summary>
+    public float serverTime;
+
     public Vector3 remotePosition
     {
         get => _remotePosition;
-        set
-        { _remotePosition = value; if (playerId == 1) Debug.Log($"Remote position={value}"); }
+        set => _remotePosition = value;
     }
 
     private Vector3 _remotePosition;
+
+    public Vector3 serverVelocity;
 
     [Header("Shinies")]
     public int score = 0;
@@ -78,12 +86,14 @@ public class Player : WorldObjectComponent
     /// </summary>
     [HideInInspector] public CharacterMovement movement;
 
-    public override void FrameAwake()
+    public float localTime = -1;
+
+    public override void WorldAwake()
     {
         movement = GetComponent<CharacterMovement>();
     }
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
         // Update aim
         float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
@@ -97,7 +107,7 @@ public class Player : WorldObjectComponent
 
             Renderer renderer = GetComponentInChildren<Renderer>();
             if (renderer && invincibilityTimeRemaining > 0)
-                renderer.enabled = ((int)(World.live.time * hitInvincibilityBlinkRate) & 1) == 0;
+                renderer.enabled = ((int)(World.live.gameTime * hitInvincibilityBlinkRate) & 1) == 0;
             else
                 renderer.enabled = true; // we finished blinky blinkying
         }
@@ -194,5 +204,22 @@ public class Player : WorldObjectComponent
         }
 
         playerName = updatedName;
+    }
+
+    public void PreLocalTick(PlayerTick tick)
+    {
+        if (tick.localTime != localTime)
+        {
+            localTime = tick.localTime;
+            movement.PreNewLocalTick(tick);
+        }
+
+        lastInput = input;
+        input = tick.input;
+    }
+
+    public void PreServerTick(PlayerTick tick)
+    {
+        movement.PreServerTick(tick);
     }
 }

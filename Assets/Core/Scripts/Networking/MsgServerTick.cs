@@ -3,21 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 
+
 [System.Serializable]
 public class MsgTick
 {
-    // Frame time before this tick is executed
-    public float time;
+    // World time before this tick is executed
+    public float gameTime;
 
-    // Local time of the receiving player, as currently known to the server, as of the last tick
-    public float localTime;
-
-    // Position of all players at this time (prior to the tick), as currently known to the server
-    public Vector3[] playerPositions = new Vector3[Netplay.maxPlayers];
-
-    // PlayerInputs during execution of this tick
-    public InputCmds[] playerInputs = new InputCmds[Netplay.maxPlayers];
-    public bool[] isPlayerInGame = new bool[Netplay.maxPlayers];
+    // Ticks per-player, if isInGame applies
+    public PlayerTick[] playerTicks = new PlayerTick[Netplay.maxPlayers];
 
     public MemoryStream syncers = new MemoryStream();
 
@@ -36,16 +30,13 @@ public class MsgTick
             int syncersLength = 0;
             using (BinaryReader reader = new BinaryReader(stream, System.Text.Encoding.ASCII, true))
             {
-                time = reader.ReadSingle();
-                localTime = reader.ReadSingle();
+                gameTime = reader.ReadSingle();
                 syncersLength = reader.ReadInt32();
 
                 // Read inputs
                 for (int player = reader.ReadByte(); player != 255 && player != -1; player = reader.ReadByte())
                 {
-                    isPlayerInGame[player] = true;
-                    playerInputs[player].FromStream(stream);
-                    playerPositions[player] = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+                    playerTicks[player].FromStream(reader);
                 }
             }
 
@@ -71,20 +62,16 @@ public class MsgTick
         // Write key info
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.ASCII, true))
         {
-            writer.Write(time);
-            writer.Write(localTime);
+            writer.Write(gameTime);
             writer.Write((int)syncers.Length);
 
             // Write players
-            for (int i = 0; i < playerInputs.Length; i++)
+            for (int i = 0; i < playerTicks.Length; i++)
             {
-                if (isPlayerInGame[i])
+                if (playerTicks[i].isInGame)
                 {
                     writer.Write((byte)i);
-                    playerInputs[i].ToStream(stream);
-                    writer.Write(playerPositions[i].x);
-                    writer.Write(playerPositions[i].y);
-                    writer.Write(playerPositions[i].z);
+                    playerTicks[i].ToStream(writer);
                 }
             }
             writer.Write((byte)255);

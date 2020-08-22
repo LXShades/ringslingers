@@ -26,13 +26,13 @@ public class Ring : WorldObjectComponent
 
     private float awakeTime;
 
-    public override void FrameAwake()
+    public override void WorldAwake()
     {
         respawnableItem = GetComponent<RespawnableItem>();
-        awakeTime = World.live.time;
+        awakeTime = World.live.gameTime;
     }
 
-    public override void FrameStart()
+    public override void WorldStart()
     {
         // Hover above the ground
         RaycastHit hit;
@@ -42,7 +42,7 @@ public class Ring : WorldObjectComponent
         }
     }
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
         if (isDroppedRing || respawnableItem.isSpawned)
         {
@@ -54,7 +54,7 @@ public class Ring : WorldObjectComponent
     private void OnTriggerStay(Collider other)
     {
         Player otherPlayer = other.GetComponent<Player>();
-        if (otherPlayer && (!isDroppedRing || World.live.time - awakeTime >= pickupWarmupDuration))
+        if (otherPlayer && (!isDroppedRing || World.live.gameTime - awakeTime >= pickupWarmupDuration))
         {
             otherPlayer.numRings++;
             pickupParticles.SetActive(true);

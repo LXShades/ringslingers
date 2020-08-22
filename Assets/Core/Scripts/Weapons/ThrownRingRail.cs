@@ -12,7 +12,7 @@ public class ThrownRingRail : ThrownRing
 
     [WorldSharedReference] public GameObject particles;
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
         return; // do nothing, instead of the default movement
     }

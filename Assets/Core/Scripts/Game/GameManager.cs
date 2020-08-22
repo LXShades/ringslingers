@@ -50,7 +50,7 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            return System.Array.Find(FindObjectsOfType<PlayerCamera>(), a => a.worldObject.world == World.server); // prototyping
+            return System.Array.Find(FindObjectsOfType<PlayerCamera>(), a => a.worldObject.world == World.live); // prototyping
         }
     }
 
@@ -91,7 +91,7 @@ public class GameManager : MonoBehaviour
             Netplay.singleton.CreateServer();
 
         // Setup the main world with the scene objects
-        World.server.CaptureSceneObjects();
+        World.live.CaptureSceneObjects();
     }
 
     void Update()
@@ -172,14 +172,14 @@ public class GameManager : MonoBehaviour
         // Press F1 to save a state
         if (Input.GetKeyDown(KeyCode.F1))
         {
-            tempSave = World.server.Serialize();
+            tempSave = World.live.Serialize();
             Debug.Log($"Serialized {tempSave.Length} bytes!");
         }
 
         if (Input.GetKeyDown(KeyCode.F2) && tempSave != null)
         {
             tempSave.Position = 0;
-            World.server.Deserialize(tempSave);
+            World.live.Deserialize(tempSave);
         }
     }
     #endregion

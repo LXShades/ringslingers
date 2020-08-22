@@ -19,13 +19,13 @@ public class DespawnAfterDuration : WorldObjectComponent
     // Components
     private Renderer myRenderer;
 
-    public override void FrameAwake()
+    public override void WorldAwake()
     {
         despawnTimeRemaining = timeUntilDespawn;
         myRenderer = GetComponent<Renderer>();
     }
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
         // Countdown!
         despawnTimeRemaining -= World.live.deltaTime;

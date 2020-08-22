@@ -13310,7 +13310,7 @@ MonoBehaviour:
   connectionStatus: 0
   playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
   serverTickRate: 2
-  clientTickRate: 20
+  clientTickRate: 5
   serverSimTime: 0.3
   maxSimTime: 0.5
   maxTickHistoryTime: 1
@@ -13319,125 +13319,8 @@ MonoBehaviour:
   replayStart: 5
   replayEnd: 0
   localPlayerId: -1
-  localPlayerTime: 0
-  lastProcessedServerTick:
-    time: 0
-    localTime: 0
-    playerPositions:
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    - {x: 0, y: 0, z: 0}
-    playerInputs:
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    - moveHorizontalAxis: 0
-      moveVerticalAxis: 0
-      horizontalAim: 0
-      verticalAim: 0
-      btnJump: 0
-      btnFire: 0
-    isPlayerInGame: 00000000000000000000000000000000
+  lastReceivedServerTick:
+    gameTime: 0
   serverTickHistory: []
   localTickHistory: []
 --- !u!4 &1700270206
@@ -16751,10 +16634,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 2820117323117607084, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 9087393328249493369, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Name
       value: GameHUD

@@ -90,91 +90,98 @@ public static class ClonerGenerator
     {
         Expression output = null;
 
-        if (type.IsValueType)
+        try
         {
-            output = Expression.Assign(target, source);
-        }
-        else if (type == typeof(string))
-        {
-            output = Expression.Assign(target, source);
-        }
-        else if (type == typeof(WorldObject) && sourceWorld != null && targetWorld != null)
-        {
-            output = Expression.Assign(target, 
-                Expression.Condition(
-                    Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, typeof(WorldObject))),
-                    Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObject"), source),
-                    Expression.Constant(null, typeof(WorldObject))
-                )
-            );
-        }
-        else if (type.IsSubclassOf(typeof(WorldObjectComponent)) && sourceWorld != null && targetWorld != null)
-        {
-            output = Expression.Assign(target,
-                Expression.Condition(
-                    Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, type)),
-                    Expression.Convert(
-                        Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObjectComponent"), source),
-                        type
-                    ),
-                    Expression.Constant(null, type)
-                )
-            );
-        }
-        else if (type == typeof(GameObject) && sourceWorld != null && targetWorld != null)
-        {
-            // If the GameObject reference has a WorldObject, get its WorldObject in its new world
-            ParameterExpression sourceAsWorldObject = Expression.Variable(typeof(WorldObject));
-            ParameterExpression targetAsWorldObject = Expression.Variable(typeof(WorldObject));
-
-            output = Expression.Block(
-                new[] { sourceAsWorldObject, targetAsWorldObject },
-                Expression.Assign(
-                    sourceAsWorldObject,
-                    Expression.Condition(
-                        Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, typeof(GameObject))),
-                        Expression.Call(source, typeof(GameObject).GetMethod("GetComponent", new Type[0]).MakeGenericMethod(typeof(WorldObject))),
-                        Expression.Constant(null, typeof(WorldObject))
-                    )
-                ), // worldObject = (source != null ? source.GetComponent<WorldObject>() : null)
-                Expression.Assign(targetAsWorldObject,
-                    Expression.Condition(
-                        Expression.NotEqual(sourceAsWorldObject, Expression.Constant(null, typeof(WorldObject))),
-                        Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObject"), sourceAsWorldObject),
-                        Expression.Constant(null, typeof(WorldObject))
-                    )
-                ), // targetAsWorldObject = worldObject != null ? target.world.GetObjectById(worldObject.objId) : null
-                Expression.IfThenElse(
-                    Expression.NotEqual(targetAsWorldObject, Expression.Constant(null, typeof(WorldObject))),
-                    Expression.Assign(target, Expression.PropertyOrField(targetAsWorldObject, "gameObject")),
-                    Expression.Assign(target, source)
-                ) // if (targetAsWorldObject != null) target = targetAsWorldObject.gameObject else target = source
-            );
-        }
-        else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
-        {
-            output = Expression.Call(typeof(ClonerGenerator).GetMethod("CloneList").MakeGenericMethod(type.GenericTypeArguments[0]), target, source);
-        }
-        else if (type.IsClass)
-        {
-            if (owner != null && owner.CustomAttributes.Any(a => a.AttributeType == typeof(WorldSharedReferenceAttribute)))
+            if (type.IsValueType)
             {
-                // share the reference
                 output = Expression.Assign(target, source);
             }
-            else if (owner != null && owner.CustomAttributes.Any(a => a.AttributeType == typeof(WorldIgnoreReferenceAttribute)))
+            else if (type == typeof(string))
             {
-                // ignore it
+                output = Expression.Assign(target, source);
             }
-            else if (type.GetCustomAttribute(typeof(WorldClonableAttribute)) != null)
+            else if (type == typeof(WorldObject) && sourceWorld != null && targetWorld != null)
             {
-                // clone it :)
-                output = Expression.Call(typeof(ClonerGenerator).GetMethod("CloneReference").MakeGenericMethod(type), target, source);
+                output = Expression.Assign(target,
+                    Expression.Condition(
+                        Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, typeof(WorldObject))),
+                        Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObject"), source),
+                        Expression.Constant(null, typeof(WorldObject))
+                    )
+                );
             }
-            else
+            else if (type.IsSubclassOf(typeof(WorldObjectComponent)) && sourceWorld != null && targetWorld != null)
             {
-                Debug.LogWarning($"Class reference {owner?.DeclaringType.Name}.{owner?.Name} does not specify a cloning action. Use WorldSharedReference, WorldIgnoreReference, or make the class WorldClonable.");
+                output = Expression.Assign(target,
+                    Expression.Condition(
+                        Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, type)),
+                        Expression.Convert(
+                            Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObjectComponent"), source),
+                            type
+                        ),
+                        Expression.Constant(null, type)
+                    )
+                );
             }
+            else if (type == typeof(GameObject) && sourceWorld != null && targetWorld != null)
+            {
+                // If the GameObject reference has a WorldObject, get its WorldObject in its new world
+                ParameterExpression sourceAsWorldObject = Expression.Variable(typeof(WorldObject));
+                ParameterExpression targetAsWorldObject = Expression.Variable(typeof(WorldObject));
+
+                output = Expression.Block(
+                    new[] { sourceAsWorldObject, targetAsWorldObject },
+                    Expression.Assign(
+                        sourceAsWorldObject,
+                        Expression.Condition(
+                            Expression.Call(typeof(UnityEngine.Object).GetMethod("op_Inequality"), source, Expression.Constant(null, typeof(GameObject))),
+                            Expression.Call(source, typeof(GameObject).GetMethod("GetComponent", new Type[0]).MakeGenericMethod(typeof(WorldObject))),
+                            Expression.Constant(null, typeof(WorldObject))
+                        )
+                    ), // worldObject = (source != null ? source.GetComponent<WorldObject>() : null)
+                    Expression.Assign(targetAsWorldObject,
+                        Expression.Condition(
+                            Expression.NotEqual(sourceAsWorldObject, Expression.Constant(null, typeof(WorldObject))),
+                            Expression.Call(targetWorld, typeof(World).GetMethod("FindEquivalentWorldObject"), sourceAsWorldObject),
+                            Expression.Constant(null, typeof(WorldObject))
+                        )
+                    ), // targetAsWorldObject = worldObject != null ? target.world.GetObjectById(worldObject.objId) : null
+                    Expression.IfThenElse(
+                        Expression.NotEqual(targetAsWorldObject, Expression.Constant(null, typeof(WorldObject))),
+                        Expression.Assign(target, Expression.PropertyOrField(targetAsWorldObject, "gameObject")),
+                        Expression.Assign(target, source)
+                    ) // if (targetAsWorldObject != null) target = targetAsWorldObject.gameObject else target = source
+                );
+            }
+            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                output = Expression.Call(typeof(ClonerGenerator).GetMethod("CloneList").MakeGenericMethod(type.GenericTypeArguments[0]), target, source);
+            }
+            else if (type.IsClass)
+            {
+                if (owner != null && owner.CustomAttributes.Any(a => a.AttributeType == typeof(WorldSharedReferenceAttribute)))
+                {
+                    // share the reference
+                    output = Expression.Assign(target, source);
+                }
+                else if (owner != null && owner.CustomAttributes.Any(a => a.AttributeType == typeof(WorldIgnoreReferenceAttribute)))
+                {
+                    // ignore it
+                }
+                else if (type.GetCustomAttribute(typeof(WorldClonableAttribute)) != null)
+                {
+                    // clone it :)
+                    output = Expression.Call(typeof(ClonerGenerator).GetMethod("CloneReference").MakeGenericMethod(type), target, source);
+                }
+                else
+                {
+                    Debug.LogWarning($"Class reference {owner?.DeclaringType.Name}.{owner?.Name} does not specify a cloning action. Use WorldSharedReference, WorldIgnoreReference, or make the class WorldClonable.");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Cannot serialize {target}/{source}: exception {e.Message}");
         }
 
         return output;

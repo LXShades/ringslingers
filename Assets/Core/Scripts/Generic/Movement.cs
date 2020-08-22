@@ -32,7 +32,7 @@ public class Movement : WorldObjectComponent
     /// </summary>
     [HideInInspector] public Vector3 velocity;
 
-    public override void FrameUpdate(float deltaTime)
+    public override void WorldUpdate(float deltaTime)
     {
         if (!useManualPhysics)
         {

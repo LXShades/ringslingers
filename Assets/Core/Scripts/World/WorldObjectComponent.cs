@@ -71,22 +71,22 @@ public abstract class WorldObjectComponent : SyncedObjectBase
     /// <summary>
     /// Called when an object is created and its synced _stuff_ is initialized
     /// </summary>
-    public virtual void FrameAwake() { return; }
+    public virtual void WorldAwake() { return; }
 
     /// <summary>
     /// Called before the first frame where the object exists begins
     /// </summary>
-    public virtual void FrameStart() { return; }
+    public virtual void WorldStart() { return; }
 
     /// <summary>
     /// Called during a synchronised frame update
     /// </summary>
-    public virtual void FrameUpdate(float deltaTime) { return; }
+    public virtual void WorldUpdate(float deltaTime) { return; }
 
     /// <summary>
     /// Called during a synchronised late frame update (after all other updates)
     /// </summary>
-    public virtual void FrameLateUpdate(float deltaTime) { return; }
+    public virtual void WorldLateUpdate(float deltaTime) { return; }
 
     /// <summary>
     /// Called when a syncer is requested for this object

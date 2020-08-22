@@ -17,6 +17,11 @@ using UnityEngine.SceneManagement;
 public class World : MonoBehaviour
 {
     /// <summary>
+    /// Local time since the world was created
+    /// </summary>
+    public float localTime;
+
+    /// <summary>
     /// Time to tick between each physics simulation
     /// </summary>
     public const float physicsFixedDeltaTime = 0.04f;
@@ -32,19 +37,14 @@ public class World : MonoBehaviour
     private float lastPhysicsSimTime;
 
     /// <summary>
-    /// The current state of the game (gameObjects) as simulated. This may switch between server and simulation during ticks
+    /// The current state of the game
     /// </summary>
-    public static World live { get => _server; }
-
-    /// <summary>
-    /// The current real state of the game according to the server
-    /// </summary>
-    public static World server
+    public static World live
     {
         get
         {
             if (_server == null)
-                _server = new GameObject("WorldServer").AddComponent<World>();
+                _server = new GameObject("World").AddComponent<World>();
 
             return _server;
         }
@@ -65,7 +65,7 @@ public class World : MonoBehaviour
     /// <summary>
     /// The accumulated game time at the beginning of this tick
     /// </summary>
-    public float time
+    public float gameTime
     {
         get; private set;
     }
@@ -104,6 +104,8 @@ public class World : MonoBehaviour
     {
         get; private set;
     }
+
+    private float lastProcessedServerTickTime;
 
     /// <summary>
     /// Constructs a new empty World
@@ -170,34 +172,20 @@ public class World : MonoBehaviour
     /// Advances the game by the given delta time and returns the new tick representing the resulting game state
     /// This causes GameState.live to be replaced with the new state, and may affect all in-game synced objects
     /// </summary>
-    public void Tick(MsgTick tick, float deltaTime)
+    public void Tick(MsgTick localTick, MsgTick serverTick, float deltaTime)
     {
         // Update timing
-        time = tick.time + deltaTime;
+        localTime += Time.deltaTime;
+
+        gameTime = localTick.gameTime + deltaTime;
         this.deltaTime = deltaTime;
 
-        // Spawn players who are pending a join
-        for (int p = 0; p < players.Length; p++)
-        {
-            if (players[p] == null && tick.isPlayerInGame[p])
-                AddPlayer(p);
-            else if (players[p] != null && !tick.isPlayerInGame[p])
-                RemovePlayer(p);
-        }
+        // Send ticks to players
+        PreTickPlayers(localTick, serverTick, deltaTime);
 
-        // Apply player inputs and positions
-        for (int i = 0; i < Netplay.maxPlayers; i++)
-        {
-            if (players[i])
-            {
-                players[i].lastInput = players[i].input;
-                players[i].input = tick.playerInputs[i];
+        // Update all game objects!
+        bool isNewServerTick = (serverTick.gameTime > lastProcessedServerTickTime);
 
-                players[i].remotePosition = tick.playerPositions[i];
-            }
-        }
-
-        // Update game objects
         for (int i = 0; i < worldObjects.Count; i++)
         {
             if (worldObjects[i] && worldObjects[i].gameObject.activeInHierarchy && worldObjects[i].enabled)
@@ -215,7 +203,7 @@ public class World : MonoBehaviour
                 worldObjects[i].FrameLateUpdate(deltaTime);
         }
 
-        // Simulate physics
+        // Simulate physics!
         if (Physics.autoSimulation)
         {
             Physics.autoSimulation = false;
@@ -225,7 +213,7 @@ public class World : MonoBehaviour
         int numPhysicsSimsOccurred = 0;
         for (int i = 1; i <= maxPhysicsSimsPerTick; i++)
         {
-            if (time - lastPhysicsSimTime >= physicsFixedDeltaTime * i)
+            if (gameTime - lastPhysicsSimTime >= physicsFixedDeltaTime * i)
             {
                 Physics.SyncTransforms();
                 physics.Simulate(physicsFixedDeltaTime);
@@ -233,7 +221,34 @@ public class World : MonoBehaviour
             }
         }
 
-        lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime + physicsFixedDeltaTime * numPhysicsSimsOccurred, time - physicsFixedDeltaTime*2, time);
+        lastPhysicsSimTime = Mathf.Clamp(lastPhysicsSimTime + physicsFixedDeltaTime * numPhysicsSimsOccurred, gameTime - physicsFixedDeltaTime*2, gameTime);
+        lastProcessedServerTickTime = serverTick != null ? serverTick.gameTime : lastProcessedServerTickTime;
+
+        // We're actually done!
+    }
+
+    private void PreTickPlayers(MsgTick tick, MsgTick serverTick, float deltaTime)
+    {
+        // Spawn players who are pending a join and despawn those who left
+        for (int p = 0; p < players.Length; p++)
+        {
+            if (players[p] == null && tick.playerTicks[p].isInGame)
+                AddPlayer(p);
+            else if (players[p] != null && !tick.playerTicks[p].isInGame)
+                RemovePlayer(p);
+        }
+
+        // Apply player ticks
+        for (int i = 0; i < Netplay.maxPlayers; i++)
+        {
+            if (players[i])
+            {
+                players[i].PreLocalTick(tick.playerTicks[i]);
+
+                if (serverTick.gameTime != lastProcessedServerTickTime)
+                    players[i].PreServerTick(serverTick.playerTicks[i]);
+            }
+        }
     }
 
     #region Serialization
@@ -247,7 +262,7 @@ public class World : MonoBehaviour
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, true))
         {
             // temp, probably, or to move. this stuff is needed
-            writer.Write(time);
+            writer.Write(gameTime);
             writer.Write(lastPhysicsSimTime);
             writer.Write(worldObjects.Count);
 
@@ -293,7 +308,7 @@ public class World : MonoBehaviour
         {
             // Read in the objects
             int objCount;
-            time = reader.ReadSingle();
+            gameTime = reader.ReadSingle();
             lastPhysicsSimTime = reader.ReadSingle();
             objCount = reader.ReadInt32();
 
@@ -349,7 +364,6 @@ public class World : MonoBehaviour
         Debug.Assert(worldObj);
         worldObj._OnCreatedByWorld(this, worldObjects.Count);
         worldObjects.Add(worldObj);
-        worldObj.transform.parent = transform;
         
         return obj;
     }
@@ -499,7 +513,7 @@ public class World : MonoBehaviour
             }
         }
 
-        time = source.time;
+        gameTime = source.gameTime;
         lastPhysicsSimTime = source.lastPhysicsSimTime;
     }
 }

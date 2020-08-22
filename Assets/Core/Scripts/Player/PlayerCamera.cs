@@ -45,11 +45,11 @@ public class PlayerCamera : WorldObjectComponent
     private float landBobMagnitude = 0;
     private float landBobDuration = 0;
 
-    public override void FrameAwake()
+    public override void WorldAwake()
     {
     }
 
-    public override void FrameLateUpdate(float deltaTime)
+    public override void WorldLateUpdate(float deltaTime)
     {
         if (currentPlayer == null)
         {
@@ -80,7 +80,7 @@ public class PlayerCamera : WorldObjectComponent
                     landBobTimer = Mathf.Max(landBobTimer - deltaTime, 0);
                 }
 
-                transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * World.live.time * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
+                transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * World.live.gameTime * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
             }
 
             lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);

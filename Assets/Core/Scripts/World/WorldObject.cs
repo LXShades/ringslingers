@@ -55,7 +55,7 @@ public class WorldObject : MonoBehaviour
     public void FrameAwake()
     {
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
-            objComponent.FrameAwake();
+            objComponent.WorldAwake();
     }
 
     public void FrameStart()
@@ -63,19 +63,19 @@ public class WorldObject : MonoBehaviour
         hasStarted = true;
 
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
-            objComponent.FrameStart();
+            objComponent.WorldStart();
     }
 
     public void FrameUpdate(float deltaTime)
     {
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
-            objComponent.FrameUpdate(deltaTime);
+            objComponent.WorldUpdate(deltaTime);
     }
 
     public void FrameLateUpdate(float deltaTime)
     {
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
-            objComponent.FrameLateUpdate(deltaTime);
+            objComponent.WorldLateUpdate(deltaTime);
     }
     #endregion
 
@@ -87,7 +87,7 @@ public class WorldObject : MonoBehaviour
     {
         _id = id;
         _world = parent;
-        creationTime = parent.time;
+        creationTime = parent.gameTime;
         hasStarted = false;
 
         foreach (WorldObjectComponent objComponent in GetComponentsInChildren<WorldObjectComponent>())
@@ -103,7 +103,16 @@ public class WorldObject : MonoBehaviour
 
         // Call Awake proper real-like
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
-            objComponent.FrameAwake();
+        {
+            try
+            {
+                objComponent.WorldAwake();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Exception on WorldAwake: {e.Message}");
+            }
+        }
     }
 
     public void _OnDestroyedByWorld(World parent)
