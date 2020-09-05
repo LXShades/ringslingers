@@ -31,9 +31,6 @@ public class SerializerGenerator
     private static MethodInfo funcWriteStruct;
     private static MethodInfo funcReadStruct;
 
-    private static MethodInfo funcWriteList;
-    private static MethodInfo funcReadList;
-
     static SerializerGenerator()
     {
         funcWriteStruct = ((WriteStructFunction)WriteStruct).GetMethodInfo();
@@ -195,10 +192,10 @@ public class SerializerGenerator
                         return null;
                     }
                 }
-                else if (type.IsSubclassOf(typeof(List<>)))
+                /*else if (type.IsSubclassOf(typeof(List<>)))
                 {
                     return Expression.Call(funcReadList, stream, target);
-                }
+                }*/
                 else if (type.IsValueType && Type.GetTypeCode(type) == TypeCode.Object)
                 {
                     // read struct

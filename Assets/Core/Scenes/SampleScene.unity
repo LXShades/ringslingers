@@ -4288,7 +4288,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &605695597
 PrefabInstance:
@@ -10915,7 +10915,7 @@ Transform:
   - {fileID: 214818154}
   - {fileID: 2087360610}
   m_Father: {fileID: 0}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1393310876
 PrefabInstance:
@@ -11561,7 +11561,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1428618299
 PrefabInstance:
@@ -13288,6 +13288,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1700270206}
   - component: {fileID: 1700270205}
+  - component: {fileID: 1700270208}
+  - component: {fileID: 1700270207}
   m_Layer: 0
   m_Name: NetplayManager
   m_TagString: Untagged
@@ -13308,21 +13310,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionStatus: 0
-  playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
-  serverTickRate: 2
-  clientTickRate: 5
-  serverSimTime: 0.3
-  maxSimTime: 0.5
-  maxTickHistoryTime: 1
-  replayMode: 0
-  freezeReplay: 0
-  replayStart: 5
-  replayEnd: 0
   localPlayerId: -1
-  lastReceivedServerTick:
-    gameTime: 0
-  serverTickHistory: []
-  localTickHistory: []
 --- !u!4 &1700270206
 Transform:
   m_ObjectHideFlags: 0
@@ -13335,8 +13323,99 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1700270207
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700270204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5671dcb80f9d69240b71f5612676a3fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  OnClientConnected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnClientDataReceived:
+    m_PersistentCalls:
+      m_Calls: []
+  OnClientError:
+    m_PersistentCalls:
+      m_Calls: []
+  OnClientDisconnected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnServerConnected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnServerDataReceived:
+    m_PersistentCalls:
+      m_Calls: []
+  OnServerError:
+    m_PersistentCalls:
+      m_Calls: []
+  OnServerDisconnected:
+    m_PersistentCalls:
+      m_Calls: []
+  clientAddress: 127.0.0.1
+  serverIPv4BindAddress: 0.0.0.0
+  serverIPv6BindAddress: '::'
+  port: 5029
+  useUpnP: 1
+  maxConnections: 20
+  ipv6Enabled: 1
+  channels: 0204010300
+  authCode: 
+  updateTime: 15
+  pingInterval: 1000
+  disconnectTimeout: 5000
+  reconnectDelay: 500
+  maxConnectAttempts: 10
+  simulatePacketLoss: 0
+  simulationPacketLossChance: 10
+  simulateLatency: 0
+  simulationMinLatency: 30
+  simulationMaxLatency: 100
+  onClientSocketError:
+    m_PersistentCalls:
+      m_Calls: []
+  onServerSocketError:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1700270208
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700270204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c24e82600c9d1a46b295db24070484a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dontDestroyOnLoad: 1
+  runInBackground: 1
+  autoStartServerBuild: 0
+  showDebugMessages: 0
+  serverTickRate: 10
+  offlineScene: 
+  onlineScene: 
+  transport: {fileID: 1700270207}
+  networkAddress: localhost
+  maxConnections: 32
+  disconnectInactiveConnections: 0
+  disconnectInactiveTimeout: 60
+  authenticator: {fileID: 0}
+  playerPrefab: {fileID: 1790104548480656412, guid: bb9dfd51c90b05943b69d3e8498fbcf8, type: 3}
+  autoCreatePlayer: 1
+  playerSpawnMethod: 0
+  spawnPrefabs:
+  - {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
 --- !u!1001 &1702050837
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14344,168 +14423,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 5752112182389242944, guid: 360211b3cb007334a818bc2da1821114, type: 3}
   m_PrefabInstance: {fileID: 1851088434}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1852057431
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1852057434}
-  - component: {fileID: 1852057432}
-  - component: {fileID: 1852057433}
-  m_Layer: 0
-  m_Name: MLAPI
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1852057432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1852057431}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 406bb792f30eb8f4caaf9cf617924e52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DontDestroy: 1
-  RunInBackground: 1
-  LogLevel: 1
-  NetworkConfig:
-    ProtocolVersion: 0
-    NetworkTransport: {fileID: 1852057433}
-    RegisteredScenes:
-    - SampleScene
-    AllowRuntimeSceneChanges: 0
-    NetworkedPrefabs:
-    - Prefab: {fileID: 1790104548480656412, guid: bb9dfd51c90b05943b69d3e8498fbcf8, type: 3}
-      PlayerPrefab: 1
-    PlayerPrefabHash:
-      Value: 9822732434093908304
-    CreatePlayerPrefab: 1
-    ReceiveTickrate: 0
-    MaxReceiveEventsPerTickRate: 500
-    EventTickrate: 5
-    MaxObjectUpdatesPerTick: -1
-    ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
-    ConnectionData: 
-    SecondsHistory: 5
-    EnableTimeResync: 0
-    TimeResyncInterval: 30
-    EnableNetworkedVar: 1
-    EnsureNetworkedVarLengthSafety: 0
-    EnableSceneManagement: 1
-    ForceSamePrefabs: 1
-    UsePrefabSync: 0
-    RecycleNetworkIds: 1
-    NetworkIdRecycleDelay: 120
-    RpcHashSize: 0
-    LoadSceneTimeOut: 120
-    EnableMessageBuffering: 1
-    MessageBufferTimeout: 20
-    EnableEncryption: 0
-    SignKeyExchange: 0
-    ServerBase64PfxCertificate: 
---- !u!114 &1852057433
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1852057431}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -2103117103, guid: 3f45785fc6a701040806514a9c0f8b43, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ConnectAddress: 127.0.0.1
-  Port: 5029
-  Channels:
-  - Name: Reliable
-    Type: 0
-  - Name: Unreliable
-    Type: 1
-  TransportBufferSize: 8192
-  LogLevel: 1
-  EnableSyncronizationEvent: 0
-  EnableSyncronizedCallbacks: 0
-  EventQueueSize: 8192
-  ProcessingQueueSize: 8192
-  HeapPointersPoolSize: 1024
-  HeapMemoryPoolSize: 1024
-  MemoryWrapperPoolSize: 1024
-  ChannelPoolSize: 1024
-  PooledChannels: -1
-  UseIPv6Dual: 1
-  AllowUnconnectedMessages: 0
-  AllowBroadcasts: 0
-  EnableAckNotifications: 0
-  LogicDelay: 4
-  ReuseChannels: 1
-  LogicThreads: 1
-  SocketThreads: 1
-  ProcessingThreads: 0
-  MaxMergeMessageSize: 1024
-  MaxMergeDelay: 15
-  EnableMergedAcks: 1
-  MergedAckBytes: 8
-  MaximumMTU: 4096
-  MinimumMTU: 512
-  EnablePathMTU: 1
-  MaxMTUAttempts: 8
-  MTUAttemptDelay: 1000
-  MTUGrowthFactor: 1.25
-  MaxFragments: 512
-  MaxBufferSize: 5120
-  HandshakeTimeout: 20000
-  ConnectionTimeout: 20000
-  HeartbeatDelay: 5000
-  HandshakeResendDelay: 500
-  MaxHandshakeResends: 20
-  ConnectionRequestMinResendDelay: 500
-  MaxConnectionRequestResends: 5
-  ConnectionRequestTimeout: 5000
-  ChallengeDifficulty: 20
-  ConnectionChallengeHistory: 2048
-  ConnectionChallengeTimeWindow: 300
-  TimeBasedConnectionChallenge: 1
-  AmplificationPreventionHandshakePadding: 512
-  ReliabilityWindowSize: 512
-  ReliableAckFlowWindowSize: 1024
-  ReliabilityMaxResendAttempts: 30
-  ReliabilityResendRoundtripMultiplier: 1.2
-  ReliabilityMinPacketResendDelay: 100
-  ReliabilityMinAckResendDelay: 100
-  UseSimulator: 0
-  DropPercentage: 0
-  MaxLatency: 250
-  MinLatency: 250
-  EnableHeartbeats: 1
-  EnableTimeouts: 1
-  EnableChannelUpdates: 1
-  EnableConnectionRequestResends: 1
-  EnablePacketMerging: 0
---- !u!4 &1852057434
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1852057431}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.7863173, y: -1.4410337, z: -6.686468}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1854998111
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14898,8 +14815,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ee72238928c1794fb5c234957fcf53f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  net: {fileID: 1852057432}
   itemRespawnTime: 3
+  playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
   gravity: 9.5703125
   fracunitsPerM: 64
   localObjects: {fileID: 1387049208}
@@ -14915,7 +14832,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1929115648
 GameObject:
@@ -14972,7 +14889,7 @@ Transform:
   - {fileID: 1682203909}
   - {fileID: 129340229}
   m_Father: {fileID: 0}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &1939413887
 Mesh:

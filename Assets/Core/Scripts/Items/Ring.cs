@@ -65,7 +65,7 @@ public class Ring : WorldObjectComponent
             if (!isDroppedRing)
                 respawnableItem.Pickup();
             else
-                GameManager.DestroyObject(gameObject); // we aren't going to respawn here
+                World.Despawn(gameObject); // we aren't going to respawn here
 
             onPickup?.Invoke(otherPlayer);
         }

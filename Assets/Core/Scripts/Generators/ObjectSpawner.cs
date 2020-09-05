@@ -83,7 +83,9 @@ public class ObjectSpawner : MonoBehaviour {
 
                     // Relink it to its prefab
 #if UNITY_EDITOR
+#pragma warning disable 618, 612
                     currentObject = PrefabUtility.ConnectGameObjectToPrefab(currentObject, objectType);
+#pragma warning restore 618, 612
 #endif
                 }
 

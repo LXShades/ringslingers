@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Mirror;
 
 public class Player : WorldObjectComponent
 {
@@ -8,14 +9,17 @@ public class Player : WorldObjectComponent
     /// <summary>
     /// Name of this player. By default, all players are Fred.
     /// </summary>
-    public string playerName = "Fred";
+    [SyncVar] public string playerName = "Fred";
 
     /// <summary>
     /// Player ID
     /// </summary>
-    public int playerId;
+    [SyncVar] public int playerId;
 
-    public bool isLocalPlayer => playerId == Netplay.singleton.localPlayerId;
+    /// <summary>
+    /// Is this the locally-controlled player?
+    /// </summary>
+    private bool isLocal => playerId == Netplay.singleton.localPlayerId;
 
     [Header("Player control")]
     /// <summary>
@@ -78,8 +82,26 @@ public class Player : WorldObjectComponent
         movement = GetComponent<CharacterMovement>();
     }
 
+    public override void WorldStart()
+    {
+        Netplay.singleton.players[playerId] = this;
+
+        if (isLocal)
+        {
+            Netplay.singleton.localPlayerId = playerId;
+        }
+    }
+
     public override void WorldUpdate(float deltaTime)
     {
+        // Receive inputs if we're local
+        if (isLocal)
+        {
+            lastInput = input;
+            input = PlayerInput.MakeLocalInput(lastInput);
+            movement.SetInput(World.live.localTime, input);
+        }
+
         // Update aim
         float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
 
@@ -160,7 +182,7 @@ public class Player : WorldObjectComponent
             for (int i = 0; i < currentNumToDrop; i++)
             {
                 float horizontalAngle = i * Mathf.PI * 2f / Mathf.Max(currentNumToDrop - 1, 1) + angleOffset;
-                Movement ringMovement = GameManager.SpawnObject(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
+                Movement ringMovement = World.Spawn(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
 
                 Debug.Assert(ringMovement);
                 ringMovement.velocity = new Vector3(Mathf.Sin(horizontalAngle) * horizontalVelocity, verticalVelocity, Mathf.Cos(horizontalAngle) * horizontalVelocity);
@@ -180,7 +202,7 @@ public class Player : WorldObjectComponent
         string updatedName = newName;
         int currentSuffix = 0;
 
-        while (System.Array.Exists(worldObject.world.players, a => a != null && a != this && a.playerName == updatedName))
+        while (System.Array.Exists(Netplay.singleton.players, a => a != null && a != this && a.playerName == updatedName))
         {
             if (currentSuffix < nameSuffices.Length)
                 updatedName = newName + nameSuffices[currentSuffix++];
@@ -189,44 +211,5 @@ public class Player : WorldObjectComponent
         }
 
         playerName = updatedName;
-    }
-
-    public void PreLocalTick(PlayerTick tick)
-    {
-        if (isLocalPlayer)
-        {
-            movement.SetInput(tick.localTime, tick.input);
-
-            lastInput = input;
-            input = tick.input;
-        }
-        else
-        {
-            if (tick.localTime != localTime)
-            {
-                localTime = tick.localTime;
-                movement.SetInput(tick.localTime, tick.input);
-            }
-        }
-    }
-
-    public void PreServerTick(PlayerTick tick)
-    {
-        if (Netplay.singleton.isClient)
-        {
-            if (!isLocalPlayer)
-            {
-                movement.SetInput(tick.localTime, tick.input);
-            }
-            else if (isLocalPlayer && Netplay.singleton.isClient)
-            {
-                movement.Reconcile(new MovementMark2.Snapshot()
-                {
-                    position = tick.position,
-                    time = tick.localTime,
-                    velocity = tick.velocity
-                });
-            }
-        }
     }
 }

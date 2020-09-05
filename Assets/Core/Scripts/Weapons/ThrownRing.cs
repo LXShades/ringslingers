@@ -54,7 +54,7 @@ public class ThrownRing : WorldObjectComponent
         }
 
         // Bye-bye!
-        GameManager.DestroyObject(gameObject);
+        World.Despawn(gameObject);
     }
 
     public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)

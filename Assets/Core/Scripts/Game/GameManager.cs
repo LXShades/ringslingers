@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using MLAPI;
 using System.IO;
 using System;
 using System.Runtime.InteropServices;
@@ -26,15 +25,10 @@ public class GameManager : MonoBehaviour
     }
     private static GameManager _singleton;
 
-    [Header("Managers")]
-    /// <summary>
-    /// Reference to the networking manager
-    /// </summary>
-    public NetworkingManager net;
-
     [Header("Game Settings")]
     [Tooltip("How long until items respawn, in seconds")]
     public float itemRespawnTime = 20;
+    public GameObject playerPrefab;
 
     [Header("Physics")]
     public float gravity = 0.2734375f;
@@ -89,57 +83,18 @@ public class GameManager : MonoBehaviour
             Netplay.singleton.ConnectToServer(commandLine[connectIndex + 1]);
         else
             Netplay.singleton.CreateServer();
-
-        // Setup the main world with the scene objects
-        World.live.CaptureSceneObjects();
     }
 
     void Update()
     {
         // Update network
+        World.live.Tick(Time.deltaTime);
+
         Netplay.singleton.Tick();
 
         // Do debug stuff
         RunDebugCommands();
     }
-
-    #region ObjectManagement
-    public static GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation)
-    {
-        if (World.live != null)
-        {
-            return World.live.SpawnObject(prefab, position, rotation);
-        }
-        else
-        {
-            return Instantiate(prefab, position, rotation);
-        }
-    }
-
-    public static GameObject SpawnObject(GameObject prefab)
-    {
-        if (World.live != null)
-        {
-            return World.live.SpawnObject(prefab, Vector3.zero, Quaternion.identity);
-        }
-        else
-        {
-            return Instantiate(prefab, Vector3.zero, Quaternion.identity);
-        }
-    }
-
-    public static void DestroyObject(GameObject obj)
-    {
-        if (World.live != null)
-        {
-            World.live.DestroyObject(obj);
-        }
-        else
-        {
-            Destroy(obj); // todo
-        }
-    }
-    #endregion
 
     #region Debug
     MemoryStream tempSave;
@@ -167,19 +122,6 @@ public class GameManager : MonoBehaviour
                 Cursor.lockState = CursorLockMode.Locked;
             else
                 Cursor.lockState = CursorLockMode.None;
-        }
-
-        // Press F1 to save a state
-        if (Input.GetKeyDown(KeyCode.F1))
-        {
-            tempSave = World.live.Serialize();
-            Debug.Log($"Serialized {tempSave.Length} bytes!");
-        }
-
-        if (Input.GetKeyDown(KeyCode.F2) && tempSave != null)
-        {
-            tempSave.Position = 0;
-            World.live.Deserialize(tempSave);
         }
     }
     #endregion

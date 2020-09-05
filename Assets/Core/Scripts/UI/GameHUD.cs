@@ -91,7 +91,7 @@ public class GameHUD : MonoBehaviour
         if (scoreboard.activeSelf)
         {
             // Refresh scoreboard info
-            Player[] orderedPlayers = (Player[])World.live.players.Clone();
+            Player[] orderedPlayers = (Player[])Netplay.singleton.players.Clone();
 
             System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : 0) - (b ? b.score : 0) > 0 ? -1 : 1);
 
@@ -115,12 +115,9 @@ public class GameHUD : MonoBehaviour
 
             switch (Netplay.singleton.connectionStatus)
             {
-                case Netplay.ConnectionStatus.Disconnected:
-                    connectStatusText.text = "DISCONNECTED";
-                    break;
-                case Netplay.ConnectionStatus.Connecting:
-                    connectStatusText.text = "Connecting...";
-                    break;
+                case Netplay.ConnectionStatus.Offline: connectStatusText.text = "OFFLINE. RESTART GAME PLZ, SORRY :("; break;
+                case Netplay.ConnectionStatus.Disconnected: connectStatusText.text = "DISCONNECTED"; break;
+                case Netplay.ConnectionStatus.Connecting: connectStatusText.text = "Connecting..."; break;
             }
         }
         else

@@ -62,7 +62,7 @@ public class RingShooting : WorldObjectComponent
             
             if (World.live.gameTime - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
             {
-                GameObject ring = GameManager.SpawnObject(currentWeapon.weaponType.prefab, spawnPosition.position, Quaternion.identity);
+                GameObject ring = World.Spawn(currentWeapon.weaponType.prefab, spawnPosition.position, Quaternion.identity);
                 ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
 
                 Debug.Assert(ringAsThrownRing);

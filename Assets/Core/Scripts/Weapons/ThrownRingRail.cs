@@ -47,12 +47,5 @@ public class ThrownRingRail : ThrownRing
             Debug.Log($"Trying to hurt player {closestPlayer}");
             closestPlayer.Hurt(owner.gameObject);
         }
-
-        if (!World.live.isResimulation)
-        {
-            // release the particles so they won't be despawned
-            particles.transform.SetParent(null, true);
-            endPoint.transform.SetParent(null, true);
-        }
     }
 }

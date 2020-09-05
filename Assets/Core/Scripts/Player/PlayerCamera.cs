@@ -54,7 +54,7 @@ public class PlayerCamera : WorldObjectComponent
         if (currentPlayer == null)
         {
             if (Netplay.singleton.localPlayerId >= 0)
-                currentPlayer = worldObject.world.players[Netplay.singleton.localPlayerId]; // follow the player in this world
+                currentPlayer = Netplay.singleton.players[Netplay.singleton.localPlayerId]; // follow the player in this world
         }
 
         if (currentPlayer)

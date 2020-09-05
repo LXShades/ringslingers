@@ -1,5 +1,4 @@
-﻿using MLAPI.Serialization.Pooled;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Remoting;
@@ -53,7 +52,7 @@ public class CharacterMovement : MovementMark2
     /// <summary>
     /// Speed of the player right now
     /// </summary>
-    [HideInInspector] public Vector3 velocity;
+    //[HideInInspector] public Vector3 velocity;
 
     /// <summary>
     /// The direction the player is trying to run in

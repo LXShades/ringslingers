@@ -28,9 +28,6 @@ public class DebugTickTimelineHUD : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Netplay.singleton.serverTickHistory.Count == 0)
-            return;
-
         minTime = 0;
         maxTime = World.live.localTime;
 
@@ -48,61 +45,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
         earlyTime.text = minTime.ToString();
         lateTime.text = maxTime.ToString();
 
-        SetTickPosition(serverTick.rectTransform, Netplay.singleton.lastReceivedServerTick.playerTicks[Netplay.singleton.localPlayerId].localTime);
         SetTickPosition(liveTick.rectTransform, World.live.localTime);
-
-        /*if (World.live.players[Netplay.singleton.localPlayerId])
-        {
-            SetTickPosition(serverTick.rectTransform, World.live.players[Netplay.singleton.localPlayerId].serverTime);
-        }*/
-
-        int movementHistoryIndexAtServer = 0;
-
-        Player player = World.live.players[Netplay.singleton.localPlayerId];
-        History<PlayerInput> movementHistory = null;
-        if (player)
-        {
-            movementHistory = player.movement.inputHistory;
-
-            for (movementHistoryIndexAtServer = 0; movementHistoryIndexAtServer < movementHistory.Count; movementHistoryIndexAtServer++)
-            {
-                if (Netplay.singleton.lastReceivedServerTick.playerTicks[Netplay.singleton.localPlayerId].localTime == movementHistory.TimeAt(movementHistoryIndexAtServer))
-                    break;
-            }
-
-            if (movementHistoryIndexAtServer == movementHistory.Count)
-                movementHistoryIndexAtServer = 0;
-
-            for (int i = 0; i < allLocalTicks.Count; i++)
-            {
-                if (i >= movementHistoryIndexAtServer)
-                    allLocalTicks[i].enabled = false;
-                else
-                {
-                    allLocalTicks[i].enabled = true;
-                    SetTickPosition(allLocalTicks[i].rectTransform, movementHistory.TimeAt(i));
-                }
-            }
-        }
-
-        SetTickListCapacity(allServerTicks, pastServerTick, Netplay.singleton.serverTickHistory.Count);
-
-        if (movementHistoryIndexAtServer != -1)
-            SetTickListCapacity(allLocalTicks, pastLocalTick, movementHistoryIndexAtServer);
-
-        // show past tick times
-        for (int i = 0; i < allServerTicks.Count; i++)
-        {
-            if (i >= Netplay.singleton.serverTickHistory.Count)
-            {
-                allServerTicks[i].enabled = false;
-            }
-            else
-            {
-                allServerTicks[i].enabled = true;
-                SetTickPosition(allServerTicks[i].rectTransform, Netplay.singleton.serverTickHistory[i].playerTicks[Netplay.singleton.localPlayerId].localTime);
-            }
-        }
     }
 
     void SetTickListCapacity(List<Image> list, Image prefab, int number)

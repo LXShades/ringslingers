@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using Mirror;
 
 /// <summary>
 /// A world object is a cloneable object that exists in the world and should be synchronised between client and server
@@ -10,22 +11,14 @@ using UnityEngine;
 /// The ping-projected objects are regularly reset to their server positions via clone. This may have unexpected implications.
 /// For now, just bear this in mind if things break.
 /// </summary>
-public class WorldObject : MonoBehaviour
+public class WorldObject : NetworkBehaviour
 {
-    private int _id = -1;
-    private World _world = null;
-
     public bool hasStarted { get; private set; } = false;
-
-    /// <summary>
-    /// Locally owned unique ID for this component
-    /// </summary>
-    public int objId => _id;
 
     /// <summary>
     /// World that this object belongs in
     /// </summary>
-    public World world => _world;
+    public World world { get; private set; }
 
     /// <summary>
     /// What time this object was created, in its parent world's time
@@ -44,10 +37,9 @@ public class WorldObject : MonoBehaviour
     public List<WorldObjectComponent> worldObjectComponents = new List<WorldObjectComponent>();
 
     #region Initialisation
-    private void Start()
+    private void Awake()
     {
-        if (_world == null)
-            Debug.LogError($"WorldObject {gameObject.name} was not instantiated via GameManager.SpawnObject or World.live.SpawnObject. Errors may occur.");
+        World.live.OnWorldObjectSpawned(this);
     }
     #endregion
 
@@ -85,8 +77,7 @@ public class WorldObject : MonoBehaviour
     /// </summary>
     public void _OnCreatedByWorld(World parent, int id)
     {
-        _id = id;
-        _world = parent;
+        world = parent;
         creationTime = parent.gameTime;
         hasStarted = false;
 
@@ -113,6 +104,12 @@ public class WorldObject : MonoBehaviour
                 Debug.LogError($"Exception on WorldAwake: {e.Message}");
             }
         }
+
+        // Spawn the object on clients?
+        if (GetComponent<Mirror.NetworkIdentity>() && Mirror.NetworkServer.active)
+        {
+            Mirror.NetworkServer.Spawn(gameObject);
+        }
     }
 
     public void _OnDestroyedByWorld(World parent)
@@ -138,11 +135,7 @@ public class WorldObject : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (!isDead && GameManager.singleton) // GameManager.singleton .... should indicate whether the game is ending...except when it doesn't
-        {
-            Debug.LogError("Synced objects should be destroyed with GameManager.DestroyObject");
-            Debug.Break();
-        }
+        world.OnWorldObjectDestroyed(this);
     }
 
     public void FlagAsRestored()

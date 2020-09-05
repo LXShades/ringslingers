@@ -57,7 +57,7 @@ public class DespawnAfterDuration : WorldObjectComponent
             if (despawnSound.clip)
                 GameSounds.PlaySound(gameObject, despawnSound);
 
-            GameManager.DestroyObject(gameObject);
+            World.Despawn(gameObject);
         }
     }
 }

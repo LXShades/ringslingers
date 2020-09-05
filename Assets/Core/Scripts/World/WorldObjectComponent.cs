@@ -1,19 +1,9 @@
-﻿using MLAPI.Serialization.Pooled;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using UnityEngine;
 using System;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Linq.Expressions;
-using System.Dynamic;
-using JetBrains.Annotations;
-using System.Linq;
-using System.Runtime.CompilerServices;
+using Mirror;
 
-public abstract class SyncedObjectBase : MonoBehaviour
+public abstract class SyncedObjectBase : NetworkBehaviour
 {
     protected virtual void Awake() { }
 
@@ -51,7 +41,7 @@ public abstract class WorldObjectComponent : SyncedObjectBase
 #if UNITY_EDITOR
     public void OnEnable()
     {
-        clonerInfo = ClonerGenerator.GetClonerInfo(GetType()).Replace(", ", "\n");
+        //clonerInfo = ClonerGenerator.GetClonerInfo(GetType()).Replace(", ", "\n");
     }
 #endif
 

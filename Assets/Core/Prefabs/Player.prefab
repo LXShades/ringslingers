@@ -120,6 +120,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7352825796714013432}
+  - component: {fileID: 3620776001654559608}
   - component: {fileID: 512623906272618797}
   - component: {fileID: 7352825796714013433}
   - component: {fileID: 7352825796714013435}
@@ -151,6 +152,22 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3620776001654559608
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  serverOnly: 0
+  m_AssetId: 
+  hasSpawned: 0
 --- !u!114 &512623906272618797
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -176,7 +193,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   syncsPerSecond: 1
-  name: Frederic Fred McFred Freddie Jr
+  clonerInfo: 
+  playerName: Fred
   playerId: 0
   input:
     moveHorizontalAxis: 0
@@ -212,6 +230,7 @@ MonoBehaviour:
   hitInvincibilityBlinkRate: 25
   aimForward: {x: 0, y: 0, z: 0}
   movement: {fileID: 0}
+  localTime: -1
 --- !u!114 &7352825796714013435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,6 +244,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   syncsPerSecond: 1
+  clonerInfo: 
+  serverPosition: {x: 0, y: 0, z: 0}
+  serverVelocity: {x: 0, y: 0, z: 0}
+  serverLocalTime: 0
+  lastMoveLocalTime: 0
+  velocity: {x: 0, y: 0, z: 0}
   accelStart: 96
   acceleration: 40
   thrustFactor: 5
@@ -262,6 +287,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   syncsPerSecond: 0
+  clonerInfo: 
   colliders:
   - {fileID: 1784313262649898792}
   blockingCollisionLayers:
@@ -285,6 +311,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   syncsPerSecond: 0
+  clonerInfo: 
   defaultWeapon:
     weaponType: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
     ammo: 0

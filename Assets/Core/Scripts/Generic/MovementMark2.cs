@@ -8,15 +8,15 @@ using UnityEngine.Audio;
 public class MovementMark2 : WorldObjectComponent
 {
     [Serializable]
-    public class Snapshot
+    public class MoveState
     {
         public float time;
         public Vector3 position;
         public Vector3 velocity;
 
-        public Snapshot() { }
+        public MoveState() { }
 
-        public Snapshot(MovementMark2 source)
+        public MoveState(MovementMark2 source)
         {
             From(source);
         }
@@ -45,7 +45,7 @@ public class MovementMark2 : WorldObjectComponent
 
     public Vector3 velocity;
 
-    private Snapshot pendingReconcilationSnapshot = null;
+    private MoveState pendingReconcilationSnapshot = null;
 
     private bool inputWasSetThisFrame = false;
 
@@ -78,15 +78,15 @@ public class MovementMark2 : WorldObjectComponent
     /// <summary>
     /// Called when this object is summoned to a position by the server
     /// </summary>
-    public virtual void OnReconcile(Snapshot snapshot)
+    public virtual void OnReconcile(MoveState snapshot)
     {
         pendingReconcilationSnapshot.To(this);
         pendingReconcilationSnapshot = null;
     }
 
-    public Snapshot GetSnapshot()
+    public MoveState GetSnapshot()
     {
-        return new Snapshot(this);
+        return new MoveState(this);
     }
 
     public void SetInput(float localTime, PlayerInput input)
@@ -100,7 +100,7 @@ public class MovementMark2 : WorldObjectComponent
         inputWasSetThisFrame = true;
     }
 
-    public void Reconcile(Snapshot snapshot)
+    public void Reconcile(MoveState snapshot)
     {
         pendingReconcilationSnapshot = snapshot;
     }
@@ -110,18 +110,18 @@ public class MovementMark2 : WorldObjectComponent
 public class History<T>
 {
     [Serializable]
-    public struct HistoryItem<T>
+    public struct HistoryItem
     {
         public float time;
         public T item;
     }
 
-    private List<HistoryItem<T>> items = new List<HistoryItem<T>>();
+    private List<HistoryItem> items = new List<HistoryItem>();
 
     public T this[int index]
     {
         get => items[index].item;
-        set => items[index] = new HistoryItem<T>()
+        set => items[index] = new HistoryItem()
         {
             time = items[index].time,
             item = value
@@ -154,7 +154,7 @@ public class History<T>
                 break;
         }
 
-        items.Insert(index, new HistoryItem<T>() { item = item, time = time });
+        items.Insert(index, new HistoryItem() { item = item, time = time });
     }
 
     public void Clear()
