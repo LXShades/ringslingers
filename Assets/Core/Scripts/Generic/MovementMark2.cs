@@ -1,15 +1,19 @@
-﻿using System;
-using System.Collections;
+﻿using Mirror;
+using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
-using UnityEngine.Audio;
 
 public class MovementMark2 : WorldObjectComponent
 {
+    public float futureness = 0.3f;
+
+    [Range(0.01f, 0.5f)]
+    public float resimulationStep = 0.08f;
+
     [Serializable]
     public class MoveState
     {
+        public PlayerInput input;
         public float time;
         public Vector3 position;
         public Vector3 velocity;
@@ -18,26 +22,24 @@ public class MovementMark2 : WorldObjectComponent
 
         public MoveState(MovementMark2 source)
         {
-            From(source);
+            Make(source);
         }
 
-        public void From(MovementMark2 source)
+        public void Make(MovementMark2 source)
         {
             time = World.live.localTime;
             position = source.transform.position;
             velocity = source.velocity;
+            input = source.inputHistory.Count > 0 ? source.inputHistory[0] : new PlayerInput();
         }
 
-        public void To(MovementMark2 target)
+        public void Apply(MovementMark2 target)
         {
             target.transform.position = position;
             target.velocity = velocity;
+            target.SetInput(time, input);
         }
     }
-
-    public Vector3 serverPosition;
-    public Vector3 serverVelocity;
-    public float serverLocalTime;
 
     public float lastMoveLocalTime;
 
@@ -46,6 +48,7 @@ public class MovementMark2 : WorldObjectComponent
     public Vector3 velocity;
 
     private MoveState pendingReconcilationSnapshot = null;
+    private MoveState lastReceivedMoveState = null;
 
     private bool inputWasSetThisFrame = false;
 
@@ -53,7 +56,7 @@ public class MovementMark2 : WorldObjectComponent
     {
         if (pendingReconcilationSnapshot != null)
         {
-            OnReconcile(pendingReconcilationSnapshot);
+            //OnReconcile(pendingReconcilationSnapshot);
         }
 
         PlayerInput lastInput = new PlayerInput();
@@ -67,42 +70,78 @@ public class MovementMark2 : WorldObjectComponent
             inputHistory.Prune(inputHistory.TimeAt(0) - 1);
         }
 
+        if ((int)((World.live.localTime - deltaTime) * Netplay.singleton.playerTickrate) != (int)(World.live.localTime * Netplay.singleton.playerTickrate))
+        {
+            SendMovementState();
+        }
+
         TickMovement(deltaTime, inputHistory.Count > 0 ? inputHistory[0] : new PlayerInput(), lastInput, false);
         inputWasSetThisFrame = false;
     }
 
-    public virtual void TickMovement(float deltaTime, PlayerInput commands, PlayerInput lastCommands, bool isResimulated = false)
-    {
-    }
-
-    /// <summary>
-    /// Called when this object is summoned to a position by the server
-    /// </summary>
-    public virtual void OnReconcile(MoveState snapshot)
-    {
-        pendingReconcilationSnapshot.To(this);
-        pendingReconcilationSnapshot = null;
-    }
-
-    public MoveState GetSnapshot()
-    {
-        return new MoveState(this);
-    }
+    public virtual void TickMovement(float deltaTime, PlayerInput commands, PlayerInput lastCommands, bool isResimulated = false) { }
 
     public void SetInput(float localTime, PlayerInput input)
     {
         inputHistory.Insert(localTime, input);
 
-        // todo set velocity from client
-        serverPosition = transform.position;
-        serverVelocity = velocity;
-        serverLocalTime = localTime;
         inputWasSetThisFrame = true;
     }
 
-    public void Reconcile(MoveState snapshot)
+    private void SendMovementState()
     {
-        pendingReconcilationSnapshot = snapshot;
+        // send movement to server
+        if (netIdentity.hasAuthority)
+        {
+            CmdSendMovement(new MoveState(this));
+        }
+
+        if (NetworkServer.active)
+        {
+            RpcSendMovement(new MoveState(this)
+            {
+                time = lastReceivedMoveState != null ? lastReceivedMoveState.time : 0
+            });
+        }
+    }
+
+    [Command(channel = Channels.DefaultUnreliable)]
+    public void CmdSendMovement(MoveState moveState)
+    {
+        Debug.Log("Server received movement");
+        OnReceivedMovement(moveState);
+    }
+
+    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    public void RpcSendMovement(MoveState moveState)
+    {
+        if (NetworkServer.active)
+        {
+            return;
+        }
+
+        OnReceivedMovement(moveState);
+    }
+
+    private void OnReceivedMovement(MoveState moveState)
+    {
+        if (!hasAuthority)
+        {
+            lastReceivedMoveState = moveState;
+            moveState.Apply(this);
+
+            for (float i = 0; i < futureness; i += resimulationStep)
+            {
+                TickMovement(Mathf.Min(resimulationStep, futureness - i), moveState.input, moveState.input, true);
+            }
+        }
+        else
+        {
+            if (!NetworkServer.active)
+            {
+                Debug.Log($"Got position ping: {World.live.localTime - moveState.time}");
+            }
+        }
     }
 }
 

@@ -97,6 +97,7 @@ public class World : MonoBehaviour
     {
         // Update timing
         localTime += Time.deltaTime;
+        gameTime += Time.deltaTime;
         this.deltaTime = deltaTime;
 
         // Update all game objects!
@@ -174,7 +175,7 @@ public class World : MonoBehaviour
 
 [System.Serializable]
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
-public struct PlayerInput : Mirror.IMessageBase
+public struct PlayerInput
 {
     public float moveHorizontalAxis;
     public float moveVerticalAxis;
@@ -225,5 +226,22 @@ public struct PlayerInput : Mirror.IMessageBase
         writer.WriteSingle(horizontalAim);
         writer.WriteSingle(verticalAim);
         writer.WriteByte((byte)((btnJump ? 1 : 0) | (btnFire ? 2 : 0)));
+    }
+}
+
+public static class PlayerInputSerializer
+{
+    public static void WritePlayerInput(this NetworkWriter writer, PlayerInput input)
+    {
+        input.Serialize(writer);
+    }
+
+    public static PlayerInput ReadPlayerInput(this NetworkReader reader)
+    {
+        PlayerInput output = new PlayerInput();
+
+        output.Deserialize(reader);
+
+        return output;
     }
 }

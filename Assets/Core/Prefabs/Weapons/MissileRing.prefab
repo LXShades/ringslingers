@@ -4988,7 +4988,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e969874be7f155448bba1dbd69f077b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  worldObjectComponents: []
+  syncMode: 0
+  syncInterval: 0.1
 --- !u!114 &3930404116993706217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5001,6 +5002,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b43bd2cefb42cbc49bafaf3bb1cec563, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   syncsPerSecond: 0
   clonerInfo: 
   settings: {fileID: 0}
@@ -5016,6 +5019,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f1b211fe1b2804478003c97e2eefb4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   syncsPerSecond: 0
   clonerInfo: 'timeUntilDespawn
 

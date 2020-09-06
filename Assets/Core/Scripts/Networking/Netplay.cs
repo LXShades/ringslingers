@@ -33,6 +33,9 @@ public class Netplay : MonoBehaviour
 
     public ConnectionStatus connectionStatus = ConnectionStatus.Offline;
 
+    [Header("Tickrate")]
+    public float playerTickrate = 10f;
+
     /// <summary>
     /// Local player ID
     /// </summary>
@@ -175,6 +178,7 @@ public class Netplay : MonoBehaviour
         {
             // spawn the player
             Player newPlayer = AddPlayer(-1);
+            newPlayer.GetComponent<NetworkIdentity>().AssignClientAuthority(connection);
 
             connection.identity.GetComponent<PlayerClient>().playerId = newPlayer ? newPlayer.playerId : -1;
         }
