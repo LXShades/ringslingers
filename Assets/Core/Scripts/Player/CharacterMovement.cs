@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.Remoting;
-using System.Xml;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
 
 [RequireComponent(typeof(Movement), typeof(Player))]
 public class CharacterMovement : MovementMark2
@@ -46,7 +41,7 @@ public class CharacterMovement : MovementMark2
     };
     public State state
     {
-        get; private set;
+        get; set;
     }
 
     /// <summary>
@@ -212,7 +207,7 @@ public class CharacterMovement : MovementMark2
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !lastInput.btnJump)
             {
                 // Thok
-                velocity.SetHorizontal(player.aimForward.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
+                velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
                 if (!isResimmingMovement)
                     GameSounds.PlaySound(gameObject, thokSound);

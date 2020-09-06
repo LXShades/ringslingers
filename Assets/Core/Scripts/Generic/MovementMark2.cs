@@ -17,6 +17,7 @@ public class MovementMark2 : WorldObjectComponent
         public float time;
         public Vector3 position;
         public Vector3 velocity;
+        public CharacterMovement.State state;
 
         public MoveState() { }
 
@@ -30,62 +31,117 @@ public class MovementMark2 : WorldObjectComponent
             time = World.live.localTime;
             position = source.transform.position;
             velocity = source.velocity;
-            input = source.inputHistory.Count > 0 ? source.inputHistory[0] : new PlayerInput();
+            input = source.moveHistory.Count > 0 ? source.moveHistory[0].input : new PlayerInput();
+            state = (source as CharacterMovement).state;
         }
 
         public void Apply(MovementMark2 target)
         {
             target.transform.position = position;
             target.velocity = velocity;
-            target.SetInput(time, input);
+            (target as CharacterMovement).state = state;
         }
     }
 
     public float lastMoveLocalTime;
 
-    public History<PlayerInput> inputHistory = new History<PlayerInput>();
+    public History<MoveState> moveHistory = new History<MoveState>();
+
+    private PlayerInput input;
 
     public Vector3 velocity;
 
-    private MoveState pendingReconcilationSnapshot = null;
+    private MoveState pendingMoveState = null;
     private MoveState lastReceivedMoveState = null;
 
-    private bool inputWasSetThisFrame = false;
+    public float movementAccuracyTolerance = 0.3f;
+
+    private float lastExecutedInput;
+
+    public int testReconcilationTime = 0;
 
     public override void WorldUpdate(float deltaTime)
     {
-        if (pendingReconcilationSnapshot != null)
+        // Tick movement locally here
+        TickMovement(deltaTime, input, moveHistory.Count > 0 ? moveHistory[0].input : new PlayerInput(), false);
+        moveHistory.Insert(World.live.localTime, new MoveState(this)
         {
-            //OnReconcile(pendingReconcilationSnapshot);
+            input = input
+        });
+        moveHistory.Prune(moveHistory.TimeAt(0) - 1);
+
+        if (moveHistory.Count > 1)
+        {
+            Debug.Log($"Ticked {moveHistory[1].time}->{moveHistory[0].time} (+{moveHistory[1].time - moveHistory[0].time})");
         }
 
-        PlayerInput lastInput = new PlayerInput();
-        if (inputHistory.Count > 1)
+        // Receive latest networked input
+        if (pendingMoveState != null)
         {
-            if (inputWasSetThisFrame)
-                lastInput = inputHistory[1];
-            else
-                lastInput = inputHistory[0];
+            if (NetworkServer.active && !hasAuthority)
+            {
+                // validate this player's movement on the server
+                ServerValidateMovement(pendingMoveState);
+            }
+            else if (!NetworkServer.active)
+            {
+                // validate this player (or our own) movement on the client
+                ClientValidateMovement(pendingMoveState);
+            }
 
-            inputHistory.Prune(inputHistory.TimeAt(0) - 1);
+            pendingMoveState = null;
         }
 
+        // Send the movement state occasionally AFTER movement has executed
+        // (this should treat jumps, etc a bit nicer)
         if ((int)((World.live.localTime - deltaTime) * Netplay.singleton.playerTickrate) != (int)(World.live.localTime * Netplay.singleton.playerTickrate))
         {
             SendMovementState();
         }
 
-        TickMovement(deltaTime, inputHistory.Count > 0 ? inputHistory[0] : new PlayerInput(), lastInput, false);
-        inputWasSetThisFrame = false;
+        if (testReconcilationTime > -1)
+        {
+            TestReconcile();
+        }
+    }
+
+    private void TestReconcile()
+    {
+        int startState = testReconcilationTime + 1;
+
+        if (moveHistory.Count <= startState)
+        {
+            return;
+        }
+
+        MoveState moveState = moveHistory[startState];
+
+        // hop back to server position
+        moveState.Apply(this);
+
+        // each item in movement history contains
+        // 1. input
+        // 2. state/movement AFTER input was executed
+        // so if we were to hop back to moveState[1], we would tick from moveState[0] onwards
+
+        Debug.Log($"Set position to {startState}");
+
+        // resimulate to our own position
+        for (int i = moveHistory.IndexAt(moveState.time); i >= 1; i--)
+        {
+            int input = i - 1;
+            int lastInput = i;
+
+            Debug.Log($"Simmed input {input} last {lastInput} {moveHistory[i].time}->{moveHistory[i - 1].time} (+{moveHistory[i - 1].time - moveHistory[i].time})");
+            TickMovement(moveHistory[i - 1].time - moveHistory[i].time, moveHistory[input].input, moveHistory[lastInput].input, true);
+        }
     }
 
     public virtual void TickMovement(float deltaTime, PlayerInput commands, PlayerInput lastCommands, bool isResimulated = false) { }
 
     public void SetInput(float localTime, PlayerInput input)
     {
-        inputHistory.Insert(localTime, input);
-
-        inputWasSetThisFrame = true;
+        this.input = input;
     }
 
     private void SendMovementState()
@@ -108,7 +164,6 @@ public class MovementMark2 : WorldObjectComponent
     [Command(channel = Channels.DefaultUnreliable)]
     public void CmdSendMovement(MoveState moveState)
     {
-        Debug.Log("Server received movement");
         OnReceivedMovement(moveState);
     }
 
@@ -125,10 +180,30 @@ public class MovementMark2 : WorldObjectComponent
 
     private void OnReceivedMovement(MoveState moveState)
     {
-        if (!hasAuthority)
+        if (lastReceivedMoveState == null || moveState.time > lastReceivedMoveState.time) // don't receive out-of-order movements
         {
             lastReceivedMoveState = moveState;
+            pendingMoveState = moveState;
+        }
+    }
+
+    private void ServerValidateMovement(MoveState moveState)
+    {
+        if (Vector3.Distance(moveState.position, transform.position) < movementAccuracyTolerance && false)
+        {
             moveState.Apply(this);
+        }
+
+        SetInput(moveState.time, moveState.input);
+    }
+
+    private void ClientValidateMovement(MoveState moveState)
+    {
+        if (!hasAuthority)
+        {
+            // this is another player, just plop them here
+            moveState.Apply(this);
+            SetInput(moveState.time, moveState.input);
 
             for (float i = 0; i < futureness; i += resimulationStep)
             {
@@ -137,9 +212,15 @@ public class MovementMark2 : WorldObjectComponent
         }
         else
         {
-            if (!NetworkServer.active)
+            Debug.Log($"Got position ping: {World.live.localTime - moveState.time}");
+
+            // hop back to server position
+            moveState.Apply(this);
+
+            // resimulate to our own position
+            for (int i = moveHistory.IndexAt(moveState.time); i >= 1; i--)
             {
-                Debug.Log($"Got position ping: {World.live.localTime - moveState.time}");
+                TickMovement(moveHistory[i - 1].time - moveHistory[i].time, moveHistory[i - 1].input, moveHistory[i].input, true);
             }
         }
     }
@@ -155,7 +236,7 @@ public class History<T>
         public T item;
     }
 
-    private List<HistoryItem> items = new List<HistoryItem>();
+    [SerializeField] private List<HistoryItem> items = new List<HistoryItem>();
 
     public T this[int index]
     {

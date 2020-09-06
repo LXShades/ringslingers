@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Mirror;
 using UnityEngine;
-using Mirror;
 
 public class Player : WorldObjectComponent
 {
@@ -64,11 +62,6 @@ public class Player : WorldObjectComponent
     public float hitInvincibilityBlinkRate = 25f;
     private float invincibilityTimeRemaining;
 
-    /// <summary>
-    /// Forward vector representing where we're aiming
-    /// </summary>
-    public Vector3 aimForward;
-
     // Components
     /// <summary>
     /// Player movement component
@@ -104,8 +97,6 @@ public class Player : WorldObjectComponent
 
         // Update aim
         float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
-
-        aimForward = new Vector3(Mathf.Sin(horizontalRads) * Mathf.Cos(verticalRads), -Mathf.Sin(verticalRads), Mathf.Cos(horizontalRads) * Mathf.Cos(verticalRads));
 
         // Invincibility blinky
         if (invincibilityTimeRemaining > 0)

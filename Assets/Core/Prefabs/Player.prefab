@@ -180,6 +180,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e969874be7f155448bba1dbd69f077b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
 --- !u!114 &7352825796714013433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,6 +194,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df62c5a802d7da04983cf8e65e0d427a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   syncsPerSecond: 1
   clonerInfo: 
   playerName: Fred
@@ -228,7 +232,6 @@ MonoBehaviour:
   hurtDefaultVerticalKnockback: 3.8
   hitInvincibilityDuration: 1.5
   hitInvincibilityBlinkRate: 25
-  aimForward: {x: 0, y: 0, z: 0}
   movement: {fileID: 0}
   localTime: -1
 --- !u!114 &7352825796714013435
@@ -243,13 +246,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4118904f0bb36834eab3af1056ce998b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   syncsPerSecond: 1
   clonerInfo: 
-  serverPosition: {x: 0, y: 0, z: 0}
-  serverVelocity: {x: 0, y: 0, z: 0}
-  serverLocalTime: 0
+  futureness: 0.3
+  resimulationStep: 0.08
   lastMoveLocalTime: 0
+  moveHistory:
+    items: []
   velocity: {x: 0, y: 0, z: 0}
+  movementAccuracyTolerance: 0.3
+  testReconcilationTime: 0
   accelStart: 96
   acceleration: 40
   thrustFactor: 5
@@ -271,7 +279,6 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     pitchVariance: 0.05
-  velocity: {x: 0, y: 0, z: 0}
   isOnGround: 0
   debugDisableCollision: 0
 --- !u!114 &4451384450655814514
@@ -286,6 +293,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ec020f51922bab4f8a92a38ac34e8c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   syncsPerSecond: 0
   clonerInfo: 
   colliders:
@@ -310,6 +319,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25d19b786be947a4a876fe24e175a23e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   syncsPerSecond: 0
   clonerInfo: 
   defaultWeapon:

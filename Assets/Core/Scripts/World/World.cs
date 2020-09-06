@@ -1,11 +1,8 @@
-﻿using System.Collections;
+﻿using Mirror;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Runtime.InteropServices;
-using System.IO;
-using System;
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using Mirror;
 
 /// <summary>
 /// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).
@@ -185,6 +182,15 @@ public struct PlayerInput
 
     public bool btnJump;
     public bool btnFire;
+
+    public Vector3 aimDirection
+    {
+        get
+        {
+            float horizontalRads = horizontalAim * Mathf.Deg2Rad, verticalRads = verticalAim * Mathf.Deg2Rad;
+            return new Vector3(Mathf.Sin(horizontalRads) * Mathf.Cos(verticalRads), -Mathf.Sin(verticalRads), Mathf.Cos(horizontalRads) * Mathf.Cos(verticalRads));
+        }
+    }
 
     /// <summary>
     /// Generates input commands from the current input

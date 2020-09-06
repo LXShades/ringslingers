@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class RingShooting : WorldObjectComponent
@@ -67,7 +66,7 @@ public class RingShooting : WorldObjectComponent
 
                 Debug.Assert(ringAsThrownRing);
                 ringAsThrownRing.settings = currentWeapon.weaponType;
-                ringAsThrownRing.Throw(player, spawnPosition.position, player.aimForward);
+                ringAsThrownRing.Throw(player, spawnPosition.position, player.input.aimDirection);
 
                 GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
