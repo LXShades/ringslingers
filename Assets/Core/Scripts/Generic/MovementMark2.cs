@@ -31,7 +31,6 @@ public class MovementMark2 : WorldObjectComponent
             time = World.live.localTime;
             position = source.transform.position;
             velocity = source.velocity;
-            input = source.moveHistory.Count > 0 ? source.moveHistory[0].input : new PlayerInput();
             state = (source as CharacterMovement).state;
         }
 
@@ -70,11 +69,6 @@ public class MovementMark2 : WorldObjectComponent
         });
         moveHistory.Prune(moveHistory.TimeAt(0) - 1);
 
-        if (moveHistory.Count > 1)
-        {
-            Debug.Log($"Ticked {moveHistory[1].time}->{moveHistory[0].time} (+{moveHistory[1].time - moveHistory[0].time})");
-        }
-
         // Receive latest networked input
         if (pendingMoveState != null)
         {
@@ -99,41 +93,40 @@ public class MovementMark2 : WorldObjectComponent
             SendMovementState();
         }
 
-        if (testReconcilationTime > -1)
+        if (testReconcilationTime > -1 && moveHistory.Count > testReconcilationTime)
         {
-            TestReconcile();
+            TryReconcile(moveHistory[testReconcilationTime]);
         }
     }
 
-    private void TestReconcile()
+    private void TryReconcile(MoveState pastState)
     {
-        int startState = testReconcilationTime + 1;
-
-        if (moveHistory.Count <= startState)
-        {
-            return;
-        }
-
-        MoveState moveState = moveHistory[startState];
-
         // hop back to server position
-        moveState.Apply(this);
+        pastState.Apply(this);
 
-        // each item in movement history contains
-        // 1. input
-        // 2. state/movement AFTER input was executed
-        // so if we were to hop back to moveState[1], we would tick from moveState[0] onwards
+        // fast forward if we can
+        int startState = moveHistory.IndexAt(pastState.time);
 
-        Debug.Log($"Set position to {startState}");
-
-        // resimulate to our own position
-        for (int i = moveHistory.IndexAt(moveState.time); i >= 1; i--)
+        if (startState > -1)
         {
-            int input = i - 1;
-            int lastInput = i;
+            // each item in movement history contains
+            // 1. input
+            // 2. state/movement AFTER input was executed
+            // so if we were to hop back to moveState[1], we tick by moveState[0].time - moveState[1].time using inputs from moveState[0].
 
-            Debug.Log($"Simmed input {input} last {lastInput} {moveHistory[i].time}->{moveHistory[i - 1].time} (+{moveHistory[i - 1].time - moveHistory[i].time})");
-            TickMovement(moveHistory[i - 1].time - moveHistory[i].time, moveHistory[input].input, moveHistory[lastInput].input, true);
+            // resimulate to our own position
+            for (int i = startState; i >= 1; i--)
+            {
+                int input = i - 1;
+                int lastInput = i;
+
+                TickMovement(moveHistory[input].time - moveHistory[lastInput].time, moveHistory[input].input, moveHistory[lastInput].input, true);
+
+                moveHistory[input] = new MoveState(this) {
+                    time = moveHistory[input].time,
+                    input = moveHistory[input].input
+                };
+            }
         }
     }
 
@@ -149,7 +142,11 @@ public class MovementMark2 : WorldObjectComponent
         // send movement to server
         if (netIdentity.hasAuthority)
         {
-            CmdSendMovement(new MoveState(this));
+            CmdSendMovement(new MoveState(this)
+            {
+                input = moveHistory.Count > 0 ? moveHistory[0].input : new PlayerInput(),
+                time = World.live.localTime
+            });
         }
 
         if (NetworkServer.active)
@@ -195,6 +192,8 @@ public class MovementMark2 : WorldObjectComponent
         }
 
         SetInput(moveState.time, moveState.input);
+
+        Debug.Log($"Client aim: {moveState.input.horizontalAim}");
     }
 
     private void ClientValidateMovement(MoveState moveState)
@@ -212,16 +211,7 @@ public class MovementMark2 : WorldObjectComponent
         }
         else
         {
-            Debug.Log($"Got position ping: {World.live.localTime - moveState.time}");
-
-            // hop back to server position
-            moveState.Apply(this);
-
-            // resimulate to our own position
-            for (int i = moveHistory.IndexAt(moveState.time); i >= 1; i--)
-            {
-                TickMovement(moveHistory[i - 1].time - moveHistory[i].time, moveHistory[i - 1].input, moveHistory[i].input, true);
-            }
+            TryReconcile(moveState);
         }
     }
 }
