@@ -256,8 +256,9 @@ MonoBehaviour:
   moveHistory:
     items: []
   velocity: {x: 0, y: 0, z: 0}
-  movementAccuracyTolerance: 0.3
   testReconcilationTime: -1
+  alwaysReconcile: 0
+  reconcilationPositionTolerance: 1
   accelStart: 96
   acceleration: 40
   thrustFactor: 5

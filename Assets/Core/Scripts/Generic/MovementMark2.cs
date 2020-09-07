@@ -11,7 +11,7 @@ public class MovementMark2 : WorldObjectComponent
     public float resimulationStep = 0.08f;
 
     [Serializable]
-    public class MoveState
+    public class MoveState : IEquatable<MoveState>
     {
         public PlayerInput input;
         public float time;
@@ -40,6 +40,11 @@ public class MovementMark2 : WorldObjectComponent
             target.velocity = velocity;
             (target as CharacterMovement).state = state;
         }
+
+        public bool Equals(MoveState other)
+        {
+            return other.input.Equals(input) && other.position == position && other.velocity == velocity && other.state == state;
+        }
     }
 
     public float lastMoveLocalTime;
@@ -53,14 +58,22 @@ public class MovementMark2 : WorldObjectComponent
     private MoveState pendingMoveState = null;
     private MoveState lastReceivedMoveState = null;
 
-    public float movementAccuracyTolerance = 0.3f;
-
     private float lastExecutedInput;
 
+    [Header("Reconcilation")]
     public int testReconcilationTime = 0;
+
+    public bool alwaysReconcile = false;
+
+    public float reconcilationPositionTolerance = 0.3f;
 
     public override void WorldUpdate(float deltaTime)
     {
+        if (pendingMoveState != null && !hasAuthority)
+        {
+            input = pendingMoveState.input;
+        }
+
         // Tick movement locally here
         TickMovement(deltaTime, input, moveHistory.Count > 0 ? moveHistory[0].input : new PlayerInput(), false);
         moveHistory.Insert(World.live.localTime, new MoveState(this)
@@ -153,6 +166,7 @@ public class MovementMark2 : WorldObjectComponent
         {
             RpcSendMovement(new MoveState(this)
             {
+                input = moveHistory.Count > 0 ? moveHistory[0].input : new PlayerInput(),
                 time = lastReceivedMoveState != null ? lastReceivedMoveState.time : 0
             });
         }
@@ -172,6 +186,19 @@ public class MovementMark2 : WorldObjectComponent
             return;
         }
 
+        if (hasAuthority)
+        {
+            return; // reconcilation movement is different
+        }
+        OnReceivedMovement(moveState);
+    }
+
+    /// <summary>
+    /// Sent when the server confirms a different position for the client (or AlwaysReconcile is on)
+    /// </summary>
+    [TargetRpc(channel = Channels.DefaultUnreliable)]
+    public void TargetSendReconcilationMovement(MoveState moveState)
+    {
         OnReceivedMovement(moveState);
     }
 
@@ -186,14 +213,22 @@ public class MovementMark2 : WorldObjectComponent
 
     private void ServerValidateMovement(MoveState moveState)
     {
-        if (Vector3.Distance(moveState.position, transform.position) < movementAccuracyTolerance && false)
+        SetInput(moveState.time, moveState.input);
+
+        if (Vector3.Distance(moveState.position, transform.position) < reconcilationPositionTolerance && !alwaysReconcile)
         {
             moveState.Apply(this);
         }
+        else
+        {
+            TargetSendReconcilationMovement(new MoveState(this)
+            {
+                input = moveState.input,
+                time = moveState.time
+            });
 
-        SetInput(moveState.time, moveState.input);
-
-        Debug.Log($"Client aim: {moveState.input.horizontalAim}");
+            Debug.Log($"Remote reconcile time: {moveState.time} dist: {Vector3.Distance(moveState.position, transform.position)}");
+        }
     }
 
     private void ClientValidateMovement(MoveState moveState)
@@ -211,7 +246,18 @@ public class MovementMark2 : WorldObjectComponent
         }
         else
         {
-            TryReconcile(moveState);
+            MoveState localState = moveHistory.ItemAt(moveState.time);
+
+            // usually we only reconcile movement if the server didn't accept our version of things
+            if (alwaysReconcile || localState == null || !localState.Equals(moveState))
+            {
+                if (localState != null)
+                {
+                    Debug.Log($"Reconciling movement (time: {moveState.time} distance: {Vector3.Distance(moveState.position, localState.position)}");
+                }
+
+                TryReconcile(moveState);
+            }
         }
     }
 }

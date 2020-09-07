@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -172,7 +173,7 @@ public class World : MonoBehaviour
 
 [System.Serializable]
 [StructLayout(LayoutKind.Sequential, Pack = 0)]
-public struct PlayerInput
+public struct PlayerInput : IEquatable<PlayerInput>
 {
     public float moveHorizontalAxis;
     public float moveVerticalAxis;
@@ -223,6 +224,13 @@ public struct PlayerInput
         byte buttons = reader.ReadByte();
         btnJump = (buttons & 1) != 0;
         btnFire = (buttons & 2) != 0;
+    }
+
+    public bool Equals(PlayerInput other)
+    {
+        return moveHorizontalAxis == other.moveHorizontalAxis && moveVerticalAxis == other.moveVerticalAxis
+            && horizontalAim == other.horizontalAim && verticalAim == other.verticalAim
+            && btnFire == other.btnFire && btnJump == other.btnJump;
     }
 
     public void Serialize(NetworkWriter writer)
