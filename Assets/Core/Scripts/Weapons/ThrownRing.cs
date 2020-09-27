@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ThrownRing : WorldObjectComponent
 {
@@ -24,6 +22,11 @@ public class ThrownRing : WorldObjectComponent
 
         spinAxis = Vector3.up + Vector3.right * Random.Range(-axisWobble, axisWobble) + Vector3.forward * Random.Range(-axisWobble, axisWobble);
         spinAxis.Normalize();
+
+        if (settings == null)
+        {
+            settings = ScriptableObject.CreateInstance<RingWeaponSettings>(); // better than nothing?
+        }
     }
 
     public override void WorldUpdate(float deltaTime)

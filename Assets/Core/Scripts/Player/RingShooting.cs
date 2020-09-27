@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Mirror;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class RingShooting : WorldObjectComponent
@@ -42,9 +43,24 @@ public class RingShooting : WorldObjectComponent
     // Components
     private Player player;
 
+    // SyncActions
+    struct ThrowRingData : IMessageBase
+    {
+        public float time;
+        public Vector3 position;
+        public Vector3 direction;
+        public uint ringNetId;
+        public GameObject spawnedTemporaryRing;
+
+        public void Serialize(NetworkWriter writer) { }
+        public void Deserialize(NetworkReader reader) { }
+    }
+    private SyncAction<ThrowRingData> syncActionThrowRing;
+
     public override void WorldAwake()
     {
         player = GetComponent<Player>();
+        syncActionThrowRing = SyncAction<ThrowRingData>.Register(gameObject, ConfirmRingThrow, PredictRingThrow, RewindRingThrow);
     }
 
     public override void WorldUpdate(float deltaTime)
@@ -58,26 +74,14 @@ public class RingShooting : WorldObjectComponent
         if (player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.weaponType.isAutomatic))
         {
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
-            
-            if (World.live.gameTime - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
+
+            syncActionThrowRing.Request(new ThrowRingData()
             {
-                GameObject ring = World.Spawn(currentWeapon.weaponType.prefab, spawnPosition.position, Quaternion.identity);
-                ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
-
-                Debug.Assert(ringAsThrownRing);
-                ringAsThrownRing.settings = currentWeapon.weaponType;
-                ringAsThrownRing.Throw(player, spawnPosition.position, player.input.aimDirection);
-
-                GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
-
-                lastFiredRingTime = World.live.gameTime;
-
-                player.numRings--;
-                if (!currentWeapon.weaponType.ammoIsTime)
-                    currentWeapon.ammo--;
-
-                hasFiredOnThisClick = true;
-            }
+                time = World.live.gameTime,
+                position = spawnPosition.position,
+                direction = player.input.aimDirection
+                
+            });
         }
 
         // Deplete timer-based weapon ammo
@@ -110,5 +114,74 @@ public class RingShooting : WorldObjectComponent
 
         // no weapon was found - add to our list
         equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
+    }
+
+    private bool PredictRingThrow(ref ThrowRingData data)
+    {
+        // just call ConfirmRingThrow
+        ConfirmRingThrow(ref data);
+
+        return data.spawnedTemporaryRing != null;
+    }
+
+    private void RewindRingThrow(ref ThrowRingData data)
+    {
+        if (data.spawnedTemporaryRing)
+        {
+            World.Despawn(data.spawnedTemporaryRing);
+        }
+    }
+
+    private void ConfirmRingThrow(ref ThrowRingData data)
+    {
+        Debug.Log($"ConfirmRingThrow: {data.time}, {data.position}, {data.direction}");
+
+        if (data.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
+        {
+            GameObject ring = null;
+
+            if (data.ringNetId > 0)
+            {
+                NetworkIdentity ringIdentity;
+
+                if (NetworkIdentity.spawned.TryGetValue(data.ringNetId, out ringIdentity))
+                {
+                    ring = ringIdentity.gameObject;
+                }
+                else
+                {
+                    Debug.LogWarning($"Could not find confirmed ring ID of {data.ringNetId}");
+                }
+            }
+            else
+            {
+                ring = World.Spawn(currentWeapon.weaponType.prefab, data.position, Quaternion.identity);
+                data.spawnedTemporaryRing = ring;
+            }
+
+            if (ring != null)
+            {
+                ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
+                Debug.Assert(ringAsThrownRing);
+
+                ringAsThrownRing.settings = currentWeapon.weaponType;
+                ringAsThrownRing.Throw(player, data.position, data.direction);
+
+                GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
+
+                lastFiredRingTime = data.time;
+
+                player.numRings--;
+                if (!currentWeapon.weaponType.ammoIsTime)
+                    currentWeapon.ammo--;
+
+                hasFiredOnThisClick = true;
+
+                if (NetworkServer.active)
+                {
+                    data.ringNetId = ring.GetComponent<NetworkIdentity>().netId;
+                }
+            }
+        }
     }
 }

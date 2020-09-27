@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GameSounds : MonoBehaviour
 {
@@ -69,7 +67,7 @@ public class GameSounds : MonoBehaviour
 
     private void InternalPlaySound(GameObject source, GameSound sound)
     {
-        if (sound.clip == null || sound.volume <= 0)
+        if (sound == null || sound.clip == null || sound.volume <= 0)
             return;
 
         currentChannel = (currentChannel + 1) % sources.Length;

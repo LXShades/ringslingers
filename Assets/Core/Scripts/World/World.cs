@@ -145,7 +145,14 @@ public class World : MonoBehaviour
 
     public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation)
     {
-        return Instantiate(prefab, position, rotation);
+        GameObject spawnedObject = Instantiate(prefab, position, rotation);
+
+        if (NetworkServer.active)
+        {
+            NetworkServer.Spawn(spawnedObject);
+        }
+
+        return spawnedObject;
     }
 
     public static void Despawn(GameObject target)

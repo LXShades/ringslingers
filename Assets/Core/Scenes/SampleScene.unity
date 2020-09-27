@@ -6742,6 +6742,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd5148a8014ec6f40bfb0e552328b6a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   syncsPerSecond: 0
   clonerInfo: 'currentPlayer
 
@@ -6783,6 +6785,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e969874be7f155448bba1dbd69f077b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
 --- !u!1 &964007904
 GameObject:
   m_ObjectHideFlags: 0
@@ -13310,7 +13314,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionStatus: 0
+  playerTickrate: 10
   localPlayerId: -1
+  players:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!4 &1700270206
 Transform:
   m_ObjectHideFlags: 0
@@ -13416,6 +13438,7 @@ MonoBehaviour:
   playerSpawnMethod: 0
   spawnPrefabs:
   - {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+  - {fileID: 6167014272590406206, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
 --- !u!1001 &1702050837
 PrefabInstance:
   m_ObjectHideFlags: 0

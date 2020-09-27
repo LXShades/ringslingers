@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using Mirror;
+﻿using Mirror;
 
 public class NetMan : NetworkManager
 {
@@ -40,6 +37,8 @@ public class NetMan : NetworkManager
         base.Awake();
 
         singleton = this;
+
+        SyncActionChain.RegisterHandlers();
     }
 
     public override void OnClientConnect(NetworkConnection conn)
