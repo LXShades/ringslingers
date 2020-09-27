@@ -130,11 +130,17 @@ public class RingShooting : WorldObjectComponent
         {
             World.Despawn(data.spawnedTemporaryRing);
         }
+
+        lastFiredRingTime = 0;
     }
 
     private void ConfirmRingThrow(ref ThrowRingData data)
     {
-        Debug.Log($"ConfirmRingThrow: {data.time}, {data.position}, {data.direction}");
+        if (NetworkServer.active)
+        {
+            // prediction test
+            data.position += Vector3.up;
+        }
 
         if (data.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
         {
@@ -143,6 +149,8 @@ public class RingShooting : WorldObjectComponent
             if (data.ringNetId > 0)
             {
                 NetworkIdentity ringIdentity;
+
+                Debug.Log($"Client received netId: {data.ringNetId}");
 
                 if (NetworkIdentity.spawned.TryGetValue(data.ringNetId, out ringIdentity))
                 {
@@ -180,6 +188,7 @@ public class RingShooting : WorldObjectComponent
                 if (NetworkServer.active)
                 {
                     data.ringNetId = ring.GetComponent<NetworkIdentity>().netId;
+                    Debug.Log($"Server adjusted netId to {data.ringNetId}");
                 }
             }
         }

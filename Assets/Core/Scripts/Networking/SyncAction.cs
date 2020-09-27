@@ -13,14 +13,19 @@ public class SyncActionChain : IMessageBase
     }
 
     /// <summary>
-    /// Current active SyncActionChain during execution
+    /// Currently executing SyncActionChain
     /// </summary>
-    public static SyncActionChain active { get; private set; }
+    public static SyncActionChain executing { get; private set; }
 
     /// <summary>
     /// Locally-predicted SyncActionChains
     /// </summary>
-    public static List<SyncActionChain> predictedSyncActions = new List<SyncActionChain>();
+    private static List<SyncActionChain> predictedChains = new List<SyncActionChain>();
+
+    /// <summary>
+    /// Incremental ID to be assigned to the next predictable SyncAction we request
+    /// </summary>
+    private static byte nextLocalRequestId = 0;
 
     /// <summary>
     /// Actions within this SyncActionChain
@@ -35,14 +40,22 @@ public class SyncActionChain : IMessageBase
     /// <summary>
     /// ID of the player calling, or 255 if N/A which shouldn't happen...?
     /// </summary>
-    public byte callingPlayer;
+    public byte requestingPlayer = 255;
+
+    /// <summary>
+    /// ID of this SyncAction request being made, used to match predicted SyncActions
+    /// </summary>
+    public byte localRequestId = 0;
 
     /// <summary>
     /// Creates a new SyncActionChain with a single root
     /// </summary>
-    public static SyncActionChain Create(SyncAction root)
+    public static SyncActionChain Create(SyncAction root, byte requestingPlayer = 255)
     {
         SyncActionChain newChain = new SyncActionChain(); // any magical pooling goes here
+
+        newChain.requestingPlayer = requestingPlayer;
+        newChain.localRequestId = nextLocalRequestId++;
         newChain.actions.Add(root);
 
         return newChain;
@@ -54,7 +67,7 @@ public class SyncActionChain : IMessageBase
     /// </summary>
     public bool Execute(ExecutionType executionType)
     {
-        if (SyncActionChain.active != null)
+        if (SyncActionChain.executing != null)
         {
             Debug.LogError("[SyncActionChain.Execute] Cannot execute SyncActionChain - a chain is already executing, we don't do that!");
             return false;
@@ -64,7 +77,7 @@ public class SyncActionChain : IMessageBase
         currentExecutionType = executionType;
 
         // Execute the first action
-        SyncActionChain.active = this;
+        SyncActionChain.executing = this;
         bool wasSuccessful = false;
 
         try
@@ -73,7 +86,7 @@ public class SyncActionChain : IMessageBase
             {
                 if (actions[0].CallPredict())
                 {
-                    predictedSyncActions.Add(this);
+                    predictedChains.Add(this);
                     wasSuccessful = true;
                 }
             }
@@ -89,7 +102,7 @@ public class SyncActionChain : IMessageBase
         }
 
         // Done!
-        SyncActionChain.active = null;
+        SyncActionChain.executing = null;
 
         return wasSuccessful;
     }
@@ -117,8 +130,19 @@ public class SyncActionChain : IMessageBase
         NetworkClient.RegisterHandler<SyncActionChain>(OnClientReceivedSyncActionChain);
     }
 
-    private static void OnClientReceivedSyncActionChain(SyncActionChain message)
+    private static void OnClientReceivedSyncActionChain(NetworkConnection conn, SyncActionChain message)
     {
+        if (NetworkClient.isLocalClient) // ignore messages sent to the host by the server
+            return;
+
+        // If we have a predicted version already, undo it
+        SyncActionChain oldChain = FindMatchingPredictedChain(message);
+
+        if (oldChain != null)
+        {
+            oldChain.Rewind();
+        }
+
         // Server's orders, execute it!
         message.Execute(ExecutionType.Confirmed);
     }
@@ -140,6 +164,8 @@ public class SyncActionChain : IMessageBase
         bool onlyFirstAction = !NetworkServer.active; // server never needs to receive a client's full action chain
         int numActions = Mathf.Clamp(actions.Count, 0, onlyFirstAction ? 1 : 255);
 
+        writer.WriteByte(requestingPlayer);
+        writer.WriteByte(localRequestId);
         writer.WriteByte((byte)numActions);
 
         for (int i = 0; i < numActions; i++)
@@ -153,6 +179,9 @@ public class SyncActionChain : IMessageBase
     {
         try
         {
+            requestingPlayer = reader.ReadByte();
+            localRequestId = reader.ReadByte();
+
             int numActions = reader.ReadByte(); // todo check if more than one action was received from a client, we should ignore those
 
             for (int i = 0; i < numActions; i++)
@@ -161,9 +190,7 @@ public class SyncActionChain : IMessageBase
                 SyncAction action = SyncAction.FindSyncActionFromHash(syncActionIdentifier);
 
                 if (action == null)
-                {
                     throw new InvalidDataException($"Could not find SyncAction with ID {syncActionIdentifier}");
-                }
 
                 action.DeserializeParameters(reader);
                 actions.Add(action);
@@ -176,6 +203,20 @@ public class SyncActionChain : IMessageBase
         }
     }
     #endregion
+
+    private static SyncActionChain FindMatchingPredictedChain(SyncActionChain confirmedChain)
+    {
+        if (confirmedChain.requestingPlayer != Netplay.singleton.localPlayerId)
+            return null; // only locally requested actions can be reasonably predicted!
+
+        foreach (SyncActionChain chain in predictedChains)
+        {
+            if (chain.localRequestId == confirmedChain.localRequestId)
+                return chain; // we made this request
+        }
+
+        return null; // none found
+    }
 
     public override string ToString()
     {
@@ -276,10 +317,10 @@ public class SyncAction<TParams> : SyncAction
     {
         parameters = inputParameters;
 
-        if (SyncActionChain.active == null)
+        if (SyncActionChain.executing == null)
         {
             // create and execute a new requested SyncActionChain
-            SyncActionChain chainToExecute = SyncActionChain.Create(this);
+            SyncActionChain chainToExecute = SyncActionChain.Create(this, (byte)Netplay.singleton.localPlayerId);
             bool wasExecutionSuccessful = chainToExecute.Execute(SyncActionChain.ExecutionType.Predicted);
 
             if (wasExecutionSuccessful)
@@ -303,7 +344,7 @@ public class SyncAction<TParams> : SyncAction
         else
         {
             // execute immediately because we're already in a chain
-            switch (SyncActionChain.active.currentExecutionType)
+            switch (SyncActionChain.executing.currentExecutionType)
             {
                 case SyncActionChain.ExecutionType.Confirmed:
                     onConfirm?.Invoke(ref parameters);
@@ -313,7 +354,7 @@ public class SyncAction<TParams> : SyncAction
                     break;
             }
 
-            SyncActionChain.active.actions.Add(this); // todo though, really
+            SyncActionChain.executing.actions.Add(this); // todo though, really
             return true;
         }
     }
