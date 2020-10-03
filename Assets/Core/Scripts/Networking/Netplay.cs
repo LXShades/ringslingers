@@ -1,10 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using Mirror;
 using UnityEngine;
-using System.IO;
-using UnityEngine.Audio;
-using Mirror;
-using Mirror.Websocket;
 
 /// <summary>
 /// Netplay is a manager that holds information on players and synced objects, and handles synchronisation

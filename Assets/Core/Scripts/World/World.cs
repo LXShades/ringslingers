@@ -176,6 +176,20 @@ public class World : MonoBehaviour
         }
     }
     #endregion
+
+    public WorldObject FindWorldObjectById(int localId)
+    {
+        int index = (localId & 0xFFFFFF);
+        if (index < worldObjects.Count)
+        {
+            if (worldObjects[index] != null && (worldObjects[index].localId >> 26) == Netplay.singleton.localPlayerId)
+            {
+                return worldObjects[index];
+            }
+        }
+
+        return null;
+    }
 }
 
 [System.Serializable]

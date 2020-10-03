@@ -50,8 +50,7 @@ public class RingShooting : WorldObjectComponent
         public Vector3 position;
         public Vector3 direction;
         public uint ringNetId;
-        public GameObject spawnedTemporaryRing;
-        public int omgWowHoldOnWhat;
+        public WorldObject spawnedTemporaryRing;
 
         public void Serialize(NetworkWriter writer) { }
         public void Deserialize(NetworkReader reader) { }
@@ -120,7 +119,6 @@ public class RingShooting : WorldObjectComponent
     {
         // just call ConfirmRingThrow
         ConfirmRingThrow(ref data);
-        data.omgWowHoldOnWhat = 100;
 
         return data.spawnedTemporaryRing != null;
     }
@@ -129,7 +127,7 @@ public class RingShooting : WorldObjectComponent
     {
         if (data.spawnedTemporaryRing)
         {
-            World.Despawn(data.spawnedTemporaryRing);
+            World.Despawn(data.spawnedTemporaryRing.gameObject);
         }
 
         lastFiredRingTime = 0;
@@ -165,7 +163,7 @@ public class RingShooting : WorldObjectComponent
             else
             {
                 ring = World.Spawn(currentWeapon.weaponType.prefab, data.position, Quaternion.identity);
-                data.spawnedTemporaryRing = ring;
+                data.spawnedTemporaryRing = ring.GetComponent<WorldObject>();
             }
 
             if (ring != null)

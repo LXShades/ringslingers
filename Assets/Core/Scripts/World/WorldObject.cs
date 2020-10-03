@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections;
+﻿using Mirror;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using Mirror;
 
 /// <summary>
 /// A world object is a cloneable object that exists in the world and should be synchronised between client and server
@@ -32,6 +31,11 @@ public class WorldObject : NetworkBehaviour
     {
         get; private set;
     }
+
+    /// <summary>
+    /// The ID of this object in the world that should be unique to this player
+    /// </summary>
+    public int localId;
 
     [System.NonSerialized]
     public List<WorldObjectComponent> worldObjectComponents = new List<WorldObjectComponent>();
@@ -77,8 +81,11 @@ public class WorldObject : NetworkBehaviour
     /// </summary>
     public void _OnCreatedByWorld(World parent, int id)
     {
+        Debug.Assert(Netplay.singleton.localPlayerId <= 255); // I mean, you never know
+
         world = parent;
         creationTime = parent.gameTime;
+        localId = (Netplay.singleton.localPlayerId << 26) | id;
         hasStarted = false;
 
         foreach (WorldObjectComponent objComponent in GetComponentsInChildren<WorldObjectComponent>())
@@ -174,4 +181,17 @@ public class WorldObject : NetworkBehaviour
         }
     }
     #endregion
+}
+
+public static class WorldObjectSerializer
+{
+    public static void WriteWorldObject(this NetworkWriter writer, WorldObject worldObject)
+    {
+        writer.WriteInt32(worldObject != null ? worldObject.localId : -1);
+    }
+
+    public static WorldObject ReadWorldObject(this NetworkReader reader)
+    {
+        return World.live.FindWorldObjectById(reader.ReadInt32());
+    }
 }
