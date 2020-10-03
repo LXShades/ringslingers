@@ -51,6 +51,7 @@ public class RingShooting : WorldObjectComponent
         public Vector3 direction;
         public uint ringNetId;
         public GameObject spawnedTemporaryRing;
+        public int omgWowHoldOnWhat;
 
         public void Serialize(NetworkWriter writer) { }
         public void Deserialize(NetworkReader reader) { }
@@ -80,7 +81,6 @@ public class RingShooting : WorldObjectComponent
                 time = World.live.gameTime,
                 position = spawnPosition.position,
                 direction = player.input.aimDirection
-                
             });
         }
 
@@ -120,6 +120,7 @@ public class RingShooting : WorldObjectComponent
     {
         // just call ConfirmRingThrow
         ConfirmRingThrow(ref data);
+        data.omgWowHoldOnWhat = 100;
 
         return data.spawnedTemporaryRing != null;
     }

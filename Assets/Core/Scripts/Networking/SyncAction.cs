@@ -1,7 +1,6 @@
 ﻿using Mirror;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using UnityEngine;
 
 public class SyncActionChain : IMessageBase
@@ -30,7 +29,7 @@ public class SyncActionChain : IMessageBase
     /// <summary>
     /// Actions within this SyncActionChain
     /// </summary>
-    public readonly List<SyncAction> actions = new List<SyncAction>();
+    public readonly List<SerializedSyncAction> actions = new List<SerializedSyncAction>();
 
     /// <summary>
     /// If executing, this is the type of execution taking place (predicted or confirmed)
@@ -56,7 +55,8 @@ public class SyncActionChain : IMessageBase
 
         newChain.requestingPlayer = requestingPlayer;
         newChain.localRequestId = nextLocalRequestId++;
-        newChain.actions.Add(root);
+
+        newChain.actions.Add(SerializedSyncAction.FromSyncAction(root));
 
         return newChain;
     }
@@ -65,7 +65,7 @@ public class SyncActionChain : IMessageBase
     /// <summary>
     /// Executes this SyncActionChain
     /// </summary>
-    public bool Execute(ExecutionType executionType)
+    public bool Execute(ExecutionType executionType, bool allowParameterRewrites)
     {
         if (SyncActionChain.executing != null)
         {
@@ -76,29 +76,40 @@ public class SyncActionChain : IMessageBase
         Debug.Log($"[SyncActionChain.Execute] Executing {this} with {executionType}");
         currentExecutionType = executionType;
 
-        // Execute the first action
+        // Execute the actions
         SyncActionChain.executing = this;
         bool wasSuccessful = false;
 
-        try
+        for (int i = 0; i < actions.Count && i < 1 /* we're not ready for multi actions just yet */; i++)
         {
-            if (executionType == ExecutionType.Predicted)
+            SyncAction targetAction = actions[i].ApplyToSyncAction();
+
+            try
             {
-                if (actions[0].CallPredict())
+                if (executionType == ExecutionType.Predicted)
                 {
-                    predictedChains.Add(this);
+                    if (targetAction.CallPredict())
+                    {
+                        predictedChains.Add(this);
+                        wasSuccessful = true;
+                    }
+                }
+                else
+                {
+                    targetAction.CallConfirm();
                     wasSuccessful = true;
                 }
+
+                if (wasSuccessful && allowParameterRewrites)
+                {
+                    // reserialize potentially changed parameters
+                    actions[i] = SerializedSyncAction.FromSyncAction(targetAction);
+                }
             }
-            else
+            catch (Exception e)
             {
-                actions[0].CallConfirm();
-                wasSuccessful = true;
+                Debug.LogError($"[SyncActionChain.Execute] Exception during execution of {this}: {e.Message}");
             }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"[SyncActionChain.Execute] Exception during execution of {this}: {e.Message}");
         }
 
         // Done!
@@ -116,7 +127,16 @@ public class SyncActionChain : IMessageBase
 
         for (int i = actions.Count - 1; i >= 0; i--)
         {
-            actions[i].CallRewind();
+            SyncAction target = actions[i].ApplyToSyncAction();
+
+            if (target != null)
+            {
+                target.CallRewind();
+            }
+            else
+            {
+                Debug.LogWarning($"[SyncActionChain.Rewind] Failed because target {actions[i].targetId} no longer exists");
+            }
         }
 
         actions.Clear();
@@ -144,7 +164,7 @@ public class SyncActionChain : IMessageBase
         }
 
         // Server's orders, execute it!
-        message.Execute(ExecutionType.Confirmed);
+        message.Execute(ExecutionType.Confirmed, false);
     }
 
     private static void OnServerReceivedSyncActionChain(SyncActionChain message)
@@ -152,7 +172,7 @@ public class SyncActionChain : IMessageBase
         if (message.actions.Count == 1)
         {
             // Received a valid SyncAction. Execute it and send the final result to clients
-            message.Execute(ExecutionType.Confirmed);
+            message.Execute(ExecutionType.Confirmed, true);
 
             // Distribute the completed chain to clients
             NetworkServer.SendToAll(message);
@@ -170,8 +190,8 @@ public class SyncActionChain : IMessageBase
 
         for (int i = 0; i < numActions; i++)
         {
-            writer.WriteInt32(actions[i].identifierHash);
-            actions[i].SerializeParameters(writer);
+            writer.WriteInt32(actions[i].targetId);
+            writer.WriteBytesAndSizeSegment(actions[i].parameters);
         }
     }
 
@@ -184,16 +204,14 @@ public class SyncActionChain : IMessageBase
 
             int numActions = reader.ReadByte(); // todo check if more than one action was received from a client, we should ignore those
 
+            actions.Clear();
             for (int i = 0; i < numActions; i++)
             {
-                int syncActionIdentifier = reader.ReadInt32();
-                SyncAction action = SyncAction.FindSyncActionFromHash(syncActionIdentifier);
-
-                if (action == null)
-                    throw new InvalidDataException($"Could not find SyncAction with ID {syncActionIdentifier}");
-
-                action.DeserializeParameters(reader);
-                actions.Add(action);
+                actions.Add(new SerializedSyncAction()
+                {
+                    targetId = reader.ReadInt32(),
+                    parameters = reader.ReadBytesAndSizeSegment()
+                });
             }
         }
         catch (Exception e)
@@ -237,15 +255,15 @@ public class SyncAction
 
     public readonly GameObject owner;
 
-    public int identifierHash { get; private set; }
+    public int targetId { get; private set; }
 
     protected SyncAction() { }
 
     protected SyncAction(GameObject owner, int indentifierHash)
     {
         this.owner = owner;
-        this.identifierHash = indentifierHash;
-        syncActionFromHash[identifierHash] = this;
+        this.targetId = indentifierHash;
+        syncActionFromHash[targetId] = this;
     }
 
     public static int CreateIdHash(GameObject owner, Delegate onConfirm, Delegate onPredict, Delegate onRewind)
@@ -264,7 +282,7 @@ public class SyncAction
         return $"{netId}/{onConfirm.Method.DeclaringType}/{onConfirm.Method.Name}/{onPredict.Method.Name}/{onRewind.Method.Name}".GetHashCode();
     }
 
-    public static SyncAction FindSyncActionFromHash(int hash)
+    public static SyncAction FindSyncActionFromTargetId(int hash)
     {
         SyncAction action;
 
@@ -321,7 +339,7 @@ public class SyncAction<TParams> : SyncAction
         {
             // create and execute a new requested SyncActionChain
             SyncActionChain chainToExecute = SyncActionChain.Create(this, (byte)Netplay.singleton.localPlayerId);
-            bool wasExecutionSuccessful = chainToExecute.Execute(SyncActionChain.ExecutionType.Predicted);
+            bool wasExecutionSuccessful = chainToExecute.Execute(SyncActionChain.ExecutionType.Predicted, true);
 
             if (wasExecutionSuccessful)
             {
@@ -354,7 +372,7 @@ public class SyncAction<TParams> : SyncAction
                     break;
             }
 
-            SyncActionChain.executing.actions.Add(this); // todo though, really
+            SyncActionChain.executing.actions.Add(SerializedSyncAction.FromSyncAction(this)); // todo: confirmed ones should swap in as before
             return true;
         }
     }
@@ -378,5 +396,49 @@ public class SyncAction<TParams> : SyncAction
     public override string ToString()
     {
         return GetType().Name;
+    }
+}
+
+/// <summary>
+/// This is an action that 
+/// </summary>
+public struct SerializedSyncAction
+{
+    public int targetId;
+    public ArraySegment<byte> parameters;
+
+    public static SerializedSyncAction FromSyncAction(SyncAction source)
+    {
+        SerializedSyncAction serializedAction = new SerializedSyncAction();
+
+        serializedAction.targetId = source.targetId;
+
+        using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
+        {
+            source.SerializeParameters(writer);
+            serializedAction.parameters = new ArraySegment<byte>(writer.ToArray());
+        }
+
+        return serializedAction;
+    }
+
+    /// <summary>
+    /// Applies parameters to a syncaction and returns the syncaction
+    /// </summary>
+    public SyncAction ApplyToSyncAction()
+    {
+        SyncAction target = SyncAction.FindSyncActionFromTargetId(targetId);
+
+        if (target != null)
+        {
+            using (PooledNetworkReader reader = NetworkReaderPool.GetReader(parameters))
+            {
+                target.DeserializeParameters(reader);
+            }
+
+            return target;
+        }
+
+        return null;
     }
 }
