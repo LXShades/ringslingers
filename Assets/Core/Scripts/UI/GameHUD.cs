@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
@@ -129,9 +127,12 @@ public class GameHUD : MonoBehaviour
         {
             debugLogText.text = debugLog;
             Canvas.ForceUpdateCanvases();
+
+            numLogLines = (int)(debugLogText.rectTransform.rect.height / (debugLogText.cachedTextGenerator.rectExtents.height / debugLogText.cachedTextGenerator.lineCount));
             if (debugLogText.cachedTextGenerator.lineCount > numLogLines)
             {
-                debugLogText.text = debugLog = debugLogText.text.Substring(debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lineCount - numLogLines].startCharIdx);
+                int startCharIdx = debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lines.Count - numLogLines].startCharIdx;
+                debugLogText.text = debugLog = debugLog.Substring(startCharIdx);
             }
 
             doRefreshLog = false;
@@ -145,7 +146,7 @@ public class GameHUD : MonoBehaviour
 
         string[] trace = stackTrace.Split('\n');
 
-        debugLog += condition + ": " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
+        debugLog += condition + " @ " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
 
         doRefreshLog = true;
     }

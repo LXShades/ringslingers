@@ -99,6 +99,8 @@ public class Netplay : MonoBehaviour
     {
         // Do debug stuff
         UpdateNetStat();
+
+        SyncActionChain.Tick();
     }
 
     #region Players

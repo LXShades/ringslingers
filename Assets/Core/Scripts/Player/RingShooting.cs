@@ -133,7 +133,7 @@ public class RingShooting : WorldObjectComponent
         lastFiredRingTime = 0;
     }
 
-    private void ConfirmRingThrow(ref ThrowRingData data)
+    private bool ConfirmRingThrow(ref ThrowRingData data)
     {
         if (NetworkServer.active)
         {
@@ -191,5 +191,7 @@ public class RingShooting : WorldObjectComponent
                 }
             }
         }
+
+        return !NetworkServer.active;
     }
 }

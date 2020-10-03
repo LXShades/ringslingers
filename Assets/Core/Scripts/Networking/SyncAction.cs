@@ -24,7 +24,7 @@ public class SyncActionChain : IMessageBase
     /// <summary>
     /// Incremental ID to be assigned to the next predictable SyncAction we request
     /// </summary>
-    private static byte nextLocalRequestId = 0;
+    private static int nextLocalRequestId = 0;
 
     /// <summary>
     /// Actions within this SyncActionChain
@@ -44,7 +44,14 @@ public class SyncActionChain : IMessageBase
     /// <summary>
     /// ID of this SyncAction request being made, used to match predicted SyncActions
     /// </summary>
-    public byte localRequestId = 0;
+    public int localRequestId = 0;
+
+    /// <summary>
+    /// Time.unscaledTime that this action was created
+    /// </summary>
+    public float creationTime { get; private set; }
+
+    public const float syncActionExpiryTime = 0.5f;
 
     /// <summary>
     /// Creates a new SyncActionChain with a single root
@@ -55,10 +62,26 @@ public class SyncActionChain : IMessageBase
 
         newChain.requestingPlayer = requestingPlayer;
         newChain.localRequestId = nextLocalRequestId++;
+        newChain.creationTime = Time.unscaledTime;
 
         newChain.actions.Add(SerializedSyncAction.FromSyncAction(root));
 
         return newChain;
+    }
+
+    public static void Tick()
+    {
+        // Remove expired SyncActionChains
+        for (int i = 0; i < predictedChains.Count; i++)
+        {
+            if (Time.unscaledTime - predictedChains[i].creationTime > syncActionExpiryTime)
+            {
+                Debug.Log($"Predicted chain {predictedChains[i]} expired.");
+
+                // expired
+                predictedChains[i].RewindAndRemove();
+            }
+        }
     }
 
     #region Execution and Rewinding
@@ -96,8 +119,7 @@ public class SyncActionChain : IMessageBase
                 }
                 else
                 {
-                    targetAction.CallConfirm();
-                    wasSuccessful = true;
+                    wasSuccessful = targetAction.CallConfirm();
                 }
 
                 if (wasSuccessful && allowParameterRewrites)
@@ -141,6 +163,17 @@ public class SyncActionChain : IMessageBase
 
         actions.Clear();
     }
+
+    /// <summary>
+    /// Rewinds this SyncActionChain and, if predicted, removes from the predicted action chain list
+    /// </summary>
+    public void RewindAndRemove()
+    {
+        Debug.Log($"[SyncActionChain.Reject] {this}");
+
+        Rewind();
+        predictedChains.Remove(this);
+    }
     #endregion
 
     #region Networking
@@ -160,7 +193,7 @@ public class SyncActionChain : IMessageBase
 
         if (oldChain != null)
         {
-            oldChain.Rewind();
+            oldChain.RewindAndRemove();
         }
 
         // Server's orders, execute it!
@@ -172,10 +205,12 @@ public class SyncActionChain : IMessageBase
         if (message.actions.Count == 1)
         {
             // Received a valid SyncAction. Execute it and send the final result to clients
-            message.Execute(ExecutionType.Confirmed, true);
-
-            // Distribute the completed chain to clients
-            NetworkServer.SendToAll(message);
+            if (message.Execute(ExecutionType.Confirmed, true))
+            {
+                // Distribute the completed chain to clients
+                NetworkServer.SendToAll(message);
+            }
+            // else: actively reject it?
         }
     }
 
@@ -185,7 +220,7 @@ public class SyncActionChain : IMessageBase
         int numActions = Mathf.Clamp(actions.Count, 0, onlyFirstAction ? 1 : 255);
 
         writer.WriteByte(requestingPlayer);
-        writer.WriteByte(localRequestId);
+        writer.WriteInt32(localRequestId);
         writer.WriteByte((byte)numActions);
 
         for (int i = 0; i < numActions; i++)
@@ -200,7 +235,7 @@ public class SyncActionChain : IMessageBase
         try
         {
             requestingPlayer = reader.ReadByte();
-            localRequestId = reader.ReadByte();
+            localRequestId = reader.ReadInt32();
 
             int numActions = reader.ReadByte(); // todo check if more than one action was received from a client, we should ignore those
 
@@ -296,7 +331,7 @@ public class SyncAction
         }
     }
 
-    public virtual void CallConfirm() { }
+    public virtual bool CallConfirm() { return false; }
 
     public virtual bool CallPredict() { return true; }
 
@@ -312,16 +347,16 @@ public class SyncAction<TParams> : SyncAction
 {
     public TParams parameters;
 
-    public delegate void CallDelegate(ref TParams parameters);
+    public delegate void VoidDelegate(ref TParams parameters);
     public delegate bool BoolDelegate(ref TParams parameters);
 
-    public CallDelegate onConfirm;
+    public BoolDelegate onConfirm;
     public BoolDelegate onPredict;
-    public CallDelegate onRewind;
+    public VoidDelegate onRewind;
 
     protected SyncAction(GameObject owner, int typeHash) : base(owner, typeHash) { }
 
-    public static SyncAction<TParams> Register(GameObject owner, CallDelegate onConfirm, BoolDelegate onPredict, CallDelegate onRewind)
+    public static SyncAction<TParams> Register(GameObject owner, BoolDelegate onConfirm, BoolDelegate onPredict, VoidDelegate onRewind)
     {
         return new SyncAction<TParams>(owner, CreateIdHash(owner, onConfirm, onPredict, onRewind))
         {
@@ -377,7 +412,7 @@ public class SyncAction<TParams> : SyncAction
         }
     }
 
-    public override void CallConfirm() => onConfirm?.Invoke(ref parameters);
+    public override bool CallConfirm() => onConfirm != null ? onConfirm.Invoke(ref parameters) : false;
 
     public override bool CallPredict() => onPredict != null ? onPredict.Invoke(ref parameters) : true;
 

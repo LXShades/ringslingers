@@ -6787,6 +6787,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  localId: 0
 --- !u!1 &964007904
 GameObject:
   m_ObjectHideFlags: 0
@@ -16574,6 +16575,34 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_Text
+      value: SOMETHING HAPPENED IT WAS A BIG ERROR AND STUFF (file/cs/cs/cs/cs/c/sc/sc/sc/s/cs/s/cs/c/sc,/dc.d,c/sd,c./s,d.f/s,ddf/d,d/f.s,d.f/s,df/.sd,f/.sd,f/.sdf,s/.df,/sd.f,dsf,s/d.f,df/sd,f/.sd,fsd/.)
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_HorizontalOverflow
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_MaxSize
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_FontSize
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_MinSize
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_BestFit
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_VerticalOverflow
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9087393328249493369, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Name
       value: GameHUD
