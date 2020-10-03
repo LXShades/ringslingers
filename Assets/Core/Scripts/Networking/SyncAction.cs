@@ -76,7 +76,7 @@ public class SyncActionChain : IMessageBase
         {
             if (Time.unscaledTime - predictedChains[i].creationTime > syncActionExpiryTime)
             {
-                Debug.Log($"Predicted chain {predictedChains[i]} expired.");
+                Log.Write($"Predicted chain {predictedChains[i]} expired.");
 
                 // expired
                 predictedChains[i].RewindAndRemove();
@@ -92,11 +92,11 @@ public class SyncActionChain : IMessageBase
     {
         if (SyncActionChain.executing != null)
         {
-            Debug.LogError("[SyncActionChain.Execute] Cannot execute SyncActionChain - a chain is already executing, we don't do that!");
+            Log.WriteError("Cannot execute SyncActionChain - a chain is already executing, we don't do that!");
             return false;
         }
 
-        Debug.Log($"[SyncActionChain.Execute] Executing {this} with {executionType}");
+        Log.Write($"Executing {this} with {executionType}");
         currentExecutionType = executionType;
 
         // Execute the actions
@@ -130,7 +130,7 @@ public class SyncActionChain : IMessageBase
             }
             catch (Exception e)
             {
-                Debug.LogError($"[SyncActionChain.Execute] Exception during execution of {this}: {e.Message}");
+                Log.WriteError($"Exception during execution of {this}: {e.Message}");
             }
         }
 
@@ -145,7 +145,7 @@ public class SyncActionChain : IMessageBase
     /// </summary>
     public void Rewind()
     {
-        Debug.Log($"[SyncActionChain.Rewind] {this}");
+        Log.Write($"{this}");
 
         for (int i = actions.Count - 1; i >= 0; i--)
         {
@@ -157,7 +157,7 @@ public class SyncActionChain : IMessageBase
             }
             else
             {
-                Debug.LogWarning($"[SyncActionChain.Rewind] Failed because target {actions[i].targetId} no longer exists");
+                Debug.LogWarning($"Failed because target {actions[i].targetId} no longer exists");
             }
         }
 
@@ -169,7 +169,7 @@ public class SyncActionChain : IMessageBase
     /// </summary>
     public void RewindAndRemove()
     {
-        Debug.Log($"[SyncActionChain.Reject] {this}");
+        Log.Write($"{this}");
 
         Rewind();
         predictedChains.Remove(this);
@@ -251,7 +251,7 @@ public class SyncActionChain : IMessageBase
         }
         catch (Exception e)
         {
-            Debug.LogError($"Exception deserializing SyncAction: {e.Message}");
+            Log.WriteError($"Exception deserializing SyncAction: {e.Message}");
             throw e;
         }
     }

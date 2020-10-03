@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class ThrownRingRail : ThrownRing
 {
@@ -44,7 +42,7 @@ public class ThrownRingRail : ThrownRing
 
         if (closestPlayer)
         {
-            Debug.Log($"Trying to hurt player {closestPlayer}");
+            Log.Write($"Trying to hurt player {closestPlayer}");
             closestPlayer.Hurt(owner.gameObject);
         }
     }

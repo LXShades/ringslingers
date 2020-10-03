@@ -250,7 +250,7 @@ public class CharacterMovement : MovementMark2
         }
 
         if (originalPosition != transform.position || originalVelocity != velocity)
-            Debug.Log($"Resync {player.playerId}@{World.live.gameTime.ToString("0.0")}");
+            Log.Write($"Resync {player.playerId}@{World.live.gameTime.ToString("0.0")}");
     }
 
     public override void WriteSyncer(System.IO.Stream stream)

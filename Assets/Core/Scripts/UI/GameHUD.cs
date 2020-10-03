@@ -126,13 +126,17 @@ public class GameHUD : MonoBehaviour
         if (doRefreshLog)
         {
             debugLogText.text = debugLog;
+
             Canvas.ForceUpdateCanvases();
 
-            numLogLines = (int)(debugLogText.rectTransform.rect.height / (debugLogText.cachedTextGenerator.rectExtents.height / debugLogText.cachedTextGenerator.lineCount));
-            if (debugLogText.cachedTextGenerator.lineCount > numLogLines)
+            if (debugLogText.cachedTextGenerator.lineCount > 0)
             {
-                int startCharIdx = debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lines.Count - numLogLines].startCharIdx;
-                debugLogText.text = debugLog = debugLog.Substring(startCharIdx);
+                numLogLines = (int)(debugLogText.rectTransform.rect.height / debugLogText.cachedTextGenerator.lines[0].height);
+                if (debugLogText.cachedTextGenerator.lineCount > numLogLines)
+                {
+                    int startCharIdx = debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lines.Count - numLogLines].startCharIdx;
+                    debugLogText.text = debugLog = debugLog.Substring(startCharIdx);
+                }
             }
 
             doRefreshLog = false;
@@ -144,9 +148,19 @@ public class GameHUD : MonoBehaviour
         if (type == LogType.Log && !showHarmlessLogs)
             return; // don't show everything
 
-        string[] trace = stackTrace.Split('\n');
+        debugLog += condition;
 
-        debugLog += condition + " @ " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
+        if (type == LogType.Error || type == LogType.Warning)
+        {
+            string[] trace = stackTrace.Split('\n');
+
+            // include stack trace where it's important
+            debugLog += " @ " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
+        }
+        else
+        {
+            debugLog += "\n";
+        }
 
         doRefreshLog = true;
     }

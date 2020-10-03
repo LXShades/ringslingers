@@ -227,7 +227,7 @@ public class MovementMark2 : WorldObjectComponent
                 time = moveState.time
             });
 
-            Debug.Log($"Remote reconcile time: {moveState.time} dist: {Vector3.Distance(moveState.position, transform.position)}");
+            Log.Write($"Remote reconcile time: {moveState.time} dist: {Vector3.Distance(moveState.position, transform.position)}");
         }
     }
 
@@ -253,7 +253,7 @@ public class MovementMark2 : WorldObjectComponent
             {
                 if (localState != null)
                 {
-                    Debug.Log($"Reconciling movement (time: {moveState.time} distance: {Vector3.Distance(moveState.position, localState.position)}");
+                    Log.Write($"Reconciling movement (time: {moveState.time} distance: {Vector3.Distance(moveState.position, localState.position)}");
                 }
 
                 TryReconcile(moveState);

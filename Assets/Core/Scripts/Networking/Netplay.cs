@@ -146,14 +146,14 @@ public class Netplay : MonoBehaviour
 
     private void OnClientConnected(NetworkConnection connection)
     {
-        Debug.Log("Connection successful");
+        Log.Write("Connection successful");
 
         connectionStatus = ConnectionStatus.Ready;
     }
 
     private void OnClientDisconnected(NetworkConnection connection)
     {
-        Debug.Log("Disconnected from server");
+        Log.Write("Disconnected from server");
 
         net.StopClient();
         connectionStatus = ConnectionStatus.Disconnected;
@@ -161,12 +161,12 @@ public class Netplay : MonoBehaviour
 
     private void OnServerConnected(NetworkConnection connection)
     {
-        Debug.Log("A client has connected!");
+        Log.Write("A client has connected!");
     }
 
     private void OnServerDisconnected(NetworkConnection connection)
     {
-        Debug.Log("A client has disconnected");
+        Log.Write("A client has disconnected");
     }
 
     private void OnNewPlayer(NetworkConnection connection)
@@ -211,7 +211,7 @@ public class Netplay : MonoBehaviour
 
         player.Respawn();
 
-        Debug.Log($"{player.playerName} ({player.playerId}) has entered the game");
+        Log.Write($"{player.playerName} ({player.playerId}) has entered the game");
 
         return player;
     }

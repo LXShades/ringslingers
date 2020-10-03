@@ -149,7 +149,7 @@ public class RingShooting : WorldObjectComponent
             {
                 NetworkIdentity ringIdentity;
 
-                Debug.Log($"Client received netId: {data.ringNetId}");
+                Log.Write($"Client received netId: {data.ringNetId}");
 
                 if (NetworkIdentity.spawned.TryGetValue(data.ringNetId, out ringIdentity))
                 {
@@ -187,7 +187,7 @@ public class RingShooting : WorldObjectComponent
                 if (NetworkServer.active)
                 {
                     data.ringNetId = ring.GetComponent<NetworkIdentity>().netId;
-                    Debug.Log($"Server adjusted netId to {data.ringNetId}");
+                    Log.Write($"Server adjusted netId to {data.ringNetId}");
                 }
             }
         }
