@@ -1,4 +1,6 @@
 ﻿using Mirror;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -63,9 +65,7 @@ public class Netplay : MonoBehaviour
         get; private set;
     }
 
-    private void Awake()
-    {
-    }
+    public readonly Dictionary<Guid, GameObject> networkedPrefabs = new Dictionary<Guid, GameObject>();
 
     private bool InitNet()
     {
@@ -76,7 +76,7 @@ public class Netplay : MonoBehaviour
 
         if (net == null)
         {
-            Debug.LogWarning("No network manager found");
+            Log.WriteWarning("No network manager found");
             return false;
         }
 
@@ -88,6 +88,19 @@ public class Netplay : MonoBehaviour
         net.onServerDisconnect += OnServerDisconnected;
 
         net.onServerAddPlayer += OnNewPlayer;
+
+        // Register spawnable objects
+        foreach (GameObject obj in NetMan.singleton.spawnPrefabs)
+        {
+            NetworkIdentity identity = obj.GetComponent<NetworkIdentity>();
+
+            if (identity)
+                networkedPrefabs[identity.assetId] = obj;
+        }
+
+        NetworkIdentity playerIdentity = NetMan.singleton.playerPrefab ? NetMan.singleton.playerPrefab.GetComponent<NetworkIdentity>() : null;
+        if (playerIdentity)
+            networkedPrefabs[playerIdentity.assetId] = playerIdentity.gameObject;
 
         return true;
     }
@@ -123,7 +136,7 @@ public class Netplay : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Cannot connect: Net system could not be initialized");
+            Log.WriteWarning("Cannot connect: Net system could not be initialized");
         }
     }
 
@@ -140,7 +153,7 @@ public class Netplay : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("Cannot create server: Net system could not be initialized");
+            Log.WriteWarning("Cannot create server: Net system could not be initialized");
         }
     }
 
@@ -197,7 +210,7 @@ public class Netplay : MonoBehaviour
 
         if (id == players.Length)
         {
-            Debug.LogWarning("Can't add new player - too many!");
+            Log.WriteWarning("Can't add new player - too many!");
             return null;
         }
 

@@ -1,12 +1,9 @@
-﻿using System.Collections;
+﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
-
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System;
-using System.Linq.Expressions;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+using UnityEngine;
 
 public static class ClonerGenerator
 {
@@ -175,7 +172,7 @@ public static class ClonerGenerator
                 }
                 else
                 {
-                    Debug.LogWarning($"Class reference {owner?.DeclaringType.Name}.{owner?.Name} does not specify a cloning action. Use WorldSharedReference, WorldIgnoreReference, or make the class WorldClonable.");
+                    Log.WriteWarning($"Class reference {owner?.DeclaringType.Name}.{owner?.Name} does not specify a cloning action. Use WorldSharedReference, WorldIgnoreReference, or make the class WorldClonable.");
                 }
             }
         }

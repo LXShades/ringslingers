@@ -79,12 +79,60 @@ public class World : MonoBehaviour
 
     private float lastProcessedServerTickTime;
 
+    public struct SpawnObjectData : IMessageBase
+    {
+        public GameObject prefab
+        {
+            set
+            {
+                if (value)
+                {
+                    NetworkIdentity identity = value.GetComponent<NetworkIdentity>();
+
+                    if (identity)
+                    {
+                        assetId = value.GetComponent<NetworkIdentity>().assetId;
+                    }
+
+                    if (identity == null || assetId == Guid.Empty)
+                    {
+                        Log.WriteWarning($"Could not obtain an assetId from object \"{value.name}\"");
+                        assetId = Guid.Empty;
+                    }
+                }
+            }
+            get
+            {
+                if (assetId != Guid.Empty && Netplay.singleton.networkedPrefabs.TryGetValue(assetId, out GameObject prefabObject))
+                {
+                    return prefabObject;
+                }
+                else
+                {
+                    Log.WriteWarning($"Could not find prefab of ID {assetId}");
+                    return null;
+                }
+            }
+        }
+
+        public Guid assetId;
+        public Vector3 position;
+        public Quaternion rotation;
+        public WorldObject spawnedObject;
+
+        public void Deserialize(NetworkReader reader) { }
+        public void Serialize(NetworkWriter writer) { }
+    }
+    public SyncAction<SpawnObjectData> syncActionSpawnObject;
+
     /// <summary>
     /// Constructs a new empty World
     /// </summary>
     void Start()
     {
         physics = SceneManager.GetActiveScene().GetPhysicsScene();
+
+        syncActionSpawnObject = new SyncAction<SpawnObjectData>(gameObject, ConfirmSpawnObject, PredictSpawnObject, RewindSpawnObject);
     }
 
     /// <summary>
@@ -174,6 +222,31 @@ public class World : MonoBehaviour
         {
             worldObjects[index] = null;
         }
+    }
+
+    public bool PredictSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
+    {
+        Log.Write("Predicting (then confirming) spawn");
+        return ConfirmSpawnObject(chain, ref data);
+    }
+
+    public void RewindSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
+    {
+        Log.Write("Rewinding spawn");
+        return;
+    }
+
+    public bool ConfirmSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
+    {
+        Log.Write("Confirming spawn");
+        if (Netplay.singleton.networkedPrefabs.TryGetValue(data.assetId, out GameObject prefab))
+        {
+            data.spawnedObject = Spawn(prefab, data.position, data.rotation).GetComponent<WorldObject>();
+            return true;
+        }
+
+        data.spawnedObject = null;
+        return false;
     }
     #endregion
 

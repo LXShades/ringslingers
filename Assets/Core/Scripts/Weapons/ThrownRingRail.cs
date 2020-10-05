@@ -15,7 +15,7 @@ public class ThrownRingRail : ThrownRing
         return; // do nothing, instead of the default movement
     }
 
-    public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
+    public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction, float jumpAhead)
     {
         this.owner = owner;
         transform.forward = direction;

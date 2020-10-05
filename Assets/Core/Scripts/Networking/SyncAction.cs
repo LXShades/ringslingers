@@ -49,7 +49,14 @@ public class SyncActionChain : IMessageBase
     /// <summary>
     /// Time.unscaledTime that this action was created
     /// </summary>
-    public float creationTime { get; private set; }
+    public float requestTime { get; private set; }
+
+    /// <summary>
+    /// How much time in seconds since this chain was requested
+    /// </summary>
+    public float timeSinceRequest => Time.unscaledTime - requestTime;
+
+    public bool isLocalRequest => requestingPlayer == Netplay.singleton.localPlayerId;
 
     public const float syncActionExpiryTime = 0.5f;
 
@@ -62,7 +69,7 @@ public class SyncActionChain : IMessageBase
 
         newChain.requestingPlayer = requestingPlayer;
         newChain.localRequestId = nextLocalRequestId++;
-        newChain.creationTime = Time.unscaledTime;
+        newChain.requestTime = Time.unscaledTime;
 
         newChain.actions.Add(SerializedSyncAction.FromSyncAction(root));
 
@@ -74,7 +81,7 @@ public class SyncActionChain : IMessageBase
         // Remove expired SyncActionChains
         for (int i = 0; i < predictedChains.Count; i++)
         {
-            if (Time.unscaledTime - predictedChains[i].creationTime > syncActionExpiryTime)
+            if (predictedChains[i].timeSinceRequest > syncActionExpiryTime)
             {
                 Log.Write($"Predicted chain {predictedChains[i]} expired.");
 
@@ -111,7 +118,7 @@ public class SyncActionChain : IMessageBase
             {
                 if (executionType == ExecutionType.Predicted)
                 {
-                    if (targetAction.CallPredict())
+                    if (targetAction.CallPredict(this))
                     {
                         predictedChains.Add(this);
                         wasSuccessful = true;
@@ -119,7 +126,7 @@ public class SyncActionChain : IMessageBase
                 }
                 else
                 {
-                    wasSuccessful = targetAction.CallConfirm();
+                    wasSuccessful = targetAction.CallConfirm(this);
                 }
 
                 if (wasSuccessful && allowParameterRewrites)
@@ -153,11 +160,11 @@ public class SyncActionChain : IMessageBase
 
             if (target != null)
             {
-                target.CallRewind();
+                target.CallRewind(this);
             }
             else
             {
-                Debug.LogWarning($"Failed because target {actions[i].targetId} no longer exists");
+                Log.WriteWarning($"Failed because target {actions[i].targetId} no longer exists");
             }
         }
 
@@ -193,6 +200,7 @@ public class SyncActionChain : IMessageBase
 
         if (oldChain != null)
         {
+            message.requestTime = oldChain.requestTime; // transfer RTT to confirmation
             oldChain.RewindAndRemove();
         }
 
@@ -202,6 +210,8 @@ public class SyncActionChain : IMessageBase
 
     private static void OnServerReceivedSyncActionChain(SyncActionChain message)
     {
+        message.requestTime = Time.unscaledTime; // todo: maybe estimate RTT?
+
         if (message.actions.Count == 1)
         {
             // Received a valid SyncAction. Execute it and send the final result to clients
@@ -294,14 +304,23 @@ public class SyncAction
 
     protected SyncAction() { }
 
-    protected SyncAction(GameObject owner, int indentifierHash)
+    protected SyncAction(GameObject owner, int targetId)
     {
         this.owner = owner;
-        this.targetId = indentifierHash;
+        this.targetId = targetId;
+
+        if (syncActionFromHash.TryGetValue(targetId, out SyncAction value))
+        {
+            if (value != null)
+            {
+                Log.WriteError("A SyncAction with a duplicate ID was created. The object might have multiple instances without being correctly networked, or the net ID has not initialised yet (Awake is too early), or there was a random hash collision.");
+            }
+        }
+
         syncActionFromHash[targetId] = this;
     }
 
-    public static int CreateIdHash(GameObject owner, Delegate onConfirm, Delegate onPredict, Delegate onRewind)
+    public static int GenerateTargetId(GameObject owner, Delegate onConfirm, Delegate onPredict, Delegate onRewind)
     {
         uint netId = 0;
 
@@ -331,11 +350,11 @@ public class SyncAction
         }
     }
 
-    public virtual bool CallConfirm() { return false; }
+    public virtual bool CallConfirm(SyncActionChain chain) { return false; }
 
-    public virtual bool CallPredict() { return true; }
+    public virtual bool CallPredict(SyncActionChain chain) { return true; }
 
-    public virtual void CallRewind() { }
+    public virtual void CallRewind(SyncActionChain chain) { }
 
     public virtual void SerializeParameters(NetworkWriter writer) { }
 
@@ -347,23 +366,18 @@ public class SyncAction<TParams> : SyncAction
 {
     public TParams parameters;
 
-    public delegate void VoidDelegate(ref TParams parameters);
-    public delegate bool BoolDelegate(ref TParams parameters);
+    public delegate void VoidDelegate(SyncActionChain chain, ref TParams parameters);
+    public delegate bool BoolDelegate(SyncActionChain chain, ref TParams parameters);
 
     public BoolDelegate onConfirm;
     public BoolDelegate onPredict;
     public VoidDelegate onRewind;
 
-    protected SyncAction(GameObject owner, int typeHash) : base(owner, typeHash) { }
-
-    public static SyncAction<TParams> Register(GameObject owner, BoolDelegate onConfirm, BoolDelegate onPredict, VoidDelegate onRewind)
+    public SyncAction(GameObject owner, BoolDelegate onConfirm, BoolDelegate onPredict, VoidDelegate onRewind) : base(owner, GenerateTargetId(owner, onConfirm, onPredict, onRewind))
     {
-        return new SyncAction<TParams>(owner, CreateIdHash(owner, onConfirm, onPredict, onRewind))
-        {
-            onConfirm = onConfirm,
-            onPredict = onPredict,
-            onRewind = onRewind
-        };
+        this.onConfirm = onConfirm;
+        this.onPredict = onPredict;
+        this.onRewind = onRewind;
     }
 
     public bool Request(TParams inputParameters)
@@ -400,10 +414,10 @@ public class SyncAction<TParams> : SyncAction
             switch (SyncActionChain.executing.currentExecutionType)
             {
                 case SyncActionChain.ExecutionType.Confirmed:
-                    onConfirm?.Invoke(ref parameters);
+                    onConfirm?.Invoke(SyncActionChain.executing, ref parameters);
                     break;
                 case SyncActionChain.ExecutionType.Predicted:
-                    onPredict?.Invoke(ref parameters);
+                    onPredict?.Invoke(SyncActionChain.executing, ref parameters);
                     break;
             }
 
@@ -412,11 +426,11 @@ public class SyncAction<TParams> : SyncAction
         }
     }
 
-    public override bool CallConfirm() => onConfirm != null ? onConfirm.Invoke(ref parameters) : false;
+    public override bool CallConfirm(SyncActionChain chain) => onConfirm != null ? onConfirm.Invoke(chain, ref parameters) : false;
 
-    public override bool CallPredict() => onPredict != null ? onPredict.Invoke(ref parameters) : true;
+    public override bool CallPredict(SyncActionChain chain) => onPredict != null ? onPredict.Invoke(chain, ref parameters) : true;
 
-    public override void CallRewind() => onRewind?.Invoke(ref parameters);
+    public override void CallRewind(SyncActionChain chain) => onRewind?.Invoke(chain, ref parameters);
 
     public override void SerializeParameters(NetworkWriter writer)
     {

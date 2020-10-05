@@ -13400,9 +13400,9 @@ MonoBehaviour:
   maxConnectAttempts: 10
   simulatePacketLoss: 0
   simulationPacketLossChance: 10
-  simulateLatency: 0
-  simulationMinLatency: 30
-  simulationMaxLatency: 100
+  simulateLatency: 1
+  simulationMinLatency: 50
+  simulationMaxLatency: 50
   onClientSocketError:
     m_PersistentCalls:
       m_Calls: []
@@ -16578,6 +16578,14 @@ PrefabInstance:
     - target: {fileID: 1124662147498685427, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: -1.7000732
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_FontSize
+      value: 18
+      objectReference: {fileID: 0}
+    - target: {fileID: 7871623710466171661, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_FontData.m_MaxSize
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 9087393328249493369, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Name

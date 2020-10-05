@@ -34,8 +34,8 @@ public class ThrownRing : WorldObjectComponent
         // Spin
         transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * deltaTime, spinAxis);
 
-        // Move
-        //transform.position += velocity * Frame.local.deltaTime;
+        // Move manually cuz... uh well, hmm, dangit rigidbody interpolation is not a thing in manually-simulated physics
+        transform.position += velocity * deltaTime;
 
         // Improves collisions, kinda annoying but it be that way
         rb.velocity = velocity;
@@ -60,7 +60,7 @@ public class ThrownRing : WorldObjectComponent
         World.Despawn(gameObject);
     }
 
-    public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
+    public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction, float jumpAheadTime = 0f)
     {
         foreach (Collider collider in GetComponentsInChildren<Collider>())
         {
@@ -71,5 +71,7 @@ public class ThrownRing : WorldObjectComponent
         this.owner = owner;
         velocity = direction.normalized * settings.projectileSpeed;
         transform.position = spawnPosition;
+
+        transform.position += jumpAheadTime * velocity;
     }
 }

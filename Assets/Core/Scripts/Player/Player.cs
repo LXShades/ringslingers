@@ -130,7 +130,7 @@ public class Player : WorldObjectComponent
         }
         else
         {
-            Debug.LogWarning("No player spawners in this stage!");
+            Log.WriteWarning("No player spawners in this stage!");
         }
     }
 

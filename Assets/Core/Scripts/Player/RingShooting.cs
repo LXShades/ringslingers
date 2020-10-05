@@ -60,7 +60,11 @@ public class RingShooting : WorldObjectComponent
     public override void WorldAwake()
     {
         player = GetComponent<Player>();
-        syncActionThrowRing = SyncAction<ThrowRingData>.Register(gameObject, ConfirmRingThrow, PredictRingThrow, RewindRingThrow);
+    }
+
+    public override void WorldStart()
+    {
+        syncActionThrowRing = new SyncAction<ThrowRingData>(gameObject, ConfirmRingThrow, PredictRingThrow, RewindRingThrow); // here in Start because netIds aren't known at the Awake stage, unfortunately, meaning SyncAction binding needs to happen later
     }
 
     public override void WorldUpdate(float deltaTime)
@@ -115,41 +119,32 @@ public class RingShooting : WorldObjectComponent
         equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
     }
 
-    private bool PredictRingThrow(ref ThrowRingData data)
+    private bool PredictRingThrow(SyncActionChain chain, ref ThrowRingData data)
     {
         // just call ConfirmRingThrow
-        ConfirmRingThrow(ref data);
-
-        return data.spawnedTemporaryRing != null;
+        return ConfirmRingThrow(chain, ref data);
     }
 
-    private void RewindRingThrow(ref ThrowRingData data)
+    private void RewindRingThrow(SyncActionChain chain, ref ThrowRingData data)
     {
         if (data.spawnedTemporaryRing)
         {
             World.Despawn(data.spawnedTemporaryRing.gameObject);
+            player.numRings++;
         }
 
         lastFiredRingTime = 0;
     }
 
-    private bool ConfirmRingThrow(ref ThrowRingData data)
+    private bool ConfirmRingThrow(SyncActionChain chain, ref ThrowRingData data)
     {
-        if (NetworkServer.active)
-        {
-            // prediction test
-            data.position += Vector3.up;
-        }
-
         if (data.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
         {
-            GameObject ring = null;
+            /*GameObject ring = null;
 
             if (data.ringNetId > 0)
             {
                 NetworkIdentity ringIdentity;
-
-                Log.Write($"Client received netId: {data.ringNetId}");
 
                 if (NetworkIdentity.spawned.TryGetValue(data.ringNetId, out ringIdentity))
                 {
@@ -157,7 +152,7 @@ public class RingShooting : WorldObjectComponent
                 }
                 else
                 {
-                    Debug.LogWarning($"Could not find confirmed ring ID of {data.ringNetId}");
+                    Log.WriteWarning($"Could not find confirmed ring ID of {data.ringNetId}");
                 }
             }
             else
@@ -172,7 +167,7 @@ public class RingShooting : WorldObjectComponent
                 Debug.Assert(ringAsThrownRing);
 
                 ringAsThrownRing.settings = currentWeapon.weaponType;
-                ringAsThrownRing.Throw(player, data.position, data.direction);
+                ringAsThrownRing.Throw(player, data.position, data.direction, chain.timeSinceRequest);
 
                 GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
@@ -187,11 +182,17 @@ public class RingShooting : WorldObjectComponent
                 if (NetworkServer.active)
                 {
                     data.ringNetId = ring.GetComponent<NetworkIdentity>().netId;
-                    Log.Write($"Server adjusted netId to {data.ringNetId}");
                 }
-            }
-        }
+            }*/
+            Log.Write("Ring throw! Spawning two objects to see what happens lolol");
+            World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position });
+            World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position + Vector3.up });
 
-        return !NetworkServer.active;
+            return true;
+        }
+        else
+        {
+            return false; // nowt throwin'
+        }
     }
 }
