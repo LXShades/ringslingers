@@ -3,13 +3,13 @@ using UnityEngine;
 
 public static class Log
 {
-    public static void Write(string logText, LogType type = LogType.Log)
+    public static void Write(string logText, LogType type = LogType.Log, int frameSteps = 1)
     {
         System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace(true);
-        System.Diagnostics.StackFrame frame = trace.GetFrame(1);
+        System.Diagnostics.StackFrame frame = trace.GetFrame(frameSteps);
         string filename = frame.GetFileName();
         
-        logText = $"({filename.Substring(Math.Max(filename.LastIndexOf("/"), filename.LastIndexOf("\\")) + 1)}:{frame.GetFileLineNumber()}) [{frame.GetMethod().DeclaringType}.{frame.GetMethod().Name}] {logText}";
+        logText = $"[{frame.GetMethod().DeclaringType}.{frame.GetMethod().Name}] {logText} ({filename.Substring(Math.Max(filename.LastIndexOf("/"), filename.LastIndexOf("\\")) + 1)}:{frame.GetFileLineNumber()})";
 
         switch (type)
         {
@@ -20,11 +20,11 @@ public static class Log
     }
     public static void WriteWarning(string logText)
     {
-        Write(logText, LogType.Warning);
+        Write(logText, LogType.Warning, 2);
     }
 
     public static void WriteError(string logText)
     {
-        Write(logText, LogType.Error);
+        Write(logText, LogType.Error, 2);
     }
 }

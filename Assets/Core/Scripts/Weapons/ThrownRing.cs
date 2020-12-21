@@ -43,6 +43,8 @@ public class ThrownRing : WorldObjectComponent
 
     public void OnCollisionEnter(Collision collision)
     {
+        return;
+
         // Play despawn sound
         GameSounds.PlaySound(gameObject, settings.despawnSound);
 

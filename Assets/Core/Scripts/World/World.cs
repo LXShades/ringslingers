@@ -6,10 +6,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// A Frame contains a virtual state of the game. It can be Ticked, serialized and deserialized (rewinded).
+/// The World is kind of like a, sort of a.
+/// What is the "world"?
 /// 
-/// A caveat is that a Tick will run in the real game rather than inside the frame. This means the frame won't always be synced with the live game state.
-/// Deserializing syncs the frame to the game state while serializing syncs the game state to the frame.
+/// W is for Wanted to makealockstepengine
+/// O is for Original plan,
+/// R is for Refactoring, lockstep's out, deltatime's king,
+/// L is for Left this code in,
+/// D is for Don't use five letters for a 4/4 time song
 /// </summary>
 [System.Serializable] // for debugging
 public class World : MonoBehaviour
@@ -79,7 +83,7 @@ public class World : MonoBehaviour
 
     private float lastProcessedServerTickTime;
 
-    public struct SpawnObjectData : IMessageBase
+    public struct SpawnObjectData : NetworkMessage
     {
         public GameObject prefab
         {
@@ -119,11 +123,11 @@ public class World : MonoBehaviour
         public Vector3 position;
         public Quaternion rotation;
         public WorldObject spawnedObject;
+        public uint networkedObjectId;
 
         public void Deserialize(NetworkReader reader) { }
         public void Serialize(NetworkWriter writer) { }
     }
-    public SyncAction<SpawnObjectData> syncActionSpawnObject;
 
     /// <summary>
     /// Constructs a new empty World
@@ -131,8 +135,6 @@ public class World : MonoBehaviour
     void Start()
     {
         physics = SceneManager.GetActiveScene().GetPhysicsScene();
-
-        syncActionSpawnObject = new SyncAction<SpawnObjectData>(gameObject, ConfirmSpawnObject, PredictSpawnObject, RewindSpawnObject);
     }
 
     /// <summary>
@@ -232,21 +234,59 @@ public class World : MonoBehaviour
 
     public void RewindSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
     {
-        Log.Write("Rewinding spawn");
+        if (data.spawnedObject)
+        {
+            Despawn(data.spawnedObject.gameObject);
+            data.spawnedObject = null;
+        }
+
+        if (data.networkedObjectId != uint.MaxValue)
+        {
+            NetworkIdentity networkedObject = null;
+            NetworkIdentity.spawned.TryGetValue(data.networkedObjectId, out networkedObject);
+
+            if (networkedObject != null)
+            {
+                data.spawnedObject = networkedObject.GetComponent<WorldObject>();
+            }
+
+            if (data.spawnedObject == null)
+            {
+                Log.WriteError($"Could not find a networked object confirmed by the server of ID {data.networkedObjectId}");
+            }
+        }
+
         return;
     }
 
     public bool ConfirmSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
     {
-        Log.Write("Confirming spawn");
         if (Netplay.singleton.networkedPrefabs.TryGetValue(data.assetId, out GameObject prefab))
         {
             data.spawnedObject = Spawn(prefab, data.position, data.rotation).GetComponent<WorldObject>();
+
+            if (NetworkServer.active)
+            {
+                if (data.spawnedObject && data.spawnedObject.GetComponent<NetworkIdentity>())
+                {
+                    data.networkedObjectId = data.spawnedObject.GetComponent<NetworkIdentity>().netId;
+                }
+                else
+                {
+                    data.networkedObjectId = uint.MaxValue; // spawned object isn't a valid networked object
+                    Log.WriteWarning($"Spawned object {data.spawnedObject} isn't networked but was attempted to be linked up via a SpawnObject SyncAction. Should this ever happen? It might be fine for special effects but I dunno");
+                }
+            }
+
             return true;
         }
-
-        data.spawnedObject = null;
-        return false;
+        else
+        {
+            Log.WriteError($"Spawn failed: Prefab not found from Asset ID {data.assetId}");
+            data.spawnedObject = null;
+            data.networkedObjectId = uint.MaxValue;
+            return false;
+        }
     }
     #endregion
 

@@ -8,6 +8,8 @@ using UnityEngine;
 /// </summary>
 public class Netplay : MonoBehaviour
 {
+    public const int kMaxNumPlayers = 16;
+
     public static Netplay singleton
     {
         get
@@ -41,12 +43,12 @@ public class Netplay : MonoBehaviour
     /// <summary>
     /// Used by the server. Used to defer new player creation
     /// </summary>
-    private ulong[] playerClientIds = new ulong[16];
+    private readonly Dictionary<int, int> playerIdFromConnectionId = new Dictionary<int, int>();
 
     /// <summary>
     /// Player objects by ID. Will contains null gaps
     /// </summary>
-    public Player[] players = new Player[16];
+    public Player[] players = new Player[kMaxNumPlayers];
 
     /// <summary>
     /// Whether this is the server player
@@ -120,10 +122,15 @@ public class Netplay : MonoBehaviour
     /// <summary>
     /// Gets the player ID from a client ID. Returns -1 if not found
     /// </summary>
-    public int GetPlayerIdFromClient(ulong clientId)
+    public int GetPlayerIdFromConnectionId(int connectionId)
     {
-        int index = System.Array.IndexOf(playerClientIds, clientId);
-        return index;
+        if (!NetworkServer.active) // only the server has accurate connection IDs
+            return -1;
+
+        if (playerIdFromConnectionId.TryGetValue(connectionId, out int playerId))
+            return playerId;
+
+        return -1;
     }
     #endregion
 
@@ -190,6 +197,7 @@ public class Netplay : MonoBehaviour
             Player newPlayer = AddPlayer(-1);
             newPlayer.GetComponent<NetworkIdentity>().AssignClientAuthority(connection);
 
+            playerIdFromConnectionId[connection.connectionId] = newPlayer ? newPlayer.playerId : -1;
             connection.identity.GetComponent<PlayerClient>().playerId = newPlayer ? newPlayer.playerId : -1;
         }
     }

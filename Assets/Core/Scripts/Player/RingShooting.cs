@@ -2,7 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RingShooting : WorldObjectComponent
+public struct SyncActionTypeA : NetworkMessage
+{
+    public string message;
+}
+
+public struct SyncActionTypeB : NetworkMessage
+{
+    public string message;
+}
+
+public class RingShooting : WorldObjectComponent, ISyncAction<SyncActionTypeA>, ISyncAction<SyncActionTypeB>
 {
     /// <summary>
     /// The default weapon to fire
@@ -44,7 +54,7 @@ public class RingShooting : WorldObjectComponent
     private Player player;
 
     // SyncActions
-    struct ThrowRingData : IMessageBase
+    struct ThrowRingData : NetworkMessage
     {
         public float time;
         public Vector3 position;
@@ -55,7 +65,6 @@ public class RingShooting : WorldObjectComponent
         public void Serialize(NetworkWriter writer) { }
         public void Deserialize(NetworkReader reader) { }
     }
-    private SyncAction<ThrowRingData> syncActionThrowRing;
 
     public override void WorldAwake()
     {
@@ -64,7 +73,6 @@ public class RingShooting : WorldObjectComponent
 
     public override void WorldStart()
     {
-        syncActionThrowRing = new SyncAction<ThrowRingData>(gameObject, ConfirmRingThrow, PredictRingThrow, RewindRingThrow); // here in Start because netIds aren't known at the Awake stage, unfortunately, meaning SyncAction binding needs to happen later
     }
 
     public override void WorldUpdate(float deltaTime)
@@ -79,12 +87,17 @@ public class RingShooting : WorldObjectComponent
         {
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
 
-            syncActionThrowRing.Request(new ThrowRingData()
+            /*syncActionThrowRing.Request(new ThrowRingData()
             {
                 time = World.live.gameTime,
                 position = spawnPosition.position,
                 direction = player.input.aimDirection
-            });
+            });*/
+
+            SyncActionSystem.Request(this, new SyncActionTypeA() { message = "success!" });
+            SyncActionSystem.Request(this, new SyncActionTypeB() { message = "success SQUARED!!!" });
+
+            hasFiredOnThisClick = true;
         }
 
         // Deplete timer-based weapon ammo
@@ -132,8 +145,6 @@ public class RingShooting : WorldObjectComponent
             World.Despawn(data.spawnedTemporaryRing.gameObject);
             player.numRings++;
         }
-
-        lastFiredRingTime = 0;
     }
 
     private bool ConfirmRingThrow(SyncActionChain chain, ref ThrowRingData data)
@@ -185,8 +196,9 @@ public class RingShooting : WorldObjectComponent
                 }
             }*/
             Log.Write("Ring throw! Spawning two objects to see what happens lolol");
-            World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position });
-            World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position + Vector3.up });
+            lastFiredRingTime = data.time;
+            //World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position });
+            //World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position + Vector3.up });
 
             return true;
         }
@@ -194,5 +206,37 @@ public class RingShooting : WorldObjectComponent
         {
             return false; // nowt throwin'
         }
+    }
+
+    public bool OnConfirm(SyncActionChain chain, ref SyncActionTypeA parameters)
+    {
+        Log.Write($"Confirm TypeA: {parameters.message}");
+        return true;
+    }
+
+    public bool OnPredict(SyncActionChain chain, ref SyncActionTypeA parameters)
+    {
+        Log.Write($"Predict TypeA: {parameters.message}");
+        return true;
+    }
+
+    public void OnRewind(SyncActionChain chain, ref SyncActionTypeA parameters)
+    {
+    }
+
+    public bool OnConfirm(SyncActionChain chain, ref SyncActionTypeB parameters)
+    {
+        Log.Write($"Confirm TypeB: {parameters.message}");
+        return true;
+    }
+
+    public bool OnPredict(SyncActionChain chain, ref SyncActionTypeB parameters)
+    {
+        Log.Write($"Predict TypeB: {parameters.message}");
+        return true;
+    }
+
+    public void OnRewind(SyncActionChain chain, ref SyncActionTypeB parameters)
+    {
     }
 }

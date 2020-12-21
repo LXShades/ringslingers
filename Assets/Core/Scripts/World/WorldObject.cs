@@ -58,6 +58,13 @@ public class WorldObject : NetworkBehaviour
     {
         hasStarted = true;
 
+        int numRegisteredSyncActions = SyncActionSystem.RegisterSyncActions(gameObject);
+
+        if (numRegisteredSyncActions > 0)
+        {
+            Log.Write($"Registered {numRegisteredSyncActions} SyncActions on {gameObject}");
+        }
+
         foreach (WorldObjectComponent objComponent in worldObjectComponents)
             objComponent.WorldStart();
     }
