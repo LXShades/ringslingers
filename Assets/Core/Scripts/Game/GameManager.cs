@@ -1,9 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.IO;
 using UnityEngine;
-using System.IO;
-using System;
-using System.Runtime.InteropServices;
 
 /// <summary>
 /// Game Manager handles references to key local objects and other non-networking stuff
@@ -48,41 +44,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public static string[] editorCommandLineArgs
-    {
-        get
-        {
-#if UNITY_EDITOR
-            return UnityEditor.EditorPrefs.GetString("editorCommandLine", "").Split(' ');
-#else
-            return new string[0];
-#endif
-        }
-        set
-        {
-#if UNITY_EDITOR
-            UnityEditor.EditorPrefs.SetString("editorCommandLine", string.Join(" ", value));
-#endif
-        }
-    }
-
     bool isMouseLocked = true;
 
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
-
-        // Read command line
-        List<string> commandLine = new List<string>(System.Environment.GetCommandLineArgs());
-
-        commandLine.AddRange(editorCommandLineArgs);
-
-        // Connect or host a server
-        int connectIndex = commandLine.IndexOf("connect");
-        if (connectIndex >= 0 && connectIndex < commandLine.Count - 1)
-            Netplay.singleton.ConnectToServer(commandLine[connectIndex + 1]);
-        else
-            Netplay.singleton.CreateServer();
     }
 
     void Update()

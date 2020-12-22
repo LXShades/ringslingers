@@ -41,7 +41,7 @@ public class SyncActionChain
     /// <summary>
     /// Incremental ID to be assigned to the next predictable SyncAction we request
     /// </summary>
-    private static int nextLocalRequestId = 0;
+    private static byte nextLocalRequestId = 0;
 
     /// <summary>
     /// Actions within this SyncActionChain
@@ -56,12 +56,12 @@ public class SyncActionChain
     /// <summary>
     /// ID of the player calling, or 255 if N/A which shouldn't happen...?
     /// </summary>
-    public byte requestingPlayer = 255;
+    public byte sourcePlayer = 255;
 
     /// <summary>
     /// ID of this SyncAction request being made, used to match predicted SyncActions
     /// </summary>
-    public int localRequestId = 0;
+    public byte requestId = 0;
 
     /// <summary>
     /// Time.unscaledTime that this action was created
@@ -73,7 +73,7 @@ public class SyncActionChain
     /// </summary>
     public float timeSinceRequest => Time.unscaledTime - requestTime;
 
-    public bool isLocalRequest => requestingPlayer == Netplay.singleton.localPlayerId;
+    public bool isLocalRequest => sourcePlayer == Netplay.singleton.localPlayerId;
 
     public const float syncActionExpiryTime = 0.5f;
 
@@ -86,8 +86,8 @@ public class SyncActionChain
     {
         SyncActionChain newChain = new SyncActionChain(); // any magical pooling goes here
 
-        newChain.requestingPlayer = requestingPlayer;
-        newChain.localRequestId = nextLocalRequestId++;
+        newChain.sourcePlayer = requestingPlayer;
+        newChain.requestId = nextLocalRequestId++;
         newChain.requestTime = Time.unscaledTime;
 
         newChain.actions.Add(root);
@@ -104,8 +104,8 @@ public class SyncActionChain
     {
         SyncActionChain newChain = new SyncActionChain(); // any magical pooling goes here
 
-        newChain.requestingPlayer = requestingPlayer;
-        newChain.localRequestId = nextLocalRequestId++;
+        newChain.sourcePlayer = requestingPlayer;
+        newChain.requestId = nextLocalRequestId++;
         newChain.requestTime = Time.unscaledTime;
 
         newChain.actions.Add(new SyncAction<TSyncActionParams>(rootTarget, rootParameters).Box());
@@ -249,7 +249,7 @@ public class SyncActionChain
     #region Networking
     public SerializedSyncActionChain Serialize()
     {
-        return new SerializedSyncActionChain() { requestingPlayer = requestingPlayer, actions = actions };
+        return new SerializedSyncActionChain() { sourcePlayer = sourcePlayer, actions = actions, requestId = requestId };
     }
 
     public static void RegisterHandlers()
@@ -270,9 +270,9 @@ public class SyncActionChain
     {
         SyncActionChain receivedChain = message.Deserialize();
 
-        receivedChain.requestingPlayer = (byte)Netplay.singleton.GetPlayerIdFromConnectionId(conn.connectionId);
+        receivedChain.sourcePlayer = (byte)Netplay.singleton.GetPlayerIdFromConnectionId(conn.connectionId);
 
-        Debug.Log($"Received syncaction from connection ID {conn.connectionId} player ID {receivedChain.requestingPlayer}");
+        Debug.Log($"Received syncaction from connection ID {conn.connectionId} player ID {receivedChain.sourcePlayer}");
         receivedChains.Add(receivedChain);
     }
     #endregion
@@ -280,12 +280,12 @@ public class SyncActionChain
     #region Misc
     private static SyncActionChain FindMatchingPredictedChain(SyncActionChain confirmedChain)
     {
-        if (confirmedChain.requestingPlayer != Netplay.singleton.localPlayerId)
+        if (confirmedChain.sourcePlayer != Netplay.singleton.localPlayerId)
             return null; // only locally requested actions can be reasonably predicted!
 
         foreach (SyncActionChain chain in predictedChains)
         {
-            if (chain.localRequestId == confirmedChain.localRequestId)
+            if (chain.requestId == confirmedChain.requestId)
                 return chain; // we made this request
         }
 
@@ -311,24 +311,25 @@ public class SyncActionChain
 /// </summary>
 public struct SerializedSyncActionChain : NetworkMessage
 {
-    public byte requestingPlayer;
+    public byte sourcePlayer;
+    public byte requestId;
     public List<SyncActionBox> actions;
 
     public SyncActionChain Deserialize()
     {
-        return new SyncActionChain() { actions = actions, requestingPlayer = requestingPlayer };
+        return new SyncActionChain() { actions = actions, sourcePlayer = sourcePlayer, requestId = requestId };
     }
 }
 
 public static class SyncActionChainReaderWriter
 {
-    public static void WriteSyncActionChain(this NetworkWriter writer, SyncActionChain chain)
+    public static void WriteSyncActionChain(this NetworkWriter writer, SerializedSyncActionChain chain)
     {
         bool onlyFirstAction = !NetworkServer.active; // server never needs to receive a client's full action chain
         int numActions = Mathf.Clamp(chain.actions.Count, 0, onlyFirstAction ? 1 : 255);
 
-        writer.WriteByte(chain.requestingPlayer);
-        writer.WriteInt32(chain.localRequestId);
+        writer.WriteByte(chain.sourcePlayer);
+        writer.WriteByte(chain.requestId);
         writer.WriteByte((byte)numActions);
 
         for (int i = 0; i < numActions; i++)
@@ -337,13 +338,14 @@ public static class SyncActionChainReaderWriter
         }
     }
 
-    public static SyncActionChain ReadSyncActionChain(this NetworkReader reader)
+    public static SerializedSyncActionChain ReadSyncActionChain(this NetworkReader reader)
     {
         try
         {
-            SyncActionChain chain = new SyncActionChain();
-            chain.requestingPlayer = reader.ReadByte();
-            chain.localRequestId = reader.ReadInt32();
+            SerializedSyncActionChain chain = new SerializedSyncActionChain();
+            chain.sourcePlayer = reader.ReadByte();
+            chain.requestId = reader.ReadByte();
+            chain.actions = new List<SyncActionBox>();
 
             int numActions = reader.ReadByte(); // todo check if more than one action was received from a client, we should ignore those
 
@@ -352,13 +354,13 @@ public static class SyncActionChainReaderWriter
                 SerializedSyncAction serializedAction = reader.Read<SerializedSyncAction>();
                 chain.actions.Add(serializedAction.DeserializeAsBox());
             }
+
+            return chain;
         }
         catch (Exception e)
         {
             Log.WriteError($"Exception deserializing SyncAction: {e.Message}");
             throw e;
         }
-
-        return null;
     }
-} 
+}
