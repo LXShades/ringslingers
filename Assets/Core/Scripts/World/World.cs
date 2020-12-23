@@ -16,7 +16,7 @@ using UnityEngine.SceneManagement;
 /// D is for Don't use five letters for a 4/4 time song
 /// </summary>
 [System.Serializable] // for debugging
-public class World : MonoBehaviour
+public class World : MonoBehaviour, ISyncAction<World.SyncActionSpawnObject>
 {
     /// <summary>
     /// Local time since the world was created
@@ -81,9 +81,7 @@ public class World : MonoBehaviour
         get; private set;
     }
 
-    private float lastProcessedServerTickTime;
-
-    public struct SpawnObjectData : NetworkMessage
+    public struct SyncActionSpawnObject : NetworkMessage
     {
         public GameObject prefab
         {
@@ -124,9 +122,6 @@ public class World : MonoBehaviour
         public Quaternion rotation;
         public WorldObject spawnedObject;
         public uint networkedObjectId;
-
-        public void Deserialize(NetworkReader reader) { }
-        public void Serialize(NetworkWriter writer) { }
     }
 
     /// <summary>
@@ -135,6 +130,8 @@ public class World : MonoBehaviour
     void Start()
     {
         physics = SceneManager.GetActiveScene().GetPhysicsScene();
+
+        SyncActionSystem.RegisterSyncActions(gameObject, true);
     }
 
     /// <summary>
@@ -226,13 +223,13 @@ public class World : MonoBehaviour
         }
     }
 
-    public bool PredictSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
+    public bool OnPredict(SyncActionChain chain, ref SyncActionSpawnObject data)
     {
         Log.Write("Predicting (then confirming) spawn");
-        return ConfirmSpawnObject(chain, ref data);
+        return OnConfirm(chain, ref data);
     }
 
-    public void RewindSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
+    public void OnRewind(SyncActionChain chain, ref SyncActionSpawnObject data)
     {
         if (data.spawnedObject)
         {
@@ -242,8 +239,7 @@ public class World : MonoBehaviour
 
         if (data.networkedObjectId != uint.MaxValue)
         {
-            NetworkIdentity networkedObject = null;
-            NetworkIdentity.spawned.TryGetValue(data.networkedObjectId, out networkedObject);
+            NetworkIdentity.spawned.TryGetValue(data.networkedObjectId, out NetworkIdentity networkedObject);
 
             if (networkedObject != null)
             {
@@ -259,7 +255,7 @@ public class World : MonoBehaviour
         return;
     }
 
-    public bool ConfirmSpawnObject(SyncActionChain chain, ref SpawnObjectData data)
+    public bool OnConfirm(SyncActionChain chain, ref SyncActionSpawnObject data)
     {
         if (Netplay.singleton.networkedPrefabs.TryGetValue(data.assetId, out GameObject prefab))
         {

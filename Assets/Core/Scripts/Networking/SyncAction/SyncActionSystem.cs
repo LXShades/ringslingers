@@ -17,9 +17,9 @@ public static class SyncActionSystem
     private static readonly Dictionary<System.Type, uint> syncActionIndexByType = new Dictionary<System.Type, uint>();
     private static readonly Dictionary<uint, System.Type> syncActionTypeByIndex = new Dictionary<uint, System.Type>();
 
-    public static int RegisterSyncActions(GameObject owner)
+    public static int RegisterSyncActions(GameObject owner, bool identityless = false)
     {
-        if (owner.GetComponentInParent<NetworkIdentity>() == null)
+        if (owner.GetComponentInParent<NetworkIdentity>() == null && !identityless)
         {
             Log.WriteError("Cannot register a syncaction on an object with no network identity");
             return 0;
@@ -98,15 +98,13 @@ public static class SyncActionSystem
     }
 
     // non-ref version
-    public static bool Request<TISyncAction, TSyncActionParams>(TISyncAction target, TSyncActionParams parameters)
-        where TISyncAction : NetworkBehaviour, ISyncAction<TSyncActionParams>
+    public static bool Request<TSyncActionParams>(ISyncAction<TSyncActionParams> target, TSyncActionParams parameters)
         where TSyncActionParams : NetworkMessage
     {
         return Request(target, ref parameters);
     }
 
-    public static bool Request<TISyncAction, TSyncActionParams>(TISyncAction target, ref TSyncActionParams parameters)
-        where TISyncAction : NetworkBehaviour, ISyncAction<TSyncActionParams>
+    public static bool Request<TSyncActionParams>(ISyncAction<TSyncActionParams> target, ref TSyncActionParams parameters)
         where TSyncActionParams : NetworkMessage
     {
         SyncAction<TSyncActionParams> syncAction = new SyncAction<TSyncActionParams>() { target = target, parameters = parameters };

@@ -98,8 +98,7 @@ public class SyncActionChain
     /// <summary>
     /// Creates a new SyncActionChain with a single root
     /// </summary>
-    public static SyncActionChain Create<TSyncAction, TSyncActionParams>(TSyncAction rootTarget, in TSyncActionParams rootParameters, byte requestingPlayer = 255)
-        where TSyncAction : NetworkBehaviour, ISyncAction<TSyncActionParams>
+    public static SyncActionChain Create<TSyncActionParams>(ISyncAction<TSyncActionParams> rootTarget, in TSyncActionParams rootParameters, byte requestingPlayer = 255)
         where TSyncActionParams : NetworkMessage
     {
         SyncActionChain newChain = new SyncActionChain(); // any magical pooling goes here

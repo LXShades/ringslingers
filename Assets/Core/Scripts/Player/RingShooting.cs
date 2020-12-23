@@ -2,17 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public struct SyncActionTypeA : NetworkMessage
-{
-    public string message;
-}
-
-public struct SyncActionTypeB : NetworkMessage
-{
-    public string message;
-}
-
-public class RingShooting : WorldObjectComponent, ISyncAction<SyncActionTypeA>, ISyncAction<SyncActionTypeB>
+public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncActionThrowRing>
 {
     /// <summary>
     /// The default weapon to fire
@@ -54,16 +44,11 @@ public class RingShooting : WorldObjectComponent, ISyncAction<SyncActionTypeA>, 
     private Player player;
 
     // SyncActions
-    struct ThrowRingData : NetworkMessage
+    public struct SyncActionThrowRing : NetworkMessage
     {
         public float time;
         public Vector3 position;
         public Vector3 direction;
-        public uint ringNetId;
-        public WorldObject spawnedTemporaryRing;
-
-        public void Serialize(NetworkWriter writer) { }
-        public void Deserialize(NetworkReader reader) { }
     }
 
     public override void WorldAwake()
@@ -94,8 +79,7 @@ public class RingShooting : WorldObjectComponent, ISyncAction<SyncActionTypeA>, 
                 direction = player.input.aimDirection
             });*/
 
-            SyncActionSystem.Request(this, new SyncActionTypeA() { message = "success!" });
-            SyncActionSystem.Request(this, new SyncActionTypeB() { message = "success SQUARED!!!" });
+            SyncActionSystem.Request(this, new SyncActionThrowRing() { position = spawnPosition.position, direction = player.input.aimDirection, time = World.live.gameTime });
 
             hasFiredOnThisClick = true;
         }
@@ -132,73 +116,52 @@ public class RingShooting : WorldObjectComponent, ISyncAction<SyncActionTypeA>, 
         equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
     }
 
-    private bool PredictRingThrow(SyncActionChain chain, ref ThrowRingData data)
+    public bool OnPredict(SyncActionChain chain, ref SyncActionThrowRing data)
     {
         // just call ConfirmRingThrow
-        return ConfirmRingThrow(chain, ref data);
+        return OnConfirm(chain, ref data);
     }
 
-    private void RewindRingThrow(SyncActionChain chain, ref ThrowRingData data)
+    public void OnRewind(SyncActionChain chain, ref SyncActionThrowRing data)
     {
-        if (data.spawnedTemporaryRing)
-        {
-            World.Despawn(data.spawnedTemporaryRing.gameObject);
-            player.numRings++;
-        }
+        // ring should be despawned by now
     }
 
-    private bool ConfirmRingThrow(SyncActionChain chain, ref ThrowRingData data)
+    public bool OnConfirm(SyncActionChain chain, ref SyncActionThrowRing data)
     {
         if (data.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
         {
-            /*GameObject ring = null;
-
-            if (data.ringNetId > 0)
+            var spawnParams = new World.SyncActionSpawnObject()
             {
-                NetworkIdentity ringIdentity;
+                prefab = currentWeapon.weaponType.prefab,
+                position = data.position,
+                rotation = Quaternion.identity
+            };
 
-                if (NetworkIdentity.spawned.TryGetValue(data.ringNetId, out ringIdentity))
+            if (SyncActionSystem.Request(World.live, spawnParams))
+            {
+                GameObject ring = spawnParams.spawnedObject?.gameObject;
+
+                if (ring != null)
                 {
-                    ring = ringIdentity.gameObject;
-                }
-                else
-                {
-                    Log.WriteWarning($"Could not find confirmed ring ID of {data.ringNetId}");
+                    ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
+                    Debug.Assert(ringAsThrownRing);
+
+                    ringAsThrownRing.settings = currentWeapon.weaponType;
+                    ringAsThrownRing.Throw(player, data.position, data.direction, chain.timeSinceRequest);
+
+                    GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
+
+                    lastFiredRingTime = data.time;
+
+                    player.numRings--;
+                    if (!currentWeapon.weaponType.ammoIsTime)
+                        currentWeapon.ammo--;
+
+                    hasFiredOnThisClick = true;
                 }
             }
-            else
-            {
-                ring = World.Spawn(currentWeapon.weaponType.prefab, data.position, Quaternion.identity);
-                data.spawnedTemporaryRing = ring.GetComponent<WorldObject>();
-            }
-
-            if (ring != null)
-            {
-                ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
-                Debug.Assert(ringAsThrownRing);
-
-                ringAsThrownRing.settings = currentWeapon.weaponType;
-                ringAsThrownRing.Throw(player, data.position, data.direction, chain.timeSinceRequest);
-
-                GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
-
-                lastFiredRingTime = data.time;
-
-                player.numRings--;
-                if (!currentWeapon.weaponType.ammoIsTime)
-                    currentWeapon.ammo--;
-
-                hasFiredOnThisClick = true;
-
-                if (NetworkServer.active)
-                {
-                    data.ringNetId = ring.GetComponent<NetworkIdentity>().netId;
-                }
-            }*/
-            Log.Write("Ring throw! Spawning two objects to see what happens lolol");
             lastFiredRingTime = data.time;
-            //World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position });
-            //World.live.syncActionSpawnObject.Request(new World.SpawnObjectData() { prefab = currentWeapon.weaponType.prefab, position = data.position + Vector3.up });
 
             return true;
         }
@@ -206,37 +169,5 @@ public class RingShooting : WorldObjectComponent, ISyncAction<SyncActionTypeA>, 
         {
             return false; // nowt throwin'
         }
-    }
-
-    public bool OnConfirm(SyncActionChain chain, ref SyncActionTypeA parameters)
-    {
-        Log.Write($"Confirm TypeA: {parameters.message}");
-        return true;
-    }
-
-    public bool OnPredict(SyncActionChain chain, ref SyncActionTypeA parameters)
-    {
-        Log.Write($"Predict TypeA: {parameters.message}");
-        return true;
-    }
-
-    public void OnRewind(SyncActionChain chain, ref SyncActionTypeA parameters)
-    {
-    }
-
-    public bool OnConfirm(SyncActionChain chain, ref SyncActionTypeB parameters)
-    {
-        Log.Write($"Confirm TypeB: {parameters.message}");
-        return true;
-    }
-
-    public bool OnPredict(SyncActionChain chain, ref SyncActionTypeB parameters)
-    {
-        Log.Write($"Predict TypeB: {parameters.message}");
-        return true;
-    }
-
-    public void OnRewind(SyncActionChain chain, ref SyncActionTypeB parameters)
-    {
     }
 }

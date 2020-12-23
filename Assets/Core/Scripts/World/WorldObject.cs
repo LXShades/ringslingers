@@ -41,7 +41,15 @@ public class WorldObject : NetworkBehaviour
     public List<WorldObjectComponent> worldObjectComponents = new List<WorldObjectComponent>();
 
     #region Initialisation
-    private void Awake()
+    public override void OnStartClient()
+    {
+        if (!NetworkServer.active) // host player
+        {
+            World.live.OnWorldObjectSpawned(this);
+        }
+    }
+
+    public override void OnStartServer()
     {
         World.live.OnWorldObjectSpawned(this);
     }
