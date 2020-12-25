@@ -40,9 +40,10 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            return System.Array.Find(FindObjectsOfType<PlayerCamera>(), a => a.worldObject.world == World.live); // prototyping
+            return cachedCamera ?? (cachedCamera = FindObjectOfType<PlayerCamera>());
         }
     }
+    private PlayerCamera cachedCamera = null;
 
     bool isMouseLocked = true;
 

@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class Player : WorldObjectComponent, ISyncAction<Player.TestSyncActionParams>
+public class Player : WorldObjectComponent
 {
     public struct TestSyncActionParams : NetworkMessage
     {
@@ -121,35 +121,6 @@ public class Player : WorldObjectComponent, ISyncAction<Player.TestSyncActionPar
         {
             Hurt(null);
         }
-
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            SyncAction<TestSyncActionParams> testAction = new SyncAction<TestSyncActionParams>()
-            {
-                parameters = new TestSyncActionParams()
-                {
-                    messageInt = 13525,
-                    messageWow = "Hello how are you doing FUCK I love you"
-                },
-                target = this
-            };
-
-            testAction.Call(null, SyncActionSystem.FunctionType.Confirm, true);
-            Debug.Log($"MessageWow is now: {testAction.parameters.messageWow}");
-
-            Debug.Log("Serializing...");
-            SerializedSyncAction serialized = testAction.Serialize();
-            SyncActionBox deserialized = serialized.DeserializeAsBox();
-
-            if (deserialized != null)
-            {
-                deserialized.Call(null, SyncActionSystem.FunctionType.Confirm, true);
-            }
-            else
-            {
-                Debug.Log("Deserialized was null...");
-            }
-        }
     }
 
     public void Respawn()
@@ -237,21 +208,5 @@ public class Player : WorldObjectComponent, ISyncAction<Player.TestSyncActionPar
         }
 
         playerName = updatedName;
-    }
-
-    public bool OnConfirm(SyncActionChain chain, ref TestSyncActionParams parameters)
-    {
-        Debug.Log($"Confirmed! Message: {parameters.messageWow}");
-        return true;
-    }
-
-    public bool OnPredict(SyncActionChain chain, ref TestSyncActionParams parameters)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void OnRewind(SyncActionChain chain, ref TestSyncActionParams parameters)
-    {
-        throw new System.NotImplementedException();
     }
 }

@@ -107,8 +107,6 @@ public static class SyncActionSystem
     public static bool Request<TSyncActionParams>(ISyncAction<TSyncActionParams> target, ref TSyncActionParams parameters)
         where TSyncActionParams : NetworkMessage
     {
-        SyncAction<TSyncActionParams> syncAction = new SyncAction<TSyncActionParams>() { target = target, parameters = parameters };
-
         if (SyncActionChain.executing == null)
         {
             // create and execute a new requested SyncActionChain
@@ -126,20 +124,25 @@ public static class SyncActionSystem
                 {
                     NetworkServer.SendToAll<SerializedSyncActionChain>(chainToExecute.Serialize());
                 }
+
+                return true;
             }
             else
             {
                 chainToExecute.Rewind();
+                return false;
             }
-            return true;
         }
         else
         {
+            SyncAction<TSyncActionParams> syncAction = new SyncAction<TSyncActionParams>() { target = target, parameters = default };
+
             // execute immediately because we're already in a chain
             switch (SyncActionChain.executing.currentExecutionType)
             {
                 case SyncActionChain.ExecutionType.Confirming:
-                    target.OnConfirm(SyncActionChain.executing, ref syncAction.parameters);
+                    target.OnConfirm(SyncActionChain.executing, ref parameters);
+                    syncAction.parameters = parameters;
                     SyncActionChain.executing.actions.Add(syncAction.Box());
                     return true;
                 case SyncActionChain.ExecutionType.Reconfirming:
@@ -163,7 +166,8 @@ public static class SyncActionSystem
                     }
                     break;
                 case SyncActionChain.ExecutionType.Predicting:
-                    target.OnPredict(SyncActionChain.executing, ref syncAction.parameters);
+                    target.OnPredict(SyncActionChain.executing, ref parameters);
+                    syncAction.parameters = parameters;
                     SyncActionChain.executing.actions.Add(syncAction.Box());
                     break;
             }

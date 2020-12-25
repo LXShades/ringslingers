@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class PlayerCamera : WorldObjectComponent
+public class PlayerCamera : MonoBehaviour
 {
     /// <summary>
     /// Player we're currently following
@@ -45,11 +43,7 @@ public class PlayerCamera : WorldObjectComponent
     private float landBobMagnitude = 0;
     private float landBobDuration = 0;
 
-    public override void WorldAwake()
-    {
-    }
-
-    public override void WorldLateUpdate(float deltaTime)
+    void LateUpdate()
     {
         if (currentPlayer == null)
         {
@@ -77,7 +71,7 @@ public class PlayerCamera : WorldObjectComponent
                 {
                     float landProgress = 1 - (landBobTimer / landBobDuration);
                     transform.position += Vector3.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
-                    landBobTimer = Mathf.Max(landBobTimer - deltaTime, 0);
+                    landBobTimer = Mathf.Max(landBobTimer - Time.deltaTime, 0);
                 }
 
                 transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * World.live.gameTime * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));

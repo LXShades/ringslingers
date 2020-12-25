@@ -46,9 +46,9 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
     // SyncActions
     public struct SyncActionThrowRing : NetworkMessage
     {
-        public float time;
         public Vector3 position;
         public Vector3 direction;
+        public float backupThrowTime;
     }
 
     public override void WorldAwake()
@@ -79,7 +79,7 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
                 direction = player.input.aimDirection
             });*/
 
-            SyncActionSystem.Request(this, new SyncActionThrowRing() { position = spawnPosition.position, direction = player.input.aimDirection, time = World.live.gameTime });
+            SyncActionSystem.Request(this, new SyncActionThrowRing() { position = spawnPosition.position, direction = player.input.aimDirection });
 
             hasFiredOnThisClick = true;
         }
@@ -118,18 +118,21 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
 
     public bool OnPredict(SyncActionChain chain, ref SyncActionThrowRing data)
     {
+        data.backupThrowTime = lastFiredRingTime;
+
         // just call ConfirmRingThrow
         return OnConfirm(chain, ref data);
     }
 
     public void OnRewind(SyncActionChain chain, ref SyncActionThrowRing data)
     {
+        lastFiredRingTime = data.backupThrowTime;
         // ring should be despawned by now
     }
 
     public bool OnConfirm(SyncActionChain chain, ref SyncActionThrowRing data)
     {
-        if (data.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
+        if (Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
         {
             var spawnParams = new World.SyncActionSpawnObject()
             {
@@ -138,7 +141,7 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
                 rotation = Quaternion.identity
             };
 
-            if (SyncActionSystem.Request(World.live, spawnParams))
+            if (SyncActionSystem.Request(World.live, ref spawnParams))
             {
                 GameObject ring = spawnParams.spawnedObject?.gameObject;
 
@@ -152,7 +155,7 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
 
                     GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
-                    lastFiredRingTime = data.time;
+                    lastFiredRingTime = Time.time;
 
                     player.numRings--;
                     if (!currentWeapon.weaponType.ammoIsTime)
@@ -161,7 +164,6 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
                     hasFiredOnThisClick = true;
                 }
             }
-            lastFiredRingTime = data.time;
 
             return true;
         }
