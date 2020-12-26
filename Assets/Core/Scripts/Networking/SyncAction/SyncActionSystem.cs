@@ -11,6 +11,7 @@ public static class SyncActionSystem
         Confirm,
         Predict,
         Rewind,
+        Reject
     }
 
     public static readonly Dictionary<uint, ISyncAction> syncActionFromTargetId = new Dictionary<uint, ISyncAction>();
@@ -19,9 +20,15 @@ public static class SyncActionSystem
 
     public static int RegisterSyncActions(GameObject owner, bool identityless = false)
     {
-        if (owner.GetComponentInParent<NetworkIdentity>() == null && !identityless)
+        if (!owner.TryGetComponent(out NetworkIdentity identity) && !identityless)
         {
-            Log.WriteError("Cannot register a syncaction on an object with no network identity");
+            Log.WriteError($"Cannot register a SyncAction on an object \"{owner}\" with no network identity");
+            return 0;
+        }
+
+        if (identity && !identity.isServer && !identity.isClient)
+        {
+            Log.WriteWarning($"Not registering SyncActions on uninitialized network object \"{owner}\"");
             return 0;
         }
 
@@ -41,7 +48,7 @@ public static class SyncActionSystem
                 {
                     if (value != null)
                     {
-                        Log.WriteError("A SyncAction with a duplicate ID was created!? The object might have multiple instances without being correctly networked.");
+                        Log.WriteError($"A SyncAction with a duplicate ID  {targetId} was created by {owner} (netID {owner.GetComponent<NetworkIdentity>()?.netId})! Bad ID/non-networked object?");
                         continue;
                     }
                 }
@@ -49,6 +56,11 @@ public static class SyncActionSystem
                 syncActionFromTargetId[targetId] = (ISyncAction)typeof(SyncActionSystem).GetMethod(nameof(ExtractSyncActionInterface)).MakeGenericMethod(new Type[] { syncAction }).Invoke(null, new object[] { syncActionComponent });
                 numRegistered++;
             }
+        }
+
+        if (numRegistered > 0)
+        {
+            Log.Write($"Registered {numRegistered} SyncActions on {owner}");
         }
 
         return numRegistered;
@@ -129,7 +141,7 @@ public static class SyncActionSystem
             }
             else
             {
-                chainToExecute.Rewind();
+                chainToExecute.Rewind(false);
                 return false;
             }
         }
@@ -324,7 +336,10 @@ public struct SyncAction<TParameters>
                 case SyncActionSystem.FunctionType.Predict:
                     return target.OnPredict(chain, ref parameters);
                 case SyncActionSystem.FunctionType.Rewind:
-                    target.OnRewind(chain, ref parameters);
+                    target.OnRewind(chain, ref parameters, true);
+                    return true;
+                case SyncActionSystem.FunctionType.Reject:
+                    target.OnRewind(chain, ref parameters, false);
                     return true;
             }
         }
@@ -339,7 +354,10 @@ public struct SyncAction<TParameters>
                 case SyncActionSystem.FunctionType.Predict:
                     return target.OnPredict(chain, ref paramCopy);
                 case SyncActionSystem.FunctionType.Rewind:
-                    target.OnRewind(chain, ref paramCopy);
+                    target.OnRewind(chain, ref paramCopy, true);
+                    return true;
+                case SyncActionSystem.FunctionType.Reject:
+                    target.OnRewind(chain, ref paramCopy, false);
                     return true;
             }
         }

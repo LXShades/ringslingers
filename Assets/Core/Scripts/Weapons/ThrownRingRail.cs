@@ -8,16 +8,16 @@ public class ThrownRingRail : ThrownRing
 
     public LayerMask collisionLayers;
 
-    [WorldSharedReference] public GameObject particles;
+    public GameObject particles;
 
-    public override void WorldUpdate(float deltaTime)
+    public override void Update()
     {
         return; // do nothing, instead of the default movement
     }
 
     public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction, float jumpAhead)
     {
-        this.owner = owner;
+        this.owner = owner.gameObject;
         transform.forward = direction;
         transform.position = spawnPosition;
 
@@ -28,7 +28,7 @@ public class ThrownRingRail : ThrownRing
         endPoint.transform.up = -direction;
 
         RaycastHit[] hits = new RaycastHit[10];
-        int numHits = worldObject.world.physics.Raycast(spawnPosition, direction, hits, maxRange, collisionLayers, QueryTriggerInteraction.Ignore);
+        int numHits = Physics.RaycastNonAlloc(spawnPosition, direction, hits, maxRange, collisionLayers, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < numHits; i++)
         {
             Player player = hits[i].collider.GetComponentInParent<Player>();

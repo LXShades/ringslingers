@@ -20,7 +20,7 @@ public class GameHUD : MonoBehaviour
     [Header("Debug")]
     public Text connectStatusText;
     public Text debugText;
-    public Text debugLogText;
+    public TMPro.TextMeshProUGUI debugLogText;
 
     public int numLogLines = 5;
     public bool showHarmlessLogs = true;
@@ -129,12 +129,12 @@ public class GameHUD : MonoBehaviour
 
             Canvas.ForceUpdateCanvases();
 
-            if (debugLogText.cachedTextGenerator.lineCount > 0)
+            if (debugLogText.textInfo.lineCount > 0)
             {
-                numLogLines = (int)(debugLogText.rectTransform.rect.height / debugLogText.cachedTextGenerator.lines[0].height);
-                if (debugLogText.cachedTextGenerator.lineCount > numLogLines)
+                numLogLines = (int)(debugLogText.rectTransform.rect.height / debugLogText.textInfo.lineInfo[0].lineHeight);
+                if (debugLogText.textInfo.lineCount > numLogLines)
                 {
-                    int startCharIdx = debugLogText.cachedTextGenerator.lines[debugLogText.cachedTextGenerator.lines.Count - numLogLines].startCharIdx;
+                    int startCharIdx = debugLogText.textInfo.lineInfo[debugLogText.textInfo.lineCount - numLogLines].firstVisibleCharacterIndex;
                     debugLogText.text = debugLog = debugLog.Substring(startCharIdx);
                 }
             }
@@ -148,7 +148,20 @@ public class GameHUD : MonoBehaviour
         if (type == LogType.Log && !showHarmlessLogs)
             return; // don't show everything
 
-        debugLog += condition;
+        string colorStart = "", colorEnd = "";
+        switch (type)
+        {
+            case LogType.Warning:
+                colorStart = "<color=yellow>";
+                colorEnd = "</color>";
+                break;
+            case LogType.Error:
+                colorStart = "<color=red>";
+                colorEnd = "</color>";
+                break;
+        }
+
+        debugLog += $"{colorStart}{condition}{colorEnd}";
 
         if (type == LogType.Error || type == LogType.Warning)
         {

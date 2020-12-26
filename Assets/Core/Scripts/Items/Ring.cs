@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class Ring : WorldObjectComponent
+public class Ring : MonoBehaviour
 {
     [Header("Ring")]
     [Tooltip("Speed that this ring spins at, in degrees per second")] public float spinSpeed = 180;
@@ -16,23 +14,23 @@ public class Ring : WorldObjectComponent
     [Header("Hierarchy")]
     public GameObject pickupParticles;
 
-    [WorldIgnoreReference] public GameSound pickupSound = new GameSound();
+    public GameSound pickupSound = new GameSound();
 
     // Components
     private RespawnableItem respawnableItem;
 
     public delegate void OnPickup(Player player);
-    [WorldIgnoreReference] public OnPickup onPickup;
+    public OnPickup onPickup;
 
     private float awakeTime;
 
-    public override void WorldAwake()
+    void Awake()
     {
         respawnableItem = GetComponent<RespawnableItem>();
-        awakeTime = World.live.gameTime;
+        awakeTime = Time.unscaledTime;
     }
 
-    public override void WorldStart()
+    void Start()
     {
         // Hover above the ground
         RaycastHit hit;
@@ -42,19 +40,19 @@ public class Ring : WorldObjectComponent
         }
     }
 
-    public override void WorldUpdate(float deltaTime)
+    void Update()
     {
         if (isDroppedRing || respawnableItem.isSpawned)
         {
             // Spinny spin
-            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * deltaTime, 0));
+            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * Time.deltaTime, 0));
         }
     }
 
     private void OnTriggerStay(Collider other)
     {
         Player otherPlayer = other.GetComponent<Player>();
-        if (otherPlayer && (!isDroppedRing || World.live.gameTime - awakeTime >= pickupWarmupDuration))
+        if (otherPlayer && (!isDroppedRing || Time.unscaledTime - awakeTime >= pickupWarmupDuration))
         {
             otherPlayer.numRings++;
             pickupParticles.SetActive(true);
@@ -65,7 +63,7 @@ public class Ring : WorldObjectComponent
             if (!isDroppedRing)
                 respawnableItem.Pickup();
             else
-                World.Despawn(gameObject); // we aren't going to respawn here
+                Spawner.Despawn(gameObject); // we aren't going to respawn here
 
             onPickup?.Invoke(otherPlayer);
         }

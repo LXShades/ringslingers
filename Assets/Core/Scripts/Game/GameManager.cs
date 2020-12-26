@@ -54,9 +54,6 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        // Update network
-        World.live.Tick(Time.deltaTime);
-
         Netplay.singleton.Tick();
 
         // Do debug stuff

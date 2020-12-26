@@ -121,7 +121,6 @@ GameObject:
   m_Component:
   - component: {fileID: 7352825796714013432}
   - component: {fileID: 3620776001654559608}
-  - component: {fileID: 512623906272618797}
   - component: {fileID: 7352825796714013433}
   - component: {fileID: 7352825796714013435}
   - component: {fileID: 4451384450655814514}
@@ -168,20 +167,6 @@ MonoBehaviour:
   serverOnly: 0
   m_AssetId: 
   hasSpawned: 0
---- !u!114 &512623906272618797
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7352825796714013436}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e969874be7f155448bba1dbd69f077b8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
 --- !u!114 &7352825796714013433
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -196,8 +181,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  syncsPerSecond: 1
-  clonerInfo: 
   playerName: Fred
   playerId: 0
   input:
@@ -248,8 +231,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  syncsPerSecond: 1
-  clonerInfo: 
   futureness: 0.3
   resimulationStep: 0.08
   lastMoveLocalTime: 0
@@ -294,10 +275,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ec020f51922bab4f8a92a38ac34e8c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  syncsPerSecond: 0
-  clonerInfo: 
   colliders:
   - {fileID: 1784313262649898792}
   blockingCollisionLayers:
@@ -322,8 +299,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  syncsPerSecond: 0
-  clonerInfo: 
   defaultWeapon:
     weaponType: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
     ammo: 0

@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using UnityEngine;
 
-public class ThrownRing : WorldObjectComponent
+public class ThrownRing : NetworkBehaviour, IPredictableObject
 {
     [HideInInspector] public RingWeaponSettings settings;
 
@@ -8,15 +9,16 @@ public class ThrownRing : WorldObjectComponent
 
     private Vector3 velocity;
 
-    protected Player owner;
+    [SyncVar]
+    protected GameObject owner;
     private Rigidbody rb;
 
-    public override void WorldAwake()
+    void Awake()
     {
         rb = GetComponent<Rigidbody>();
     }
 
-    public override void WorldStart()
+    void Start()
     {
         float axisWobble = 0.5f;
 
@@ -29,13 +31,13 @@ public class ThrownRing : WorldObjectComponent
         }
     }
 
-    public override void WorldUpdate(float deltaTime)
+    public virtual void Update()
     {
         // Spin
-        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * deltaTime, spinAxis);
+        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * Time.deltaTime, spinAxis);
 
         // Move manually cuz... uh well, hmm, dangit rigidbody interpolation is not a thing in manually-simulated physics
-        transform.position += velocity * deltaTime;
+        transform.position += velocity * Time.deltaTime;
 
         // Improves collisions, kinda annoying but it be that way
         rb.velocity = velocity;
@@ -43,23 +45,25 @@ public class ThrownRing : WorldObjectComponent
 
     public void OnCollisionEnter(Collision collision)
     {
-        return;
-
         // Play despawn sound
         GameSounds.PlaySound(gameObject, settings.despawnSound);
 
         // Hurt any players we collided with
-        Player otherPlayer = collision.collider.GetComponent<Player>();
-        if (otherPlayer)
+        if (collision.collider.TryGetComponent(out Player otherPlayer) && owner)
         {
-            if (otherPlayer == owner)
+            if (otherPlayer.gameObject == owner)
                 return; // actually we're fine here
 
-            otherPlayer.Hurt(owner.gameObject);
+            otherPlayer.Hurt(owner);
         }
 
-        // Bye-bye!
-        World.Despawn(gameObject);
+        if (collision.collider.TryGetComponent(out ThrownRing thrownRing))
+        {
+            if (thrownRing.owner == owner)
+                return; // don't collider with our other rings
+        }
+
+        Destroy(gameObject);
     }
 
     public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction, float jumpAheadTime = 0f)
@@ -70,7 +74,7 @@ public class ThrownRing : WorldObjectComponent
                 Physics.IgnoreCollision(collider, ownerCollider);
         }
 
-        this.owner = owner;
+        this.owner = owner.gameObject;
         velocity = direction.normalized * settings.projectileSpeed;
         transform.position = spawnPosition;
 

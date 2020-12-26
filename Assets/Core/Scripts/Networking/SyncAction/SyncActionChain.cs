@@ -124,19 +124,23 @@ public class SyncActionChain
             if (oldChain != null)
             {
                 chain.requestTime = oldChain.requestTime; // transfer RTT to confirmation
-                oldChain.RewindAndRemove();
+                oldChain.RewindAndRemove(true);
             }
 
             chain.requestTime = Time.unscaledTime; // todo: maybe estimate RTT?
 
             // Execute the SyncActionChain
-            if (chain.Execute(ExecutionType.Confirming))
+            if (NetworkServer.active)
             {
-                if (NetworkServer.active)
+                if (chain.Execute(ExecutionType.Confirming))
                 {
                     // Distribute the completed chain to clients
                     NetworkServer.SendToAll(chain.Serialize());
                 }
+            }
+            else
+            {
+                chain.Execute(ExecutionType.Reconfirming);
             }
         }
 
@@ -150,7 +154,7 @@ public class SyncActionChain
                 Log.Write($"Predicted chain {predictedChains[i]} expired.");
 
                 // expired
-                predictedChains[i].RewindAndRemove();
+                predictedChains[i].RewindAndRemove(false);
             }
         }
     }
@@ -189,13 +193,20 @@ public class SyncActionChain
             }
             else if (executionType == ExecutionType.Confirming || executionType == ExecutionType.Reconfirming)
             {
-                // we're confirming this action, either on the server or client
-                wasSuccessful = actions[0].Call(this, SyncActionSystem.FunctionType.Confirm, false);
+                if (actions[0] != null)
+                {
+                    // we're confirming this action, either on the server or client
+                    wasSuccessful = actions[0].Call(this, SyncActionSystem.FunctionType.Confirm, executionType == ExecutionType.Confirming);
+                }
+                else
+                {
+                    Log.WriteError("Chain action 0 is null! Invalid chain.");
+                }
             }
         }
         catch (Exception e)
         {
-            Log.WriteError($"Exception during execution of {this}: {e.Message}");
+            Log.WriteException(e);
         }
 
         // Done!
@@ -207,13 +218,13 @@ public class SyncActionChain
     /// <summary>
     /// Rewinds this SyncActionChain
     /// </summary>
-    public void Rewind()
+    public void Rewind(bool isConfirming)
     {
         Log.Write($"{this}");
 
         for (int i = actions.Count - 1; i >= 0; i--)
         {
-            actions[i].Call(this, SyncActionSystem.FunctionType.Rewind, true);
+            actions[i].Call(this, isConfirming ? SyncActionSystem.FunctionType.Rewind : SyncActionSystem.FunctionType.Reject, true);
         }
 
         actions.Clear();
@@ -222,11 +233,9 @@ public class SyncActionChain
     /// <summary>
     /// Rewinds this SyncActionChain and, if predicted, removes from the predicted action chain list
     /// </summary>
-    public void RewindAndRemove()
+    public void RewindAndRemove(bool isConfirming)
     {
-        Log.Write($"{this}");
-
-        Rewind();
+        Rewind(isConfirming);
         predictedChains.Remove(this);
     }
 
@@ -271,7 +280,6 @@ public class SyncActionChain
 
         receivedChain.sourcePlayer = (byte)Netplay.singleton.GetPlayerIdFromConnectionId(conn.connectionId);
 
-        Debug.Log($"Received syncaction from connection ID {conn.connectionId} player ID {receivedChain.sourcePlayer}");
         receivedChains.Add(receivedChain);
     }
     #endregion
@@ -293,9 +301,16 @@ public class SyncActionChain
 
     public override string ToString()
     {
-        if (actions.Count > 0 && actions[0].GetType().GetGenericArguments().Length > 0)
+        if (actions.Count > 0)
         {
-            return $"SyncActionChain ({actions.Count} actions / {(actions.Count > 0 ? $"{actions[0].GetType().Name}<{actions[0].GetType().GetGenericArguments()[0].Name}>" : "empty")})";
+            if (actions[0] != null && actions[0].GetType().GetGenericArguments().Length > 0)
+            {
+                return $"SyncActionChain ({actions.Count} actions / {(actions.Count > 0 ? $"{actions[0].GetType().Name}<{actions[0].GetType().GetGenericArguments()[0].Name}>)" : "empty")})";
+            }
+            else
+            {
+                return $"SyncActionChain ({actions.Count} actions / <INVALID FIRST ACTION>)";
+            }
         }
         else
         {

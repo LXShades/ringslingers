@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class Player : WorldObjectComponent
+public class Player : NetworkBehaviour
 {
     public struct TestSyncActionParams : NetworkMessage
     {
@@ -76,12 +76,12 @@ public class Player : WorldObjectComponent
 
     public float localTime = -1;
 
-    public override void WorldAwake()
+    void Awake()
     {
         movement = GetComponent<CharacterMovement>();
     }
 
-    public override void WorldStart()
+    void Start()
     {
         Netplay.singleton.players[playerId] = this;
 
@@ -91,14 +91,14 @@ public class Player : WorldObjectComponent
         }
     }
 
-    public override void WorldUpdate(float deltaTime)
+    void Update()
     {
         // Receive inputs if we're local
         if (isLocal)
         {
             lastInput = input;
             input = PlayerInput.MakeLocalInput(lastInput);
-            movement.SetInput(World.live.localTime, input);
+            movement.SetInput(Time.unscaledTime, input);
         }
 
         // Update aim
@@ -107,19 +107,19 @@ public class Player : WorldObjectComponent
         // Invincibility blinky
         if (invincibilityTimeRemaining > 0)
         {
-            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - deltaTime, 0);
+            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - Time.deltaTime, 0);
 
             Renderer renderer = GetComponentInChildren<Renderer>();
             if (renderer && invincibilityTimeRemaining > 0)
-                renderer.enabled = ((int)(World.live.gameTime * hitInvincibilityBlinkRate) & 1) == 0;
+                renderer.enabled = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
             else
                 renderer.enabled = true; // we finished blinky blinkying
         }
 
         // Debug
-        if (Input.GetKeyDown(KeyCode.R))
+        if (hasAuthority && Input.GetKeyDown(KeyCode.R))
         {
-            Hurt(null);
+            SyncActionSystem.Request(Spawner.singleton, new Spawner.SyncActionSpawnObject() { prefab = droppedRingPrefab, position = transform.position + Vector3.up, rotation = Quaternion.identity });
         }
     }
 
@@ -179,7 +179,7 @@ public class Player : WorldObjectComponent
             for (int i = 0; i < currentNumToDrop; i++)
             {
                 float horizontalAngle = i * Mathf.PI * 2f / Mathf.Max(currentNumToDrop - 1, 1) + angleOffset;
-                Movement ringMovement = World.Spawn(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
+                Movement ringMovement = Spawner.Spawn(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
 
                 Debug.Assert(ringMovement);
                 ringMovement.velocity = new Vector3(Mathf.Sin(horizontalAngle) * horizontalVelocity, verticalVelocity, Mathf.Cos(horizontalAngle) * horizontalVelocity);

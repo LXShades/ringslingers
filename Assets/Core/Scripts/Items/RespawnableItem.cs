@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Dynamic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class RespawnableItem : WorldObjectComponent
+public class RespawnableItem : MonoBehaviour
 {
     private int originalLayer;
     private int despawnedLayer;
@@ -41,14 +38,14 @@ public class RespawnableItem : WorldObjectComponent
         }
     }
 
-    public override void WorldStart()
+    void Start()
     {
         originalLayer = gameObject.layer;
         despawnedLayer = LayerMask.NameToLayer("Despawned");
         originalPosition = transform.position;
     }
 
-    public override void WorldUpdate(float deltaTime)
+    void WorldUpdate(float deltaTime)
     {
         if (respawnCountdownTimer > 0)
         {

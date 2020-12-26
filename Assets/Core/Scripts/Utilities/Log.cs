@@ -27,4 +27,9 @@ public static class Log
     {
         Write(logText, LogType.Error, 2);
     }
+
+    public static void WriteException(Exception e)
+    {
+        Debug.LogException(e);
+    }
 }

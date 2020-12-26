@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class DespawnAfterDuration : WorldObjectComponent
+public class DespawnAfterDuration : MonoBehaviour
 {
     [Header("Despawn timing")]
     public float timeUntilDespawn = 1f;
@@ -19,23 +17,23 @@ public class DespawnAfterDuration : WorldObjectComponent
     // Components
     private Renderer myRenderer;
 
-    public override void WorldAwake()
+    void Awake()
     {
         despawnTimeRemaining = timeUntilDespawn;
         myRenderer = GetComponent<Renderer>();
     }
 
-    public override void WorldUpdate(float deltaTime)
+    void Update()
     {
         // Countdown!
-        despawnTimeRemaining -= World.live.deltaTime;
+        despawnTimeRemaining -= Time.deltaTime;
 
         // Blink!
         if (myRenderer)
         {
             float rate = blinkRateOverTime.Evaluate(timeUntilDespawn - despawnTimeRemaining);
 
-            perBlinkTimer += deltaTime;
+            perBlinkTimer += Time.deltaTime;
 
             if (rate > 0)
             {
@@ -57,7 +55,7 @@ public class DespawnAfterDuration : WorldObjectComponent
             if (despawnSound.clip)
                 GameSounds.PlaySound(gameObject, despawnSound);
 
-            World.Despawn(gameObject);
+            Spawner.Despawn(gameObject);
         }
     }
 }

@@ -61,7 +61,7 @@ public class CharacterMovement : MovementMark2
 
     private bool isResimmingMovement = false;
 
-    public override void WorldAwake()
+    void Awake()
     {
         player = GetComponent<Player>();
         move = GetComponent<Movement>();
@@ -135,7 +135,7 @@ public class CharacterMovement : MovementMark2
             return transform.position.y <= 0;
 
         RaycastHit[] hits = new RaycastHit[10];
-        int numHits = World.live.physics.Raycast(transform.position + Vector3.up * 0.1f, -Vector3.up.normalized, hits, 0.199f, ~0, QueryTriggerInteraction.Ignore);
+        int numHits = Physics.RaycastNonAlloc(transform.position + Vector3.up * 0.1f, -Vector3.up.normalized, hits, 0.199f, ~0, QueryTriggerInteraction.Ignore);
 
         for (int i = 0; i < numHits; i++)
         {
@@ -229,41 +229,4 @@ public class CharacterMovement : MovementMark2
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
         velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
     }
-
-    #region Networking
-    public override void ReadSyncer(System.IO.Stream stream)
-    {
-        Vector3 originalPosition = transform.position;
-        Vector3 originalVelocity = velocity;
-
-        using (System.IO.BinaryReader reader = new System.IO.BinaryReader(stream, System.Text.Encoding.ASCII, true))
-        {
-            Vector3 position;
-            position.x = reader.ReadSingle();
-            position.y = reader.ReadSingle();
-            position.z = reader.ReadSingle();
-            velocity.x = reader.ReadSingle();
-            velocity.y = reader.ReadSingle();
-            velocity.z = reader.ReadSingle();
-
-            transform.position = position;
-        }
-
-        if (originalPosition != transform.position || originalVelocity != velocity)
-            Log.Write($"Resync {player.playerId}@{World.live.gameTime.ToString("0.0")}");
-    }
-
-    public override void WriteSyncer(System.IO.Stream stream)
-    {
-        using (System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream, System.Text.Encoding.ASCII, true))
-        {
-            writer.Write(transform.position.x);
-            writer.Write(transform.position.y);
-            writer.Write(transform.position.z);
-            writer.Write(velocity.x);
-            writer.Write(velocity.y);
-            writer.Write(velocity.z);
-        }
-    }
-    #endregion
 }

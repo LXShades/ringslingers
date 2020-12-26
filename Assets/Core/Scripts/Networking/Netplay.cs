@@ -1,5 +1,4 @@
 ﻿using Mirror;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -67,8 +66,6 @@ public class Netplay : MonoBehaviour
         get; private set;
     }
 
-    public readonly Dictionary<Guid, GameObject> networkedPrefabs = new Dictionary<Guid, GameObject>();
-
     private bool InitNet()
     {
         if (net)
@@ -91,18 +88,8 @@ public class Netplay : MonoBehaviour
 
         net.onServerAddPlayer += OnNewPlayer;
 
-        // Register spawnable objects
-        foreach (GameObject obj in NetMan.singleton.spawnPrefabs)
-        {
-            NetworkIdentity identity = obj.GetComponent<NetworkIdentity>();
-
-            if (identity)
-                networkedPrefabs[identity.assetId] = obj;
-        }
-
-        NetworkIdentity playerIdentity = NetMan.singleton.playerPrefab ? NetMan.singleton.playerPrefab.GetComponent<NetworkIdentity>() : null;
-        if (playerIdentity)
-            networkedPrefabs[playerIdentity.assetId] = playerIdentity.gameObject;
+        NetworkDiagnostics.InMessageEvent += NetworkDiagnostics_InMessageEvent;
+        NetworkDiagnostics.OutMessageEvent += NetworkDiagnostics_OutMessageEvent;
 
         return true;
     }
@@ -223,8 +210,9 @@ public class Netplay : MonoBehaviour
         }
 
         // Spawn the player
-        Player player = World.Spawn(GameManager.singleton.playerPrefab).GetComponent<Player>();
+        Player player = Spawner.Spawn(GameManager.singleton.playerPrefab).GetComponent<Player>();
 
+        player.gameObject.name = $"Player {player.playerId}";
         player.playerId = id;
         players[id] = player;
 
@@ -250,9 +238,18 @@ public class Netplay : MonoBehaviour
     #region Debugging
     private int netStatFrameNum = 0;
     private int[] numTicksPerFrame = new int[500];
-    private int numReceivedTicks = 0;
-    private int numSentTicks = 0;
     private int numReceivedBytes = 0;
+    private int numSentBytes = 0;
+
+    private void NetworkDiagnostics_OutMessageEvent(NetworkDiagnostics.MessageInfo obj)
+    {
+        numSentBytes += (obj.bytes + 40) * obj.count;
+    }
+
+    private void NetworkDiagnostics_InMessageEvent(NetworkDiagnostics.MessageInfo obj)
+    {
+        numReceivedBytes += (obj.bytes + 40) * obj.count;
+    }
 
     void UpdateNetStat()
     {
@@ -261,26 +258,9 @@ public class Netplay : MonoBehaviour
         // Update netstat
         if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
         {
-            float averageTicksPerFrame = 0;
-            int maxTicksPerFrame = System.Int32.MinValue, minTicksPerFrame = System.Int32.MaxValue;
-            int numFramesWhereTicksWereReceived = 0;
-
-            for (int i = 0; i < Mathf.Min(netStatFrameNum, numTicksPerFrame.Length); i++)
-            {
-                averageTicksPerFrame += numTicksPerFrame[i];
-                if (numTicksPerFrame[i] > 0)
-                {
-                    numFramesWhereTicksWereReceived++;
-                    maxTicksPerFrame = Mathf.Max(maxTicksPerFrame, numTicksPerFrame[i]);
-                    minTicksPerFrame = Mathf.Min(minTicksPerFrame, numTicksPerFrame[i]);
-                }
-            }
-            averageTicksPerFrame /= Mathf.Max(numFramesWhereTicksWereReceived, 1);
-
-            netStat = $"Bytes recv: {numReceivedBytes}\nTicks recv: {numReceivedTicks}\nTicks sent: {numSentTicks}\nAvg ticks per frame: {averageTicksPerFrame} (max {maxTicksPerFrame} min {minTicksPerFrame}";
-            numSentTicks = 0;
-            numReceivedTicks = 0;
+            netStat = $"Bytes send/recv: {numSentBytes/1024f:0.0}/{numReceivedBytes / 1024f:0.0}\n";
             numReceivedBytes = 0;
+            numSentBytes = 0;
             netStatFrameNum = 0;
 
             System.Array.Clear(numTicksPerFrame, 0, numTicksPerFrame.Length);

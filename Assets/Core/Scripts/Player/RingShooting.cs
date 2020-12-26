@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncActionThrowRing>
+public class RingShooting : NetworkBehaviour, ISyncAction<RingShooting.SyncActionThrowRing>
 {
     /// <summary>
     /// The default weapon to fire
@@ -51,16 +51,12 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
         public float backupThrowTime;
     }
 
-    public override void WorldAwake()
+    void Awake()
     {
         player = GetComponent<Player>();
     }
 
-    public override void WorldStart()
-    {
-    }
-
-    public override void WorldUpdate(float deltaTime)
+    void Update()
     {
         if (equippedWeapons.Count > 0)
             currentWeapon = equippedWeapons[equippedWeapons.Count - 1];
@@ -79,7 +75,8 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
                 direction = player.input.aimDirection
             });*/
 
-            SyncActionSystem.Request(this, new SyncActionThrowRing() { position = spawnPosition.position, direction = player.input.aimDirection });
+            //SyncActionSystem.Request(this, new SyncActionThrowRing() { position = spawnPosition.position, direction = player.input.aimDirection });
+            LocalDropRings();
 
             hasFiredOnThisClick = true;
         }
@@ -88,7 +85,7 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
         for (int i = 0; i < equippedWeapons.Count; i++)
         {
             if (equippedWeapons[i].weaponType.ammoIsTime)
-                equippedWeapons[i].ammo -= deltaTime;
+                equippedWeapons[i].ammo -= Time.deltaTime;
         }
 
         // Remove weapons with no ammo remaining
@@ -97,7 +94,7 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
             if (equippedWeapons[i].ammo <= 0)
                 equippedWeapons.RemoveAt(i--);
         }
-   
+
         hasFiredOnThisClick &= player.input.btnFire;
     }
 
@@ -116,6 +113,46 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
         equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
     }
 
+    private void LocalDropRings()
+    {
+        CmdThrowRing();
+    }
+
+    [Command]
+    private void CmdThrowRing()
+    {
+        // on server, spawn the object
+        GameObject ring = Spawner.Spawn(currentWeapon.weaponType.prefab);
+
+        if (ring != null)
+        {
+            ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
+            Debug.Assert(ringAsThrownRing);
+
+            ringAsThrownRing.settings = currentWeapon.weaponType;
+            ringAsThrownRing.Throw(player, transform.position, player.input.aimDirection, 0);
+
+            GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
+
+            lastFiredRingTime = Time.time;
+
+            player.numRings--;
+            if (!currentWeapon.weaponType.ammoIsTime)
+                currentWeapon.ammo--;
+
+            hasFiredOnThisClick = true;
+        }
+
+        // tell the client this was successful
+        TargetThrowRing();
+    }
+
+    [TargetRpc]
+    private void TargetThrowRing()
+    {
+
+    }
+
     public bool OnPredict(SyncActionChain chain, ref SyncActionThrowRing data)
     {
         data.backupThrowTime = lastFiredRingTime;
@@ -124,7 +161,7 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
         return OnConfirm(chain, ref data);
     }
 
-    public void OnRewind(SyncActionChain chain, ref SyncActionThrowRing data)
+    public void OnRewind(SyncActionChain chain, ref SyncActionThrowRing data, bool isConfirmed)
     {
         lastFiredRingTime = data.backupThrowTime;
         // ring should be despawned by now
@@ -134,14 +171,14 @@ public class RingShooting : WorldObjectComponent, ISyncAction<RingShooting.SyncA
     {
         if (Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
         {
-            var spawnParams = new World.SyncActionSpawnObject()
+            var spawnParams = new Spawner.SyncActionSpawnObject()
             {
                 prefab = currentWeapon.weaponType.prefab,
                 position = data.position,
                 rotation = Quaternion.identity
             };
 
-            if (SyncActionSystem.Request(World.live, ref spawnParams))
+            if (SyncActionSystem.Request(Spawner.singleton, ref spawnParams))
             {
                 GameObject ring = spawnParams.spawnedObject?.gameObject;
 

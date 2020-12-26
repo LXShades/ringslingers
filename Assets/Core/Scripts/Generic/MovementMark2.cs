@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MovementMark2 : WorldObjectComponent
+public class MovementMark2 : NetworkBehaviour
 {
     public float futureness = 0.3f;
 
@@ -28,7 +28,7 @@ public class MovementMark2 : WorldObjectComponent
 
         public void Make(MovementMark2 source)
         {
-            time = World.live.localTime;
+            time = Time.unscaledTime;
             position = source.transform.position;
             velocity = source.velocity;
             state = (source as CharacterMovement).state;
@@ -67,7 +67,7 @@ public class MovementMark2 : WorldObjectComponent
 
     public float reconcilationPositionTolerance = 0.3f;
 
-    public override void WorldUpdate(float deltaTime)
+    void Update()
     {
         if (pendingMoveState != null && !hasAuthority)
         {
@@ -75,8 +75,8 @@ public class MovementMark2 : WorldObjectComponent
         }
 
         // Tick movement locally here
-        TickMovement(deltaTime, input, moveHistory.Count > 0 ? moveHistory[0].input : new PlayerInput(), false);
-        moveHistory.Insert(World.live.localTime, new MoveState(this)
+        TickMovement(Time.deltaTime, input, moveHistory.Count > 0 ? moveHistory[0].input : new PlayerInput(), false);
+        moveHistory.Insert(Time.unscaledTime, new MoveState(this)
         {
             input = input
         });
@@ -101,7 +101,7 @@ public class MovementMark2 : WorldObjectComponent
 
         // Send the movement state occasionally AFTER movement has executed
         // (this should treat jumps, etc a bit nicer)
-        if ((int)((World.live.localTime - deltaTime) * Netplay.singleton.playerTickrate) != (int)(World.live.localTime * Netplay.singleton.playerTickrate))
+        if ((int)((Time.unscaledTime - Time.deltaTime) * Netplay.singleton.playerTickrate) != (int)(Time.unscaledTime * Netplay.singleton.playerTickrate))
         {
             SendMovementState();
         }
@@ -158,7 +158,7 @@ public class MovementMark2 : WorldObjectComponent
             CmdSendMovement(new MoveState(this)
             {
                 input = moveHistory.Count > 0 ? moveHistory[0].input : new PlayerInput(),
-                time = World.live.localTime
+                time = Time.unscaledTime
             });
         }
 

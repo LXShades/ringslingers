@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 339010217050480060}
   - component: {fileID: 5223553386541877840}
-  - component: {fileID: 8718821590848772179}
   - component: {fileID: 3682744285042217497}
   - component: {fileID: 1513010616310851283}
   - component: {fileID: 233868881636913150}
@@ -55,21 +54,6 @@ MonoBehaviour:
   serverOnly: 0
   m_AssetId: 
   hasSpawned: 0
---- !u!114 &8718821590848772179
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1152841599159748358}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e969874be7f155448bba1dbd69f077b8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  localId: 0
 --- !u!33 &3682744285042217497
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -145,10 +129,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de1131573d6397440b56301f169589e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  syncsPerSecond: 0
-  clonerInfo: 
   spinSpeed: 270
   hoverHeight: 0.64
   isDroppedRing: 0
@@ -171,10 +151,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18e6f51da8c84284ca6029c31a7aaa77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  syncsPerSecond: 0
-  clonerInfo: 
 --- !u!54 &233868881636913148
 Rigidbody:
   m_ObjectHideFlags: 0

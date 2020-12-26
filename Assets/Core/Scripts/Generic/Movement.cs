@@ -1,11 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.ComponentModel.Design;
-using System.Linq;
-using UnityEngine;
-using UnityEngine.Animations;
+﻿using UnityEngine;
 
-public class Movement : WorldObjectComponent
+public class Movement : MonoBehaviour
 {
     [Header("Collision")]
     [Header("Note: Colliders cannot currently rotate")]
@@ -32,17 +27,17 @@ public class Movement : WorldObjectComponent
     /// </summary>
     [HideInInspector] public Vector3 velocity;
 
-    public override void WorldUpdate(float deltaTime)
+    void Update()
     {
         if (!useManualPhysics)
         {
             // Do le gravity
-            velocity.y -= GameManager.singleton.gravity * World.live.deltaTime * gravityMultiplier;
+            velocity.y -= GameManager.singleton.gravity * Time.deltaTime * gravityMultiplier;
 
             // Do le move
             RaycastHit hit;
 
-            if (Move(velocity * deltaTime, out hit))
+            if (Move(velocity * Time.deltaTime, out hit))
             {
                 Vector3 resistanceVector = hit.normal * (-Vector3.Dot(hit.normal, velocity) * (1f + bounceFactor));
                 Vector3 frictionVector = -velocity * bounceFriction;
@@ -68,7 +63,6 @@ public class Movement : WorldObjectComponent
         int numIterations = 2;
         Vector3 currentMovement = offset;
         bool hasHitOccurred = false;
-        PhysicsScene physics = World.live.physics;
 
         for (int iteration = 0; iteration < numIterations; iteration++)
         {
@@ -83,7 +77,7 @@ public class Movement : WorldObjectComponent
                 if (collider.GetType() == typeof(SphereCollider))
                 {
                     SphereCollider sphere = collider as SphereCollider;
-                    physics.SphereCast(
+                    Physics.SphereCastNonAlloc(
                         transform.TransformPoint(sphere.center),
                         sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
                         currentMovement.normalized,
@@ -98,7 +92,7 @@ public class Movement : WorldObjectComponent
                     Vector3 up = (capsule.direction == 0 ? transform.right : (capsule.direction == 1 ? transform.up : transform.forward)) * (Mathf.Max(capsule.height * 0.5f - capsule.radius, 0));
                     Vector3 center = transform.TransformPoint(capsule.center);
 
-                    physics.CapsuleCast(
+                    Physics.CapsuleCastNonAlloc(
                         center + up, center - up,
                         capsule.radius * 0.5f * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
                         currentMovement.normalized,
