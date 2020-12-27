@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RingShooting : NetworkBehaviour, ISyncAction<RingShooting.SyncActionThrowRing>
+public class RingShooting : NetworkBehaviour
 {
     /// <summary>
     /// The default weapon to fire
@@ -43,14 +43,6 @@ public class RingShooting : NetworkBehaviour, ISyncAction<RingShooting.SyncActio
     // Components
     private Player player;
 
-    // SyncActions
-    public struct SyncActionThrowRing : NetworkMessage
-    {
-        public Vector3 position;
-        public Vector3 direction;
-        public float backupThrowTime;
-    }
-
     void Awake()
     {
         player = GetComponent<Player>();
@@ -68,15 +60,7 @@ public class RingShooting : NetworkBehaviour, ISyncAction<RingShooting.SyncActio
         {
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
 
-            /*syncActionThrowRing.Request(new ThrowRingData()
-            {
-                time = World.live.gameTime,
-                position = spawnPosition.position,
-                direction = player.input.aimDirection
-            });*/
-
-            //SyncActionSystem.Request(this, new SyncActionThrowRing() { position = spawnPosition.position, direction = player.input.aimDirection });
-            LocalDropRings();
+            LocalThrowRing();
 
             hasFiredOnThisClick = true;
         }
@@ -113,35 +97,36 @@ public class RingShooting : NetworkBehaviour, ISyncAction<RingShooting.SyncActio
         equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
     }
 
-    private void LocalDropRings()
+    private void LocalThrowRing()
     {
-        CmdThrowRing();
+        // spawn temporary ring
+        Spawner.StartSpawnPrediction();
+        GameObject predictedRing = Spawner.PredictSpawn(currentWeapon.weaponType.prefab, transform.position, Quaternion.identity);
+        FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
+
+        CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction());
     }
 
     [Command]
-    private void CmdThrowRing()
+    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction)
     {
+        if (Vector3.Distance(position, spawnPosition.position) > 0.5f || Mathf.Abs(direction.sqrMagnitude - 1.0f) > 0.01f)
+        {
+            return; // invalid throw
+        }
+
         // on server, spawn the object
-        GameObject ring = Spawner.Spawn(currentWeapon.weaponType.prefab);
+        Spawner.ApplySpawnPrediction(spawnPrediction);
+        GameObject ring = Spawner.StartSpawn(currentWeapon.weaponType.prefab, position, Quaternion.identity);
 
         if (ring != null)
-        {
-            ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
-            Debug.Assert(ringAsThrownRing);
+            FireSpawnedRing(ring, position, direction);
 
-            ringAsThrownRing.settings = currentWeapon.weaponType;
-            ringAsThrownRing.Throw(player, transform.position, player.input.aimDirection, 0);
+        Spawner.FinalizeSpawn(ring);
 
-            GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
-
-            lastFiredRingTime = Time.time;
-
-            player.numRings--;
-            if (!currentWeapon.weaponType.ammoIsTime)
-                currentWeapon.ammo--;
-
-            hasFiredOnThisClick = true;
-        }
+        // RPC it to other clients
+        // wait, actually it'll already be spawned
+        //RpcThrowRing(ring, position, direction);
 
         // tell the client this was successful
         TargetThrowRing();
@@ -153,60 +138,22 @@ public class RingShooting : NetworkBehaviour, ISyncAction<RingShooting.SyncActio
 
     }
 
-    public bool OnPredict(SyncActionChain chain, ref SyncActionThrowRing data)
+    private void FireSpawnedRing(GameObject ring, Vector3 position, Vector3 direction)
     {
-        data.backupThrowTime = lastFiredRingTime;
+        ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
+        Debug.Assert(ringAsThrownRing);
 
-        // just call ConfirmRingThrow
-        return OnConfirm(chain, ref data);
-    }
+        ringAsThrownRing.settings = currentWeapon.weaponType;
+        ringAsThrownRing.Throw(player, position, direction, 0);
 
-    public void OnRewind(SyncActionChain chain, ref SyncActionThrowRing data, bool isConfirmed)
-    {
-        lastFiredRingTime = data.backupThrowTime;
-        // ring should be despawned by now
-    }
+        GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
-    public bool OnConfirm(SyncActionChain chain, ref SyncActionThrowRing data)
-    {
-        if (Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond && player.numRings > 0)
-        {
-            var spawnParams = new Spawner.SyncActionSpawnObject()
-            {
-                prefab = currentWeapon.weaponType.prefab,
-                position = data.position,
-                rotation = Quaternion.identity
-            };
+        lastFiredRingTime = Time.time;
 
-            if (SyncActionSystem.Request(Spawner.singleton, ref spawnParams))
-            {
-                GameObject ring = spawnParams.spawnedObject?.gameObject;
+        player.numRings--;
+        if (!currentWeapon.weaponType.ammoIsTime)
+            currentWeapon.ammo--;
 
-                if (ring != null)
-                {
-                    ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
-                    Debug.Assert(ringAsThrownRing);
-
-                    ringAsThrownRing.settings = currentWeapon.weaponType;
-                    ringAsThrownRing.Throw(player, data.position, data.direction, chain.timeSinceRequest);
-
-                    GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
-
-                    lastFiredRingTime = Time.time;
-
-                    player.numRings--;
-                    if (!currentWeapon.weaponType.ammoIsTime)
-                        currentWeapon.ammo--;
-
-                    hasFiredOnThisClick = true;
-                }
-            }
-
-            return true;
-        }
-        else
-        {
-            return false; // nowt throwin'
-        }
+        hasFiredOnThisClick = true;
     }
 }

@@ -101,9 +101,6 @@ public class Player : NetworkBehaviour
             movement.SetInput(Time.unscaledTime, input);
         }
 
-        // Update aim
-        float horizontalRads = input.horizontalAim * Mathf.Deg2Rad, verticalRads = input.verticalAim * Mathf.Deg2Rad;
-
         // Invincibility blinky
         if (invincibilityTimeRemaining > 0)
         {
@@ -114,12 +111,6 @@ public class Player : NetworkBehaviour
                 renderer.enabled = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
             else
                 renderer.enabled = true; // we finished blinky blinkying
-        }
-
-        // Debug
-        if (hasAuthority && Input.GetKeyDown(KeyCode.R))
-        {
-            SyncActionSystem.Request(Spawner.singleton, new Spawner.SyncActionSpawnObject() { prefab = droppedRingPrefab, position = transform.position + Vector3.up, rotation = Quaternion.identity });
         }
     }
 

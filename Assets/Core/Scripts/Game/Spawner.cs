@@ -3,8 +3,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Spawner : MonoBehaviour, ISyncAction<Spawner.SyncActionSpawnObject>
+public class Spawner : MonoBehaviour
 {
+    public struct SpawnPrediction
+    {
+        public ushort startId;
+    }
+
     public static Spawner singleton => _singleton ?? (_singleton = FindObjectOfType<Spawner>());
     private static Spawner _singleton;
 
@@ -12,52 +17,12 @@ public class Spawner : MonoBehaviour, ISyncAction<Spawner.SyncActionSpawnObject>
     private readonly Dictionary<Guid, GameObject> prefabByGuid = new Dictionary<Guid, GameObject>();
 
     public List<GameObject> spawnablePrefabs = new List<GameObject>();
+    
+    private bool isPredictingSpawn = false;
+    private SpawnPrediction activeSpawnPrediction;
 
-    private byte nextClientPredictId = 0;
-
-    public struct SyncActionSpawnObject : NetworkMessage
-    {
-        public GameObject prefab
-        {
-            set
-            {
-                if (value)
-                {
-                    NetworkIdentity identity = value.GetComponent<NetworkIdentity>();
-
-                    if (identity)
-                    {
-                        assetId = value.GetComponent<NetworkIdentity>().assetId;
-                    }
-
-                    if (identity == null || assetId == Guid.Empty)
-                    {
-                        Log.WriteWarning($"Could not obtain an assetId from object \"{value.name}\"");
-                        assetId = Guid.Empty;
-                    }
-                }
-            }
-            get
-            {
-                if (assetId != Guid.Empty && Spawner.singleton.prefabByGuid.TryGetValue(assetId, out GameObject prefabObject))
-                {
-                    return prefabObject;
-                }
-                else
-                {
-                    Log.WriteWarning($"Could not find prefab of ID {assetId}");
-                    return null;
-                }
-            }
-        }
-
-        public Guid assetId;
-        public Vector3 position;
-        public Quaternion rotation;
-        public GameObject spawnedObject;
-        public byte clientPredictId;
-        public uint serverNetId;
-    }
+    private byte nextClientPredictionId = 0;
+    private ushort nextServerPredictionId = 0;
 
     void Awake()
     {
@@ -118,15 +83,6 @@ public class Spawner : MonoBehaviour, ISyncAction<Spawner.SyncActionSpawnObject>
         return Instantiate(prefab, position, rotation);
     }
 
-    public static void FinalizeSpawn(GameObject target)
-    {
-        if (NetworkServer.active && target.GetComponent<NetworkIdentity>() != null)
-        {
-            NetworkServer.Spawn(target);
-            SyncActionSystem.RegisterSyncActions(target);
-        }
-    }
-
     public static GameObject Spawn(GameObject prefab)
     {
         GameObject obj = Instantiate(prefab);
@@ -143,6 +99,21 @@ public class Spawner : MonoBehaviour, ISyncAction<Spawner.SyncActionSpawnObject>
         return obj;
     }
 
+    public static void FinalizeSpawn(GameObject target)
+    {
+        if (NetworkServer.active && target.TryGetComponent(out NetworkIdentity identity))
+        {
+            if (target.GetComponent<Predictable>() != null)
+            {
+                identity.predictedId = singleton.nextServerPredictionId;
+                singleton.nextServerPredictionId = (ushort)((singleton.nextServerPredictionId & ~0xFF) | ((singleton.nextServerPredictionId + 1) & 0xFF));
+            }
+
+            NetworkServer.Spawn(target);
+            SyncActionSystem.RegisterSyncActions(target);
+        }
+    }
+
     public static void Despawn(GameObject target)
     {
         Destroy(target);
@@ -153,16 +124,43 @@ public class Spawner : MonoBehaviour, ISyncAction<Spawner.SyncActionSpawnObject>
         return prefab.GetComponent<Predictable>() && prefab.GetComponent<NetworkIdentity>();
     }
 
-    private static GameObject PredictSpawn(GameObject prefab, Vector3 position, Quaternion rotation)
+    public static void StartSpawnPrediction()
     {
+        singleton.isPredictingSpawn = true;
+        singleton.activeSpawnPrediction = new SpawnPrediction() { startId = (ushort)((Netplay.singleton.localPlayerId << 8) | singleton.nextClientPredictionId) };
+    }
+
+    public static SpawnPrediction EndSpawnPrediction()
+    {
+        singleton.isPredictingSpawn = false;
+        return singleton.activeSpawnPrediction;
+    }
+
+    public static void ApplySpawnPrediction(SpawnPrediction prediction)
+    {
+        singleton.nextServerPredictionId = prediction.startId;
+    }
+
+    /// <summary>
+    /// Spawns a predicted object
+    /// </summary>
+    [Client]
+    public static GameObject PredictSpawn(GameObject prefab, Vector3 position, Quaternion rotation)
+    {
+        if (!singleton.isPredictingSpawn)
+            Log.WriteWarning("You should call StartSpawnPrediction before predicting a spawn and send the result to the server after EndSpawnPrediction.");
+
         GameObject obj = Instantiate(prefab, position, rotation);
 
         if (obj && obj.TryGetComponent(out NetworkIdentity identity) && obj.TryGetComponent(out Predictable predictable))
         {
             // player-specific "predictable object ID" which we can use later to replace the object
-            identity.predictedId = (ushort)((Netplay.singleton.localPlayerId << 8) | singleton.nextClientPredictId);
+            identity.predictedId = (ushort)((Netplay.singleton.localPlayerId << 8) | singleton.nextClientPredictionId);
+
+            predictable.isPrediction = true;
+
             singleton.predictedSpawns[identity.predictedId] = predictable;
-            singleton.nextClientPredictId++;
+            singleton.nextClientPredictionId++;
         }
         else
         {
@@ -181,10 +179,11 @@ public class Spawner : MonoBehaviour, ISyncAction<Spawner.SyncActionSpawnObject>
                 if (predictable.TryGetComponent(out NetworkIdentity identity) && identity.assetId == spawnMessage.assetId)
                 {
                     // it's the same object, and we predicted it, let's replace it!
-                    Log.Write($"Successfully predicted spawn of {predictable.gameObject}!");
+                    predictable.isPrediction = false;
                     return predictable.gameObject;
                 }
             }
+
             Log.Write($"Spawning a {prefabByGuid[spawnMessage.assetId]}");
             return Spawn(prefabByGuid[spawnMessage.assetId], spawnMessage.position, spawnMessage.rotation);
         }
@@ -202,89 +201,5 @@ public class Spawner : MonoBehaviour, ISyncAction<Spawner.SyncActionSpawnObject>
     private void PostSpawnHandler(GameObject target)
     {
         SyncActionSystem.RegisterSyncActions(target);
-    }
-
-    public bool OnPredict(SyncActionChain chain, ref SyncActionSpawnObject data)
-    {
-        if (data.prefab == null)
-        {
-            Log.WriteError("Predicted prefab was null - object probably isn't in spawnables.");
-            return false;
-        }
-
-        if (CanPredictSpawn(data.prefab))
-        {
-            data.spawnedObject = PredictSpawn(data.prefab, data.position, data.rotation);
-
-            if (data.spawnedObject)
-            {
-                data.clientPredictId = (byte)data.spawnedObject.GetComponent<NetworkIdentity>().predictedId;
-            }
-        }
-
-        return true;
-    }
-
-    public bool OnConfirm(SyncActionChain chain, ref SyncActionSpawnObject data)
-    {
-        if (NetworkServer.active)
-        {
-            if (prefabByGuid.TryGetValue(data.assetId, out GameObject prefab))
-            {
-                data.spawnedObject = StartSpawn(prefab, data.position, data.rotation);
-
-                if (data.spawnedObject)
-                {
-                    NetworkIdentity identity = data.spawnedObject.GetComponent<NetworkIdentity>();
-
-                    // inform the client that this is the object they predicted so they can replace it without respawning it
-                    identity.predictedId = (ushort)((chain.sourcePlayer << 8) | data.clientPredictId);
-
-                    FinalizeSpawn(data.spawnedObject);
-
-                    if (identity)
-                    {
-                        // the client shall know what this object is
-                        data.serverNetId = identity.netId;
-                    }
-                }
-                else
-                {
-                    data.serverNetId = uint.MaxValue; // spawned object isn't a valid networked object
-                    Log.WriteWarning($"Spawned object {data.spawnedObject} isn't networkable and won't be permanently spawned");
-                }
-
-                return true;
-            }
-            else
-            {
-                Log.WriteError($"Spawn failed: Prefab not found from Asset ID {data.assetId}");
-                data.spawnedObject = null;
-                data.serverNetId = uint.MaxValue;
-                return false;
-            }
-        }
-        else
-        {
-            if (NetworkIdentity.spawned.TryGetValue(data.serverNetId, out NetworkIdentity identity) && identity != null)
-            {
-                data.spawnedObject = identity.gameObject;
-                return true;
-            }
-            else
-            {
-                Log.WriteError($"Could not retrieve spawned object: object (ID: {data.serverNetId}) not found in spawned)");
-                return false;
-            }
-        }
-    }
-
-    public void OnRewind(SyncActionChain chain, ref SyncActionSpawnObject data, bool isConfirmed)
-    {
-        if (data.spawnedObject && !isConfirmed)
-        {
-            Despawn(data.spawnedObject.gameObject);
-            data.spawnedObject = null;
-        }
     }
 }

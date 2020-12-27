@@ -7,6 +7,7 @@ public class ThrownRing : NetworkBehaviour, IPredictableObject
 
     private Vector3 spinAxis;
 
+    [SyncVar]
     private Vector3 velocity;
 
     [SyncVar]
