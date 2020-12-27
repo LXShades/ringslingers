@@ -61,7 +61,6 @@ public class RingShooting : NetworkBehaviour
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
 
             LocalThrowRing();
-
             hasFiredOnThisClick = true;
         }
 
@@ -82,7 +81,7 @@ public class RingShooting : NetworkBehaviour
         hasFiredOnThisClick &= player.input.btnFire;
     }
 
-    public void AddWeapon(RingWeaponSettings weaponType)
+    public void AddWeaponAmmo(RingWeaponSettings weaponType)
     {
         foreach (EquippedRingWeapon weapon in equippedWeapons)
         {
@@ -97,25 +96,28 @@ public class RingShooting : NetworkBehaviour
         equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
     }
 
+    private bool CanThrowRing() => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond;
+
     private void LocalThrowRing()
     {
-        // spawn temporary ring
-        Spawner.StartSpawnPrediction();
-        GameObject predictedRing = Spawner.PredictSpawn(currentWeapon.weaponType.prefab, transform.position, Quaternion.identity);
-        FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
+        if (CanThrowRing())
+        {
+            // spawn temporary ring
+            Spawner.StartSpawnPrediction();
+            GameObject predictedRing = Spawner.PredictSpawn(currentWeapon.weaponType.prefab, transform.position, Quaternion.identity);
+            FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
 
-        CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction());
+            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction());
+        }
     }
 
     [Command]
     private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction)
     {
-        if (Vector3.Distance(position, spawnPosition.position) > 0.5f || Mathf.Abs(direction.sqrMagnitude - 1.0f) > 0.01f)
-        {
+        if (!CanThrowRing() || Vector3.Distance(position, spawnPosition.position) > 0.5f || Mathf.Abs(direction.sqrMagnitude - 1.0f) > 0.01f)
             return; // invalid throw
-        }
 
-        // on server, spawn the object
+        // on server, spawn the ring properly and match it to the client prediction
         Spawner.ApplySpawnPrediction(spawnPrediction);
         GameObject ring = Spawner.StartSpawn(currentWeapon.weaponType.prefab, position, Quaternion.identity);
 
@@ -130,6 +132,11 @@ public class RingShooting : NetworkBehaviour
 
         // tell the client this was successful
         TargetThrowRing();
+
+        // Update stats
+        player.numRings--;
+        if (!currentWeapon.weaponType.ammoIsTime)
+            currentWeapon.ammo--;
     }
 
     [TargetRpc]
@@ -149,11 +156,5 @@ public class RingShooting : NetworkBehaviour
         GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
         lastFiredRingTime = Time.time;
-
-        player.numRings--;
-        if (!currentWeapon.weaponType.ammoIsTime)
-            currentWeapon.ammo--;
-
-        hasFiredOnThisClick = true;
     }
 }

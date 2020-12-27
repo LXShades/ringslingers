@@ -17,6 +17,6 @@ public class RingWeaponPickup : MonoBehaviour
 
     private void OnRingPickedUp(Player player)
     {
-        player.GetComponent<RingShooting>().AddWeapon(weaponType);
+        player.GetComponent<RingShooting>().AddWeaponAmmo(weaponType);
     }
 }

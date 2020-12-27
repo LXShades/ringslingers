@@ -1,42 +1,35 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using System;
+using System.Collections;
+using UnityEngine;
 
-public class RespawnableItem : MonoBehaviour
+public class RespawnableItem : NetworkBehaviour
 {
     private int originalLayer;
     private int despawnedLayer;
 
     private Vector3 originalPosition;
 
-    public float respawnCountdownTimer
-    {
-        get; private set;
-    }
-
     public bool isSpawned
     {
         get
         {
-            return gameObject.layer != despawnedLayer;
+            return _isSpawned;
         }
         set
         {
-            if (value != isSpawned)
-            {
-                gameObject.layer = value ? originalLayer : despawnedLayer;
-
-                if (value)
-                {
-                    respawnCountdownTimer = 0;
-                    transform.position = originalPosition;
-                }
-                else
-                {
-                    gameObject.SetActive(false); // Unity bug: physics scene won't update unless we do something fun
-                    gameObject.SetActive(true);
-                }
-            }
+            if (value != _isSpawned && NetworkServer.active)
+                OnIsSpawnedChanged(isSpawned, value);
         }
     }
+
+    [SyncVar(hook = nameof(OnIsSpawnedChanged))]
+    private bool _isSpawned = true;
+
+    public Action onRespawn;
+    public Action onDespawn;
+
+    private Coroutine respawnRoutine = null;
 
     void Start()
     {
@@ -45,28 +38,50 @@ public class RespawnableItem : MonoBehaviour
         originalPosition = transform.position;
     }
 
-    void WorldUpdate(float deltaTime)
-    {
-        if (respawnCountdownTimer > 0)
-        {
-            respawnCountdownTimer = Mathf.Max(respawnCountdownTimer - deltaTime, 0);
-
-            if (respawnCountdownTimer <= 0)
-                Respawn();
-        }
-    }
-
     public void Pickup()
     {
-        if (GameManager.singleton.itemRespawnTime > 0)
+        if (NetworkServer.active && GameManager.singleton.itemRespawnTime > 0)
         {
             isSpawned = false;
-            respawnCountdownTimer = GameManager.singleton.itemRespawnTime;
+
+            StopCoroutine(nameof(RespawnRoutine));
+            respawnRoutine = StartCoroutine(nameof(RespawnRoutine));
         }
     }
 
     public void Respawn()
     {
         isSpawned = true;
+    }
+
+    private void OnIsSpawnedChanged(bool oldVal, bool newVal)
+    {
+        _isSpawned = newVal;
+
+        gameObject.layer = newVal ? originalLayer : despawnedLayer;
+
+        if (newVal)
+        {
+            transform.position = originalPosition;
+        }
+        else
+        {
+            gameObject.SetActive(false); // Unity bug: physics scene won't update unless we do something fun
+            gameObject.SetActive(true);
+        }
+
+        if (oldVal != newVal)
+        {
+            if (newVal)
+                onRespawn?.Invoke();
+            else
+                onDespawn?.Invoke();
+        }
+    }
+
+    IEnumerator RespawnRoutine()
+    {
+        yield return new WaitForSeconds(GameManager.singleton.itemRespawnTime);
+        Respawn();
     }
 }

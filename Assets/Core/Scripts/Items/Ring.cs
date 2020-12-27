@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using UnityEngine;
 
 public class Ring : MonoBehaviour
 {
@@ -22,11 +23,15 @@ public class Ring : MonoBehaviour
     public delegate void OnPickup(Player player);
     public OnPickup onPickup;
 
+    private Player probablePickedUpPlayer;
+
     private float awakeTime;
 
     void Awake()
     {
         respawnableItem = GetComponent<RespawnableItem>();
+        respawnableItem.onRespawn += OnRespawn;
+        respawnableItem.onDespawn += OnPickedUp;
         awakeTime = Time.unscaledTime;
     }
 
@@ -54,18 +59,32 @@ public class Ring : MonoBehaviour
         Player otherPlayer = other.GetComponent<Player>();
         if (otherPlayer && (!isDroppedRing || Time.unscaledTime - awakeTime >= pickupWarmupDuration))
         {
-            otherPlayer.numRings++;
-            pickupParticles.SetActive(true);
-            pickupParticles.transform.SetParent(null);
+            probablePickedUpPlayer = otherPlayer;
 
-            GameSounds.PlaySound(other.gameObject, pickupSound);
+            if (NetworkServer.active)
+            {
+                otherPlayer.numRings++;
 
-            if (!isDroppedRing)
-                respawnableItem.Pickup();
-            else
-                Spawner.Despawn(gameObject); // we aren't going to respawn here
+                if (!isDroppedRing)
+                    respawnableItem.Pickup();
+                else
+                    Spawner.Despawn(gameObject); // we aren't going to respawn here
 
-            onPickup?.Invoke(otherPlayer);
+                onPickup?.Invoke(otherPlayer);
+            }
         }
+    }
+
+    private void OnPickedUp()
+    {
+        pickupParticles.SetActive(true);
+        pickupParticles.transform.SetParent(null);
+
+        GameSounds.PlaySound(probablePickedUpPlayer != null && probablePickedUpPlayer.playerId == Netplay.singleton.localPlayerId ? probablePickedUpPlayer.gameObject : gameObject, pickupSound);
+    }
+
+    private void OnRespawn()
+    {
+        probablePickedUpPlayer = null;
     }
 }

@@ -37,11 +37,13 @@ public class Player : NetworkBehaviour
     public PlayerInput lastInput;
 
     [Header("Shinies")]
+    [SyncVar]
     public int score = 0;
 
     /// <summary>
     /// Number of rings picked up
     /// </summary>
+    [SyncVar]
     public int numRings = 0;
 
     [Header("Ring drop")]
@@ -185,6 +187,7 @@ public class Player : NetworkBehaviour
     }
 
     private static readonly string[] nameSuffices = { " and Knuckles", " Jr", " Sr", " Classic", " Modern", " Esquire", " Ph.d", " Squared" }; // ive done my best
+
     public void Rename(string newName)
     {
         string updatedName = newName;
