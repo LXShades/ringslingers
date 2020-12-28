@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class Ring : MonoBehaviour
+public class Ring : MonoBehaviour, ISpawnCallbacks
 {
     [Header("Ring")]
     [Tooltip("Speed that this ring spins at, in degrees per second")] public float spinSpeed = 180;
@@ -27,11 +27,18 @@ public class Ring : MonoBehaviour
 
     private float awakeTime;
 
+    private bool canPickup = true;
+
     void Awake()
     {
         respawnableItem = GetComponent<RespawnableItem>();
-        respawnableItem.onRespawn += OnRespawn;
-        respawnableItem.onDespawn += OnPickedUp;
+
+        if (respawnableItem)
+        {
+            respawnableItem.onRespawn += OnRespawn;
+            respawnableItem.onDespawn += OnPickedUp;
+        }
+
         awakeTime = Time.unscaledTime;
     }
 
@@ -54,10 +61,10 @@ public class Ring : MonoBehaviour
         }
     }
 
-    private void OnTriggerStay(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
         Player otherPlayer = other.GetComponent<Player>();
-        if (otherPlayer && (!isDroppedRing || Time.unscaledTime - awakeTime >= pickupWarmupDuration))
+        if (otherPlayer && (!isDroppedRing || Time.unscaledTime - awakeTime >= pickupWarmupDuration) && canPickup)
         {
             probablePickedUpPlayer = otherPlayer;
 
@@ -68,7 +75,10 @@ public class Ring : MonoBehaviour
                 if (!isDroppedRing)
                     respawnableItem.Pickup();
                 else
+                {
                     Spawner.Despawn(gameObject); // we aren't going to respawn here
+                    canPickup = false; // HACK: collider calls can happen even after despawning...
+                }
 
                 onPickup?.Invoke(otherPlayer);
             }
@@ -76,6 +86,16 @@ public class Ring : MonoBehaviour
     }
 
     private void OnPickedUp()
+    {
+        PlayPickupEffects();
+    }
+
+    public void OnBeforeDespawn()
+    {
+        PlayPickupEffects();
+    }
+
+    private void PlayPickupEffects()
     {
         pickupParticles.SetActive(true);
         pickupParticles.transform.SetParent(null);

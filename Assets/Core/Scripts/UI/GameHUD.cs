@@ -161,18 +161,18 @@ public class GameHUD : MonoBehaviour
                 break;
         }
 
-        debugLog += $"{colorStart}{condition}{colorEnd}";
+        debugLog += $"{colorStart}{condition}";
 
         if (type == LogType.Error || type == LogType.Warning)
         {
             string[] trace = stackTrace.Split('\n');
 
             // include stack trace where it's important
-            debugLog += " @ " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + "\n";
+            debugLog += " @ " + (trace.Length > 0 ? (trace[Mathf.Min(1, trace.Length - 1)]) : "") + colorEnd + "\n";
         }
         else
         {
-            debugLog += "\n";
+            debugLog += colorEnd + "\n";
         }
 
         doRefreshLog = true;

@@ -61,7 +61,6 @@ public class RingShooting : NetworkBehaviour
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
 
             LocalThrowRing();
-            hasFiredOnThisClick = true;
         }
 
         // Deplete timer-based weapon ammo
@@ -108,6 +107,7 @@ public class RingShooting : NetworkBehaviour
             FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
 
             CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction());
+            hasFiredOnThisClick = true;
         }
     }
 

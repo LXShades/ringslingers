@@ -116,6 +116,10 @@ public class Spawner : MonoBehaviour
 
     public static void Despawn(GameObject target)
     {
+        foreach (var spawnable in target.GetComponents<ISpawnCallbacks>())
+        {
+            spawnable.OnBeforeDespawn();
+        }
         Destroy(target);
     }
 
@@ -195,6 +199,10 @@ public class Spawner : MonoBehaviour
 
     private void UnspawnHandler(GameObject target)
     {
+        foreach (var spawnable in target.GetComponents<ISpawnCallbacks>())
+        {
+            spawnable.OnBeforeDespawn();
+        }
         Destroy(target);
     }
 
@@ -202,4 +210,9 @@ public class Spawner : MonoBehaviour
     {
         SyncActionSystem.RegisterSyncActions(target);
     }
+}
+
+public interface ISpawnCallbacks
+{
+    void OnBeforeDespawn();
 }

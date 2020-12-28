@@ -125,6 +125,7 @@ GameObject:
   - component: {fileID: 7352825796714013435}
   - component: {fileID: 4451384450655814514}
   - component: {fileID: 1227556274159782272}
+  - component: {fileID: 933529237501604302}
   - component: {fileID: 4408426014098253173}
   - component: {fileID: 1784313262649898792}
   - component: {fileID: 2222083882362034574}
@@ -164,6 +165,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneId: 0
+  predictedId: 0
   serverOnly: 0
   m_AssetId: 
   hasSpawned: 0
@@ -198,7 +200,6 @@ MonoBehaviour:
     btnJump: 0
     btnFire: 0
   score: 0
-  numRings: 0
   dropSound:
     clip: {fileID: 8300000, guid: eb3b92045251f434fab489da0cf93319, type: 3}
     volume: 1
@@ -216,6 +217,7 @@ MonoBehaviour:
   hitInvincibilityDuration: 1.5
   hitInvincibilityBlinkRate: 25
   movement: {fileID: 0}
+  damageable: {fileID: 0}
   localTime: -1
 --- !u!114 &7352825796714013435
 MonoBehaviour:
@@ -308,6 +310,26 @@ MonoBehaviour:
   equippedWeapons: []
   spawnPosition: {fileID: 3310946930297574031}
   spawnNudge: 0.469
+--- !u!114 &933529237501604302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be006d80fe9d0314a8671e87e56c934e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  onDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  hitInvincibilityDuration: 1.5
+  doInvincibilityBlink: 1
+  hitInvincibilityBlinkRate: 25
 --- !u!136 &4408426014098253173
 CapsuleCollider:
   m_ObjectHideFlags: 0

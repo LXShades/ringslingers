@@ -3,12 +3,6 @@ using UnityEngine;
 
 public class Player : NetworkBehaviour
 {
-    public struct TestSyncActionParams : NetworkMessage
-    {
-        public string messageWow;
-        public int messageInt;
-    }
-
     [Header("Player info")]
     /// <summary>
     /// Name of this player. By default, all players are Fred.
@@ -43,8 +37,9 @@ public class Player : NetworkBehaviour
     /// <summary>
     /// Number of rings picked up
     /// </summary>
+    public int numRings { set => _numRings = NetworkServer.active ? value : _numRings; get => _numRings; }
     [SyncVar]
-    public int numRings = 0;
+    private int _numRings;
 
     [Header("Ring drop")]
     public GameSound dropSound = new GameSound();
@@ -75,16 +70,19 @@ public class Player : NetworkBehaviour
     /// Player movement component
     /// </summary>
     [HideInInspector] public CharacterMovement movement;
+    [HideInInspector] public Damageable damageable;
 
     public float localTime = -1;
 
     void Awake()
     {
         movement = GetComponent<CharacterMovement>();
+        damageable = GetComponent<Damageable>();
     }
 
     void Start()
     {
+        damageable.onDamaged.AddListener(OnDamaged);
         Netplay.singleton.players[playerId] = this;
 
         if (isLocal)
@@ -101,18 +99,6 @@ public class Player : NetworkBehaviour
             lastInput = input;
             input = PlayerInput.MakeLocalInput(lastInput);
             movement.SetInput(Time.unscaledTime, input);
-        }
-
-        // Invincibility blinky
-        if (invincibilityTimeRemaining > 0)
-        {
-            invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - Time.deltaTime, 0);
-
-            Renderer renderer = GetComponentInChildren<Renderer>();
-            if (renderer && invincibilityTimeRemaining > 0)
-                renderer.enabled = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
-            else
-                renderer.enabled = true; // we finished blinky blinkying
         }
     }
 
@@ -133,16 +119,27 @@ public class Player : NetworkBehaviour
         }
     }
 
+    private void OnDamaged(GameObject instigator)
+    {
+        // Only the server can really hurt us
+        if (NetworkServer.active)
+        {
+            Hurt(instigator);
+        }
+
+        // Let's predict our hit anyway
+        movement.ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0));
+    }
+
+    [Server]
     public void Hurt(GameObject instigator)
     {
-        if (invincibilityTimeRemaining > 0 || movement.state.HasFlag(CharacterMovement.State.Pained))
-            return; // can't touch this
-
-        // Give score to the attacker if possible
-        Player attackerAsPlayer = instigator.GetComponent<Player>();
-
-        if (attackerAsPlayer)
-            attackerAsPlayer.score += 50;
+        if (instigator && instigator.TryGetComponent(out Player attackerAsPlayer))
+        {
+            // Give score to the attacker if possible
+            if (attackerAsPlayer)
+                attackerAsPlayer.score += 50;
+        }
 
         movement.ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0));
 

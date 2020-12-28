@@ -50,21 +50,21 @@ public class ThrownRing : NetworkBehaviour, IPredictableObject
         GameSounds.PlaySound(gameObject, settings.despawnSound);
 
         // Hurt any players we collided with
-        if (collision.collider.TryGetComponent(out Player otherPlayer) && owner)
+        if (NetworkServer.active && collision.collider.TryGetComponent(out Damageable damageable) && owner)
         {
-            if (otherPlayer.gameObject == owner)
+            if (damageable.gameObject == owner)
                 return; // actually we're fine here
 
-            otherPlayer.Hurt(owner);
+            damageable.TryDamage(owner);
         }
 
         if (collision.collider.TryGetComponent(out ThrownRing thrownRing))
         {
             if (thrownRing.owner == owner)
-                return; // don't collider with our other rings
+                return; // don't collide with our other rings
         }
 
-        Destroy(gameObject);
+        Spawner.Despawn(gameObject);
     }
 
     public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction, float jumpAheadTime = 0f)
