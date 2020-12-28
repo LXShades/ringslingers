@@ -1,18 +1,17 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class WeaponSlotUI : MonoBehaviour
 {
+    public bool hasWeapon;
     public Text ammoRemaining;
     public Image icon;
 
-    [System.NonSerialized] public EquippedRingWeapon weapon;
+    [System.NonSerialized] public RingWeapon weapon;
 
     private void Update()
     {
-        if (weapon != null)
+        if (hasWeapon)
         {
             if (icon.sprite != weapon.weaponType.uiIcon)
                 icon.sprite = weapon.weaponType.uiIcon;

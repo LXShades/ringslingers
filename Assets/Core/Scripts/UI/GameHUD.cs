@@ -65,10 +65,13 @@ public class GameHUD : MonoBehaviour
 
             // Weapon stuff
             RingShooting ringShooting = player.GetComponent<RingShooting>();
-            for (int i = 0; i < ringShooting.equippedWeapons.Count && i < weaponSlots.Length; i++)
-                weaponSlots[i].weapon = ringShooting.equippedWeapons[i];
-            for (int j = ringShooting.equippedWeapons.Count; j < weaponSlots.Length; j++)
-                weaponSlots[j].weapon = null;
+            for (int i = 0; i < ringShooting.weapons.Count - 1 && i < weaponSlots.Length; i++)
+            {
+                weaponSlots[i].weapon = ringShooting.weapons[i + 1]; // skip default weapon
+                weaponSlots[i].hasWeapon = true;
+            }
+            for (int j = ringShooting.weapons.Count; j < weaponSlots.Length; j++)
+                weaponSlots[j].hasWeapon = false;
 
             // Debug stuff
             if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))

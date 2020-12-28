@@ -304,10 +304,7 @@ MonoBehaviour:
   defaultWeapon:
     weaponType: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
     ammo: 0
-  currentWeapon:
-    weaponType: {fileID: 0}
-    ammo: 0
-  equippedWeapons: []
+    isInfinite: 1
   spawnPosition: {fileID: 3310946930297574031}
   spawnNudge: 0.469
 --- !u!114 &933529237501604302

@@ -1,23 +1,22 @@
 ﻿using Mirror;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class RingShooting : NetworkBehaviour
 {
     /// <summary>
-    /// The default weapon to fire
+    /// The default weapon setup
     /// </summary>
-    public EquippedRingWeapon defaultWeapon;
+    public RingWeapon defaultWeapon;
 
     /// <summary>
     /// The weapon currently equipped to fire
     /// </summary>
-    public EquippedRingWeapon currentWeapon;
+    public RingWeapon currentWeapon => weapons[equippedWeaponIndex];
 
     /// <summary>
     /// List of weapons that have been picked up
     /// </summary>
-    public List<EquippedRingWeapon> equippedWeapons = new List<EquippedRingWeapon>();
+    public SyncList<RingWeapon> weapons = new SyncList<RingWeapon>();
 
     [Header("Hierarchy")]
     /// <summary>
@@ -40,20 +39,37 @@ public class RingShooting : NetworkBehaviour
     /// </summary>
     private bool hasFiredOnThisClick = false;
 
+    private int equippedWeaponIndex
+    {
+        set
+        {
+            _equippedWeaponIndex = value < weapons.Count ? value : 0;
+        }
+        get
+        {
+            return _equippedWeaponIndex;
+        }
+    }
+    private int _equippedWeaponIndex;
+
     // Components
     private Player player;
 
     void Awake()
     {
         player = GetComponent<Player>();
+
+        if (NetworkServer.active)
+        {
+            weapons.Add(defaultWeapon);
+        }
     }
 
     void Update()
     {
-        if (equippedWeapons.Count > 0)
-            currentWeapon = equippedWeapons[equippedWeapons.Count - 1];
-        else
-            currentWeapon = defaultWeapon;
+        // test: equip best weapon
+        if (weapons.Count > 0)
+            equippedWeaponIndex = weapons.Count - 1;
 
         // Fire weapons if we can
         if (player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.weaponType.isAutomatic))
@@ -63,18 +79,25 @@ public class RingShooting : NetworkBehaviour
             LocalThrowRing();
         }
 
-        // Deplete timer-based weapon ammo
-        for (int i = 0; i < equippedWeapons.Count; i++)
+        if (NetworkServer.active)
         {
-            if (equippedWeapons[i].weaponType.ammoIsTime)
-                equippedWeapons[i].ammo -= Time.deltaTime;
-        }
+            // Deplete timer-based weapon ammo
+            for (int i = 0; i < weapons.Count; i++)
+            {
+                if (!weapons[i].isInfinite && weapons[i].weaponType.ammoIsTime)
+                {
+                    RingWeapon weapon = weapons[i];
+                    weapon.ammo -= Time.deltaTime;
+                    weapons[i] = weapon;
+                }
+            }
 
-        // Remove weapons with no ammo remaining
-        for (int i = 0; i < equippedWeapons.Count; i++)
-        {
-            if (equippedWeapons[i].ammo <= 0)
-                equippedWeapons.RemoveAt(i--);
+            // Remove weapons with no ammo remaining
+            for (int i = 0; i < weapons.Count; i++)
+            {
+                if (!weapons[i].isInfinite && weapons[i].ammo <= 0)
+                    weapons.RemoveAt(i--);
+            }
         }
 
         hasFiredOnThisClick &= player.input.btnFire;
@@ -82,17 +105,19 @@ public class RingShooting : NetworkBehaviour
 
     public void AddWeaponAmmo(RingWeaponSettings weaponType)
     {
-        foreach (EquippedRingWeapon weapon in equippedWeapons)
+        for (int i = 0; i < weapons.Count; i++)
         {
-            if (weapon.weaponType == weaponType)
+            if (weapons[i].weaponType == weaponType)
             {
+                RingWeapon weapon = weapons[i];
                 weapon.ammo = Mathf.Min(weapon.ammo + weaponType.ammoOnPickup, weaponType.maxAmmo);
+                weapons[i] = weapon;
                 return;
             }
         }
 
         // no weapon was found - add to our list
-        equippedWeapons.Add(new EquippedRingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
+        weapons.Add(new RingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
     }
 
     private bool CanThrowRing() => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond;
@@ -109,16 +134,18 @@ public class RingShooting : NetworkBehaviour
                 FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
             }
 
-            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction());
+            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction(), equippedWeaponIndex);
             hasFiredOnThisClick = true;
         }
     }
 
     [Command]
-    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction)
+    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon)
     {
         if (!CanThrowRing() || Vector3.Distance(position, spawnPosition.position) > 0.5f || Mathf.Abs(direction.sqrMagnitude - 1.0f) > 0.01f)
             return; // invalid throw
+
+        equippedWeaponIndex = equippedWeapon;
 
         // on server, spawn the ring properly and match it to the client prediction
         Spawner.ApplySpawnPrediction(spawnPrediction);
@@ -132,7 +159,11 @@ public class RingShooting : NetworkBehaviour
         // Update stats
         player.numRings--;
         if (!currentWeapon.weaponType.ammoIsTime)
-            currentWeapon.ammo--;
+        {
+            RingWeapon weapon = weapons[equippedWeaponIndex];
+            weapon.ammo--;
+            weapons[equippedWeaponIndex] = weapon;
+        }
     }
 
     private void FireSpawnedRing(GameObject ring, Vector3 position, Vector3 direction)

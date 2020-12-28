@@ -1,10 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Security.Permissions;
+﻿using Mirror;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "Ring Weapon", menuName = "Ring Weapon", order = 50)]
-public class RingWeaponSettings : ScriptableObject
+public class RingWeaponSettings : ScriptableObject, ILookupableAsset
 {
     /// <summary>
     /// Prefab used to create the ring weapon. This can define its behaviour, etc
@@ -65,4 +63,19 @@ public class RingWeaponSettings : ScriptableObject
     /// Whether the shoot button can be held down with this weapon
     /// </summary>
     public bool isAutomatic = false;
+}
+
+public static class RingWeaponSettingsReaderWriter
+{
+    public static RingWeaponSettings ReadRingWeaponSettings(this NetworkReader reader)
+    {
+        ushort id = reader.ReadUInt16();
+
+        return AssetLookup.singleton.GetAsset<RingWeaponSettings>(id);
+    }
+
+    public static void WriteRingWeaponSettings(this NetworkWriter writer, RingWeaponSettings settings)
+    {
+        writer.WriteUInt16(AssetLookup.singleton.GetId(settings));
+    }
 }

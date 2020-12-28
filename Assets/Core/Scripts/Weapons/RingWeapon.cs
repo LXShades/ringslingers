@@ -1,5 +1,5 @@
 ﻿[System.Serializable]
-public class EquippedRingWeapon
+public struct RingWeapon
 {
     /// <summary>
     /// The type of weapon this is an instance of
@@ -10,4 +10,9 @@ public class EquippedRingWeapon
     /// Current ammo or time remaining for this weapon
     /// </summary>
     public float ammo;
+
+    /// <summary>
+    /// Whether this weapon has infinite ammo
+    /// </summary>
+    public bool isInfinite;
 }
