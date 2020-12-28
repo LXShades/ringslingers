@@ -14,9 +14,12 @@ public class ThrownRing : NetworkBehaviour, IPredictableObject
     protected GameObject owner;
     private Rigidbody rb;
 
+    private float spawnTime;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        spawnTime = Time.time;
     }
 
     void Start()
@@ -46,6 +49,11 @@ public class ThrownRing : NetworkBehaviour, IPredictableObject
 
     public void OnCollisionEnter(Collision collision)
     {
+        if (Time.time - spawnTime < 0.1f)
+        {
+            return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
+        }
+
         // Play despawn sound
         GameSounds.PlaySound(gameObject, settings.despawnSound);
 

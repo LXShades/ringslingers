@@ -97,10 +97,13 @@ public class Ring : MonoBehaviour, ISpawnCallbacks
 
     private void PlayPickupEffects()
     {
-        pickupParticles.SetActive(true);
-        pickupParticles.transform.SetParent(null);
+        if (probablePickedUpPlayer)
+        {
+            pickupParticles.SetActive(true);
+            pickupParticles.transform.SetParent(null);
 
-        GameSounds.PlaySound(probablePickedUpPlayer != null && probablePickedUpPlayer.playerId == Netplay.singleton.localPlayerId ? probablePickedUpPlayer.gameObject : gameObject, pickupSound);
+            GameSounds.PlaySound(probablePickedUpPlayer != null && probablePickedUpPlayer.playerId == Netplay.singleton.localPlayerId ? probablePickedUpPlayer.gameObject : gameObject, pickupSound);
+        }
     }
 
     private void OnRespawn()

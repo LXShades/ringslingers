@@ -101,10 +101,13 @@ public class RingShooting : NetworkBehaviour
     {
         if (CanThrowRing())
         {
-            // spawn temporary ring
-            Spawner.StartSpawnPrediction();
-            GameObject predictedRing = Spawner.PredictSpawn(currentWeapon.weaponType.prefab, transform.position, Quaternion.identity);
-            FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
+            if (!NetworkServer.active)
+            {
+                // spawn temporary ring
+                Spawner.StartSpawnPrediction();
+                GameObject predictedRing = Spawner.PredictSpawn(currentWeapon.weaponType.prefab, transform.position, Quaternion.identity);
+                FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
+            }
 
             CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction());
             hasFiredOnThisClick = true;
@@ -126,23 +129,10 @@ public class RingShooting : NetworkBehaviour
 
         Spawner.FinalizeSpawn(ring);
 
-        // RPC it to other clients
-        // wait, actually it'll already be spawned
-        //RpcThrowRing(ring, position, direction);
-
-        // tell the client this was successful
-        TargetThrowRing();
-
         // Update stats
         player.numRings--;
         if (!currentWeapon.weaponType.ammoIsTime)
             currentWeapon.ammo--;
-    }
-
-    [TargetRpc]
-    private void TargetThrowRing()
-    {
-
     }
 
     private void FireSpawnedRing(GameObject ring, Vector3 position, Vector3 direction)
