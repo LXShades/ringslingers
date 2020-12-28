@@ -7,6 +7,12 @@ using UnityEngine;
 /// </summary>
 public class Netplay : MonoBehaviour
 {
+    public struct PingMessage : NetworkMessage
+    {
+        public ushort time;
+        public bool isReliable;
+    }
+
     public const int kMaxNumPlayers = 16;
 
     public static Netplay singleton
@@ -29,11 +35,16 @@ public class Netplay : MonoBehaviour
         Disconnected
     };
 
+    [Header("Connection")]
     public ConnectionStatus connectionStatus = ConnectionStatus.Offline;
+
+    [Range(0.5f, 20f)]
+    public float pingsPerSecond = 2f;
 
     [Header("Tickrate")]
     public float playerTickrate = 10f;
 
+    [Header("Players")]
     /// <summary>
     /// Local player ID
     /// </summary>
@@ -60,6 +71,12 @@ public class Netplay : MonoBehaviour
     public bool isClient => net.mode == Mirror.NetworkManagerMode.ClientOnly;
 
     private NetMan net;
+
+    public float unreliablePing { get; private set; }
+    public float reliablePing { get; private set; }
+
+    private uint msTime; // time in ms since InitNet
+    private uint lastPingMsTime;
 
     public string netStat
     {
@@ -91,19 +108,75 @@ public class Netplay : MonoBehaviour
         NetworkDiagnostics.InMessageEvent += NetworkDiagnostics_InMessageEvent;
         NetworkDiagnostics.OutMessageEvent += NetworkDiagnostics_OutMessageEvent;
 
+        NetworkClient.RegisterHandler<PingMessage>(OnClientPingMessageReceived);
+        NetworkServer.RegisterHandler<PingMessage>(OnServerPingMessageReceived);
+
+        msTime = 0;
+
         return true;
     }
 
-    /// <summary>
-    /// Runs a networking tick
-    /// </summary>
-    public void Tick()
+    void Update()
     {
         // Do debug stuff
         UpdateNetStat();
 
+        // Update SyncActions
         SyncActionChain.Tick();
+
+        // Update ping
+        msTime += (uint)Mathf.RoundToInt(Time.deltaTime * 1000);
+        if (NetworkClient.isConnected && msTime - lastPingMsTime > 1000f / pingsPerSecond)
+        {
+            SendPings();
+        }
     }
+
+    #region Ping
+    private void SendPings()
+    {
+        if (NetworkClient.isConnected)
+        {
+            NetworkClient.Send(new PingMessage()
+            {
+                time = (ushort)msTime,
+                isReliable = false
+            }, Channels.DefaultUnreliable);
+            NetworkClient.Send(new PingMessage()
+            {
+                time = (ushort)msTime,
+                isReliable = true
+            }, Channels.DefaultReliable);
+        }
+        lastPingMsTime = msTime;
+    }
+
+    private void OnClientPingMessageReceived(PingMessage message)
+    {
+        // resolve the received time
+        uint receivedTime = message.time | (msTime & 0xFFFF0000);
+
+        if (receivedTime > msTime)
+        {
+            // we've wrapped around since this message!
+            // see e.g. (where last two digits are the only digits we've actually received)
+            // received              = 3 99
+            // new                   = 4 02
+            // likely real received  = 3 99 (not 4 99 like we assembled above)
+            receivedTime -= 0x10000;
+        }
+
+        if (message.isReliable)
+            reliablePing = msTime - receivedTime;
+        else
+            unreliablePing = msTime - receivedTime;
+    }
+
+    private void OnServerPingMessageReceived(NetworkConnection source, PingMessage message)
+    {
+        source.Send(message); // pong!
+    }
+    #endregion
 
     #region Players
     /// <summary>
@@ -236,7 +309,6 @@ public class Netplay : MonoBehaviour
     #endregion
 
     #region Debugging
-    private int netStatFrameNum = 0;
     private int[] numTicksPerFrame = new int[500];
     private int numReceivedBytes = 0;
     private int numSentBytes = 0;
@@ -253,23 +325,15 @@ public class Netplay : MonoBehaviour
 
     void UpdateNetStat()
     {
-        netStatFrameNum++;
-
         // Update netstat
         if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
         {
             netStat = $"Send/Recv: {numSentBytes/1024f:0.0}KB/{numReceivedBytes / 1024f:0.0}KB\nSend/Recv: {numSentBytes / 128f:0.0}Kbits/{numReceivedBytes / 128f:0.0}Kbits";
             numReceivedBytes = 0;
             numSentBytes = 0;
-            netStatFrameNum = 0;
 
             System.Array.Clear(numTicksPerFrame, 0, numTicksPerFrame.Length);
         }
-    }
-
-    public float GetPing()
-    {
-        return 0f;
     }
     #endregion
 }

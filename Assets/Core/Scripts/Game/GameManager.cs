@@ -54,8 +54,6 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        Netplay.singleton.Tick();
-
         // Do debug stuff
         RunDebugCommands();
     }

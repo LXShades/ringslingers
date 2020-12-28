@@ -27,7 +27,6 @@ public class GameHUD : MonoBehaviour
 
     private int numFramesThisSecond = 0;
     private int lastFps = 0;
-    private float lastPing = 0;
 
     private string debugLog;
 
@@ -77,11 +76,10 @@ public class GameHUD : MonoBehaviour
             if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
             {
                 lastFps = numFramesThisSecond;
-                lastPing = Netplay.singleton.GetPing();
                 numFramesThisSecond = 0;
             }
 
-            debugText.text = $"\nPing: {(int)(lastPing * 1000)}ms" +
+            debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing)}ms" +
                 $"\nFPS: {lastFps}" +
                 $"\n{Netplay.singleton.netStat}";
         }
