@@ -49,8 +49,10 @@ public class Movement : MonoBehaviour
         }
     }
 
+    RaycastHit[] hits = new RaycastHit[10];
+
     /// <summary>
-    /// Moves with collision checking. Can be a computationally expensive operation - be advised
+    /// Moves with collision checking. Can be a computationally expensive operation
     /// </summary>
     /// <param name="offset"></param>
     public bool Move(Vector3 offset, out RaycastHit hitOut)
@@ -66,18 +68,18 @@ public class Movement : MonoBehaviour
 
         for (int iteration = 0; iteration < numIterations; iteration++)
         {
-            RaycastHit hit = new RaycastHit();
-            RaycastHit[] hits = new RaycastHit[10];
+            RaycastHit hit = default;
             float movementMagnitude = currentMovement.magnitude;
             float lowestDist = float.MaxValue;
             int lowestHitId = -1;
 
             foreach (Collider collider in colliders)
             {
+                int numHits = 0;
                 if (collider.GetType() == typeof(SphereCollider))
                 {
                     SphereCollider sphere = collider as SphereCollider;
-                    Physics.SphereCastNonAlloc(
+                    numHits = Physics.SphereCastNonAlloc(
                         transform.TransformPoint(sphere.center),
                         sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
                         currentMovement.normalized,
@@ -92,7 +94,7 @@ public class Movement : MonoBehaviour
                     Vector3 up = (capsule.direction == 0 ? transform.right : (capsule.direction == 1 ? transform.up : transform.forward)) * (Mathf.Max(capsule.height * 0.5f - capsule.radius, 0));
                     Vector3 center = transform.TransformPoint(capsule.center);
 
-                    Physics.CapsuleCastNonAlloc(
+                    numHits = Physics.CapsuleCastNonAlloc(
                         center + up, center - up,
                         capsule.radius * 0.5f * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
                         currentMovement.normalized,
@@ -107,7 +109,7 @@ public class Movement : MonoBehaviour
                 }
 
                 // Get the current closest one
-                for (int i = 0; i < hits.Length; i++)
+                for (int i = 0; i < numHits; i++)
                 {
                     if (hits[i].distance > 0 && hits[i].distance < lowestDist) // kinda hacky: 0 seems to mean we're stuck inside something and das is nicht gut
                     {

@@ -50,6 +50,8 @@ public class Netplay : MonoBehaviour
     /// </summary>
     public int localPlayerId = -1;
 
+    public Player localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
+
     /// <summary>
     /// Used by the server. Used to defer new player creation
     /// </summary>
@@ -285,7 +287,7 @@ public class Netplay : MonoBehaviour
         // Spawn the player
         Player player = Spawner.Spawn(GameManager.singleton.playerPrefab).GetComponent<Player>();
 
-        player.gameObject.name = $"Player {player.playerId}";
+        player.gameObject.name = $"Player {id}";
         player.playerId = id;
         players[id] = player;
 

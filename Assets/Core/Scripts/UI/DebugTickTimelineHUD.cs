@@ -21,19 +21,40 @@ public class DebugTickTimelineHUD : MonoBehaviour
     private float minTime;
     private float maxTime;
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
     {
-        minTime = 0;
-        maxTime = Time.time;
+        SetTickListCapacity(allLocalTicks, playerTick, 10);
+    }
 
-        minTime = Mathf.Floor(maxTime / timePeriod) * timePeriod;
-        maxTime = Mathf.Ceil(maxTime / timePeriod) * timePeriod;
+    // Update is called once per frame
+    void LateUpdate()
+    {
+        PlayerController localPlayerController = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<PlayerController>() : null;
 
-        earlyTime.text = minTime.ToString();
-        lateTime.text = maxTime.ToString();
+        if (Mirror.NetworkServer.active)
+        {
+            localPlayerController = Netplay.singleton.players[1]?.GetComponent<PlayerController>();
+        }
 
-        SetTickPosition(liveTick.rectTransform, Time.time);
+        if (localPlayerController)
+        {
+            minTime = 0;
+            maxTime = localPlayerController.clientTime;
+
+            minTime = Mathf.Floor(maxTime / timePeriod) * timePeriod;
+            maxTime = Mathf.Ceil(maxTime / timePeriod) * timePeriod;
+
+            earlyTime.text = minTime.ToString();
+            lateTime.text = maxTime.ToString();
+
+            SetTickPosition(serverTick.rectTransform, localPlayerController.clientTime);
+            SetTickPosition(liveTick.rectTransform, localPlayerController.clientPlaybackTime);
+
+            for (int i = 0; i < allLocalTicks.Count && i < localPlayerController.inputHistory.Count; i++)
+            {
+                SetTickPosition(allLocalTicks[i].rectTransform, localPlayerController.inputHistory.TimeAt(i));
+            }
+        }
     }
 
     void SetTickListCapacity(List<Image> list, Image prefab, int number)

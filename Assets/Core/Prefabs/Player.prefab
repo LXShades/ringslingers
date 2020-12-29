@@ -123,7 +123,7 @@ GameObject:
   - component: {fileID: 3620776001654559608}
   - component: {fileID: 7352825796714013433}
   - component: {fileID: 7352825796714013435}
-  - component: {fileID: 4451384450655814514}
+  - component: {fileID: 647324544927865860}
   - component: {fileID: 1227556274159782272}
   - component: {fileID: 933529237501604302}
   - component: {fileID: 4408426014098253173}
@@ -192,6 +192,10 @@ MonoBehaviour:
     verticalAim: 0
     btnJump: 0
     btnFire: 0
+    btnJumpPressed: 0
+    btnJumpReleased: 0
+    btnFirePressed: 0
+    btnFireReleased: 0
   lastInput:
     moveHorizontalAxis: 0
     moveVerticalAxis: 0
@@ -199,6 +203,10 @@ MonoBehaviour:
     verticalAim: 0
     btnJump: 0
     btnFire: 0
+    btnJumpPressed: 0
+    btnJumpReleased: 0
+    btnFirePressed: 0
+    btnFireReleased: 0
   score: 0
   dropSound:
     clip: {fileID: 8300000, guid: eb3b92045251f434fab489da0cf93319, type: 3}
@@ -231,17 +239,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4118904f0bb36834eab3af1056ce998b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncMode: 0
-  syncInterval: 0.1
-  futureness: 0.3
-  resimulationStep: 0.08
-  lastMoveLocalTime: 0
-  moveHistory:
-    items: []
+  colliders:
+  - {fileID: 1784313262649898792}
+  blockingCollisionLayers:
+    serializedVersion: 2
+    m_Bits: 311
+  useManualPhysics: 1
+  bounceFactor: 0
+  bounceFriction: 0
+  gravityMultiplier: 1
   velocity: {x: 0, y: 0, z: 0}
-  testReconcilationTime: -1
-  alwaysReconcile: 0
-  reconcilationPositionTolerance: 1
   accelStart: 96
   acceleration: 40
   thrustFactor: 5
@@ -265,7 +272,7 @@ MonoBehaviour:
     pitchVariance: 0.05
   isOnGround: 0
   debugDisableCollision: 0
---- !u!114 &4451384450655814514
+--- !u!114 &647324544927865860
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -274,19 +281,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 7352825796714013436}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ec020f51922bab4f8a92a38ac34e8c2, type: 3}
+  m_Script: {fileID: 11500000, guid: ded31bb227fe1f84f805517b8219b223, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  colliders:
-  - {fileID: 1784313262649898792}
-  blockingCollisionLayers:
-    serializedVersion: 2
-    m_Bits: 311
-  useManualPhysics: 1
-  bounceFactor: 0
-  bounceFriction: 0
-  gravityMultiplier: 1
-  velocity: {x: 0, y: 0, z: 0}
+  syncMode: 0
+  syncInterval: 0.1
+  inputHistory:
+    items: []
+  printReconcileInfo: 0
+  inputHistoryMaxLength: 0.5
+  inputBufferLength: 0.2
+  limitInputRate: 1
+  limitUpdatesToInputRate: 1
+  maxInputRate: 60
+  maxDeltaTime: 0.5
+  predictionAmount: 0.3
+  predictionTimeStep: 0.08
+  alwaysReconcile: 0
+  reconcilationPositionTolerance: 0
 --- !u!114 &1227556274159782272
 MonoBehaviour:
   m_ObjectHideFlags: 0

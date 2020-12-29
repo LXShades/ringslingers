@@ -1,8 +1,8 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Movement), typeof(Player))]
-public class CharacterMovement : MovementMark2
+[RequireComponent(typeof(Player))]
+public class CharacterMovement : Movement
 {
     private Player player;
     private Movement move;
@@ -67,8 +67,10 @@ public class CharacterMovement : MovementMark2
         move = GetComponent<Movement>();
     }
 
-    public override void TickMovement(float deltaTime, PlayerInput input, PlayerInput lastInput, bool isResimulated = false)
+    public void TickMovement(float deltaTime, PlayerInput input, bool isResimulated = false)
     {
+        isResimmingMovement = isResimulated;
+
         // Check whether on ground
         isOnGround = DetectOnGround();
 
@@ -88,7 +90,7 @@ public class CharacterMovement : MovementMark2
         ApplyFriction(deltaTime);
         float lastHorizontalSpeed = velocity.Horizontal().magnitude; // this is our new max speed if our max speed was already exceeded
 
-        ApplyRunAcceleration(deltaTime, input, lastInput);
+        ApplyRunAcceleration(deltaTime, input);
 
         // Gravity
         velocity += new Vector3(0, -1, 0) * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime);
@@ -101,7 +103,7 @@ public class CharacterMovement : MovementMark2
             velocity.SetHorizontal(Vector3.zero);
 
         // Jump button
-        HandleJumpAbilities(input, lastInput);
+        HandleJumpAbilities(input);
 
         // Do not slip through the ground
         if (isOnGround)
@@ -153,7 +155,7 @@ public class CharacterMovement : MovementMark2
             velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, deltaTime * 35f));
     }
 
-    private void ApplyRunAcceleration(float deltaTime, PlayerInput input, PlayerInput lastInput)
+    private void ApplyRunAcceleration(float deltaTime, PlayerInput input)
     {
         if (state.HasFlag(State.Pained))
             return; // cannot accelerate while in pain
@@ -188,14 +190,14 @@ public class CharacterMovement : MovementMark2
         velocity = force;
     }
 
-    private void HandleJumpAbilities(PlayerInput input, PlayerInput lastInput)
+    private void HandleJumpAbilities(PlayerInput input)
     {
         if (state.HasFlag(State.Pained))
             return;
 
-        if (input.btnJump)
+        if (input.btnJumpPressed)
         {
-            if (isOnGround && !state.HasFlag(State.Jumped) && !lastInput.btnJump)
+            if (isOnGround && !state.HasFlag(State.Jumped))
             {
                 // Jump
                 velocity.y = jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM;
@@ -204,7 +206,7 @@ public class CharacterMovement : MovementMark2
                     GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
-            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !lastInput.btnJump)
+            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped))
             {
                 // Thok
                 velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
@@ -214,7 +216,8 @@ public class CharacterMovement : MovementMark2
                 state |= State.Thokked;
             }
         }
-        else if (state.HasFlag(State.Jumped) && !state.HasFlag(State.CanceledJump))
+        
+        if (input.btnJumpReleased && state.HasFlag(State.Jumped) && !state.HasFlag(State.CanceledJump))
         {
             // Cancel jump
             state |= State.CanceledJump;

@@ -98,7 +98,6 @@ public class Player : NetworkBehaviour
         {
             lastInput = input;
             input = PlayerInput.MakeLocalInput(lastInput);
-            movement.SetInput(Time.unscaledTime, input);
         }
     }
 

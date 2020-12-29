@@ -42,7 +42,7 @@ public class GameHUD : MonoBehaviour
         Application.logMessageReceived -= OnLogMessageReceived;
     }
 
-    void Update()
+    void LateUpdate()
     {
         if (!GameManager.singleton || !GameManager.singleton.camera)
         {

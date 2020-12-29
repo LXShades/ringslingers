@@ -215,7 +215,7 @@ MonoBehaviour:
   Channels: 0100000002000000
   StatisticsCalculationInterval: 3
   ClientLatencySimulationEnabled: 1
-  ClientLatencySimulationDelayMs: 200
+  ClientLatencySimulationDelayMs: 150
 --- !u!114 &779978514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -258,6 +258,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionStatus: 0
+  pingsPerSecond: 2
   playerTickrate: 10
   localPlayerId: -1
   players:

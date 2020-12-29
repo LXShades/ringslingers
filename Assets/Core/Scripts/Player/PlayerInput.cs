@@ -14,6 +14,11 @@ public struct PlayerInput : IEquatable<PlayerInput>
     public bool btnJump;
     public bool btnFire;
 
+    public bool btnJumpPressed;
+    public bool btnJumpReleased;
+    public bool btnFirePressed;
+    public bool btnFireReleased;
+
     public Vector3 aimDirection
     {
         get
@@ -30,7 +35,7 @@ public struct PlayerInput : IEquatable<PlayerInput>
     /// <returns></returns>
     public static PlayerInput MakeLocalInput(PlayerInput lastInput)
     {
-        PlayerInput localInput;
+        PlayerInput localInput = default;
 
         localInput.moveHorizontalAxis = Input.GetAxisRaw("Horizontal");
         localInput.moveVerticalAxis = Input.GetAxisRaw("Vertical");
@@ -42,6 +47,19 @@ public struct PlayerInput : IEquatable<PlayerInput>
         localInput.btnJump = Input.GetButton("Jump");
 
         return localInput;
+    }
+
+    public static PlayerInput MakeWithDeltas(PlayerInput input, PlayerInput lastInput)
+    {
+        PlayerInput output = input;
+
+        output.btnJumpPressed = !lastInput.btnJump && input.btnJump;
+        output.btnFirePressed = !lastInput.btnFire && input.btnFire;
+
+        output.btnJumpReleased = lastInput.btnJump && !input.btnJump;
+        output.btnFireReleased = lastInput.btnFire && !input.btnFire;
+
+        return output;
     }
 
     public void Serialize(NetworkWriter writer)
@@ -70,6 +88,11 @@ public struct PlayerInput : IEquatable<PlayerInput>
         return moveHorizontalAxis == other.moveHorizontalAxis && moveVerticalAxis == other.moveVerticalAxis
             && horizontalAim == other.horizontalAim && verticalAim == other.verticalAim
             && btnFire == other.btnFire && btnJump == other.btnJump;
+    }
+
+    public override string ToString()
+    {
+        return $"H {moveHorizontalAxis:0.00} V {moveVerticalAxis:0.00} Jmp {btnJump}/P{btnJumpPressed}/R{btnJumpReleased} Fire {btnFire}/P{btnFirePressed}/R{btnFireReleased}";
     }
 }
 
