@@ -136,13 +136,14 @@ public class PlayerController : NetworkBehaviour
     {
         // Playback our latest movements
         int index = inputHistory.ClosestIndexAfter(lastPlaybackInput, 0f);
+        bool doExtrapolate = hasAuthority && extrapolateLocalInput;
 
         try
         {
             if (index != -1)
             {
-                if (hasAuthority && extrapolateLocalInput)
-                    ApplyMoveState(lastConfirmedState); // when extrapoolating our own inputs, we need to restore our positions for normal playback when the time comes
+                if (doExtrapolate)
+                    ApplyMoveState(lastConfirmedState); // when extrapolating our own inputs, we need to restore our positions for normal playback when the time comes
 
                 for (int i = index; i >= 0; i--)
                 {
@@ -152,12 +153,12 @@ public class PlayerController : NetworkBehaviour
 
                 clientPlaybackTime = inputHistory.LatestTime + inputHistory.Latest.deltaTime; // precision correction
 
-                if (hasAuthority && extrapolateLocalInput)
+                if (doExtrapolate)
                     lastConfirmedState = MakeMoveState();
             }
-            else if (hasAuthority && extrapolateLocalInput)
+            else if (doExtrapolate)
             {
-                movement.TickMovement(Time.deltaTime, PlayerInput.MakeWithDeltas(player.input, player.input), false);
+                movement.TickMovement(Time.deltaTime, PlayerInput.MakeWithDeltas(player.input, player.input), true);
             }
         }
         catch (Exception e)

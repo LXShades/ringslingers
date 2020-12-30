@@ -59,7 +59,7 @@ public class CharacterMovement : Movement
     /// </summary>
     [HideInInspector] public bool isOnGround = false;
 
-    private bool isResimmingMovement = false;
+    private bool isReconciling = false;
 
     void Awake()
     {
@@ -67,9 +67,9 @@ public class CharacterMovement : Movement
         move = GetComponent<Movement>();
     }
 
-    public void TickMovement(float deltaTime, PlayerInput input, bool isResimulated = false)
+    public void TickMovement(float deltaTime, PlayerInput input, bool isReconciliation = false)
     {
-        isResimmingMovement = isResimulated;
+        isReconciling = isReconciliation;
 
         // Check whether on ground
         isOnGround = DetectOnGround();
@@ -125,7 +125,7 @@ public class CharacterMovement : Movement
         else
         {
             RaycastHit hit;
-            move.Move(velocity * deltaTime, out hit);
+            move.Move(velocity * deltaTime, out hit, isReconciliation);
         }
     }
 
@@ -202,7 +202,7 @@ public class CharacterMovement : Movement
                 // Jump
                 velocity.y = jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM;
 
-                if (!isResimmingMovement)
+                if (!isReconciling)
                     GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
@@ -211,7 +211,7 @@ public class CharacterMovement : Movement
                 // Thok
                 velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
-                if (!isResimmingMovement)
+                if (!isReconciling)
                     GameSounds.PlaySound(gameObject, thokSound);
                 state |= State.Thokked;
             }

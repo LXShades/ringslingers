@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
@@ -50,12 +51,13 @@ public class Movement : MonoBehaviour
     }
 
     RaycastHit[] hits = new RaycastHit[10];
+    HashSet<IMovementCollisions> movementCollisions = new HashSet<IMovementCollisions>();
 
     /// <summary>
     /// Moves with collision checking. Can be a computationally expensive operation
     /// </summary>
     /// <param name="offset"></param>
-    public bool Move(Vector3 offset, out RaycastHit hitOut)
+    public bool Move(Vector3 offset, out RaycastHit hitOut, bool isReconciliation = false)
     {
         hitOut = new RaycastHit();
 
@@ -73,6 +75,8 @@ public class Movement : MonoBehaviour
             float lowestDist = float.MaxValue;
             int lowestHitId = -1;
 
+            movementCollisions.Clear();
+
             foreach (Collider collider in colliders)
             {
                 int numHits = 0;
@@ -86,7 +90,7 @@ public class Movement : MonoBehaviour
                         hits,
                         movementMagnitude + 0.0001f,
                         blockingCollisionLayers,
-                        QueryTriggerInteraction.Ignore);
+                        QueryTriggerInteraction.Collide);
                 }
                 else if (collider.GetType() == typeof(CapsuleCollider))
                 {
@@ -101,23 +105,28 @@ public class Movement : MonoBehaviour
                         hits,
                         movementMagnitude + 0.0001f,
                         blockingCollisionLayers,
-                        QueryTriggerInteraction.Ignore);
+                        QueryTriggerInteraction.Collide);
                 }
                 else
                 {
                     continue; // couldn't detect collider type
                 }
 
-                // Get the current closest one
                 for (int i = 0; i < numHits; i++)
                 {
-                    if (hits[i].distance > 0 && hits[i].distance < lowestDist) // kinda hacky: 0 seems to mean we're stuck inside something and das is nicht gut
+                    // find closest blocking collider
+                    if (!hits[i].collider.isTrigger && hits[i].distance > 0 && hits[i].distance < lowestDist) // kinda hacky: 0 seems to mean we're stuck inside something and das is nicht gut
                     {
                         lowestDist = hits[i].distance;
                         lowestHitId = i;
                     }
+
+                    // acknowledge all collided movementcollision objects
+                    foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
+                        movementCollisions.Add(movementCollision);
                 }
 
+                // Identify the closest blocking collision
                 if (lowestHitId != -1)
                 {
                     hit = hits[lowestHitId];
@@ -135,8 +144,7 @@ public class Movement : MonoBehaviour
                 else
                 {
                     // use slidey slidey collision
-                    currentMovement += hit.normal
-                        * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - hit.distance)) + 0.01f);
+                    currentMovement += hit.normal * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - hit.distance)) + 0.01f);
                 }
             }
             else
@@ -148,6 +156,16 @@ public class Movement : MonoBehaviour
         // Do the move
         transform.position += currentMovement;
 
+        foreach (IMovementCollisions collisions in movementCollisions)
+        {
+            collisions.OnMovementCollidedBy(this, isReconciliation);
+        }
+
         return hasHitOccurred;
     }
+}
+
+public interface IMovementCollisions
+{
+    void OnMovementCollidedBy(Movement source, bool isReconciliation);
 }

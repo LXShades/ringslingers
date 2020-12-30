@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class Spring : MonoBehaviour
+public class Spring : MonoBehaviour, IMovementCollisions
 {
     [Header("Spring properties")]
     // red: 32, yellow: 20, blue: 11
@@ -18,19 +16,20 @@ public class Spring : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
-    private void OnTriggerStay(Collider other)
+    public void OnMovementCollidedBy(Movement source, bool isReconciliation)
     {
-        CharacterMovement movement = other.GetComponent<CharacterMovement>();
+        CharacterMovement movement = source as CharacterMovement;
 
         if (movement && movement.velocity.y < springForce * 0.7f)
         {
             movement.SpringUp(springForce, transform.up);
-            animator.SetTrigger("DoSpring");
 
-            //if (!Netplay.singleton.freezeReplay || !Netplay.singleton.replayMode)
-            //   Debug.Break();
+            if (!isReconciliation)
+            {
+                animator.SetTrigger("DoSpring");
 
-            GameSounds.PlaySound(gameObject, springSound);
+                GameSounds.PlaySound(gameObject, springSound);
+            }
         }
     }
 }
