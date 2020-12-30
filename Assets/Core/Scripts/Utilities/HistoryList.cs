@@ -74,6 +74,20 @@ public class HistoryList<T> : HistoryListBase
         return -1;
     }
 
+    public int ClosestIndexBeforeOrEarliest(float time, float tolerance = 0.01f)
+    {
+        int index = ClosestIndexBefore(time, tolerance);
+        
+        if (index == -1)
+        {
+            return items.Count - 1;
+        }
+        else
+        {
+            return index;
+        }
+    }
+
     public void Set(float time, T item, float tolerance = 0.01f)
     {
         for (int index = 0; index < items.Count; index++)

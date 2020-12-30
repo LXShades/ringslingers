@@ -289,11 +289,12 @@ MonoBehaviour:
   inputHistory:
     items: []
   printReconcileInfo: 0
-  inputHistoryMaxLength: 0.5
-  inputBufferLength: 0.2
+  pingTolerance: 0.5
+  inputBufferLength: 0.45
   limitInputRate: 1
   limitUpdatesToInputRate: 1
   maxInputRate: 60
+  extrapolateLocalInput: 1
   maxDeltaTime: 0.5
   predictionAmount: 0.3
   predictionTimeStep: 0.08
