@@ -36,7 +36,14 @@ public class ThrownRing : NetworkBehaviour
 
         if (settings == null)
         {
+            Log.WriteWarning($"{gameObject}: Ring weapon settings is missing!?");
             settings = ScriptableObject.CreateInstance<RingWeaponSettings>(); // better than nothing?
+        }
+
+        if (NetworkClient.active && !NetworkServer.active && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.gameObject != owner)
+        {
+            // shoot further ahead
+            Simulate(Netplay.singleton.unreliablePing);
         }
     }
 
@@ -74,17 +81,19 @@ public class ThrownRing : NetworkBehaviour
     {
         if (Time.time - spawnTime < 0.1f)
             return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
+        if (collision.collider.gameObject == owner)
+            return; // don't collide with the player who threw the ring
 
         // Play despawn sound
         GameSounds.PlaySound(gameObject, settings.despawnSound);
 
         // Hurt any players we collided with
-        if (NetworkServer.active && collision.collider.TryGetComponent(out Damageable damageable) && owner)
+        if (collision.collider.TryGetComponent(out Damageable damageable) && owner)
         {
             if (damageable.gameObject == owner)
                 return; // actually we're fine here
 
-            damageable.TryDamage(owner);
+            damageable.TryDamage(owner, velocity.normalized * settings.projectileKnockback);
         }
 
         if (collision.collider.TryGetComponent(out ThrownRing thrownRing))

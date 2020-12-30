@@ -43,7 +43,7 @@ public class ThrownRingRail : ThrownRing
         if (closestPlayer)
         {
             Log.Write($"Trying to hurt player {closestPlayer}");
-            closestPlayer.Hurt(owner.gameObject);
+            closestPlayer.Hurt(owner.gameObject, direction);
         }
     }
 }

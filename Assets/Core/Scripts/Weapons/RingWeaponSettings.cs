@@ -60,6 +60,11 @@ public class RingWeaponSettings : ScriptableObject, ILookupableAsset
     public float projectileLifetime = 10;
 
     /// <summary>
+    /// How fast in m/s will the projectile knock you back?
+    /// </summary>
+    public float projectileKnockback = 10f;
+
+    /// <summary>
     /// Whether the shoot button can be held down with this weapon
     /// </summary>
     public bool isAutomatic = false;

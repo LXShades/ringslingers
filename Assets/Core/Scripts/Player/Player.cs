@@ -82,7 +82,7 @@ public class Player : NetworkBehaviour
 
     void Start()
     {
-        damageable.onDamaged.AddListener(OnDamaged);
+        damageable.onLocalDamaged.AddListener(OnDamaged);
         Netplay.singleton.players[playerId] = this;
 
         if (isLocal)
@@ -118,16 +118,21 @@ public class Player : NetworkBehaviour
         }
     }
 
-    private void OnDamaged(GameObject instigator)
+    private void OnDamaged(GameObject instigator, Vector3 force)
     {
         // Only the server can really hurt us
-        Hurt(instigator);
+        Hurt(instigator, force);
     }
 
-    public void Hurt(GameObject instigator)
+    public void Hurt(GameObject instigator, Vector3 force)
     {
+        if (force.sqrMagnitude <= Mathf.Epsilon)
+            force = -transform.forward.Horizontal() * hurtDefaultHorizontalKnockback;
+        else if (force.Horizontal().magnitude < hurtDefaultHorizontalKnockback)
+            force.SetHorizontal(force.Horizontal().normalized * hurtDefaultHorizontalKnockback);
+
         // predict our hit
-        GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0)));
+        GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force + new Vector3(0, hurtDefaultVerticalKnockback, 0)));
 
         // only the server can do the rest (ring drop, score, etc)
         if (NetworkServer.active)

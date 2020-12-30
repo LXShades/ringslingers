@@ -9,12 +9,13 @@ public class PlayerController : NetworkBehaviour
     {
         public float time;
         public Vector3 position;
+        public Quaternion rotation;
         public Vector3 velocity;
         public CharacterMovement.State state;
 
         public bool Equals(MoveState other)
         {
-            return other.position == position && other.velocity == velocity && other.state == state;
+            return other.position == position && other.rotation == rotation && other.velocity == velocity && other.state == state;
         }
     }
 
@@ -287,11 +288,28 @@ public class PlayerController : NetworkBehaviour
             // this is another player, just plop them here
             ApplyMoveState(moveState);
             inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
+            clientTime = moveState.time;
 
+            // Run latest prediction
             float predictionAmount = Netplay.singleton.unreliablePing;
+
+            // try and get events working... pop any new predictions into the pendingEvents
+            if (pendingEvents != null && pendingEvents.GetInvocationList().Length > 0)
+            {
+                eventHistory.Insert(moveState.time + predictionAmount - 0.001f, pendingEvents);
+                pendingEvents = null;
+            }
+
             for (float t = 0; t < predictionAmount; t += remotePredictionTimeStep)
             {
-                movement.TickMovement(Mathf.Min(remotePredictionTimeStep, predictionAmount - t), input, true);
+                float delta = Mathf.Min(remotePredictionTimeStep, predictionAmount - t);
+                int closestFollowingEvent = eventHistory.ClosestIndexAfter(moveState.time + t);
+                bool theFuck = closestFollowingEvent != -1 && eventHistory.TimeAt(closestFollowingEvent) <= moveState.time + t + delta;
+
+                if (theFuck)
+                    eventHistory[closestFollowingEvent]?.Invoke(movement, true);
+
+                movement.TickMovement(delta, input, true);
             }
         }
         else
@@ -302,9 +320,9 @@ public class PlayerController : NetworkBehaviour
 
     private void TryReconcile(MoveState pastState)
     {
+        Vector3 position = transform.position;
         Debug.Assert(hasAuthority && !NetworkServer.active);
 
-        Vector3 position = transform.position;
         // hop back to server position
         ApplyMoveState(pastState);
 
@@ -370,6 +388,7 @@ public class PlayerController : NetworkBehaviour
         {
             time = clientPlaybackTime,
             position = transform.position,
+            rotation = transform.rotation,
             state = movement.state,
             velocity = movement.velocity
         };
@@ -378,6 +397,7 @@ public class PlayerController : NetworkBehaviour
     private void ApplyMoveState(MoveState state)
     {
         transform.position = state.position;
+        transform.rotation = state.rotation;
         movement.state = state.state;
         movement.velocity = state.velocity;
 
