@@ -184,6 +184,7 @@ public class Spawner : MonoBehaviour
                 {
                     // it's the same object, and we predicted it, let's replace it!
                     predictable.isPrediction = false;
+                    predictable.wasPredicted = true;
                     return predictable.gameObject;
                 }
             }
@@ -209,6 +210,13 @@ public class Spawner : MonoBehaviour
     private void PostSpawnHandler(GameObject target)
     {
         SyncActionSystem.RegisterSyncActions(target);
+
+        // inform successful predictions that they're ready!
+        if (target.TryGetComponent(out Predictable predictable))
+        {
+            if (predictable.wasPredicted)
+                predictable.onPredictionSuccessful?.Invoke();
+        }
     }
 }
 

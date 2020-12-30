@@ -10,12 +10,12 @@ public class ThrownRingRail : ThrownRing
 
     public GameObject particles;
 
-    public override void Update()
+    public override void Simulate(float deltaTime)
     {
-        return; // do nothing, instead of the default movement
+        return; // do nothing
     }
 
-    public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction, float jumpAhead)
+    public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
     {
         this.owner = owner.gameObject;
         transform.forward = direction;

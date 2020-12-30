@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class ThrownRing : NetworkBehaviour, IPredictableObject
+public class ThrownRing : NetworkBehaviour
 {
     [HideInInspector] public RingWeaponSettings settings;
 
@@ -20,6 +20,11 @@ public class ThrownRing : NetworkBehaviour, IPredictableObject
     {
         rb = GetComponent<Rigidbody>();
         spawnTime = Time.time;
+
+        if (TryGetComponent(out Predictable predictable))
+        {
+            predictable.onPredictionSuccessful += OnPredictionSuccessful;
+        }
     }
 
     void Start()
@@ -35,24 +40,40 @@ public class ThrownRing : NetworkBehaviour, IPredictableObject
         }
     }
 
-    public virtual void Update()
+    private void Update()
+    {
+        Simulate(Time.deltaTime);
+    }
+
+    public virtual void Simulate(float deltaTime)
     {
         // Spin
-        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * Time.deltaTime, spinAxis);
+        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * deltaTime, spinAxis);
 
         // Move manually cuz... uh well, hmm, dangit rigidbody interpolation is not a thing in manually-simulated physics
-        transform.position += velocity * Time.deltaTime;
+        transform.position += velocity * deltaTime;
 
         // Improves collisions, kinda annoying but it be that way
         rb.velocity = velocity;
     }
 
-    public void OnCollisionEnter(Collision collision)
+    public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
+    {
+        foreach (Collider collider in GetComponentsInChildren<Collider>())
+        {
+            foreach (Collider ownerCollider in owner.GetComponentsInChildren<Collider>())
+                Physics.IgnoreCollision(collider, ownerCollider);
+        }
+
+        this.owner = owner.gameObject;
+        velocity = direction.normalized * settings.projectileSpeed;
+        transform.position = spawnPosition;
+    }
+
+    private void OnCollisionEnter(Collision collision)
     {
         if (Time.time - spawnTime < 0.1f)
-        {
             return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
-        }
 
         // Play despawn sound
         GameSounds.PlaySound(gameObject, settings.despawnSound);
@@ -75,18 +96,8 @@ public class ThrownRing : NetworkBehaviour, IPredictableObject
         Spawner.Despawn(gameObject);
     }
 
-    public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction, float jumpAheadTime = 0f)
+    private void OnPredictionSuccessful()
     {
-        foreach (Collider collider in GetComponentsInChildren<Collider>())
-        {
-            foreach (Collider ownerCollider in owner.GetComponentsInChildren<Collider>())
-                Physics.IgnoreCollision(collider, ownerCollider);
-        }
-
-        this.owner = owner.gameObject;
-        velocity = direction.normalized * settings.projectileSpeed;
-        transform.position = spawnPosition;
-
-        transform.position += jumpAheadTime * velocity;
+        Simulate(Time.time - spawnTime);
     }
 }

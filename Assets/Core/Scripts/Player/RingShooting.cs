@@ -172,7 +172,7 @@ public class RingShooting : NetworkBehaviour
         Debug.Assert(ringAsThrownRing);
 
         ringAsThrownRing.settings = currentWeapon.weaponType;
-        ringAsThrownRing.Throw(player, position, direction, 0);
+        ringAsThrownRing.Throw(player, position, direction);
 
         GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
 
