@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class ThrownRing : NetworkBehaviour
 {
+    [SyncVar]
     [HideInInspector] public RingWeaponSettings settings;
 
     private Vector3 spinAxis;
