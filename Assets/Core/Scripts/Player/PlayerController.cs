@@ -30,18 +30,7 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    public struct InputBuffer
-    {
-        public float startTime;
-        public InputDelta[] inputs;
-    }
-
-    [Header("Debug")]
-    public HistoryList<InputDelta> inputHistory = new HistoryList<InputDelta>();
-
-    private HistoryList<Vector3> positionHistory = new HistoryList<Vector3>();
-
-    public bool printReconcileInfo = false;
+    public delegate void MovementEvent(Movement target, bool isReconciliation);
 
     [Header("Local simulation")]
     [Range(0.1f, 1f)]
@@ -71,8 +60,18 @@ public class PlayerController : NetworkBehaviour
     public bool alwaysReconcile = false;
     public float reconcilationPositionTolerance = 0.3f;
 
+    [Header("Debug")]
+    public bool printReconcileInfo = false;
+
+    public HistoryList<InputDelta> inputHistory = new HistoryList<InputDelta>();
+
     public float clientPlaybackTime { get; private set; }
     public float clientTime { get; private set; }
+
+    private MovementEvent pendingEvents = null;
+    private HistoryList<MovementEvent> eventHistory = new HistoryList<MovementEvent>();
+
+    private HistoryList<Vector3> positionHistory = new HistoryList<Vector3>();
 
     private bool hasReceivedMoveState = false;
     private MoveState lastReceivedMoveState;
@@ -125,8 +124,11 @@ public class PlayerController : NetworkBehaviour
         }
 
         float inputHistoryMaxLength = pingTolerance + Mathf.Min(1f / (Mathf.Min(Netplay.singleton.playerTickrate, limitInputRate ? maxInputRate : 1000f)), 5f);
-        inputHistory.Prune(clientTime - inputHistoryMaxLength);
-        positionHistory.Prune(clientTime - inputHistoryMaxLength);
+        float trimTo = clientTime - inputHistoryMaxLength;
+
+        inputHistory.Prune(trimTo);
+        eventHistory.Prune(trimTo);
+        positionHistory.Prune(trimTo);
     }
 
     private float lastPlaybackInput = -1f;
@@ -146,10 +148,24 @@ public class PlayerController : NetworkBehaviour
                 if (doExtrapolate)
                     ApplyMoveState(lastConfirmedState); // when extrapolating our own inputs, we need to restore our positions for normal playback when the time comes
 
+                // add any pending events
+                if (pendingEvents != null && pendingEvents.GetInvocationList().Length > 0)
+                {
+                    eventHistory.Insert(inputHistory.TimeAt(index), pendingEvents);
+                    pendingEvents = null;
+                }
+
+                // execute the ticks
                 for (int i = index; i >= 0; i--)
                 {
+                    float time = inputHistory.TimeAt(i);
+                    var events = eventHistory.ItemAt(time);
+
+                    if (events != null)
+                        events?.Invoke(movement, false);
+
                     movement.TickMovement(inputHistory[i].deltaTime, PlayerInput.MakeWithDeltas(inputHistory[i].input, inputHistory.Count > i + 1 ? inputHistory[i + 1].input : inputHistory[i].input), false);
-                    lastPlaybackInput = inputHistory.TimeAt(i);
+                    lastPlaybackInput = time;
                 }
 
                 clientPlaybackTime = inputHistory.LatestTime + inputHistory.Latest.deltaTime; // precision correction
@@ -196,16 +212,11 @@ public class PlayerController : NetworkBehaviour
 
             if (startIndex != -1)
             {
-                InputBuffer buffer = new InputBuffer()
-                {
-                    startTime = inputHistory.TimeAt(startIndex),
-                    inputs = new InputDelta[startIndex + 1]
-                };
-
+                InputDelta[] inputs = new InputDelta[startIndex + 1];
                 for (int i = startIndex; i >= 0; i--)
-                    buffer.inputs[i] = inputHistory[i];
+                    inputs[i] = inputHistory[i];
 
-                CmdMoveState(buffer, MakeMoveState());
+                CmdMoveState(inputHistory.TimeAt(startIndex), inputs, MakeMoveState());
             }
         }
 
@@ -216,13 +227,13 @@ public class PlayerController : NetworkBehaviour
     }
 
     [Command(channel = Channels.DefaultUnreliable)]
-    public void CmdMoveState(InputBuffer inputs, MoveState moveState)
+    public void CmdMoveState(float startTime, InputDelta[] inputs, MoveState moveState)
     {
-        float time = inputs.startTime;
-        for (int i = inputs.inputs.Length - 1; i >= 0; i--)
+        float time = startTime;
+        for (int i = inputs.Length - 1; i >= 0; i--)
         {
-            inputHistory.Set(time, inputs.inputs[i], 0.001f);
-            time += inputs.inputs[i].deltaTime;
+            inputHistory.Set(time, inputs[i], 0.001f);
+            time += inputs[i].deltaTime;
         }
 
         OnReceivedMovement(moveState);
@@ -314,6 +325,12 @@ public class PlayerController : NetworkBehaviour
                     history += $"\n-> {i}@{t:F2}: {inputWithDeltas} offset: {transform.position - positionHistory[i]}";
                     t += inputHistory[i].deltaTime;
                 }
+
+                var events = eventHistory.ItemAt(inputHistory.TimeAt(i));
+
+                if (events != null)
+                    events?.Invoke(movement, false);
+
                 movement.TickMovement(inputHistory[i].deltaTime, inputWithDeltas, true);
             }
         }
@@ -331,6 +348,11 @@ public class PlayerController : NetworkBehaviour
             history += $"\nfinal offset: {transform.position - position}";
             Log.Write($"Reconcile: {pastState.time:F2} ({startState}@{(startState != -1 ? inputHistory.TimeAt(startState) : -1):F2}) clientTime: {clientTime:F2} {history}");
         }
+    }
+
+    public void CallEvent(MovementEvent eventToCall)
+    {
+        pendingEvents += eventToCall;
     }
 
     private void OnValidate()

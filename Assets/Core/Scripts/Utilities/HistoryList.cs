@@ -32,9 +32,9 @@ public class HistoryList<T> : HistoryListBase
 
     public float LatestTime => items.Count > 0 ? items[0].time : 0.0f;
 
-    public T ItemAt(float time)
+    public T ItemAt(float time, float tolerance = 0.01f)
     {
-        return items.Find(a => a.time == time).item;
+        return items.Find(a => a.time >= time - tolerance && a.time <= time + tolerance).item;
     }
 
     public int IndexAt(float time)

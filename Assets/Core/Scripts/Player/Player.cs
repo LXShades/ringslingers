@@ -121,28 +121,26 @@ public class Player : NetworkBehaviour
     private void OnDamaged(GameObject instigator)
     {
         // Only the server can really hurt us
-        if (NetworkServer.active)
-        {
-            Hurt(instigator);
-        }
-
-        // Let's predict our hit anyway
-        movement.ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0));
+        Hurt(instigator);
     }
 
-    [Server]
     public void Hurt(GameObject instigator)
     {
-        if (instigator && instigator.TryGetComponent(out Player attackerAsPlayer))
+        // predict our hit
+        GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0)));
+
+        // only the server can do the rest (ring drop, score, etc)
+        if (NetworkServer.active)
         {
-            // Give score to the attacker if possible
-            if (attackerAsPlayer)
-                attackerAsPlayer.score += 50;
+            if (instigator && instigator.TryGetComponent(out Player attackerAsPlayer))
+            {
+                // Give score to the attacker if possible
+                if (attackerAsPlayer)
+                    attackerAsPlayer.score += 50;
+            }
+
+            DropRings();
         }
-
-        movement.ApplyHitKnockback(-transform.forward.Horizontal() * hurtDefaultHorizontalKnockback + new Vector3(0, hurtDefaultVerticalKnockback, 0));
-
-        DropRings();
     }
 
     public void StartInvincibilityTime()

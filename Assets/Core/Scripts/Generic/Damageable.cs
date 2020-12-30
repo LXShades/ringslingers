@@ -32,18 +32,22 @@ public class Damageable : NetworkBehaviour
     {
         if (NetworkServer.active && invincibilityTimeRemaining <= 0f)
         {
-            invincibilityTimeRemaining = hitInvincibilityDuration;
-
             RpcDamage(instigator);
 
-            if (!NetworkClient.active) // boo, no client, server won't receive Rpcs
-                onDamaged?.Invoke(instigator);
+            if (!NetworkClient.active) // no client active? we need to play the RPC ourself...
+                OnDamage(instigator);
         }
     }
 
     [ClientRpc]
     private void RpcDamage(GameObject instigator)
     {
+        OnDamage(instigator);
+    }
+
+    private void OnDamage(GameObject instigator)
+    {
+        invincibilityTimeRemaining = hitInvincibilityDuration;
         onDamaged?.Invoke(instigator);
     }
 }
