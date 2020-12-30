@@ -142,7 +142,7 @@ public class RingShooting : NetworkBehaviour
     [Command]
     private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon)
     {
-        if (!CanThrowRing() || Vector3.Distance(position, spawnPosition.position) > 0.5f || Mathf.Abs(direction.sqrMagnitude - 1.0f) > 0.01f)
+        if (!CanThrowRing() || Vector3.Distance(position, spawnPosition.position) > 2f)
             return; // invalid throw
 
         equippedWeaponIndex = equippedWeapon;
