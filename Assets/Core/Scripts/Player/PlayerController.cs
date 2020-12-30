@@ -51,6 +51,8 @@ public class PlayerController : NetworkBehaviour
     public float maxDeltaTime = 0.5f;
 
     [Header("Remote playback")]
+    public bool extrapolateRemoteInput = true;
+
     [Range(0f, 1f)]
     public float maxRemotePrediction = 0.3f;
 
@@ -76,6 +78,7 @@ public class PlayerController : NetworkBehaviour
 
     private bool hasReceivedMoveState = false;
     private MoveState lastReceivedMoveState;
+    private PlayerInput lastReceivedMoveStateInput; // valid on client when receiving a player from the server
 
     private float nextInputUpdateTime;
 
@@ -141,12 +144,13 @@ public class PlayerController : NetworkBehaviour
         // Playback our latest movements
         int index = inputHistory.ClosestIndexAfter(lastPlaybackInput, 0f);
         bool doExtrapolate = hasAuthority && extrapolateLocalInput;
+        bool doRemoteExtrapolate = !hasAuthority && extrapolateRemoteInput;
 
         try
         {
             if (index != -1)
             {
-                if (doExtrapolate)
+                if (doExtrapolate || doRemoteExtrapolate)
                     ApplyMoveState(lastConfirmedState); // when extrapolating our own inputs, we need to restore our positions for normal playback when the time comes
 
                 // add any pending events
@@ -170,13 +174,15 @@ public class PlayerController : NetworkBehaviour
                 }
 
                 clientPlaybackTime = inputHistory.LatestTime + inputHistory.Latest.deltaTime; // precision correction
-
-                if (doExtrapolate)
-                    lastConfirmedState = MakeMoveState();
+                lastConfirmedState = MakeMoveState();
             }
             else if (doExtrapolate)
             {
                 movement.TickMovement(Time.deltaTime, PlayerInput.MakeWithDeltas(player.input, player.input), true);
+            }
+            else if (doRemoteExtrapolate)
+            {
+                movement.TickMovement(Time.deltaTime, inputHistory.Latest.input, true);
             }
         }
         catch (Exception e)
@@ -197,7 +203,7 @@ public class PlayerController : NetworkBehaviour
             else if (!NetworkServer.active)
             {
                 // validate this player (or our own) movement on the client
-                ClientValidateMovement(lastReceivedMoveState, default); // TODO
+                ClientValidateMovement(lastReceivedMoveState, lastReceivedMoveStateInput);
             }
 
             hasReceivedMoveState = false;
@@ -221,9 +227,10 @@ public class PlayerController : NetworkBehaviour
             }
         }
 
+        // send final state to players
         if (NetworkServer.active)
         {
-            RpcMoveState(MakeMoveState());
+            RpcMoveState(lastConfirmedState, inputHistory.Latest.input);
         }
     }
 
@@ -243,12 +250,12 @@ public class PlayerController : NetworkBehaviour
     }
 
     [ClientRpc(channel = Channels.DefaultUnreliable, excludeOwner = true)]
-    public void RpcMoveState(MoveState moveState)
+    public void RpcMoveState(MoveState moveState, PlayerInput input)
     {
         if (NetworkServer.active)
             return;
 
-        OnReceivedMovement(moveState);
+        OnReceivedMovement(moveState, input);
     }
 
     /// <summary>
@@ -260,11 +267,12 @@ public class PlayerController : NetworkBehaviour
         OnReceivedMovement(moveState);
     }
 
-    private void OnReceivedMovement(MoveState moveState)
+    private void OnReceivedMovement(MoveState moveState, PlayerInput input = default)
     {
         if (moveState.time > lastReceivedMoveState.time) // don't receive out-of-order movements
         {
             lastReceivedMoveState = moveState;
+            lastReceivedMoveStateInput = input;
             hasReceivedMoveState = true;
         }
     }
@@ -277,7 +285,7 @@ public class PlayerController : NetworkBehaviour
         }
         else
         {
-            TargetReconcile(MakeMoveState());
+            TargetReconcile(lastConfirmedState);
         }
     }
 
@@ -287,11 +295,17 @@ public class PlayerController : NetworkBehaviour
         {
             // this is another player, just plop them here
             ApplyMoveState(moveState);
-            inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
+
             clientTime = moveState.time;
+            lastPlaybackInput = moveState.time;
+
+            inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
 
             // Run latest prediction
-            float predictionAmount = Netplay.singleton.unreliablePing;
+            float predictionAmount = Mathf.Min(maxRemotePrediction, Netplay.singleton.unreliablePing);
+
+            if (extrapolateRemoteInput)
+                predictionAmount -= Time.deltaTime; // we're gonna replay this again anyway
 
             // try and get events working... pop any new predictions into the pendingEvents
             if (pendingEvents != null && pendingEvents.GetInvocationList().Length > 0)
@@ -304,9 +318,8 @@ public class PlayerController : NetworkBehaviour
             {
                 float delta = Mathf.Min(remotePredictionTimeStep, predictionAmount - t);
                 int closestFollowingEvent = eventHistory.ClosestIndexAfter(moveState.time + t);
-                bool theFuck = closestFollowingEvent != -1 && eventHistory.TimeAt(closestFollowingEvent) <= moveState.time + t + delta;
 
-                if (theFuck)
+                if (closestFollowingEvent != -1 && eventHistory.TimeAt(closestFollowingEvent) <= moveState.time + t + delta)
                     eventHistory[closestFollowingEvent]?.Invoke(movement, true);
 
                 movement.TickMovement(delta, input, true);
@@ -379,6 +392,7 @@ public class PlayerController : NetworkBehaviour
         {
             maxInputRate = Mathf.Max(maxInputRate, 1);
             sendBufferLength = Mathf.Max(sendBufferLength, 1f / maxInputRate);
+            remotePredictionTimeStep = Mathf.Max(remotePredictionTimeStep, 1f / maxInputRate); // no point in doing smaller time steps for predictions
         }
     }
 

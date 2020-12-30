@@ -4870,6 +4870,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneId: 0
+  predictedId: 0
   serverOnly: 0
   m_AssetId: 
   hasSpawned: 0
@@ -4906,7 +4907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f1b211fe1b2804478003c97e2eefb4f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  timeUntilDespawn: 0.1
+  timeUntilDespawn: 0.5
   blinkRateOverTime:
     serializedVersion: 2
     m_Curve:
@@ -4966,8 +4967,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 297f87762d9d329459c9c170a9b86528, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  predictableId: 0
-  playerId: 0
+  expiryTime: 0.5
 --- !u!1 &7351466003061733668
 GameObject:
   m_ObjectHideFlags: 0

@@ -141,7 +141,7 @@ public class CharacterMovement : Movement
 
         for (int i = 0; i < numHits; i++)
         {
-            if (!hits[i].collider.GetComponentInParent<Player>())
+            if (hits[i].collider.GetComponentInParent<CharacterMovement>() != this)
                 return true;
         }
 
