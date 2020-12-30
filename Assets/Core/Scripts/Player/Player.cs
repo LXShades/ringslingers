@@ -7,7 +7,7 @@ public class Player : NetworkBehaviour
     /// <summary>
     /// Name of this player. By default, all players are Fred.
     /// </summary>
-    [SyncVar] public string playerName = "Fred";
+    [SyncVar(hook=nameof(OnPlayerNameChanged))] public string playerName = "Fred";
 
     /// <summary>
     /// Player ID
@@ -198,5 +198,11 @@ public class Player : NetworkBehaviour
         }
 
         playerName = updatedName;
+    }
+
+    private void OnPlayerNameChanged(string oldVal, string newVal)
+    {
+        playerName = newVal;
+        gameObject.name = playerName;
     }
 }

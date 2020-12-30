@@ -169,9 +169,9 @@ public class Netplay : MonoBehaviour
         }
 
         if (message.isReliable)
-            reliablePing = msTime - receivedTime;
+            reliablePing = (msTime - receivedTime) / 1000f;
         else
-            unreliablePing = msTime - receivedTime;
+            unreliablePing = (msTime - receivedTime) / 1000f;
     }
 
     private void OnServerPingMessageReceived(NetworkConnection source, PingMessage message)

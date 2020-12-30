@@ -61,10 +61,11 @@ public class PlayerController : NetworkBehaviour
     public float maxDeltaTime = 0.5f;
 
     [Header("Remote playback")]
-    public float predictionAmount = 0.3f;
+    [Range(0f, 1f)]
+    public float maxRemotePrediction = 0.3f;
 
     [Range(0.01f, 0.5f)]
-    public float predictionTimeStep = 0.08f;
+    public float remotePredictionTimeStep = 0.08f;
 
     [Header("Reconcilation")]
     public bool alwaysReconcile = false;
@@ -276,9 +277,10 @@ public class PlayerController : NetworkBehaviour
             ApplyMoveState(moveState);
             inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
 
-            for (float i = 0; i < predictionAmount; i += predictionTimeStep)
+            float predictionAmount = Netplay.singleton.unreliablePing;
+            for (float t = 0; t < predictionAmount; t += remotePredictionTimeStep)
             {
-                movement.TickMovement(Mathf.Min(predictionTimeStep, predictionAmount - i), input, true);
+                movement.TickMovement(Mathf.Min(remotePredictionTimeStep, predictionAmount - t), input, true);
             }
         }
         else

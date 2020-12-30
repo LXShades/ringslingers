@@ -290,14 +290,14 @@ MonoBehaviour:
     items: []
   printReconcileInfo: 0
   pingTolerance: 0.5
-  inputBufferLength: 0.45
+  sendBufferLength: 0.2
   limitInputRate: 1
   limitUpdatesToInputRate: 1
   maxInputRate: 60
   extrapolateLocalInput: 1
   maxDeltaTime: 0.5
-  predictionAmount: 0.3
-  predictionTimeStep: 0.08
+  maxRemotePrediction: 0.5
+  remotePredictionTimeStep: 0.1
   alwaysReconcile: 0
   reconcilationPositionTolerance: 0
 --- !u!114 &1227556274159782272

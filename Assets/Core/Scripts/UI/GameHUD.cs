@@ -79,7 +79,7 @@ public class GameHUD : MonoBehaviour
                 numFramesThisSecond = 0;
             }
 
-            debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing)}ms" +
+            debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing * 1000f)}ms (reliable: {(int)(Netplay.singleton.reliablePing)})" +
                 $"\nFPS: {lastFps}" +
                 $"\n{Netplay.singleton.netStat}";
         }
