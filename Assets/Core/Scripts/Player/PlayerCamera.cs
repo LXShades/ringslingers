@@ -86,8 +86,18 @@ public class PlayerCamera : MonoBehaviour
                 }
             }
 
+            // Apply third-person view
             if (thirdPersonDistance > 0f)
+            {
                 transform.position -= transform.forward * thirdPersonDistance;
+                if (!currentPlayer.characterModel.enabled)
+                    currentPlayer.characterModel.enabled = true;
+            }
+            else
+            {
+                if (currentPlayer.characterModel.enabled)
+                    currentPlayer.characterModel.enabled = false;
+            }
 
             // Apply eye bob
             if (currentPlayer.movement.isOnGround && thirdPersonDistance <= Mathf.Epsilon)

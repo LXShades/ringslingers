@@ -3,17 +3,45 @@
 public class CharacterAnimation : MonoBehaviour
 {
     private CharacterMovement movement;
+    private Player player;
     private Animator animation;
+
+    [Header("Body parts")]
+    public Transform root;
+    public Transform torso;
+    public Transform head;
 
     private void Start()
     {
         movement = GetComponentInParent<CharacterMovement>();
+        player = GetComponentInParent<Player>();
         animation = GetComponentInParent<Animator>();
     }
 
     private void LateUpdate()
     {
+        float forwardSpeedMultiplier = 1;
+        // Turn body towards look direction
+        if (movement.isOnGround && movement.velocity.Horizontal().magnitude > 0.2f)
+        {
+            Vector3 runForward = movement.velocity.Horizontal();
+
+            if (Vector3.Dot(transform.forward.Horizontal(), runForward) <= 0f)
+            {
+                runForward = -runForward;
+                forwardSpeedMultiplier = -1;
+            }
+
+            Quaternion forwardToVelocity = Quaternion.LookRotation(runForward) * Quaternion.Inverse(Quaternion.LookRotation(transform.forward.Horizontal()));
+
+            root.rotation = forwardToVelocity * root.transform.rotation;
+            torso.rotation = Quaternion.Inverse(forwardToVelocity) * torso.rotation;
+        }
+
+        head.transform.rotation = Quaternion.LookRotation(player.input.aimDirection) * Quaternion.Inverse(Quaternion.LookRotation(torso.forward.Horizontal())) * head.transform.rotation;
+
         animation.SetFloat("HorizontalSpeed", movement.velocity.Horizontal().magnitude);
+        animation.SetFloat("HorizontalForwardSpeed", movement.velocity.Horizontal().magnitude * forwardSpeedMultiplier);
         animation.SetBool("IsOnGround", movement.isOnGround);
         animation.SetBool("IsRolling", !movement.isOnGround && (movement.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0);
         animation.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & CharacterMovement.State.Jumped) == 0);

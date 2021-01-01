@@ -41,6 +41,9 @@ public class Player : NetworkBehaviour
     [SyncVar]
     private int _numRings;
 
+    [Header("Visuals")]
+    public Renderer characterModel;
+
     [Header("Ring drop")]
     public GameSound dropSound = new GameSound();
 

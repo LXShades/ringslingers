@@ -72,7 +72,7 @@ public class RingShooting : NetworkBehaviour
             equippedWeaponIndex = weapons.Count - 1;
 
         // Fire weapons if we can
-        if (player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.weaponType.isAutomatic))
+        if (hasAuthority && player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.weaponType.isAutomatic))
         {
             Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
 

@@ -247,6 +247,7 @@ public class PlayerController : NetworkBehaviour
         OnReceivedMovement(moveState);
 
         clientTime = time;
+        player.input = inputHistory.Latest.input;
     }
 
     [ClientRpc(channel = Channels.DefaultUnreliable, excludeOwner = true)]
@@ -296,6 +297,7 @@ public class PlayerController : NetworkBehaviour
             // this is another player, just plop them here
             ApplyMoveState(moveState);
 
+            player.input = input;
             clientTime = moveState.time;
             lastPlaybackInput = moveState.time;
 
