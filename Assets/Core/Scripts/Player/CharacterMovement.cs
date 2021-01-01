@@ -22,6 +22,9 @@ public class CharacterMovement : Movement
 
     public float airAccelerationMultiplier = 0.25f;
 
+    [Header("Advanced")]
+    public float groundTestDistance = 0.05f;
+
     [Header("Abilities")]
     public float actionSpeed = 60;
 
@@ -137,7 +140,7 @@ public class CharacterMovement : Movement
             return transform.position.y <= 0;
 
         RaycastHit[] hits = new RaycastHit[10];
-        int numHits = Physics.RaycastNonAlloc(transform.position + Vector3.up * 0.1f, -Vector3.up.normalized, hits, 0.199f, ~0, QueryTriggerInteraction.Ignore);
+        int numHits = Physics.RaycastNonAlloc(transform.position + Vector3.up * groundTestDistance, -Vector3.up.normalized, hits, groundTestDistance * 2f, ~0, QueryTriggerInteraction.Ignore);
 
         for (int i = 0; i < numHits; i++)
         {

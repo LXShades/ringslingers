@@ -7,11 +7,20 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     public Player currentPlayer;
 
+    [Header("Zoom")]
+    public float zoomSpeed = 1f;
+    public float thirdPersonDistance = 0f;
+
+    public float maxThirdPersonDistance = 5f;
+    public float minThirdPersonDistance = 1f;
+
+    [Header("Position")]
     /// <summary>
     /// The height of the camera relative to the player's feet
     /// </summary>
     public float eyeHeight = 0.6f;
 
+    [Header("Head bob")]
     /// <summary>
     /// The height (positive and negative) of eye bobs
     /// </summary>
@@ -57,8 +66,31 @@ public class PlayerCamera : MonoBehaviour
             transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
             transform.rotation = Quaternion.Euler(currentPlayer.input.verticalAim, currentPlayer.input.horizontalAim, 0);
 
+            // Apply zoom in/out
+            float zoom = Input.GetAxis("CameraZoom") * zoomSpeed;
+            if (zoom != 0f)
+            {
+                if (zoom > 0)
+                {
+                    if (thirdPersonDistance == 0f)
+                        thirdPersonDistance = minThirdPersonDistance;
+                    else
+                        thirdPersonDistance = Mathf.Min(thirdPersonDistance + zoom, maxThirdPersonDistance);
+                }
+                else
+                {
+                    if (thirdPersonDistance + zoom < minThirdPersonDistance)
+                        thirdPersonDistance = 0f;
+                    else
+                        thirdPersonDistance = Mathf.Max(thirdPersonDistance + zoom, minThirdPersonDistance);
+                }
+            }
+
+            if (thirdPersonDistance > 0f)
+                transform.position -= transform.forward * thirdPersonDistance;
+
             // Apply eye bob
-            if (currentPlayer.movement.isOnGround)
+            if (currentPlayer.movement.isOnGround && thirdPersonDistance <= Mathf.Epsilon)
             {
                 if (lastPlayerFallSpeed > 0)
                 {
