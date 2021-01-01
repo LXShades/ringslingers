@@ -5,6 +5,8 @@ public class Chatbox : MonoBehaviour
 {
     public InputField input;
 
+    public string defaultText = "<type here>";
+
     private void Start()
     {
         input.gameObject.SetActive(false);
@@ -25,8 +27,10 @@ public class Chatbox : MonoBehaviour
 
     public void OnChatBoxSubmitted(string text)
     {
-        if (Input.GetKey(KeyCode.Return))
-            Log.Write(input.text);
+        if (Input.GetKey(KeyCode.Return) && text != defaultText && !string.IsNullOrEmpty(text))
+        {
+            Netplay.singleton.localClient.CmdSendMessage(text);
+        }
 
         input.gameObject.SetActive(false);
     }

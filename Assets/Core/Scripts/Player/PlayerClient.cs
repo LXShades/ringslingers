@@ -1,7 +1,4 @@
 ﻿using Mirror;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class PlayerClient : NetworkBehaviour
 {
@@ -9,6 +6,8 @@ public class PlayerClient : NetworkBehaviour
     /// ID of this client
     /// </summary>
     [SyncVar(hook = nameof(OnPlayerIdChanged))] public int playerId;
+
+    private Player player => playerId != -1 ? Netplay.singleton.players[playerId] : null;
 
     void OnPlayerIdChanged(int oldValue, int newValue)
     {
@@ -18,5 +17,12 @@ public class PlayerClient : NetworkBehaviour
         {
             Netplay.singleton.localPlayerId = newValue;
         }
+    }
+
+    [Command]
+    public void CmdSendMessage(string message)
+    {
+        message = message.Replace("</noparse>", "lol"); // plz don't
+        MessageFeed.Post($"<<player>{player?.playerName}</player>>: <noparse>{message}</noparse>");
     }
 }

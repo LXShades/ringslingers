@@ -50,6 +50,8 @@ public class Netplay : MonoBehaviour
     /// </summary>
     public int localPlayerId = -1;
 
+    public PlayerClient localClient => NetworkClient.connection.identity.GetComponent<PlayerClient>();
+
     public Player localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
 
     /// <summary>
