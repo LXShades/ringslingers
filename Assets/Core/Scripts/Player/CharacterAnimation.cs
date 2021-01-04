@@ -21,10 +21,12 @@ public class CharacterAnimation : MonoBehaviour
     private void LateUpdate()
     {
         float forwardSpeedMultiplier = 1;
+        Vector3 groundVelocity = movement.groundVelocity;
+
         // Turn body towards look direction
-        if (movement.isOnGround && movement.velocity.Horizontal().magnitude > 0.2f)
+        if (movement.isOnGround && groundVelocity.magnitude > 0.2f)
         {
-            Vector3 runForward = movement.velocity.Horizontal();
+            Vector3 runForward = groundVelocity;
 
             if (Vector3.Dot(transform.forward.Horizontal(), runForward) <= 0f)
             {
@@ -40,8 +42,8 @@ public class CharacterAnimation : MonoBehaviour
 
         head.transform.rotation = Quaternion.LookRotation(player.input.aimDirection) * Quaternion.Inverse(Quaternion.LookRotation(torso.forward.Horizontal())) * head.transform.rotation;
 
-        animation.SetFloat("HorizontalSpeed", movement.velocity.Horizontal().magnitude);
-        animation.SetFloat("HorizontalForwardSpeed", movement.velocity.Horizontal().magnitude * forwardSpeedMultiplier);
+        animation.SetFloat("HorizontalSpeed", groundVelocity.magnitude);
+        animation.SetFloat("HorizontalForwardSpeed", groundVelocity.magnitude * forwardSpeedMultiplier);
         animation.SetBool("IsOnGround", movement.isOnGround);
         animation.SetBool("IsRolling", !movement.isOnGround && (movement.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0);
         animation.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & CharacterMovement.State.Jumped) == 0);

@@ -22,8 +22,14 @@ public class CharacterMovement : Movement
 
     public float airAccelerationMultiplier = 0.25f;
 
+    [Header("3D movement")]
+    public bool enableWallRun = true;
+    public float wallRunRotationResetSpeed = 180f;
+    public Transform rotateableModel;
+
     [Header("Advanced")]
     public float groundTestDistance = 0.05f;
+    public float wallRunTestDistance = 0.3f;
 
     [Header("Abilities")]
     public float actionSpeed = 60;
@@ -31,6 +37,9 @@ public class CharacterMovement : Movement
     [Header("Sounds")]
     public GameSound jumpSound = new GameSound();
     public GameSound thokSound = new GameSound();
+
+    [Header("Debug")]
+    public bool debugDisableCollision = true;
 
     // States
     [Flags]
@@ -42,15 +51,16 @@ public class CharacterMovement : Movement
         CanceledJump = 8,
         Pained = 16
     };
-    public State state
-    {
-        get; set;
-    }
+    public State state { get; set; }
 
     /// <summary>
-    /// Speed of the player right now
+    /// Retrieves the velocity vector along the current ground plane (horizontal if you're in the air)
     /// </summary>
-    //[HideInInspector] public Vector3 velocity;
+    public Vector3 groundVelocity
+    {
+        get => velocity.AlongPlane(groundNormal);
+        set => velocity.SetAlongPlane(groundNormal, value);
+    }
 
     /// <summary>
     /// The direction the player is trying to run in
@@ -60,8 +70,20 @@ public class CharacterMovement : Movement
     /// <summary>
     /// Whether the player is on the ground
     /// </summary>
-    [HideInInspector] public bool isOnGround = false;
+    public bool isOnGround { get; private set; }
 
+    public Vector3 groundNormal { get; private set; }
+
+    public float groundDistance { get; private set; }
+
+    /// <summary>
+    /// Current up vector
+    /// </summary>
+    private Vector3 up = Vector3.up;
+
+    private Vector3 gravityDirection = new Vector3(0, -1, 0);
+
+    // whether we're currently reconciling movement
     private bool isReconciling = false;
 
     void Awake()
@@ -75,10 +97,26 @@ public class CharacterMovement : Movement
         isReconciling = isReconciliation;
 
         // Check whether on ground
-        isOnGround = DetectOnGround();
+        bool wasFound = DetectGround(1f, out float _groundDistance, out Vector3 _groundNormal);
+
+        isOnGround = wasFound && _groundDistance < groundTestDistance;
+
+        if (wasFound)
+        {
+            groundNormal = _groundNormal;
+            groundDistance = _groundDistance;
+        }
+        else
+        {
+            groundNormal = Vector3.up;
+            groundDistance = float.MaxValue;
+        }
 
         // Point towards relevent direction
         transform.rotation = Quaternion.Euler(0, input.horizontalAim, 0);
+
+        // 3D movement
+        ApplyWallRunRotation(deltaTime);
 
         // Add/remove states depending on whether isOnGround
         if (isOnGround)
@@ -91,71 +129,71 @@ public class CharacterMovement : Movement
 
         // Friction
         ApplyFriction(deltaTime);
-        float lastHorizontalSpeed = velocity.Horizontal().magnitude; // this is our new max speed if our max speed was already exceeded
+        float lastHorizontalSpeed = groundVelocity.magnitude; // this is our new max speed if our max speed was already exceeded
 
         ApplyRunAcceleration(deltaTime, input);
 
         // Gravity
-        velocity += new Vector3(0, -1, 0) * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime);
+        ApplyGravity(deltaTime);
 
         // Top speed clamp
         ApplyTopSpeedLimit(lastHorizontalSpeed);
 
         // Stop speed
-        if (inputRunDirection.sqrMagnitude == 0 && velocity.Horizontal().magnitude < stopSpeed / GameManager.singleton.fracunitsPerM * 35f)
-            velocity.SetHorizontal(Vector3.zero);
+        if (inputRunDirection.sqrMagnitude == 0 && groundVelocity.magnitude < stopSpeed / GameManager.singleton.fracunitsPerM * 35f)
+            groundVelocity = Vector3.zero;
 
         // Jump button
         HandleJumpAbilities(input);
 
         // Do not slip through the ground
-        if (isOnGround)
-        {
-            velocity.y = Mathf.Max(velocity.y, 0);
-
-            if (velocity.y == 0)
-            {
-                isOnGround = true;
-                state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
-            }
-        }
+        ApplyGrounding();
 
         // Perform final movement and collision
-        if (debugDisableCollision)
-        {
-            transform.position += velocity * deltaTime;
-        }
-        else
-        {
-            RaycastHit hit;
-            move.Move(velocity * deltaTime, out hit, isReconciliation);
-        }
+        move.enableCollision = !debugDisableCollision;
+        move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
+
+        Debug.DrawLine(transform.position, transform.position + velocity.normalized, Color.yellow);
+        Debug.DrawLine(transform.position, transform.position + groundVelocity.normalized, Color.red);
     }
 
-    public bool debugDisableCollision = true;
-
-    private bool DetectOnGround()
+    private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal)
     {
-        if (debugDisableCollision)
-            return transform.position.y <= 0;
+        groundNormal = Vector3.up;
+        foundDistance = -1f;
 
-        RaycastHit[] hits = new RaycastHit[10];
-        int numHits = Physics.RaycastNonAlloc(transform.position + Vector3.up * groundTestDistance, -Vector3.up.normalized, hits, groundTestDistance * 2f, ~0, QueryTriggerInteraction.Ignore);
-
-        for (int i = 0; i < numHits; i++)
+        if (!debugDisableCollision)
         {
-            if (hits[i].collider.GetComponentInParent<CharacterMovement>() != this)
-                return true;
-        }
+            const float kUpTestDistance = 0.05f; // buffer in case slightly slipping through, awkward physics prevention etc
+            RaycastHit[] hits = new RaycastHit[10];
+            int numHits = move.ColliderCast(hits, transform.position + up * kUpTestDistance, -up.normalized, testDistance + kUpTestDistance, ~0, QueryTriggerInteraction.Ignore);
+            float closestGroundDistance = kUpTestDistance + testDistance;
+            bool isFound = false;
 
-        return false;
+            for (int i = 0; i < numHits; i++)
+            {
+                if (hits[i].collider.GetComponentInParent<CharacterMovement>() != this && hits[i].distance - kUpTestDistance < closestGroundDistance)
+                {
+                    isFound = true;
+                    groundNormal = hits[i].normal;
+                    foundDistance = hits[i].distance - kUpTestDistance;
+                    closestGroundDistance = foundDistance;
+                }
+            }
+
+            return isFound;
+        }
+        else // if (debugDisableCollision)
+        {
+            return transform.position.y <= 0;
+        }
     }
 
     private void ApplyFriction(float deltaTime)
     {
         // Friction
-        if (velocity.Horizontal().magnitude > 0 && isOnGround)
-            velocity.SetHorizontal(velocity.Horizontal() * Mathf.Pow(friction, deltaTime * 35f));
+        if (groundVelocity.magnitude > 0 && isOnGround)
+            groundVelocity = velocity * Mathf.Pow(friction, deltaTime * 35f);
     }
 
     private void ApplyRunAcceleration(float deltaTime, PlayerInput input)
@@ -163,13 +201,12 @@ public class CharacterMovement : Movement
         if (state.HasFlag(State.Pained))
             return; // cannot accelerate while in pain
 
-        inputRunDirection = transform.forward.Horizontal().normalized * input.moveVerticalAxis + transform.right.Horizontal().normalized * input.moveHorizontalAxis;
+        Vector3 groundForward = Vector3.Cross(transform.right, groundNormal), groundRight = Vector3.Cross(groundNormal, transform.forward);
 
-        if (inputRunDirection.magnitude > 1)
-            inputRunDirection.Normalize();
+        inputRunDirection = Vector3.ClampMagnitude(groundForward.normalized * input.moveVerticalAxis + groundRight.normalized * input.moveHorizontalAxis, 1);
 
         velocity *= GameManager.singleton.fracunitsPerM / 35f;
-        float speed = velocity.Horizontal().magnitude; // todo: use rmomentum
+        float speed = groundVelocity.magnitude; // todo: use rmomentum
         float currentAcceleration = accelStart + speed * acceleration; // divide by scale in the real game
 
         if (!isOnGround)
@@ -181,10 +218,10 @@ public class CharacterMovement : Movement
 
     private void ApplyTopSpeedLimit(float lastHorizontalSpeed)
     {
-        float speedToClamp = velocity.Horizontal().magnitude;
+        float speedToClamp = groundVelocity.magnitude;
 
         if (speedToClamp > topSpeed / GameManager.singleton.fracunitsPerM * 35f && speedToClamp > lastHorizontalSpeed)
-            velocity.SetHorizontal(velocity.Horizontal() * (Mathf.Max(lastHorizontalSpeed, topSpeed / GameManager.singleton.fracunitsPerM * 35f) / speedToClamp));
+            groundVelocity = (groundVelocity * (Mathf.Max(lastHorizontalSpeed, topSpeed / GameManager.singleton.fracunitsPerM * 35f) / speedToClamp));
     }
 
     public void ApplyHitKnockback(Vector3 force)
@@ -203,7 +240,7 @@ public class CharacterMovement : Movement
             if (isOnGround && !state.HasFlag(State.Jumped))
             {
                 // Jump
-                velocity.y = jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM;
+                velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM);
 
                 if (!isReconciling)
                     GameSounds.PlaySound(gameObject, jumpSound);
@@ -227,6 +264,55 @@ public class CharacterMovement : Movement
 
             if (velocity.y > 0)
                 velocity.y /= 2f;
+        }
+    }
+
+    private void ApplyWallRunRotation(float deltaTime)
+    {
+        if (!enableWallRun)
+        {
+            up = Vector3.up;
+            return;
+        }
+
+        // Rotate towards our target
+        Vector3 targetUp;
+
+        if (groundDistance <= wallRunTestDistance)
+        {
+            targetUp = groundNormal;
+            isOnGround = true;
+        }
+        else
+            targetUp = Vector3.up;
+
+        if (Vector3.Angle(up, targetUp) > 0f)
+        {
+            float degreesToRotate = wallRunRotationResetSpeed * deltaTime;
+            up = Vector3.Slerp(up, targetUp, Mathf.Min(degreesToRotate / Vector3.Angle(up, targetUp), 1.0f));
+        }
+
+        // Apply final rotation
+        if (rotateableModel)
+            rotateableModel.transform.rotation = Quaternion.LookRotation(player.input.aimDirection.Horizontal(), up);
+    }
+
+    private void ApplyGravity(float deltaTime)
+    {
+        if (!isOnGround) // wall run, etc cancels out gravity
+            velocity += gravityDirection * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime);
+    }
+
+    private void ApplyGrounding()
+    {
+        if (isOnGround)
+        {
+            // Push towrads the ground, if we're not actively moving away from it
+            if (velocity.GetAlongAxis(groundNormal) <= 1f)
+            {
+                velocity.SetAlongAxis(groundNormal, -groundDistance * 10f);
+                state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
+            }
         }
     }
 

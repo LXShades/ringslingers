@@ -372,6 +372,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4118904f0bb36834eab3af1056ce998b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  enableCollision: 1
   colliders:
   - {fileID: 1784313262649898792}
   blockingCollisionLayers:
@@ -392,6 +393,9 @@ MonoBehaviour:
   jumpFactor: 1
   gravity: 0.5
   airAccelerationMultiplier: 0.25
+  enableWallRun: 1
+  wallRunRotationResetSpeed: 360
+  rotateableModel: {fileID: 1526902982376324854}
   groundTestDistance: 0.015
   actionSpeed: 60
   jumpSound:
@@ -404,7 +408,6 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     pitchVariance: 0.05
-  isOnGround: 0
   debugDisableCollision: 0
 --- !u!114 &647324544927865860
 MonoBehaviour:

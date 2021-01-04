@@ -4,6 +4,8 @@ using UnityEngine;
 public class Movement : MonoBehaviour
 {
     [Header("Collision")]
+    public bool enableCollision = true;
+
     [Header("Note: Colliders cannot currently rotate")]
     [Tooltip("List of colliders to be used in collision tests")]
     public Collider[] colliders = new Collider[0];
@@ -50,8 +52,8 @@ public class Movement : MonoBehaviour
         }
     }
 
-    RaycastHit[] hits = new RaycastHit[10];
     HashSet<IMovementCollisions> movementCollisions = new HashSet<IMovementCollisions>();
+    RaycastHit[] hits = new RaycastHit[16];
 
     /// <summary>
     /// Moves with collision checking. Can be a computationally expensive operation
@@ -63,6 +65,11 @@ public class Movement : MonoBehaviour
 
         if (offset == Vector3.zero)
             return false;
+        if (!enableCollision)
+        {
+            transform.position += offset;
+            return true; // that was easy
+        }
 
         int numIterations = 2;
         Vector3 currentMovement = offset;
@@ -71,74 +78,39 @@ public class Movement : MonoBehaviour
         for (int iteration = 0; iteration < numIterations; iteration++)
         {
             RaycastHit hit = default;
-            float movementMagnitude = currentMovement.magnitude;
             float lowestDist = float.MaxValue;
             int lowestHitId = -1;
 
             movementCollisions.Clear();
 
-            foreach (Collider collider in colliders)
+            int numHits = ColliderCast(hits, transform.position, currentMovement.normalized, currentMovement.magnitude + 0.0001f, blockingCollisionLayers, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < numHits; i++)
             {
-                int numHits = 0;
-                if (collider.GetType() == typeof(SphereCollider))
+                // find closest blocking collider
+                if (!hits[i].collider.isTrigger && hits[i].distance > 0 && hits[i].distance < lowestDist) // kinda hacky: 0 seems to mean we're stuck inside something and das is nicht gut
                 {
-                    SphereCollider sphere = collider as SphereCollider;
-                    numHits = Physics.SphereCastNonAlloc(
-                        transform.TransformPoint(sphere.center),
-                        sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
-                        currentMovement.normalized,
-                        hits,
-                        movementMagnitude + 0.0001f,
-                        blockingCollisionLayers,
-                        QueryTriggerInteraction.Collide);
-                }
-                else if (collider.GetType() == typeof(CapsuleCollider))
-                {
-                    CapsuleCollider capsule = collider as CapsuleCollider;
-                    Vector3 up = (capsule.direction == 0 ? transform.right : (capsule.direction == 1 ? transform.up : transform.forward)) * (Mathf.Max(capsule.height * 0.5f - capsule.radius, 0));
-                    Vector3 center = transform.TransformPoint(capsule.center);
-
-                    numHits = Physics.CapsuleCastNonAlloc(
-                        center + up, center - up,
-                        capsule.radius * 0.5f * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
-                        currentMovement.normalized,
-                        hits,
-                        movementMagnitude + 0.0001f,
-                        blockingCollisionLayers,
-                        QueryTriggerInteraction.Collide);
-                }
-                else
-                {
-                    continue; // couldn't detect collider type
+                    lowestDist = hits[i].distance;
+                    lowestHitId = i;
                 }
 
-                for (int i = 0; i < numHits; i++)
-                {
-                    // find closest blocking collider
-                    if (!hits[i].collider.isTrigger && hits[i].distance > 0 && hits[i].distance < lowestDist) // kinda hacky: 0 seems to mean we're stuck inside something and das is nicht gut
-                    {
-                        lowestDist = hits[i].distance;
-                        lowestHitId = i;
-                    }
+                // acknowledge all collided movementcollision objects
+                foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
+                    movementCollisions.Add(movementCollision);
+            }
 
-                    // acknowledge all collided movementcollision objects
-                    foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
-                        movementCollisions.Add(movementCollision);
-                }
-
-                // Identify the closest blocking collision
-                if (lowestHitId != -1)
-                {
-                    hit = hits[lowestHitId];
-                    hitOut = hit;
-                    hasHitOccurred = true;
-                }
+            // Identify the closest blocking collision
+            if (lowestHitId != -1)
+            {
+                hit = hits[lowestHitId];
+                hitOut = hit;
+                hasHitOccurred = true;
             }
 
             if (lowestDist != float.MaxValue)
             {
                 if (iteration == numIterations - 1)
                 {
+                    // final collision: block further movement entirely
                     currentMovement = currentMovement.normalized * (hit.distance - 0.001f);
                 }
                 else
@@ -162,6 +134,55 @@ public class Movement : MonoBehaviour
         }
 
         return hasHitOccurred;
+    }
+
+    RaycastHit[] hitBuffer = new RaycastHit[128];
+
+    public int ColliderCast(RaycastHit[] hitsOut, Vector3 startPosition, Vector3 castDirection, float castMaxDistance, int layers, QueryTriggerInteraction queryTriggerInteraction)
+    {
+        Matrix4x4 toWorld = transform.localToWorldMatrix;
+        int numHits = 0;
+
+        toWorld = Matrix4x4.Translate(startPosition - transform.position) * toWorld;
+
+        foreach (Collider collider in colliders)
+        {
+            int colliderNumHits = 0;
+            if (collider is SphereCollider sphere)
+            {
+                colliderNumHits = Physics.SphereCastNonAlloc(
+                    toWorld.MultiplyPoint(sphere.center),
+                    sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
+                    castDirection,
+                    hitBuffer,
+                    castMaxDistance,
+                    layers,
+                    queryTriggerInteraction);
+            }
+            else if (collider is CapsuleCollider capsule)
+            {
+                Vector3 up = (capsule.direction == 0 ? transform.right : (capsule.direction == 1 ? transform.up : transform.forward)) * (Mathf.Max(capsule.height * 0.5f - capsule.radius, 0));
+                Vector3 center = toWorld.MultiplyPoint(capsule.center);
+
+                colliderNumHits = Physics.CapsuleCastNonAlloc(
+                    center + up, center - up,
+                    capsule.radius * 0.5f * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
+                    castDirection,
+                    hitBuffer,
+                    castMaxDistance,
+                    layers,
+                    queryTriggerInteraction);
+            }
+            else
+            {
+                continue; // couldn't detect collider type
+            }
+
+            for (int i = 0; i < colliderNumHits && numHits < hitsOut.Length; i++)
+                hitsOut[numHits++] = hitBuffer[i];
+        }
+
+        return numHits;
     }
 }
 
