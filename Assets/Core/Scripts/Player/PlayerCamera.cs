@@ -62,9 +62,12 @@ public class PlayerCamera : MonoBehaviour
 
         if (currentPlayer)
         {
-            // Move to player position
+            // Move and rotate to player position
             transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
             transform.rotation = Quaternion.Euler(currentPlayer.input.verticalAim, currentPlayer.input.horizontalAim, 0);
+
+            // actually try 3D rotation
+            transform.rotation = Quaternion.LookRotation(currentPlayer.input.aimDirection, currentPlayer.GetComponent<CharacterMovement>().up);
 
             // Apply zoom in/out
             float zoom = Input.GetAxis("CameraZoom") * zoomSpeed;
@@ -112,11 +115,11 @@ public class PlayerCamera : MonoBehaviour
                 if (landBobTimer > 0)
                 {
                     float landProgress = 1 - (landBobTimer / landBobDuration);
-                    transform.position += Vector3.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
+                    transform.position += transform.up * (-landBobMagnitude * landProgress * 2 + landBobMagnitude * landProgress * landProgress * 2);
                     landBobTimer = Mathf.Max(landBobTimer - Time.deltaTime, 0);
                 }
 
-                transform.position += Vector3.up * (Mathf.Sin(eyeBobSpeed * Time.unscaledTime * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
+                transform.position += transform.up * (Mathf.Sin(eyeBobSpeed * Time.unscaledTime * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
             }
 
             lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);

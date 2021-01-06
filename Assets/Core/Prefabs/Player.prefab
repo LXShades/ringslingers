@@ -394,9 +394,10 @@ MonoBehaviour:
   gravity: 0.5
   airAccelerationMultiplier: 0.25
   enableWallRun: 1
-  wallRunRotationResetSpeed: 360
+  wallRunRotationResetSpeed: 180
   rotateableModel: {fileID: 1526902982376324854}
   groundTestDistance: 0.015
+  wallRunTestDistance: 0.3
   actionSpeed: 60
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}

@@ -5,7 +5,7 @@ public static class VectorExtensions
     /// <summary>
     /// Returns the horizontal components (x,z) of the vector
     /// </summary>
-    public static Vector3 Horizontal(this Vector3 vec)
+    public static Vector3 Horizontal(in this Vector3 vec)
     {
         return new Vector3(vec.x, 0, vec.z);
     }
@@ -22,7 +22,7 @@ public static class VectorExtensions
     /// <summary>
     /// Returns how far along the axis the vector goes. The axis does not need to be normalized
     /// </summary>
-    public static float GetAlongAxis(ref this Vector3 vec, Vector3 axis)
+    public static float AlongAxis(in this Vector3 vec, Vector3 axis)
     {
         float mag = axis.sqrMagnitude;
         if (mag <= 0.999f || mag >= 1.001f)
@@ -63,7 +63,7 @@ public static class VectorExtensions
     /// <param name="vec"></param>
     /// <param name="planeNormal"></param>
     /// <returns></returns>
-    public static Vector3 AlongPlane(ref this Vector3 vec, Vector3 planeNormal)
+    public static Vector3 AlongPlane(in this Vector3 vec, Vector3 planeNormal)
     {
         float mag = planeNormal.sqrMagnitude;
         if (mag <= 0.999f || mag >= 1.001f)

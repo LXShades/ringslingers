@@ -100,7 +100,7 @@ public class Player : NetworkBehaviour
         if (isLocal)
         {
             lastInput = input;
-            input = PlayerInput.MakeLocalInput(lastInput);
+            input = PlayerInput.MakeLocalInput(lastInput, GetComponent<CharacterMovement>().up);
         }
     }
 

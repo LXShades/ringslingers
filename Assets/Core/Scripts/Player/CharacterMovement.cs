@@ -79,7 +79,7 @@ public class CharacterMovement : Movement
     /// <summary>
     /// Current up vector
     /// </summary>
-    private Vector3 up = Vector3.up;
+    public Vector3 up { get; private set; } = Vector3.up;
 
     private Vector3 gravityDirection = new Vector3(0, -1, 0);
 
@@ -152,9 +152,6 @@ public class CharacterMovement : Movement
         // Perform final movement and collision
         move.enableCollision = !debugDisableCollision;
         move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
-
-        Debug.DrawLine(transform.position, transform.position + velocity.normalized, Color.yellow);
-        Debug.DrawLine(transform.position, transform.position + groundVelocity.normalized, Color.red);
     }
 
     private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal)
@@ -166,7 +163,7 @@ public class CharacterMovement : Movement
         {
             const float kUpTestDistance = 0.05f; // buffer in case slightly slipping through, awkward physics prevention etc
             RaycastHit[] hits = new RaycastHit[10];
-            int numHits = move.ColliderCast(hits, transform.position + up * kUpTestDistance, -up.normalized, testDistance + kUpTestDistance, ~0, QueryTriggerInteraction.Ignore);
+            int numHits = move.ColliderCast(hits, transform.position + up * kUpTestDistance, -up.normalized, testDistance + kUpTestDistance, blockingCollisionLayers, QueryTriggerInteraction.Ignore);
             float closestGroundDistance = kUpTestDistance + testDistance;
             bool isFound = false;
 
@@ -201,9 +198,10 @@ public class CharacterMovement : Movement
         if (state.HasFlag(State.Pained))
             return; // cannot accelerate while in pain
 
-        Vector3 groundForward = Vector3.Cross(transform.right, groundNormal), groundRight = Vector3.Cross(groundNormal, transform.forward);
+        Vector3 aim = input.aimDirection;
+        Vector3 groundForward = aim.AlongPlane(groundNormal).normalized, groundRight = Vector3.Cross(up, aim).normalized;
 
-        inputRunDirection = Vector3.ClampMagnitude(groundForward.normalized * input.moveVerticalAxis + groundRight.normalized * input.moveHorizontalAxis, 1);
+        inputRunDirection = Vector3.ClampMagnitude(groundForward * input.moveVerticalAxis + groundRight * input.moveHorizontalAxis, 1);
 
         velocity *= GameManager.singleton.fracunitsPerM / 35f;
         float speed = groundVelocity.magnitude; // todo: use rmomentum
@@ -277,6 +275,7 @@ public class CharacterMovement : Movement
 
         // Rotate towards our target
         Vector3 targetUp;
+        Vector3 lastUp = up;
 
         if (groundDistance <= wallRunTestDistance)
         {
@@ -294,7 +293,9 @@ public class CharacterMovement : Movement
 
         // Apply final rotation
         if (rotateableModel)
-            rotateableModel.transform.rotation = Quaternion.LookRotation(player.input.aimDirection.Horizontal(), up);
+            rotateableModel.transform.rotation = Quaternion.LookRotation(player.input.aimDirection.AlongPlane(groundNormal), up);
+
+        player.input.aimDirection = Quaternion.FromToRotation(lastUp, up) * player.input.aimDirection;// test?
     }
 
     private void ApplyGravity(float deltaTime)
@@ -308,7 +309,7 @@ public class CharacterMovement : Movement
         if (isOnGround)
         {
             // Push towrads the ground, if we're not actively moving away from it
-            if (velocity.GetAlongAxis(groundNormal) <= 1f)
+            if (velocity.AlongAxis(groundNormal) <= 1f)
             {
                 velocity.SetAlongAxis(groundNormal, -groundDistance * 10f);
                 state &= ~(State.Jumped | State.Thokked | State.CanceledJump);

@@ -26,6 +26,11 @@ public struct PlayerInput : IEquatable<PlayerInput>
             float horizontalRads = horizontalAim * Mathf.Deg2Rad, verticalRads = verticalAim * Mathf.Deg2Rad;
             return new Vector3(Mathf.Sin(horizontalRads) * Mathf.Cos(verticalRads), -Mathf.Sin(verticalRads), Mathf.Cos(horizontalRads) * Mathf.Cos(verticalRads));
         }
+        set
+        {
+            horizontalAim = Mathf.Atan2(value.x, value.z) * Mathf.Rad2Deg;
+            verticalAim = -Mathf.Asin(value.y) * Mathf.Rad2Deg;
+        }
     }
 
     /// <summary>
@@ -33,15 +38,30 @@ public struct PlayerInput : IEquatable<PlayerInput>
     /// </summary>
     /// <param name="lastInput"></param>
     /// <returns></returns>
-    public static PlayerInput MakeLocalInput(PlayerInput lastInput)
+    public static PlayerInput MakeLocalInput(PlayerInput lastInput, Vector3 up)
     {
         PlayerInput localInput = default;
 
         localInput.moveHorizontalAxis = Input.GetAxisRaw("Horizontal");
         localInput.moveVerticalAxis = Input.GetAxisRaw("Vertical");
 
-        localInput.horizontalAim = (lastInput.horizontalAim + Input.GetAxis("Mouse X") % 360 + 360) % 360;
-        localInput.verticalAim = Mathf.Clamp(lastInput.verticalAim - Input.GetAxis("Mouse Y"), -89.99f, 89.99f);
+        //localInput.horizontalAim = (lastInput.horizontalAim + Input.GetAxis("Mouse X") % 360 + 360) % 360;
+        //localInput.verticalAim = Mathf.Clamp(lastInput.verticalAim - Input.GetAxis("Mouse Y"), -89.99f, 89.99f);
+
+        Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X"), up) * lastInput.aimDirection;
+        // we need to clamp this...
+        const float limit = 1f;
+        float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, up)) * Mathf.Rad2Deg;
+        float verticalAngleDelta = -Input.GetAxis("Mouse Y");
+
+        if (degreesFromUp + verticalAngleDelta <= limit)
+            verticalAngleDelta = limit - degreesFromUp;
+        if (degreesFromUp + verticalAngleDelta >= 180f - limit)
+            verticalAngleDelta = 180f - limit - degreesFromUp;
+        newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(up, newAim)) * newAim;
+
+
+        localInput.aimDirection = newAim;
 
         localInput.btnFire = Input.GetButton("Fire");
         localInput.btnJump = Input.GetButton("Jump");
