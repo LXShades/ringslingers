@@ -22,6 +22,7 @@ public class CharacterAnimation : MonoBehaviour
     {
         float forwardSpeedMultiplier = 1;
         Vector3 groundVelocity = movement.groundVelocity;
+        Vector3 characterUp = player.GetComponent<CharacterMovement>().up;
 
         // Turn body towards look direction
         if (movement.isOnGround && groundVelocity.magnitude > 0.2f)
@@ -34,13 +35,14 @@ public class CharacterAnimation : MonoBehaviour
                 forwardSpeedMultiplier = -1;
             }
 
-            Quaternion forwardToVelocity = Quaternion.LookRotation(runForward) * Quaternion.Inverse(Quaternion.LookRotation(transform.forward.Horizontal()));
+            Quaternion forwardToVelocity = Quaternion.LookRotation(runForward, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(transform.forward.AlongPlane(characterUp), characterUp));
 
             root.rotation = forwardToVelocity * root.transform.rotation;
             torso.rotation = Quaternion.Inverse(forwardToVelocity) * torso.rotation;
         }
 
-        head.transform.rotation = Quaternion.LookRotation(player.input.aimDirection) * Quaternion.Inverse(Quaternion.LookRotation(torso.forward.Horizontal())) * head.transform.rotation;
+        // think of this as rotation = originalRotation - forwardRotation + newHeadForwardRotation
+        head.transform.rotation = Quaternion.LookRotation(player.input.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(torso.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
 
         animation.SetFloat("HorizontalSpeed", groundVelocity.magnitude);
         animation.SetFloat("HorizontalForwardSpeed", groundVelocity.magnitude * forwardSpeedMultiplier);

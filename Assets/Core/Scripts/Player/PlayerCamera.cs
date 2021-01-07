@@ -62,12 +62,11 @@ public class PlayerCamera : MonoBehaviour
 
         if (currentPlayer)
         {
-            // Move and rotate to player position
-            transform.position = currentPlayer.transform.position + Vector3.up * eyeHeight;
-            transform.rotation = Quaternion.Euler(currentPlayer.input.verticalAim, currentPlayer.input.horizontalAim, 0);
+            Vector3 characterUp = currentPlayer.GetComponent<CharacterMovement>().up;
 
-            // actually try 3D rotation
-            transform.rotation = Quaternion.LookRotation(currentPlayer.input.aimDirection, currentPlayer.GetComponent<CharacterMovement>().up);
+            // Move and rotate to player position
+            transform.position = currentPlayer.transform.position + characterUp * eyeHeight;
+            transform.rotation = Quaternion.LookRotation(currentPlayer.input.aimDirection, characterUp);
 
             // Apply zoom in/out
             float zoom = Input.GetAxis("CameraZoom") * zoomSpeed;

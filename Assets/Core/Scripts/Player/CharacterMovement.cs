@@ -292,8 +292,7 @@ public class CharacterMovement : Movement
         }
 
         // Apply final rotation
-        if (rotateableModel)
-            rotateableModel.transform.rotation = Quaternion.LookRotation(player.input.aimDirection.AlongPlane(groundNormal), up);
+        transform.rotation = Quaternion.LookRotation(player.input.aimDirection.AlongPlane(groundNormal), up);
 
         player.input.aimDirection = Quaternion.FromToRotation(lastUp, up) * player.input.aimDirection;// test?
     }
