@@ -79,7 +79,7 @@ public class CharacterMovement : Movement
     /// <summary>
     /// Current up vector
     /// </summary>
-    public Vector3 up { get; private set; } = Vector3.up;
+    public Vector3 up { get; set; } = Vector3.up;
 
     private Vector3 gravityDirection = new Vector3(0, -1, 0);
 
@@ -294,7 +294,7 @@ public class CharacterMovement : Movement
         // Apply final rotation
         transform.rotation = Quaternion.LookRotation(player.input.aimDirection.AlongPlane(groundNormal), up);
 
-        player.input.aimDirection = Quaternion.FromToRotation(lastUp, up) * player.input.aimDirection;// test?
+        //player.input.aimDirection = Quaternion.FromToRotation(lastUp, up) * player.input.aimDirection;// test?
     }
 
     private void ApplyGravity(float deltaTime)

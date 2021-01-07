@@ -11,6 +11,7 @@ public class PlayerController : NetworkBehaviour
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 velocity;
+        public Vector3 up;
         public CharacterMovement.State state;
 
         public bool Equals(MoveState other)
@@ -406,7 +407,8 @@ public class PlayerController : NetworkBehaviour
             position = transform.position,
             rotation = transform.rotation,
             state = movement.state,
-            velocity = movement.velocity
+            velocity = movement.velocity,
+            up = movement.up
         };
     }
 
@@ -416,6 +418,7 @@ public class PlayerController : NetworkBehaviour
         transform.rotation = state.rotation;
         movement.state = state.state;
         movement.velocity = state.velocity;
+        movement.up = state.up;
 
         Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
     }
