@@ -70,7 +70,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
 
     public void OnMovementCollidedBy(Movement source, bool isReconciliation)
     {
-        if (source is CharacterMovement character)
+        if (source is CharacterMovement character && (character.state & CharacterMovement.State.Jumped) != 0)
         {
             // bounce off
             if (character.velocity.y <= -1.0f)
