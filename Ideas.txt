@@ -39,10 +39,10 @@
 + Verify game works with multiple players without causing errors/breaks/etc
 + Add Rail powerup
 + Add icons to weapons/HUDs
-- Fix weapon states not rewinding
-- Make basic test AI to find physics inconsistencies
-- Add camera reset button
-- Add camera speed config
++ Add monitor
+- Monitor should give reward
+- Monitor should make pop sound effect
+- Monitor should be synced properly
 
 Post-playtest:
 - Add rename ability
@@ -71,6 +71,7 @@ Gameplay ideas
 - Bounce shield - has a cooldown, returns you to the height from whence you came
 - Character ability: jump directly onto walls and/or ceilings
 - Subterranean ring: When fired, travels underground. Firing again makes it spike out of the ground hitting anyone above it
+- Chain ring: Ring bound by a chain. Fire and hold, and you can swing it as it goes out, whacking players from the side. Swing has a slight delay, as the movement ripples down the chain.
 
 CTF:
 + Teamwork rewards

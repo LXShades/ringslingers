@@ -19,10 +19,10 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
     {
         set
         {
-            monitorCollider.enabled = value;
-            monitorRenderer.enabled = value;
+            monitorCollider.enabled = !value;
+            monitorRenderer.enabled = !value;
         }
-        get => monitorCollider.enabled;
+        get => !monitorCollider.enabled;
     }
 
     public void Update()
@@ -32,9 +32,6 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
             Vector3 targetLookDirection = (GameManager.singleton.camera.transform.position - new Vector3(0, centreHeight, 0) - monitorHead.position).normalized;
             float clampY = Mathf.Sin(maxVerticalLookAngle * Mathf.Deg2Rad);
 
-            // srqt x*x + z*z + y*y = 1
-            // sqrt x*x + z*z = 1 - y*y
-            // x*x + z*z = (1 - y*y)2
             targetLookDirection.y = Mathf.Clamp(targetLookDirection.y, -clampY, clampY);
             float horizontalMult = Mathf.Sqrt(1f - Mathf.Abs(targetLookDirection.y)) / targetLookDirection.Horizontal().magnitude;
             targetLookDirection.x *= horizontalMult;
@@ -51,7 +48,11 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
             if (character.velocity.y <= -1.0f)
             {
                 character.velocity.y = -character.velocity.y;
-                isDestroyed = true;
+
+                if (!isReconciliation)
+                {
+                    isDestroyed = true;
+                }
             }
         }
     }

@@ -27,6 +27,11 @@ public class CharacterMovement : Movement
     public float wallRunRotationResetSpeed = 180f;
     public Transform rotateableModel;
 
+    [Header("Collision")]
+    public float groundingForce = 3f;
+    public float groundingEscapeVelocity = 1f;
+    public LayerMask landableCollisionLayers;
+
     [Header("Advanced")]
     public float groundTestDistance = 0.05f;
     public float wallRunTestDistance = 0.3f;
@@ -150,8 +155,14 @@ public class CharacterMovement : Movement
         ApplyGrounding();
 
         // Perform final movement and collision
+        Vector3 originalPosition = transform.position;
+        Vector3 originalVelocity = velocity;
+
         move.enableCollision = !debugDisableCollision;
         move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
+
+        if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick, if so don't recalculate it, we want to keep the changes
+            velocity = (transform.position - originalPosition) / deltaTime;
     }
 
     private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal)
@@ -163,7 +174,7 @@ public class CharacterMovement : Movement
         {
             const float kUpTestDistance = 0.05f; // buffer in case slightly slipping through, awkward physics prevention etc
             RaycastHit[] hits = new RaycastHit[10];
-            int numHits = move.ColliderCast(hits, transform.position + up * kUpTestDistance, -up.normalized, testDistance + kUpTestDistance, blockingCollisionLayers, QueryTriggerInteraction.Ignore);
+            int numHits = move.ColliderCast(hits, transform.position + up * kUpTestDistance, -up.normalized, testDistance + kUpTestDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore);
             float closestGroundDistance = kUpTestDistance + testDistance;
             bool isFound = false;
 
@@ -275,7 +286,7 @@ public class CharacterMovement : Movement
 
         // Rotate towards our target
         Vector3 targetUp;
-        Vector3 lastUp = up;
+        //Vector3 lastUp = up;
 
         if (groundDistance <= wallRunTestDistance)
         {
@@ -307,10 +318,10 @@ public class CharacterMovement : Movement
     {
         if (isOnGround)
         {
-            // Push towrads the ground, if we're not actively moving away from it
-            if (velocity.AlongAxis(groundNormal) <= 1f)
+            // Push towards the ground, if we're not actively moving away from it
+            if (velocity.AlongAxis(groundNormal) <= groundingEscapeVelocity)
             {
-                velocity.SetAlongAxis(groundNormal, -groundDistance * 10f);
+                velocity.SetAlongAxis(groundNormal, -groundingForce);
                 state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
             }
         }

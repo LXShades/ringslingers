@@ -377,7 +377,7 @@ MonoBehaviour:
   - {fileID: 1784313262649898792}
   blockingCollisionLayers:
     serializedVersion: 2
-    m_Bits: 311
+    m_Bits: 1335
   useManualPhysics: 1
   bounceFactor: 0
   bounceFriction: 0
@@ -396,6 +396,9 @@ MonoBehaviour:
   enableWallRun: 1
   wallRunRotationResetSpeed: 180
   rotateableModel: {fileID: 1526902982376324854}
+  landableCollisionLayers:
+    serializedVersion: 2
+    m_Bits: 311
   groundTestDistance: 0.015
   wallRunTestDistance: 0.3
   actionSpeed: 60

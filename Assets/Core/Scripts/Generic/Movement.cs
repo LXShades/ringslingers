@@ -71,52 +71,68 @@ public class Movement : MonoBehaviour
             return true; // that was easy
         }
 
-        int numIterations = 2;
+        const bool kDrawDebug = true;
+        const float kPullback = 0.5f;
+        const float kSkin = 0.005f;
+        const int kNumIterations = 3;
         Vector3 currentMovement = offset;
         bool hasHitOccurred = false;
+        Color[] colorByStage = new Color[] { Color.red, Color.green, Color.blue, Color.yellow };
 
         movementCollisions.Clear();
 
-        for (int iteration = 0; iteration < numIterations; iteration++)
+        for (int iteration = 0; iteration < kNumIterations; iteration++)
         {
-            RaycastHit hit = default;
-            float lowestDist = float.MaxValue;
+            RaycastHit hit;
+            float currentMovementMagnitude = currentMovement.magnitude;
+            Vector3 normalMovement = currentMovement.normalized;
+
+            int numHits = ColliderCast(hits, transform.position - normalMovement * kPullback, normalMovement, currentMovementMagnitude + kPullback, blockingCollisionLayers, QueryTriggerInteraction.Collide);
+            float lowestDist = currentMovementMagnitude + kPullback;
             int lowestHitId = -1;
 
-            int numHits = ColliderCast(hits, transform.position, currentMovement.normalized, currentMovement.magnitude + 0.0001f, blockingCollisionLayers, QueryTriggerInteraction.Collide);
             for (int i = 0; i < numHits; i++)
             {
-                // find closest blocking collider
-                if (!hits[i].collider.isTrigger && hits[i].distance > 0 && hits[i].distance < lowestDist) // kinda hacky: 0 seems to mean we're stuck inside something and das is nicht gut
+                if (hits[i].distance > kPullback)
                 {
-                    lowestDist = hits[i].distance;
-                    lowestHitId = i;
-                }
+                    // find closest blocking collider
+                    if (!hits[i].collider.isTrigger && hits[i].distance < lowestDist)
+                    {
+                        lowestDist = hits[i].distance;
+                        lowestHitId = i;
+                    }
 
-                // acknowledge all collided movementcollision objects
-                foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
-                    movementCollisions.Add(movementCollision);
+                    // acknowledge all collided movementcollision objects
+                    foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
+                        movementCollisions.Add(movementCollision);
+                }
             }
 
-            // Identify the closest blocking collision
+            // Identify the closest blocking collisiond
             if (lowestHitId != -1)
             {
                 hit = hits[lowestHitId];
                 hitOut = hit;
                 hasHitOccurred = true;
-            }
 
-            if (lowestDist != float.MaxValue)
-            {
-                if (iteration == numIterations - 1)
+                if (kDrawDebug)
+                    DebugExtension.DebugCapsule(transform.position - normalMovement * kPullback, transform.position - normalMovement * kPullback + currentMovement.normalized * (currentMovement.magnitude + kPullback), colorByStage[iteration], 0.1f);
+
+                if (iteration == kNumIterations - 1)
                 {
                     // final collision: block further movement entirely
-                    currentMovement = currentMovement.normalized * (hit.distance - 0.001f);
+                    currentMovement = currentMovement.normalized * Mathf.Max(hit.distance - kPullback - kSkin, 0f);
                 }
                 else
                 {
                     // use slidey slidey collision
-                    currentMovement += hit.normal * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - hit.distance)) + 0.01f);
+                    currentMovement += hit.normal * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - (hit.distance - kPullback))) + kSkin);
+                }
+
+                if (kDrawDebug)
+                {
+                    DebugExtension.DebugWireSphere(transform.position + currentMovement, colorByStage[iteration], 0.15f + iteration * 0.02f);
+                    DebugExtension.DebugPoint(transform.position + currentMovement, colorByStage[iteration], 0.15f);
                 }
             }
             else
