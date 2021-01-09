@@ -75,13 +75,13 @@ public class Movement : MonoBehaviour
         Vector3 currentMovement = offset;
         bool hasHitOccurred = false;
 
+        movementCollisions.Clear();
+
         for (int iteration = 0; iteration < numIterations; iteration++)
         {
             RaycastHit hit = default;
             float lowestDist = float.MaxValue;
             int lowestHitId = -1;
-
-            movementCollisions.Clear();
 
             int numHits = ColliderCast(hits, transform.position, currentMovement.normalized, currentMovement.magnitude + 0.0001f, blockingCollisionLayers, QueryTriggerInteraction.Collide);
             for (int i = 0; i < numHits; i++)
