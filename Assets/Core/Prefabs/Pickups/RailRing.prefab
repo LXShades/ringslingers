@@ -98,6 +98,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18e6f51da8c84284ca6029c31a7aaa77, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  swapLayerOnSpawn: 1
+  despawnedLayer: 31
 --- !u!54 &233868881636913148
 Rigidbody:
   m_ObjectHideFlags: 0

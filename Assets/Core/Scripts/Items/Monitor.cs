@@ -28,7 +28,20 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
         get => !monitorHead.gameObject.activeSelf;
     }
 
-    public void Update()
+    private RespawnableItem respawnable;
+
+    private void Start()
+    {
+        respawnable = GetComponent<RespawnableItem>();
+
+        if (respawnable)
+        {
+            respawnable.onDespawn += OnDespawn;
+            respawnable.onRespawn += OnRespawn;
+        }
+    }
+
+    private void Update()
     {
         if (monitorHead && GameManager.singleton.camera != null)
         {
@@ -44,6 +57,17 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
         }
     }
 
+    private void OnRespawn()
+    {
+        isDestroyed = false;
+    }
+
+    private void OnDespawn()
+    {
+        isDestroyed = true;
+        GameSounds.PlaySound(gameObject, popSound);
+    }
+
     public void OnMovementCollidedBy(Movement source, bool isReconciliation)
     {
         if (source is CharacterMovement character)
@@ -57,10 +81,10 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
             // pop
             if (!isReconciliation)
             {
-                isDestroyed = true;
-                GameSounds.PlaySound(gameObject, popSound);
-
                 onLocalPopped?.Invoke(source.GetComponent<Player>());
+
+                if (respawnable)
+                    respawnable.Despawn();
             }
         }
     }

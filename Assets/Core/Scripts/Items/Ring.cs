@@ -73,7 +73,7 @@ public class Ring : MonoBehaviour, ISpawnCallbacks
                 otherPlayer.numRings++;
 
                 if (!isDroppedRing)
-                    respawnableItem.Pickup();
+                    respawnableItem.Despawn();
                 else
                 {
                     Spawner.Despawn(gameObject); // we aren't going to respawn here

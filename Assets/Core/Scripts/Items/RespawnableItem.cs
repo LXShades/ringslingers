@@ -5,8 +5,12 @@ using UnityEngine;
 
 public class RespawnableItem : NetworkBehaviour
 {
+    [Header("Default behaviour")]
+    public bool swapLayerOnRespawn = true;
+    [Layer]
+    public int despawnedLayer;
+
     private int originalLayer;
-    private int despawnedLayer;
 
     private Vector3 originalPosition;
 
@@ -34,13 +38,12 @@ public class RespawnableItem : NetworkBehaviour
     void Start()
     {
         originalLayer = gameObject.layer;
-        despawnedLayer = LayerMask.NameToLayer("Despawned");
         originalPosition = transform.position;
     }
 
-    public void Pickup()
+    public void Despawn()
     {
-        if (NetworkServer.active && GameManager.singleton.itemRespawnTime > 0)
+        if (NetworkServer.active && GameManager.singleton.itemRespawnTime > 0 && isSpawned)
         {
             isSpawned = false;
 
@@ -58,16 +61,14 @@ public class RespawnableItem : NetworkBehaviour
     {
         _isSpawned = newVal;
 
-        gameObject.layer = newVal ? originalLayer : despawnedLayer;
+        if (swapLayerOnRespawn)
+        {
+            gameObject.layer = newVal ? originalLayer : despawnedLayer;
 
-        if (newVal)
-        {
-            transform.position = originalPosition;
-        }
-        else
-        {
-            gameObject.SetActive(false); // Unity bug: physics scene won't update unless we do something fun
-            gameObject.SetActive(true);
+            if (newVal)
+            {
+                transform.position = originalPosition;
+            }
         }
 
         if (oldVal != newVal)

@@ -95,6 +95,7 @@ GameObject:
   - component: {fileID: 1417973409654235996}
   - component: {fileID: 3854591326885938772}
   - component: {fileID: 3529562049053671078}
+  - component: {fileID: 4335265979853435841}
   - component: {fileID: 2471371051071127928}
   m_Layer: 10
   m_Name: Monitor
@@ -112,7 +113,7 @@ Transform:
   m_GameObject: {fileID: 3354472749510327343}
   m_LocalRotation: {x: -0, y: -0.70710677, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 62.69, y: -0.0029172897, z: 33.47}
-  m_LocalScale: {x: 0.70515, y: 0.70515, z: 0.70515}
+  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_Children:
   - {fileID: 2678052598585934715}
   - {fileID: 5132025379555330742}
@@ -188,6 +189,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   numRingsToReward: 10
+--- !u!114 &4335265979853435841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3354472749510327343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18e6f51da8c84284ca6029c31a7aaa77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  swapLayerOnRespawn: 0
+  despawnedLayer: 0
 --- !u!65 &2471371051071127928
 BoxCollider:
   m_ObjectHideFlags: 0
