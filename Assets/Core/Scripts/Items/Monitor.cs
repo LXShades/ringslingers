@@ -1,11 +1,10 @@
 ﻿using Mirror;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Monitor : NetworkBehaviour, IMovementCollisions
 {
-    [Header("Destroying")]
-    public Renderer monitorRenderer;
-    public Collider monitorCollider;
+    public Collider mainCollider;
 
     [Header("Looking")]
     public Transform monitorHead;
@@ -13,16 +12,20 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
     public float lookSmoothTime = 0.1f;
     public float centreHeight = 0.5f;
 
+    [Header("Pop")]
+    public GameSound popSound;
+    public UnityEvent<Player> onLocalPopped;
+
     private Vector3 lookVelocity;
 
     private bool isDestroyed
     {
         set
         {
-            monitorCollider.enabled = !value;
-            monitorRenderer.enabled = !value;
+            monitorHead.gameObject.SetActive(!value);
+            mainCollider.enabled = !value;
         }
-        get => !monitorCollider.enabled;
+        get => !monitorHead.gameObject.activeSelf;
     }
 
     public void Update()
@@ -45,14 +48,19 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
     {
         if (source is CharacterMovement character)
         {
+            // bounce off
             if (character.velocity.y <= -1.0f)
             {
                 character.velocity.y = -character.velocity.y;
+            }
 
-                if (!isReconciliation)
-                {
-                    isDestroyed = true;
-                }
+            // pop
+            if (!isReconciliation)
+            {
+                isDestroyed = true;
+                GameSounds.PlaySound(gameObject, popSound);
+
+                onLocalPopped?.Invoke(source.GetComponent<Player>());
             }
         }
     }
