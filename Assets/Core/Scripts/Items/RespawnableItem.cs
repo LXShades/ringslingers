@@ -9,6 +9,7 @@ public class RespawnableItem : NetworkBehaviour
     public bool swapLayerOnRespawn = true;
     [Layer]
     public int despawnedLayer;
+    public GameObject[] despawnedLayerAffectedSubobjects = new GameObject[0];
 
     private int originalLayer;
 
@@ -64,6 +65,8 @@ public class RespawnableItem : NetworkBehaviour
         if (swapLayerOnRespawn)
         {
             gameObject.layer = newVal ? originalLayer : despawnedLayer;
+            foreach (GameObject obj in despawnedLayerAffectedSubobjects)
+                obj.layer = newVal ? originalLayer : despawnedLayer;
 
             if (newVal)
             {
