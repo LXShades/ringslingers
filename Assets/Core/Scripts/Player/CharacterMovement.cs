@@ -99,6 +99,7 @@ public class CharacterMovement : Movement
 
     public void TickMovement(float deltaTime, PlayerInput input, bool isReconciliation = false)
     {
+        Vector3 veryOriginalVelocity = velocity;
         isReconciling = isReconciliation;
 
         // Check whether on ground
@@ -161,9 +162,20 @@ public class CharacterMovement : Movement
         move.enableCollision = !debugDisableCollision;
         move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
 
+        if (Input.GetKeyDown(KeyCode.P) && !isReconciliation)
+            doStep = !doStep;
+
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick, if so don't recalculate it, we want to keep the changes
             velocity = (transform.position - originalPosition) / deltaTime;
+
+        if (doStep && !(Input.GetKeyDown(KeyCode.N) && !isReconciliation))
+        {
+            transform.position = originalPosition;
+            velocity = veryOriginalVelocity;
+        }
     }
+
+    private bool doStep = false;
 
     private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal)
     {

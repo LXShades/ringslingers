@@ -71,7 +71,7 @@ public class Movement : MonoBehaviour
             return true; // that was easy
         }
 
-        const bool kDrawDebug = true;
+        const bool kDrawDebug = false;
         const float kSkin = 0.005f;
         const int kNumIterations = 3;
         Vector3 currentMovement = offset;
@@ -84,16 +84,16 @@ public class Movement : MonoBehaviour
         {
             RaycastHit hit;
             float currentMovementMagnitude = currentMovement.magnitude;
-            float kPullback = iteration == 0 ? 0.5f : 0f;
+            float kPullback = iteration == 0 ? 1f : 0f;
             Vector3 normalMovement = currentMovement.normalized;
 
-            int numHits = ColliderCast(hits, transform.position - normalMovement * kPullback, normalMovement, currentMovementMagnitude + kPullback, blockingCollisionLayers, QueryTriggerInteraction.Collide);
-            float lowestDist = currentMovementMagnitude + kPullback;
+            int numHits = ColliderCast(hits, transform.position, normalMovement, currentMovementMagnitude + kSkin, blockingCollisionLayers, QueryTriggerInteraction.Collide, kPullback, kDrawDebug, colorByStage[iteration]);
+            float lowestDist = currentMovementMagnitude + kSkin;
             int lowestHitId = -1;
 
             for (int i = 0; i < numHits; i++)
             {
-                if (hits[i].distance > kPullback)
+                if (true) //hits[i].distance >= -0.001f) - basically, when collider rotation is possible, things can break... colliders can rotate through the ground
                 {
                     // find closest blocking collider
                     if (!hits[i].collider.isTrigger && hits[i].distance < lowestDist)
@@ -115,28 +115,33 @@ public class Movement : MonoBehaviour
                 hitOut = hit;
                 hasHitOccurred = true;
 
-                if (kDrawDebug)
-                    DebugExtension.DebugCapsule(transform.position - normalMovement * kPullback, transform.position - normalMovement * kPullback + currentMovement.normalized * (currentMovement.magnitude + kPullback), colorByStage[iteration], 0.1f);
-
                 if (iteration == kNumIterations - 1)
                 {
                     // final collision: block further movement entirely
-                    currentMovement = currentMovement.normalized * Mathf.Max(hit.distance - kPullback - kSkin, 0f);
+                    currentMovement = currentMovement.normalized * (hit.distance - kSkin);
                 }
                 else
                 {
                     // use slidey slidey collision
-                    currentMovement += hit.normal * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - (hit.distance - kPullback))) + kSkin);
+                    currentMovement += hit.normal * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - hit.distance)) + kSkin);
                 }
 
                 if (kDrawDebug)
                 {
-                    DebugExtension.DebugWireSphere(transform.position + currentMovement, colorByStage[iteration], 0.15f + iteration * 0.02f);
-                    DebugExtension.DebugPoint(transform.position + currentMovement, colorByStage[iteration], 0.15f);
+                    Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
+                    DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
+                    DebugExtension.DebugWireSphere(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
                 }
             }
             else
             {
+                if (kDrawDebug)
+                {
+                    Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
+                    DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
+                    DebugExtension.DebugWireSphere(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
+                }
+
                 break;
             }
         }
@@ -154,10 +159,14 @@ public class Movement : MonoBehaviour
 
     RaycastHit[] hitBuffer = new RaycastHit[128];
 
-    public int ColliderCast(RaycastHit[] hitsOut, Vector3 startPosition, Vector3 castDirection, float castMaxDistance, int layers, QueryTriggerInteraction queryTriggerInteraction)
+    public int ColliderCast(RaycastHit[] hitsOut, Vector3 startPosition, Vector3 castDirection, float castMaxDistance, int layers, QueryTriggerInteraction queryTriggerInteraction, float pullback = 0f, bool drawDebug = false, Color drawDebugColor = default)
     {
         Matrix4x4 toWorld = transform.localToWorldMatrix;
         int numHits = 0;
+
+        castDirection.Normalize();
+        startPosition -= castDirection * pullback;
+        castMaxDistance += pullback;
 
         toWorld = Matrix4x4.Translate(startPosition - transform.position) * toWorld;
 
@@ -166,14 +175,20 @@ public class Movement : MonoBehaviour
             int colliderNumHits = 0;
             if (collider is SphereCollider sphere)
             {
+                float radius = sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z);
                 colliderNumHits = Physics.SphereCastNonAlloc(
                     toWorld.MultiplyPoint(sphere.center),
-                    sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
+                    radius,
                     castDirection,
                     hitBuffer,
                     castMaxDistance,
                     layers,
                     queryTriggerInteraction);
+
+                if (drawDebug)
+                {
+                    DebugExtension.DebugCapsule(toWorld.MultiplyPoint(sphere.center) - castDirection * radius, toWorld.MultiplyPoint(sphere.center) + castDirection * (castMaxDistance + radius), drawDebugColor, radius);
+                }
             }
             else if (collider is CapsuleCollider capsule)
             {
@@ -195,7 +210,18 @@ public class Movement : MonoBehaviour
             }
 
             for (int i = 0; i < colliderNumHits && numHits < hitsOut.Length; i++)
-                hitsOut[numHits++] = hitBuffer[i];
+            {
+                if (hitBuffer[i].collider.gameObject == collider.gameObject)
+                    continue; // avoid colliding with self...
+                if (Vector3.Dot(hitBuffer[i].normal, castDirection) > 0.01f)
+                    continue; // in pullback collisions, don't collide with things we wouldn't actually crash into
+                if (hitBuffer[i].distance <= 0f)
+                    continue; // this type of collision normally seems to happen when we're already inside them, which doesn't work nicely with pullback collisions
+
+                hitsOut[numHits] = hitBuffer[i];
+                hitsOut[numHits].distance -= pullback;
+                numHits++;
+            }
         }
 
         return numHits;
