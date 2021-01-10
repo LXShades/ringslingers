@@ -207,7 +207,7 @@ MonoBehaviour:
   DebugEnabled: 0
   ServerBindAll: 1
   ServerBindAddress: 127.0.0.1
-  CommunicationPort: 7777
+  CommunicationPort: 5029
   MaximumPeerCCU: 100
   EnetServerPollTimeout: 1
   EnetClientPollTimeout: 1
@@ -215,7 +215,7 @@ MonoBehaviour:
   Channels: 0100000002000000
   StatisticsCalculationInterval: 3
   ClientLatencySimulationEnabled: 1
-  ClientLatencySimulationDelayMs: 300
+  ClientLatencySimulationDelayMs: 150
 --- !u!114 &779978514
 MonoBehaviour:
   m_ObjectHideFlags: 0

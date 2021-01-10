@@ -91,6 +91,9 @@ public class CharacterMovement : Movement
     // whether we're currently reconciling movement
     private bool isReconciling = false;
 
+    // debugging collision step
+    private bool doStep = false;
+
     void Awake()
     {
         player = GetComponent<Player>();
@@ -162,7 +165,7 @@ public class CharacterMovement : Movement
         move.enableCollision = !debugDisableCollision;
         move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
 
-        if (Input.GetKeyDown(KeyCode.P) && !isReconciliation)
+        if (Application.isEditor && Input.GetKeyDown(KeyCode.P) && !isReconciliation)
             doStep = !doStep;
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick, if so don't recalculate it, we want to keep the changes
@@ -174,8 +177,6 @@ public class CharacterMovement : Movement
             velocity = veryOriginalVelocity;
         }
     }
-
-    private bool doStep = false;
 
     private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal)
     {
@@ -311,6 +312,7 @@ public class CharacterMovement : Movement
         if (Vector3.Angle(up, targetUp) > 0f)
         {
             float degreesToRotate = wallRunRotationResetSpeed * deltaTime;
+
             up = Vector3.Slerp(up, targetUp, Mathf.Min(degreesToRotate / Vector3.Angle(up, targetUp), 1.0f));
         }
 
