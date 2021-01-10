@@ -72,7 +72,6 @@ public class Movement : MonoBehaviour
         }
 
         const bool kDrawDebug = true;
-        const float kPullback = 0.5f;
         const float kSkin = 0.005f;
         const int kNumIterations = 3;
         Vector3 currentMovement = offset;
@@ -85,6 +84,7 @@ public class Movement : MonoBehaviour
         {
             RaycastHit hit;
             float currentMovementMagnitude = currentMovement.magnitude;
+            float kPullback = iteration == 0 ? 0.5f : 0f;
             Vector3 normalMovement = currentMovement.normalized;
 
             int numHits = ColliderCast(hits, transform.position - normalMovement * kPullback, normalMovement, currentMovementMagnitude + kPullback, blockingCollisionLayers, QueryTriggerInteraction.Collide);
