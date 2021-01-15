@@ -112,7 +112,7 @@ Transform:
   m_GameObject: {fileID: 3354472749510327343}
   m_LocalRotation: {x: -0, y: -0.70710677, z: -0, w: 0.7071068}
   m_LocalPosition: {x: 62.69, y: -0.0029172897, z: 33.47}
-  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
+  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_Children:
   - {fileID: 2678052598585934715}
   - {fileID: 5132025379555330742}
@@ -204,6 +204,7 @@ MonoBehaviour:
   syncInterval: 0.1
   swapLayerOnRespawn: 0
   despawnedLayer: 0
+  despawnedLayerAffectedSubobjects: []
 --- !u!65 &2471371051071127928
 BoxCollider:
   m_ObjectHideFlags: 0

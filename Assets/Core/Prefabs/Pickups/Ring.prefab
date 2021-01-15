@@ -154,8 +154,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  swapLayerOnSpawn: 1
+  swapLayerOnRespawn: 1
   despawnedLayer: 31
+  despawnedLayerAffectedSubobjects: []
 --- !u!54 &233868881636913148
 Rigidbody:
   m_ObjectHideFlags: 0

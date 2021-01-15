@@ -203,7 +203,7 @@ public class Netplay : MonoBehaviour
     {
         if (net || InitNet())
         {
-            net.StartClient();
+            net.Connect(ipString);
         }
         else
         {

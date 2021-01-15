@@ -41,6 +41,12 @@ public class NetMan : NetworkManager
         SyncActionChain.RegisterHandlers();
     }
 
+    public void Connect(string ip)
+    {
+        networkAddress = ip;
+        StartClient();
+    }
+
     public override void OnClientConnect(NetworkConnection conn)
     {
         base.OnClientConnect(conn);
