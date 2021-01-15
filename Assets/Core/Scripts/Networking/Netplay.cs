@@ -211,14 +211,14 @@ public class Netplay : MonoBehaviour
         }
     }
 
-    public void CreateServer()
+    public void HostServer()
     {
         if (net || InitNet())
         {
             // should be Frame.server, serialization/deserialization is still todo
             localPlayerId = 0;
 
-            net.StartHost();
+            net.Host(true);
 
             connectionStatus = ConnectionStatus.Ready;
         }

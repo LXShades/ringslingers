@@ -168,8 +168,26 @@ public class CharacterMovement : Movement
         if (Application.isEditor && Input.GetKeyDown(KeyCode.P) && !isReconciliation)
             doStep = !doStep;
 
-        if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick, if so don't recalculate it, we want to keep the changes
-            velocity = (transform.position - originalPosition) / deltaTime;
+        if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
+        {
+            // recalculate velocity. but some collisions will force us out of the ground, etc..
+            // normally we'd do this...
+            //  -> velocity = (transform.position - originalPosition) / deltaTime;
+            // but instead, let's restrict the pushback to the opposite of the vector and no further
+            // in other words the dot product of velocityNormal and pushAway should be <= 0 >= -1
+            Vector3 offset = originalVelocity * deltaTime;
+            Vector3 pushAwayVector = transform.position - (originalPosition + offset);
+
+            /*if (Vector3.Dot(pushAwayVector, velocity) > 0f)
+                pushAwayVector -= velocityNormal * Vector3.Dot(pushAwayVector, velocityNormal);
+            if (Vector3.Dot(pushAwayVector, velocity) < -1f)
+                pushAwayVector += velocityNormal * (-1f - Vector3.Dot(pushAwayVector, velocityNormal));*/
+            if (Vector3.Dot(pushAwayVector, offset) < -1.01f)
+                velocity = velocity;
+
+            velocity += pushAwayVector / deltaTime;
+            //pushAwayVector -= originalVelocity.normalized * Mathf.Clamp(Vector3.Dot(pushAwayVector, originalVelocity));
+        }
 
         if (doStep && !(Input.GetKeyDown(KeyCode.N) && !isReconciliation))
         {

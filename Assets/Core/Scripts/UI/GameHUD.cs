@@ -55,7 +55,13 @@ public class GameHUD : MonoBehaviour
         // Player stuff
         ringsText.text = "0";
         scoreText.text = "0";
-        timeText.text = "todo";
+        timeText.text = "INF";
+
+        if (NetGameState.singleton is NetGameStateDeathmatch netGameStateDeathmatch)
+        {
+            timeText.text = $"{(int)netGameStateDeathmatch.timeRemaining / 60}:{((int)netGameStateDeathmatch.timeRemaining % 60).ToString("D2")}";
+        }
+
 
         if (player)
         {

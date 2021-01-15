@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using UnityEngine.SceneManagement;
 
 public class NetMan : NetworkManager
 {
@@ -39,6 +40,16 @@ public class NetMan : NetworkManager
         singleton = this;
 
         SyncActionChain.RegisterHandlers();
+    }
+
+    public void Host(bool withLocalPlayer)
+    {
+        if (withLocalPlayer)
+            StartHost();
+        else
+            StartServer();
+
+        networkSceneName = SceneManager.GetActiveScene().name;
     }
 
     public void Connect(string ip)

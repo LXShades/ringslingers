@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class CommandLineProcessor : MonoBehaviour
@@ -28,18 +29,18 @@ public class CommandLineProcessor : MonoBehaviour
 
     private void ExecuteCommandLine()
     {
-        if (CommandLine.HasCommand("-server"))
+        /*if (CommandLine.HasCommand("-server"))
         {
             Debug.Log("Running server only!");
 
-            Netplay.singleton.CreateServer();
-        }
+            Netplay.singleton.HostServer();
+        }*/
 
         if (CommandLine.HasCommand("-host"))
         {
             Debug.Log("Hosting!");
 
-            Netplay.singleton.CreateServer();
+            Netplay.singleton.HostServer();
         }
 
         if (CommandLine.GetCommand("-connect", 1, out string[] connectParams))
@@ -47,6 +48,16 @@ public class CommandLineProcessor : MonoBehaviour
             Debug.Log($"Connecting to {connectParams[0]}");
 
             Netplay.singleton.ConnectToServer(connectParams[0]);
+        }
+
+        if (CommandLine.GetCommand("-scene", 1, out string[] sceneParams))
+        {
+            Debug.Log($"Setting scene to {sceneParams[0]}");
+
+            if (NetworkServer.active)
+                NetMan.singleton.ServerChangeScene(sceneParams[0]);
+            else if (!NetworkClient.active)
+                SceneManager.LoadScene(sceneParams[0]);
         }
     }
 

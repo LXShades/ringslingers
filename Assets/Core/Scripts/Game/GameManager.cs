@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using Mirror;
+using System.IO;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Game Manager handles references to key local objects and other non-networking stuff
@@ -22,6 +24,8 @@ public class GameManager : MonoBehaviour
     private static GameManager _singleton;
 
     [Header("Game Settings")]
+    public NetGameState defaultNetGameState;
+
     [Tooltip("How long until items respawn, in seconds")]
     public float itemRespawnTime = 20;
     public GameObject playerPrefab;
@@ -50,6 +54,16 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
+
+        SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
+    }
+
+    private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
+    {
+        if (NetworkServer.active)
+        {
+            NetGameState.SetNetGameState(defaultNetGameState.gameObject);
+        }
     }
 
     void Update()

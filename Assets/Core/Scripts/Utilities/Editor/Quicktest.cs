@@ -25,19 +25,13 @@ public class NetworkEditorTools : MonoBehaviour
     public static string webGlBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/WebGL";
     public static string linuxBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/Linux";
 
-    public static bool onlyThisScene
-    {
-        get => EditorPrefs.GetBool("netOnlyThisScene", false);
-        set => EditorPrefs.SetBool("netOnlyThisScene", value);
-    }
-
     private static EditorRole editorRole
     {
         get { return (EditorRole)EditorPrefs.GetInt("editorRole"); }
         set { EditorPrefs.SetInt("editorRole", (int)value); }
     }
 
-    [MenuItem("Build/Build", priority = 1)]
+    [MenuItem("Playtest/Build", priority = 1)]
     public static bool Build()
     {
         // Add the open scene to the list if it's not already in there
@@ -45,26 +39,17 @@ public class NetworkEditorTools : MonoBehaviour
         string activeScenePath = EditorSceneManager.GetActiveScene().path;
         int currentSceneIndex = -1;
 
-        if (!onlyThisScene)
+        for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
         {
-            for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
+            if (EditorBuildSettings.scenes[i].enabled)
             {
-                if (EditorBuildSettings.scenes[i].enabled)
-                {
-                    levels.Add(EditorBuildSettings.scenes[i].path);
+                levels.Add(EditorBuildSettings.scenes[i].path);
 
-                    if (EditorBuildSettings.scenes[i].path == activeScenePath)
-                    {
-                        currentSceneIndex = i;
-                    }
+                if (EditorBuildSettings.scenes[i].path == activeScenePath)
+                {
+                    currentSceneIndex = i;
                 }
             }
-        }
-        else
-        {
-            // add the boot scene at least
-            if (EditorBuildSettings.scenes.Length > 0)
-                levels.Add(EditorBuildSettings.scenes[0].path);
         }
 
         if (currentSceneIndex == -1)
@@ -92,7 +77,7 @@ public class NetworkEditorTools : MonoBehaviour
         }
     }
 
-    [MenuItem("Build/Build && Run", priority = 20)]
+    [MenuItem("Playtest/Build && Run", priority = 20)]
     public static void BuildAndRun()
     {
         if (Build())
@@ -100,7 +85,7 @@ public class NetworkEditorTools : MonoBehaviour
     }
 
 
-    [MenuItem("Build/Run", priority = 21)]
+    [MenuItem("Playtest/Run", priority = 21)]
     public static void Run()
     {
         string dimensions = $"-screen-fullscreen 0 -screen-width {Screen.currentResolution.width / 2} -screen-height {Screen.currentResolution.height / 2}";
@@ -112,14 +97,14 @@ public class NetworkEditorTools : MonoBehaviour
                 RunBuild($"-server {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
                 break;
             case EditorRole.Server:
-                CommandLine.editorCommands = new string[] { "-server", "127.0.0.1" };
+                CommandLine.editorCommands = new string[] { "-server", "127.0.0.1", "-scene", EditorSceneManager.GetActiveScene().path };
                 RunBuild($"-connect 127.0.0.1 {dimensions}");
                 break;
             case EditorRole.Host:
                 CommandLine.editorCommands = new string[] { "-host", "127.0.0.1", "-scene", EditorSceneManager.GetActiveScene().path };
                 break;
             case EditorRole.None:
-                RunBuild($"-server {dimensions}");
+                RunBuild($"-server {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
                 RunBuild($"-connect 127.0.0.1 {dimensions}");
                 break;
         }
@@ -137,7 +122,7 @@ public class NetworkEditorTools : MonoBehaviour
     }
 
 
-    [MenuItem("Build/Final/Server Build")]
+    [MenuItem("Playtest/Final/Server Build")]
     public static void BuildFinalServer()
     {
         string originalScene = EditorSceneManager.GetActiveScene().path;
@@ -154,7 +139,7 @@ public class NetworkEditorTools : MonoBehaviour
         }
     }
 
-    [MenuItem("Build/Final/WebGL Build")]
+    [MenuItem("Playtest/Final/WebGL Build")]
     public static void BuildFinalWebGL()
     {
         string originalScene = EditorSceneManager.GetActiveScene().path;
@@ -171,63 +156,56 @@ public class NetworkEditorTools : MonoBehaviour
         }
     }
 
-    [MenuItem("Build/Standalone Only", priority = 40)]
+    [MenuItem("Playtest/Standalone Only", priority = 40)]
     private static void StandaloneOnly() { editorRole = EditorRole.None; }
 
-    [MenuItem("Build/Standalone Only", true)]
-    private static bool StandaloneOnlyValidate() { Menu.SetChecked("Build/Standalone Only", editorRole == EditorRole.None); return true; }
+    [MenuItem("Playtest/Standalone Only", true)]
+    private static bool StandaloneOnlyValidate() { Menu.SetChecked("Playtest/Standalone Only", editorRole == EditorRole.None); return true; }
 
-    [MenuItem("Build/Editor is Host", priority = 41)]
+    [MenuItem("Playtest/Editor is Host", priority = 41)]
     private static void EditorIsHost() { editorRole = EditorRole.Host; }
 
-    [MenuItem("Build/Editor is Host", true)]
-    private static bool EditorIsHostValidate() { Menu.SetChecked("Build/Editor is Host", editorRole == EditorRole.Host); return true; }
+    [MenuItem("Playtest/Editor is Host", true)]
+    private static bool EditorIsHostValidate() { Menu.SetChecked("Playtest/Editor is Host", editorRole == EditorRole.Host); return true; }
 
-    [MenuItem("Build/Editor is Server", priority = 42)]
+    [MenuItem("Playtest/Editor is Server", priority = 42)]
     private static void EditorIsServer() { editorRole = EditorRole.Server; }
 
-    [MenuItem("Build/Editor is Server", true)]
-    private static bool EditorIsServerValidate() { Menu.SetChecked("Build/Editor is Server", editorRole == EditorRole.Server); return true; }
+    [MenuItem("Playtest/Editor is Server", true)]
+    private static bool EditorIsServerValidate() { Menu.SetChecked("Playtest/Editor is Server", editorRole == EditorRole.Server); return true; }
 
-    [MenuItem("Build/Editor is Client", priority = 43)]
+    [MenuItem("Playtest/Editor is Client", priority = 43)]
     private static void EditorIsClient() { editorRole = EditorRole.Client; }
 
-    [MenuItem("Build/Editor is Client", true)]
-    private static bool EditorIsClientValidate() { Menu.SetChecked("Build/Editor is Client", editorRole == EditorRole.Client); return true; }
+    [MenuItem("Playtest/Editor is Client", true)]
+    private static bool EditorIsClientValidate() { Menu.SetChecked("Playtest/Editor is Client", editorRole == EditorRole.Client); return true; }
 
-    [MenuItem("Build/1 player", priority = 80)]
+    [MenuItem("Playtest/1 player", priority = 80)]
     private static void OneTestPlayer() { numTestPlayers = 1; }
 
-    [MenuItem("Build/1 player", true)]
-    private static bool OneTestPlayerValidate() { Menu.SetChecked("Build/1 player", numTestPlayers == 1); return true; }
+    [MenuItem("Playtest/1 player", true)]
+    private static bool OneTestPlayerValidate() { Menu.SetChecked("Playtest/1 player", numTestPlayers == 1); return true; }
 
 
-    [MenuItem("Build/2 players", priority = 81)]
+    [MenuItem("Playtest/2 players", priority = 81)]
     private static void TwoTestPlayers() { numTestPlayers = 2; }
 
-    [MenuItem("Build/2 players", true)]
-    private static bool TwoTestPlayersValidate() { Menu.SetChecked("Build/2 players", numTestPlayers == 2); return true; }
+    [MenuItem("Playtest/2 players", true)]
+    private static bool TwoTestPlayersValidate() { Menu.SetChecked("Playtest/2 players", numTestPlayers == 2); return true; }
 
 
-    [MenuItem("Build/3 players", priority = 82)]
+    [MenuItem("Playtest/3 players", priority = 82)]
     private static void ThreeTestPlayers() { numTestPlayers = 3; }
 
-    [MenuItem("Build/3 players", true)]
-    private static bool ThreeTestPlayersValidate() { Menu.SetChecked("Build/3 players", numTestPlayers == 3); return true; }
+    [MenuItem("Playtest/3 players", true)]
+    private static bool ThreeTestPlayersValidate() { Menu.SetChecked("Playtest/3 players", numTestPlayers == 3); return true; }
 
 
-    [MenuItem("Build/4 players", priority = 83)]
+    [MenuItem("Playtest/4 players", priority = 83)]
     private static void FourTestPlayers() { numTestPlayers = 4; }
 
-    [MenuItem("Build/4 players", true)]
-    private static bool FourTestPlayersValidate() { Menu.SetChecked("Build/4 players", numTestPlayers == 4); return true; }
-
-
-    [MenuItem("Build/This scene only", priority = 100)]
-    private static void OnlyThisScene() { onlyThisScene = !onlyThisScene; }
-
-    [MenuItem("Build/This scene only", true)]
-    private static bool OnlyThisSceneValidate() { Menu.SetChecked("Build/This scene only", onlyThisScene); return true; }
+    [MenuItem("Playtest/4 players", true)]
+    private static bool FourTestPlayersValidate() { Menu.SetChecked("Playtest/4 players", numTestPlayers == 4); return true; }
 
     private static void RunBuild(string arguments = "")
     {
