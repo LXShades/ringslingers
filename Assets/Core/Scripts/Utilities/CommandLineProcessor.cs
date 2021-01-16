@@ -1,5 +1,4 @@
-﻿using Mirror;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class CommandLineProcessor : MonoBehaviour
@@ -7,6 +6,7 @@ public class CommandLineProcessor : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // Execute scene command line first, we might want to change scene then host
         AsyncOperation op = null;
         if (CommandLine.GetCommand("-scene", 1, out string[] sceneParams))
         {
@@ -48,16 +48,6 @@ public class CommandLineProcessor : MonoBehaviour
             Debug.Log($"Connecting to {connectParams[0]}");
 
             Netplay.singleton.ConnectToServer(connectParams[0]);
-        }
-
-        if (CommandLine.GetCommand("-scene", 1, out string[] sceneParams))
-        {
-            Debug.Log($"Setting scene to {sceneParams[0]}");
-
-            if (NetworkServer.active)
-                NetMan.singleton.ServerChangeScene(sceneParams[0]);
-            else if (!NetworkClient.active)
-                SceneManager.LoadScene(sceneParams[0]);
         }
     }
 

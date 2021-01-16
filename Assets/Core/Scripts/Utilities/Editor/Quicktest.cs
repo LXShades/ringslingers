@@ -94,17 +94,17 @@ public class NetworkEditorTools : MonoBehaviour
         {
             case EditorRole.Client:
                 CommandLine.editorCommands = new string[] { "-connect", "127.0.0.1" };
-                RunBuild($"-server {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
+                RunBuild($"-host {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
                 break;
             case EditorRole.Server:
-                CommandLine.editorCommands = new string[] { "-server", "127.0.0.1", "-scene", EditorSceneManager.GetActiveScene().path };
+                CommandLine.editorCommands = new string[] { "-host", "127.0.0.1", "-scene", EditorSceneManager.GetActiveScene().path };
                 RunBuild($"-connect 127.0.0.1 {dimensions}");
                 break;
             case EditorRole.Host:
                 CommandLine.editorCommands = new string[] { "-host", "127.0.0.1", "-scene", EditorSceneManager.GetActiveScene().path };
                 break;
             case EditorRole.None:
-                RunBuild($"-server {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
+                RunBuild($"-host {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
                 RunBuild($"-connect 127.0.0.1 {dimensions}");
                 break;
         }
