@@ -46,14 +46,11 @@ public struct PlayerInput : IEquatable<PlayerInput>
         localInput.moveHorizontalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().x;
         localInput.moveVerticalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().y;
 
-        //localInput.horizontalAim = (lastInput.horizontalAim + Input.GetAxis("Mouse X") % 360 + 360) % 360;
-        //localInput.verticalAim = Mathf.Clamp(lastInput.verticalAim - Input.GetAxis("Mouse Y"), -89.99f, 89.99f);
-
-        Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X"), up) * lastInput.aimDirection;
+        Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, up) * lastInput.aimDirection;
         // we need to clamp this...
         const float limit = 1f;
         float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, up)) * Mathf.Rad2Deg;
-        float verticalAngleDelta = -Input.GetAxis("Mouse Y");
+        float verticalAngleDelta = -Input.GetAxis("Mouse Y") * GamePreferences.mouseSpeed;
 
         if (degreesFromUp + verticalAngleDelta <= limit)
             verticalAngleDelta = limit - degreesFromUp;

@@ -50,9 +50,18 @@ public class GameManager : MonoBehaviour
 
     public PlayerControls input;
 
-    private PlayerCamera cachedCamera = null;
+    public bool isPaused
+    {
+        get => _isPaused;
+        set
+        {
+            _isPaused = value;
 
-    bool isMouseLocked = true;
+        }
+    }
+    private bool _isPaused = false;
+
+    private PlayerCamera cachedCamera = null;
 
     private void Awake()
     {
@@ -60,12 +69,12 @@ public class GameManager : MonoBehaviour
 
         input = new PlayerControls();
         input.Enable();
+
+        GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
     }
 
     private void Start()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-
         SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
     }
 
@@ -79,6 +88,8 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
+        Cursor.lockState = (isPaused || SceneManager.GetActiveScene().buildIndex == 1) ? CursorLockMode.None : CursorLockMode.Locked;
+
         // Do debug stuff
         RunDebugCommands();
     }
@@ -100,16 +111,6 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Alpha4))
             Application.targetFrameRate = 144;
-
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            isMouseLocked = !isMouseLocked;
-
-            if (isMouseLocked)
-                Cursor.lockState = CursorLockMode.Locked;
-            else
-                Cursor.lockState = CursorLockMode.None;
-        }
     }
     #endregion
 }
