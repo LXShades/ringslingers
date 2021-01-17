@@ -85,6 +85,8 @@ public class Player : NetworkBehaviour
 
     void Start()
     {
+        PlayerControls control = new PlayerControls();
+
         damageable.onLocalDamaged.AddListener(OnDamaged);
         Netplay.singleton.players[playerId] = this;
 

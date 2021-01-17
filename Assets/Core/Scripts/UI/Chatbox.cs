@@ -1,37 +1,43 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class Chatbox : MonoBehaviour
 {
-    public InputField input;
+    [FormerlySerializedAs("input")]
+    public InputField chatInput;
 
     public string defaultText = "<type here>";
 
+    private PlayerControls input;
+
     private void Start()
     {
-        input.gameObject.SetActive(false);
+        input = GameManager.singleton.input;
+        chatInput.gameObject.SetActive(false);
 
-        input.onEndEdit.AddListener(OnChatBoxSubmitted);
+        chatInput.onEndEdit.AddListener(OnChatBoxSubmitted);
     }
 
     private void Update()
     {
-        if (!input.gameObject.activeSelf && Input.GetButtonDown("Talk"))
+        if (!chatInput.gameObject.activeSelf && input.Gameplay.Talk.triggered)
         {
-            input.gameObject.SetActive(true);
-            input.text = "<type here>";
-            input.ActivateInputField();
-            input.Select();
+            chatInput.gameObject.SetActive(true);
+            chatInput.text = "<type here>";
+            chatInput.ActivateInputField();
+            chatInput.Select();
         }
     }
 
     public void OnChatBoxSubmitted(string text)
     {
-        if (Input.GetKey(KeyCode.Return) && text != defaultText && !string.IsNullOrEmpty(text))
+        if (Keyboard.current.enterKey.wasPressedThisFrame && text != defaultText && !string.IsNullOrEmpty(text))
         {
             Netplay.singleton.localClient.CmdSendMessage(text);
         }
 
-        input.gameObject.SetActive(false);
+        chatInput.gameObject.SetActive(false);
     }
 }

@@ -40,10 +40,11 @@ public struct PlayerInput : IEquatable<PlayerInput>
     /// <returns></returns>
     public static PlayerInput MakeLocalInput(PlayerInput lastInput, Vector3 up)
     {
+        PlayerControls controls = GameManager.singleton.input;
         PlayerInput localInput = default;
 
-        localInput.moveHorizontalAxis = Input.GetAxisRaw("Horizontal");
-        localInput.moveVerticalAxis = Input.GetAxisRaw("Vertical");
+        localInput.moveHorizontalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().x;
+        localInput.moveVerticalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().y;
 
         //localInput.horizontalAim = (lastInput.horizontalAim + Input.GetAxis("Mouse X") % 360 + 360) % 360;
         //localInput.verticalAim = Mathf.Clamp(lastInput.verticalAim - Input.GetAxis("Mouse Y"), -89.99f, 89.99f);
@@ -63,8 +64,8 @@ public struct PlayerInput : IEquatable<PlayerInput>
 
         localInput.aimDirection = newAim;
 
-        localInput.btnFire = Input.GetButton("Fire");
-        localInput.btnJump = Input.GetButton("Jump");
+        localInput.btnFire = controls.Gameplay.Fire.ReadValue<float>() > 0.5f; // seriously unity what the f***
+        localInput.btnJump = controls.Gameplay.Jump.ReadValue<float>() > 0.5f; // this is apparently the way to read digital buttons, look it up
 
         return localInput;
     }

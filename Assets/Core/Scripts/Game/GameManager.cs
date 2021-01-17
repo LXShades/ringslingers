@@ -47,9 +47,20 @@ public class GameManager : MonoBehaviour
             return cachedCamera ?? (cachedCamera = FindObjectOfType<PlayerCamera>());
         }
     }
+
+    public PlayerControls input;
+
     private PlayerCamera cachedCamera = null;
 
     bool isMouseLocked = true;
+
+    private void Awake()
+    {
+        DontDestroyOnLoad(gameObject);
+
+        input = new PlayerControls();
+        input.Enable();
+    }
 
     private void Start()
     {
