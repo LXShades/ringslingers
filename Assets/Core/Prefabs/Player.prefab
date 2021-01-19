@@ -397,14 +397,15 @@ MonoBehaviour:
   airAccelerationMultiplier: 0.25
   enableWallRun: 1
   wallRunRotationResetSpeed: 180
+  wallRunPushForce: 1
+  wallRunTestDistance: 0.8
   rotateableModel: {fileID: 1526902982376324854}
-  groundingForce: 3
+  groundTestDistance: 0.015
+  groundingForce: 1
   groundingEscapeVelocity: 1
   landableCollisionLayers:
     serializedVersion: 2
     m_Bits: 311
-  groundTestDistance: 0.015
-  wallRunTestDistance: 0.3
   actionSpeed: 60
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}

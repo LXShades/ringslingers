@@ -25,16 +25,16 @@ public class CharacterMovement : Movement
     [Header("3D movement")]
     public bool enableWallRun = true;
     public float wallRunRotationResetSpeed = 180f;
+    [Tooltip("When wall running on the previous frame, this force pushes you down towards the ground on the next frame if in range and running fast enough. This value is multiplied by your velocity")]
+    public float wallRunPushForce = 1f;
+    public float wallRunTestDistance = 0.3f;
     public Transform rotateableModel;
 
     [Header("Collision")]
+    public float groundTestDistance = 0.05f;
     public float groundingForce = 3f;
     public float groundingEscapeVelocity = 1f;
     public LayerMask landableCollisionLayers;
-
-    [Header("Advanced")]
-    public float groundTestDistance = 0.05f;
-    public float wallRunTestDistance = 0.3f;
 
     [Header("Abilities")]
     public float actionSpeed = 60;
@@ -94,6 +94,11 @@ public class CharacterMovement : Movement
     // debugging collision step
     private bool doStep = false;
 
+    private Vector3 debugPausePosition;
+    private Quaternion debugPauseRotation;
+    private Vector3 debugPauseVelocity;
+    private Vector3 debugPauseUp;
+
     void Awake()
     {
         player = GetComponent<Player>();
@@ -102,15 +107,20 @@ public class CharacterMovement : Movement
 
     public void TickMovement(float deltaTime, PlayerInput input, bool isReconciliation = false)
     {
-        Vector3 veryOriginalVelocity = velocity;
-        isReconciling = isReconciliation;
+        if (!isReconciliation)
+            DebugPauseStart();
+
+        this.isReconciling = isReconciliation;
+
+        // If we were wall running on the last frame, and below escape velocity, push downwards
+        //ApplyWallRunPushForce(input);
 
         // Check whether on ground
-        bool wasFound = DetectGround(1f, out float _groundDistance, out Vector3 _groundNormal);
+        bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDistance, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal);
 
-        isOnGround = wasFound && _groundDistance < groundTestDistance;
+        isOnGround = wasGroundDetected && _groundDistance < groundTestDistance;
 
-        if (wasFound)
+        if (wasGroundDetected)
         {
             groundNormal = _groundNormal;
             groundDistance = _groundDistance;
@@ -121,11 +131,8 @@ public class CharacterMovement : Movement
             groundDistance = float.MaxValue;
         }
 
-        // Point towards relevent direction
-        transform.rotation = Quaternion.Euler(0, input.horizontalAim, 0);
-
         // 3D movement
-        ApplyWallRunRotation(deltaTime);
+        ApplyRotation(deltaTime, input);
 
         // Add/remove states depending on whether isOnGround
         if (isOnGround)
@@ -165,8 +172,7 @@ public class CharacterMovement : Movement
         move.enableCollision = !debugDisableCollision;
         move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
 
-        if (Application.isEditor && Input.GetKeyDown(KeyCode.P) && !isReconciliation)
-            doStep = !doStep;
+        DebugExtension.DebugCapsule(transform.position, transform.position + velocity * deltaTime, Color.red, 0.1f);
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
         {
@@ -178,21 +184,41 @@ public class CharacterMovement : Movement
             Vector3 offset = originalVelocity * deltaTime;
             Vector3 pushAwayVector = transform.position - (originalPosition + offset);
 
-            /*if (Vector3.Dot(pushAwayVector, velocity) > 0f)
-                pushAwayVector -= velocityNormal * Vector3.Dot(pushAwayVector, velocityNormal);
-            if (Vector3.Dot(pushAwayVector, velocity) < -1f)
-                pushAwayVector += velocityNormal * (-1f - Vector3.Dot(pushAwayVector, velocityNormal));*/
-            if (Vector3.Dot(pushAwayVector, offset) < -1.01f)
-                velocity = velocity;
-
             velocity += pushAwayVector / deltaTime;
-            //pushAwayVector -= originalVelocity.normalized * Mathf.Clamp(Vector3.Dot(pushAwayVector, originalVelocity));
+
+            // don't let velocity invert, that's a fishy sign
+            if (Vector3.Dot(velocity, originalVelocity) < 0f)
+                velocity -= originalVelocity.normalized * Vector3.Dot(velocity, originalVelocity.normalized);
+
+            // don't let velocity exceed its original magnitude, that's another fishy sign
+            velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
         }
 
-        if (doStep && !(Input.GetKeyDown(KeyCode.N) && !isReconciliation))
+        DebugExtension.DebugCapsule(transform.position, transform.position + velocity * deltaTime, Color.blue, 0.1f);
+
+        if (!isReconciliation)
+            DebugPauseEnd();
+    }
+
+    private void DebugPauseStart()
+    {
+        if (Application.isEditor && UnityEngine.InputSystem.Keyboard.current.pKey.wasPressedThisFrame)
+            doStep = !doStep;
+
+        debugPauseUp = up;
+        debugPausePosition = transform.position;
+        debugPauseRotation = transform.rotation;
+        debugPauseVelocity = velocity;
+    }
+
+    private void DebugPauseEnd()
+    {
+        if (doStep && !UnityEngine.InputSystem.Keyboard.current.nKey.wasPressedThisFrame)
         {
-            transform.position = originalPosition;
-            velocity = veryOriginalVelocity;
+            transform.position = debugPausePosition;
+            transform.rotation = debugPauseRotation;
+            velocity = debugPauseVelocity;
+            up = debugPauseUp;
         }
     }
 
@@ -307,17 +333,17 @@ public class CharacterMovement : Movement
         }
     }
 
-    private void ApplyWallRunRotation(float deltaTime)
+    private void ApplyRotation(float deltaTime, PlayerInput input)
     {
         if (!enableWallRun)
         {
             up = Vector3.up;
+            transform.rotation = Quaternion.Euler(0, input.horizontalAim, 0);
             return;
         }
 
         // Rotate towards our target
         Vector3 targetUp;
-        //Vector3 lastUp = up;
 
         if (groundDistance <= wallRunTestDistance)
         {
@@ -335,8 +361,9 @@ public class CharacterMovement : Movement
         }
 
         // Apply final rotation
-        transform.rotation = Quaternion.LookRotation(player.input.aimDirection.AlongPlane(groundNormal), up);
+        transform.rotation = Quaternion.LookRotation(input.aimDirection.AlongPlane(groundNormal), up);
 
+        // change look rotation with rotation?
         //player.input.aimDirection = Quaternion.FromToRotation(lastUp, up) * player.input.aimDirection;// test?
     }
 
