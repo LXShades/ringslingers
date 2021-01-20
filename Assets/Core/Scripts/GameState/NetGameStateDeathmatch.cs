@@ -4,18 +4,21 @@ using UnityEngine;
 public class NetGameStateDeathmatch : NetGameState
 {
     [Header("Match settings")]
-    public int timeLimit = 5;
+    public float timeLimit = 5f;
+    public int intermissionTime = 15;
 
     [Header("Networking settings")]
     public int secondsPerTimeUpdate = 5;
 
     public float timeRemaining { get; private set; }
 
+    public float timeTilRestart => timeRemaining < 0f ? intermissionTime + timeRemaining : 0f;
+
     public override void OnAwake()
     {
         base.OnAwake();
 
-        timeRemaining = timeLimit;
+        timeRemaining = timeLimit * 60;
     }
 
     public override void OnUpdate()
@@ -28,6 +31,11 @@ public class NetGameStateDeathmatch : NetGameState
             {
                 RpcTimeUpdate(timeRemaining);
             }
+
+            if (timeRemaining <= -timeTilRestart)
+            {
+                NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+            }
         }
 
         timeRemaining -= Time.deltaTime;
@@ -36,6 +44,7 @@ public class NetGameStateDeathmatch : NetGameState
     [ClientRpc]
     private void RpcTimeUpdate(float time)
     {
-        timeRemaining = time;
+        if (!NetworkServer.active)
+            timeRemaining = time;
     }
 }

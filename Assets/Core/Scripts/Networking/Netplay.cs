@@ -1,6 +1,7 @@
 ﻿using Mirror;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Netplay is a manager that holds information on players and synced objects, and handles synchronisation
@@ -115,6 +116,9 @@ public class Netplay : MonoBehaviour
         NetworkClient.RegisterHandler<PingMessage>(OnClientPingMessageReceived);
         NetworkServer.RegisterHandler<PingMessage>(OnServerPingMessageReceived);
 
+        SceneManager.activeSceneChanged += (Scene old, Scene neww) => StartMatch();
+        net.onServerStarted += StartMatch;
+
         msTime = 0;
 
         return true;
@@ -135,6 +139,19 @@ public class Netplay : MonoBehaviour
             SendPings();
         }
     }
+
+    #region Game
+    /// <summary>
+    /// Called when the level starts or a server starts
+    /// </summary>
+    private void StartMatch()
+    {
+        if (NetworkServer.active)
+        {
+            NetGameState.SetNetGameState(GameManager.singleton.defaultNetGameState.gameObject);
+        }
+    }
+    #endregion
 
     #region Ping
     private void SendPings()
@@ -215,7 +232,6 @@ public class Netplay : MonoBehaviour
     {
         if (net || InitNet())
         {
-            // should be Frame.server, serialization/deserialization is still todo
             localPlayerId = 0;
 
             net.Host(true);

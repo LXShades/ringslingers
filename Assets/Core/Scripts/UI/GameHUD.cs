@@ -17,6 +17,10 @@ public class GameHUD : MonoBehaviour
     public Text scoreboardNames;
     public Text scoreboardScores;
 
+    [Header("Win screen")]
+    public GameObject winScreen;
+    public Text winScreenMessage;
+
     [Header("Debug")]
     public Text connectStatusText;
     public Text debugText;
@@ -45,10 +49,10 @@ public class GameHUD : MonoBehaviour
     void LateUpdate()
     {
         if (!GameManager.singleton || !GameManager.singleton.camera)
-        {
             return;
-        }
+
         Player player = GameManager.singleton.camera.currentPlayer;
+        bool isMatchFinished = NetGameState.singleton as NetGameStateDeathmatch != null && (NetGameState.singleton as NetGameStateDeathmatch).timeRemaining <= 0;
 
         numFramesThisSecond++;
 
@@ -59,7 +63,9 @@ public class GameHUD : MonoBehaviour
 
         if (NetGameState.singleton is NetGameStateDeathmatch netGameStateDeathmatch)
         {
-            timeText.text = $"{(int)netGameStateDeathmatch.timeRemaining / 60}:{((int)netGameStateDeathmatch.timeRemaining % 60).ToString("D2")}";
+            float timeRemaining = Mathf.Max(netGameStateDeathmatch.timeRemaining, 0f);
+
+            timeText.text = $"{(int)timeRemaining / 60}:{((int)timeRemaining % 60).ToString("D2")}";
         }
 
 
@@ -91,7 +97,8 @@ public class GameHUD : MonoBehaviour
         }
 
         // Scoreboard stuff
-        scoreboard.SetActive(Input.GetButton("Scoreboard")); // normally we don't use Input, but the HUD is completely client-side so it's fine here
+        scoreboard.SetActive(Input.GetButton("Scoreboard") || isMatchFinished); // normally we don't use Input, but the HUD is completely client-side so it's fine here
+        winScreen.SetActive(isMatchFinished);
 
         if (scoreboard.activeSelf)
         {
@@ -111,6 +118,22 @@ public class GameHUD : MonoBehaviour
                 scoreboardNames.text += $"{scoreboardPlayer.playerName}\n";
                 scoreboardScores.text += $"{scoreboardPlayer.score}\n";
             }
+        }
+
+        if (winScreen.activeSelf)
+        {
+            Player winningPlayer = null;
+
+            foreach (Player candidate in Netplay.singleton.players)
+            {
+                if (candidate != null)
+                {
+                    if (winningPlayer == null || candidate.score > winningPlayer.score)
+                        winningPlayer = candidate;
+                }
+            }
+
+            winScreenMessage.text = $"{winningPlayer.playerName} wins!";
         }
 
         // Connection stuff

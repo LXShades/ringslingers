@@ -29,6 +29,11 @@ public class NetMan : NetworkManager
     public ConnectionEvent onServerDisconnect;
 
     /// <summary>
+    /// Server has been started
+    /// </summary>
+    public BasicEvent onServerStarted;
+
+    /// <summary>
     /// Player was added on the server
     /// </summary>
     public ConnectionEvent onServerAddPlayer;
@@ -80,6 +85,12 @@ public class NetMan : NetworkManager
     {
         base.OnServerDisconnect(conn);
         onServerDisconnect?.Invoke(conn);
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        onServerStarted?.Invoke();
     }
 
     public override void OnServerAddPlayer(NetworkConnection conn)

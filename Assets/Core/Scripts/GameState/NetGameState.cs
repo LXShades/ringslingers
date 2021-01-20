@@ -32,13 +32,11 @@ public class NetGameState : NetworkBehaviour
     public static void SetNetGameState(GameObject newGameStatePrefab)
     {
         if (_singleton != null)
-        {
             Destroy(_singleton.gameObject);
-        }
 
         GameObject newState = Instantiate(newGameStatePrefab);
         NetworkServer.Spawn(newState);
-        _singleton = newGameStatePrefab.GetComponent<NetGameState>();
+        _singleton = newState.GetComponent<NetGameState>();
     }
 
     private void Awake()

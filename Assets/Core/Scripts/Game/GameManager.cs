@@ -1,5 +1,4 @@
-﻿using Mirror;
-using System.IO;
+﻿using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -75,15 +74,6 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
-        SceneManager.activeSceneChanged += SceneManager_activeSceneChanged;
-    }
-
-    private void SceneManager_activeSceneChanged(Scene arg0, Scene arg1)
-    {
-        if (NetworkServer.active)
-        {
-            NetGameState.SetNetGameState(defaultNetGameState.gameObject);
-        }
     }
 
     void Update()
