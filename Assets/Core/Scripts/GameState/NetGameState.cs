@@ -9,17 +9,7 @@ using UnityEngine;
 public class NetGameState : NetworkBehaviour
 {
     // singleton pattern abuse!?
-    public static NetGameState singleton
-    {
-        get
-        {
-            if (_singleton == null)
-                _singleton = FindObjectOfType<NetGameState>();
-
-            return _singleton;
-        }
-    }
-    private static NetGameState _singleton;
+    public static NetGameState singleton { get; private set; }
 
     public virtual bool HasRoundFinished { get; set; } = false;
 
@@ -31,16 +21,26 @@ public class NetGameState : NetworkBehaviour
     [Server]
     public static void SetNetGameState(GameObject newGameStatePrefab)
     {
-        if (_singleton != null)
-            Destroy(_singleton.gameObject);
+        if (singleton != null)
+        {
+            Destroy(singleton.gameObject);
+            singleton = null;
+        }
 
         GameObject newState = Instantiate(newGameStatePrefab);
         NetworkServer.Spawn(newState);
-        _singleton = newState.GetComponent<NetGameState>();
     }
 
     private void Awake()
     {
+        if (singleton != null)
+        {
+            Destroy(gameObject);
+            Log.WriteWarning("There is already a NetGameState running");
+            return;
+        }
+
+        singleton = this;
         OnAwake();
     }
 

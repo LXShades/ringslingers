@@ -43,7 +43,7 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            return cachedCamera ?? (cachedCamera = FindObjectOfType<PlayerCamera>());
+            return cachedCamera != null ? cachedCamera : (cachedCamera = FindObjectOfType<PlayerCamera>());
         }
     }
 

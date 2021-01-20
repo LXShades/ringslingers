@@ -20,7 +20,8 @@ public static class SyncActionSystem
 
     public static int RegisterSyncActions(GameObject owner, bool identityless = false)
     {
-        if (!owner.TryGetComponent(out NetworkIdentity identity) && !identityless)
+        NetworkIdentity identity = owner.GetComponentInParent<NetworkIdentity>();
+        if (identity == null && !identityless)
         {
             Log.WriteError($"Cannot register a SyncAction on an object \"{owner}\" with no network identity");
             return 0;

@@ -154,9 +154,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnablePrefabs:
   - {fileID: 1790104548480656412, guid: bb9dfd51c90b05943b69d3e8498fbcf8, type: 3}
+  - {fileID: 3354472749510327343, guid: 2fac6622aa7b6c344b91f5db12097122, type: 3}
+  - {fileID: 9067864423546626223, guid: 5f4b08bc9bff14d4cb749324a2531f55, type: 3}
+  - {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
   - {fileID: 1152841599159748358, guid: 317c876dc6b60cf4ab9e2b16896200a5, type: 3}
   - {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
   - {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+  - {fileID: 6167014272590406206, guid: 5f2ee636d2368a64fa4d7e8acdb62ec6, type: 3}
   - {fileID: 6167014272590406206, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
   - {fileID: 6167014272590406206, guid: 0f103a358d266f343bae03cac2c1b896, type: 3}
 --- !u!4 &520157040
@@ -245,7 +249,8 @@ MonoBehaviour:
   playerPrefab: {fileID: 1790104548480656412, guid: bb9dfd51c90b05943b69d3e8498fbcf8, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 0}
 --- !u!114 &779978515
 MonoBehaviour:
   m_ObjectHideFlags: 0
