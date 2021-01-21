@@ -25,9 +25,11 @@ public class InputRemapUI : MonoBehaviour
 
         primaryButton.onClick.AddListener(() => OnRemapClicked(0));
         altButton.onClick.AddListener(() => OnRemapClicked(1));
+
+        RefreshButtonText();
     }
 
-    private void Update()
+    private void RefreshButtonText()
     {
         if (!isRebinding)
         {
@@ -50,6 +52,8 @@ public class InputRemapUI : MonoBehaviour
         isRebinding = false;
 
         GamePreferences.Save(new[] { action });
+
+        RefreshButtonText();
     }
 
     private void OnRemapClicked(int bindingIndex)
@@ -64,6 +68,8 @@ public class InputRemapUI : MonoBehaviour
         currentRebindingIndex = bindingIndex;
         action.Disable();
         action.PerformInteractiveRebinding().OnComplete(OnCompletedBinding).WithTargetBinding(bindingIndex).Start();
+
+        RefreshButtonText();
     }
 
     private void OnValidate()

@@ -27,7 +27,9 @@ public class CharacterMovement : Movement
     public float wallRunRotationResetSpeed = 180f;
     [Tooltip("When wall running on the previous frame, this force pushes you down towards the ground on the next frame if in range and running fast enough. This value is multiplied by your velocity")]
     public float wallRunPushForce = 1f;
-    public float wallRunTestDistance = 0.3f;
+    public float wallRunTestDepth = 0.3f;
+    public float wallRunTestRadius = 0.4f;
+    public float wallRunTestHeight = 0.08f;
     public Transform rotateableModel;
 
     [Header("Collision")]
@@ -81,6 +83,8 @@ public class CharacterMovement : Movement
 
     public float groundDistance { get; private set; }
 
+    public Vector3 wallRunNormal { get; private set; }
+
     /// <summary>
     /// Current up vector
     /// </summary>
@@ -116,7 +120,7 @@ public class CharacterMovement : Movement
         //ApplyWallRunPushForce(input);
 
         // Check whether on ground
-        bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDistance, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal);
+        bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal);
 
         isOnGround = wasGroundDetected && _groundDistance < groundTestDistance;
 
@@ -342,17 +346,42 @@ public class CharacterMovement : Movement
             return;
         }
 
-        // Rotate towards our target
         Vector3 targetUp;
+        Vector3 frontRight = transform.position + (transform.forward + transform.right) * wallRunTestRadius + up * wallRunTestHeight;
+        Vector3 frontLeft = transform.position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
+        Vector3 back = transform.position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
+        Vector3 frontLeftHit = default, frontRightHit = default, backHit = default;
+        int numSuccessfulCollisions = 0;
 
-        if (groundDistance <= wallRunTestDistance)
+        // Detect our target rotation
+        for (int i = 0; i < 3; i++)
         {
-            targetUp = groundNormal;
-            isOnGround = true;
+            Vector3 start = i == 0 ? frontLeft : (i == 1 ? frontRight : back);
+            Color color = Color.red;
+
+            if (Physics.Raycast(start, -up, out RaycastHit hit, wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (i == 0) frontLeftHit = hit.point;
+                if (i == 1) frontRightHit = hit.point;
+                if (i == 2) backHit = hit.point;
+                numSuccessfulCollisions++;
+                color = Color.green;
+            }
+
+            Debug.DrawLine(start, start - up * wallRunTestDepth, color);
+        }
+
+        if (numSuccessfulCollisions == 3)
+        {
+            targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
+
+            if (isOnGround)
+                velocity += -targetUp * (wallRunPushForce * deltaTime);
         }
         else
             targetUp = Vector3.up;
 
+        // Rotate towards our target
         if (Vector3.Angle(up, targetUp) > 0f)
         {
             float degreesToRotate = wallRunRotationResetSpeed * deltaTime;
@@ -390,5 +419,17 @@ public class CharacterMovement : Movement
     {
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
         velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.blue;
+        Vector3 frontRight = transform.position + (transform.forward + transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
+        Vector3 frontLeft = transform.position + (transform.forward - transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
+        Vector3 back = transform.position - transform.forward * wallRunTestRadius + transform.up * wallRunTestHeight;
+
+        Gizmos.DrawLine(frontRight, frontRight - transform.up * wallRunTestDepth);
+        Gizmos.DrawLine(frontLeft, frontLeft - transform.up * wallRunTestDepth);
+        Gizmos.DrawLine(back, back- transform.up * wallRunTestDepth);
     }
 }

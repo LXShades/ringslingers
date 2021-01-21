@@ -31,6 +31,13 @@ public class Ring : MonoBehaviour, ISpawnCallbacks
 
     void Awake()
     {
+        // Hover above the ground
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, -Vector3.up, out hit, hoverHeight, ~0, QueryTriggerInteraction.Ignore))
+        {
+            transform.position = hit.point + new Vector3(0, hoverHeight, 0);
+        }
+
         respawnableItem = GetComponent<RespawnableItem>();
 
         if (respawnableItem)
@@ -40,16 +47,6 @@ public class Ring : MonoBehaviour, ISpawnCallbacks
         }
 
         awakeTime = Time.unscaledTime;
-    }
-
-    void Start()
-    {
-        // Hover above the ground
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, -Vector3.up, out hit, hoverHeight, ~0, QueryTriggerInteraction.Ignore))
-        {
-            transform.position = hit.point + new Vector3(0, hoverHeight, 0);
-        }
     }
 
     void Update()
