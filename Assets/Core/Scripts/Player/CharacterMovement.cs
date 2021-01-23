@@ -215,6 +215,8 @@ public class CharacterMovement : Movement
             DebugPauseEnd();
     }
 
+    public Vector3 axis;
+
     private void DebugPauseStart()
     {
         if (Application.isEditor && UnityEngine.InputSystem.Keyboard.current.pKey.wasPressedThisFrame)
@@ -435,10 +437,14 @@ public class CharacterMovement : Movement
         }
     }
 
-    public void SpringUp(float force, Vector3 direction)
+    public void SpringUp(float force, Vector3 direction, bool doSpringAbsolutely)
     {
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
-        velocity = velocity - direction * (Vector3.Dot(direction, velocity) / Vector3.Dot(direction, direction)) + force * direction;
+
+        if (doSpringAbsolutely)
+            velocity = direction * force;
+        else
+            velocity.SetAlongAxis(direction, force);
     }
 
     private void OnDrawGizmos()

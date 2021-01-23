@@ -6,6 +6,8 @@ public class Spring : MonoBehaviour, IMovementCollisions
     // red: 32, yellow: 20, blue: 11
     public float springForce = (32 * 35);
 
+    public bool springAbsolutely = false;
+
     [Header("Sounds")]
     public GameSound springSound = new GameSound();
 
@@ -20,9 +22,9 @@ public class Spring : MonoBehaviour, IMovementCollisions
     {
         CharacterMovement movement = source as CharacterMovement;
 
-        if (movement && movement.velocity.y < springForce * 0.7f)
+        if (movement && movement.velocity.AlongAxis(transform.up) < springForce * 0.7f)
         {
-            movement.SpringUp(springForce, transform.up);
+            movement.SpringUp(springForce, transform.up, springAbsolutely);
 
             if (!isReconciliation)
             {

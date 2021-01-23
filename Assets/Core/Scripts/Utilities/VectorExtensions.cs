@@ -32,7 +32,7 @@ public static class VectorExtensions
     }
 
     /// <summary>
-    /// Sets how far along the axis the factor goes. The axis does not need to be normalized
+    /// Sets how far along the axis the vector goes by adding or subtracting the axis. The axis does not need to be normalized
     /// </summary>
     public static void SetAlongAxis(ref this Vector3 vec, Vector3 axis, float magnitude)
     {
@@ -41,6 +41,15 @@ public static class VectorExtensions
             axis.Normalize();
 
         vec = vec + axis * (magnitude - Vector3.Dot(vec, axis));
+    }
+
+    /// <summary>
+    /// Sets how far along the axis the vector goes by removing the vector until it no longer goes along the axis and adding the axis until magnitude is met.
+    /// </summary>
+    public static void HardStopAxis(ref this Vector3 vec, Vector3 axis)
+    {
+        if (Vector3.Dot(vec, axis) < 0f)
+            vec = Vector3.zero;
     }
 
     /// <summary>
