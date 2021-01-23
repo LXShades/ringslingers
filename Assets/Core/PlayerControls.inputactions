@@ -52,6 +52,14 @@
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
+                },
+                {
+                    "name": "Center Camera",
+                    "type": "Button",
+                    "id": "169b5944-5fa4-4b91-a048-cbf2aee769a1",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
                 }
             ],
             "bindings": [
@@ -195,6 +203,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "View Scores",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "468aa807-787e-484a-be52-b3af96f78153",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Center Camera",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

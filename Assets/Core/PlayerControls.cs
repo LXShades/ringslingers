@@ -65,6 +65,14 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Center Camera"",
+                    ""type"": ""Button"",
+                    ""id"": ""169b5944-5fa4-4b91-a048-cbf2aee769a1"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -210,6 +218,17 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""action"": ""View Scores"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""468aa807-787e-484a-be52-b3af96f78153"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Center Camera"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -224,6 +243,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         m_Gameplay_Zoom = m_Gameplay.FindAction("Zoom", throwIfNotFound: true);
         m_Gameplay_Talk = m_Gameplay.FindAction("Talk", throwIfNotFound: true);
         m_Gameplay_ViewScores = m_Gameplay.FindAction("View Scores", throwIfNotFound: true);
+        m_Gameplay_CenterCamera = m_Gameplay.FindAction("Center Camera", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -279,6 +299,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
     private readonly InputAction m_Gameplay_Zoom;
     private readonly InputAction m_Gameplay_Talk;
     private readonly InputAction m_Gameplay_ViewScores;
+    private readonly InputAction m_Gameplay_CenterCamera;
     public struct GameplayActions
     {
         private @PlayerControls m_Wrapper;
@@ -289,6 +310,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         public InputAction @Zoom => m_Wrapper.m_Gameplay_Zoom;
         public InputAction @Talk => m_Wrapper.m_Gameplay_Talk;
         public InputAction @ViewScores => m_Wrapper.m_Gameplay_ViewScores;
+        public InputAction @CenterCamera => m_Wrapper.m_Gameplay_CenterCamera;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -316,6 +338,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @ViewScores.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnViewScores;
                 @ViewScores.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnViewScores;
                 @ViewScores.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnViewScores;
+                @CenterCamera.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
+                @CenterCamera.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
+                @CenterCamera.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
             }
             m_Wrapper.m_GameplayActionsCallbackInterface = instance;
             if (instance != null)
@@ -338,6 +363,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @ViewScores.started += instance.OnViewScores;
                 @ViewScores.performed += instance.OnViewScores;
                 @ViewScores.canceled += instance.OnViewScores;
+                @CenterCamera.started += instance.OnCenterCamera;
+                @CenterCamera.performed += instance.OnCenterCamera;
+                @CenterCamera.canceled += instance.OnCenterCamera;
             }
         }
     }
@@ -350,5 +378,6 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         void OnZoom(InputAction.CallbackContext context);
         void OnTalk(InputAction.CallbackContext context);
         void OnViewScores(InputAction.CallbackContext context);
+        void OnCenterCamera(InputAction.CallbackContext context);
     }
 }

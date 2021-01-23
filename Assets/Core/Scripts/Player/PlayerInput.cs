@@ -58,6 +58,11 @@ public struct PlayerInput : IEquatable<PlayerInput>
             verticalAngleDelta = 180f - limit - degreesFromUp;
         newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(up, newAim)) * newAim;
 
+        if (controls.Gameplay.CenterCamera.ReadValue<float>() > 0.5f)
+        {
+            newAim.SetAlongAxis(up, 0);
+            newAim.Normalize();
+        }
 
         localInput.aimDirection = newAim;
 
