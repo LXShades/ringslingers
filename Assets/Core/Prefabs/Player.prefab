@@ -160,6 +160,9 @@ MonoBehaviour:
   root: {fileID: 2153966524698617702}
   torso: {fileID: 7707168638965207191}
   head: {fileID: 6797645665708461201}
+  legTurnDegreesPerSecond: 720
+  fallTiltDegreesPerSecond: 50
+  fallTiltMaxDegrees: 20
 --- !u!1 &3772004447444073683
 GameObject:
   m_ObjectHideFlags: 0
@@ -357,8 +360,6 @@ MonoBehaviour:
   ringDropHorizontalVelocity: 3
   hurtDefaultHorizontalKnockback: 7
   hurtDefaultVerticalKnockback: 3.8
-  hitInvincibilityDuration: 1.5
-  hitInvincibilityBlinkRate: 25
   movement: {fileID: 0}
   damageable: {fileID: 0}
   localTime: -1
@@ -396,8 +397,41 @@ MonoBehaviour:
   gravity: 0.5
   airAccelerationMultiplier: 0.25
   enableWallRun: 1
-  wallRunRotationResetSpeed: 180
-  wallRunPushForce: 1
+  wallRunRotationResetSpeed: 270
+  wallRunPushForceByUprightness:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 31.831795
+      value: 1.0004568
+      inSlope: -0.000030391811
+      outSlope: -0.000030391811
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.10144344
+    - serializedVersion: 3
+      time: 180
+      value: 1
+      inSlope: -0
+      outSlope: -0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.092450716
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  wallRunEscapeVelocity: 3
   wallRunTestDepth: 0.69
   wallRunTestRadius: 0.22
   wallRunTestHeight: 0.14

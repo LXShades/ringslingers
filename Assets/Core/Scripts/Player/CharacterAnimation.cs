@@ -11,6 +11,14 @@ public class CharacterAnimation : MonoBehaviour
     public Transform torso;
     public Transform head;
 
+    [Header("Settings")]
+    public float legTurnDegreesPerSecond = 360f;
+    public float fallTiltDegreesPerSecond = 50f;
+    public float fallTiltMaxDegrees = 20f;
+
+    private Quaternion lastRootRotation = Quaternion.identity;
+    private Vector3 lastCharacterUp = Vector3.up;
+
     private void Start()
     {
         movement = GetComponentInParent<CharacterMovement>();
@@ -35,7 +43,7 @@ public class CharacterAnimation : MonoBehaviour
     private void LateUpdate()
     {
         Vector3 groundVelocity = movement.groundVelocity;
-        Vector3 characterUp = player.GetComponent<CharacterMovement>().up;
+        Vector3 characterUp = movement.up;
 
         // Turn body towards look direction
         if (movement.isOnGround && groundVelocity.magnitude > 0.2f)
@@ -49,11 +57,15 @@ public class CharacterAnimation : MonoBehaviour
 
             Quaternion forwardToVelocity = Quaternion.LookRotation(runForward, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(transform.forward.AlongPlane(characterUp), characterUp));
 
-            root.rotation = forwardToVelocity * root.transform.rotation;
+            root.rotation = Quaternion.RotateTowards(lastRootRotation, forwardToVelocity * root.rotation, Time.deltaTime * legTurnDegreesPerSecond);
             torso.rotation = Quaternion.Inverse(forwardToVelocity) * torso.rotation;
+
+            lastRootRotation = root.rotation;
         }
 
         // think of this as rotation = originalRotation - forwardRotation + newHeadForwardRotation
         head.transform.rotation = Quaternion.LookRotation(player.input.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(torso.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
+
+        lastCharacterUp = characterUp;
     }
 }

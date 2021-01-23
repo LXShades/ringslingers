@@ -93,7 +93,7 @@ public class GameHUD : MonoBehaviour
 
             debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing * 1000f)}ms (reliable: {(int)(Netplay.singleton.reliablePing)})" +
                 $"\nFPS: {lastFps}" +
-                $"\n{Netplay.singleton.netStat}";
+                $"\n{Netplay.singleton.netStat}\nVelocity: {player.movement.velocity} ({player.movement.velocity.magnitude:F2})\nGround: {player.movement.isOnGround}";
         }
 
         // Scoreboard stuff

@@ -25,8 +25,9 @@ public class CharacterMovement : Movement
     [Header("3D movement")]
     public bool enableWallRun = true;
     public float wallRunRotationResetSpeed = 180f;
-    [Tooltip("When wall running on the previous frame, this force pushes you down towards the ground on the next frame if in range and running fast enough. This value is multiplied by your velocity")]
-    public float wallRunPushForce = 1f;
+    [Tooltip("When wall running on the previous frame, this force pushes you down towards the ground on the next frame if in range and running fast enough. Based on how much your orientation diverged from up=(0,1,0) in degrees. 1 means push fully to the ground.")]
+    public AnimationCurve wallRunPushForceByUprightness = AnimationCurve.Linear(0, 0, 180, 1);
+    public float wallRunEscapeVelocity = 6f;
     public float wallRunTestDepth = 0.3f;
     public float wallRunTestRadius = 0.4f;
     public float wallRunTestHeight = 0.08f;
@@ -69,6 +70,12 @@ public class CharacterMovement : Movement
         set => velocity.SetAlongPlane(groundNormal, value);
     }
 
+    public float verticalVelocity
+    {
+        get => velocity.AlongAxis(up);
+        set => velocity.SetAlongAxis(up, value);
+    }
+
     /// <summary>
     /// The direction the player is trying to run in
     /// </summary>
@@ -91,6 +98,8 @@ public class CharacterMovement : Movement
     public Vector3 up { get; set; } = Vector3.up;
 
     private Vector3 gravityDirection = new Vector3(0, -1, 0);
+
+    private bool showDebugLines => Application.platform == RuntimePlatform.WindowsEditor;
 
     // whether we're currently reconciling movement
     private bool isReconciling = false;
@@ -116,9 +125,6 @@ public class CharacterMovement : Movement
 
         this.isReconciling = isReconciliation;
 
-        // If we were wall running on the last frame, and below escape velocity, push downwards
-        //ApplyWallRunPushForce(input);
-
         // Check whether on ground
         bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal);
 
@@ -135,14 +141,16 @@ public class CharacterMovement : Movement
             groundDistance = float.MaxValue;
         }
 
-        // 3D movement
-        ApplyRotation(deltaTime, input);
+        // Apply grounding effects straight away so we can be more up-to-date with wallrunning stuff
+        ApplyGrounding();
 
         // Add/remove states depending on whether isOnGround
-        if (isOnGround)
+        if (isOnGround && velocity.y <= 0f)
         {
             if (state.HasFlag(State.Pained))
-                player.StartInvincibilityTime();
+            {
+                //player.damageable.StartInvincibilityTime();
+            }
 
             state &= ~State.Pained;
         }
@@ -151,6 +159,7 @@ public class CharacterMovement : Movement
         ApplyFriction(deltaTime);
         float lastHorizontalSpeed = groundVelocity.magnitude; // this is our new max speed if our max speed was already exceeded
 
+        // Run
         ApplyRunAcceleration(deltaTime, input);
 
         // Gravity
@@ -166,8 +175,8 @@ public class CharacterMovement : Movement
         // Jump button
         HandleJumpAbilities(input);
 
-        // Do not slip through the ground
-        ApplyGrounding();
+        // 3D rotation - do this after movement to encourage push down
+        ApplyRotation(deltaTime, input);
 
         // Perform final movement and collision
         Vector3 originalPosition = transform.position;
@@ -175,8 +184,6 @@ public class CharacterMovement : Movement
 
         move.enableCollision = !debugDisableCollision;
         move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
-
-        DebugExtension.DebugCapsule(transform.position, transform.position + velocity * deltaTime, Color.red, 0.1f);
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
         {
@@ -198,7 +205,11 @@ public class CharacterMovement : Movement
             velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
         }
 
-        DebugExtension.DebugCapsule(transform.position, transform.position + velocity * deltaTime, Color.blue, 0.1f);
+        if (showDebugLines)
+        {
+            DebugExtension.DebugCapsule(originalPosition, originalPosition + originalVelocity * deltaTime, Color.red, 0.1f);
+            DebugExtension.DebugCapsule(originalPosition, originalPosition + velocity * deltaTime, Color.blue, 0.1f);
+        }
 
         if (!isReconciliation)
             DebugPauseEnd();
@@ -346,14 +357,17 @@ public class CharacterMovement : Movement
             return;
         }
 
-        Vector3 targetUp;
-        Vector3 frontRight = transform.position + (transform.forward + transform.right) * wallRunTestRadius + up * wallRunTestHeight;
-        Vector3 frontLeft = transform.position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
-        Vector3 back = transform.position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
+        Vector3 targetUp = Vector3.up;
+
+        // We need to look ahead a bit so that we can push towards the ground after we've moved
+        Vector3 position = transform.position + velocity * deltaTime;
+        Vector3 frontRight = position + (transform.forward + transform.right) * wallRunTestRadius + up * wallRunTestHeight;
+        Vector3 frontLeft = position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
+        Vector3 back = position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
         Vector3 frontLeftHit = default, frontRightHit = default, backHit = default;
         int numSuccessfulCollisions = 0;
 
-        // Detect our target rotation
+        // Detect our target rotation using three sensors
         for (int i = 0; i < 3; i++)
         {
             Vector3 start = i == 0 ? frontLeft : (i == 1 ? frontRight : back);
@@ -368,18 +382,24 @@ public class CharacterMovement : Movement
                 color = Color.green;
             }
 
-            Debug.DrawLine(start, start - up * wallRunTestDepth, color);
+            if (showDebugLines)
+                Debug.DrawLine(start, start - up * wallRunTestDepth, color);
         }
 
+        // If all sensors were activated, we can rotate
         if (numSuccessfulCollisions == 3)
         {
+            // Set target up vector
             targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
 
-            if (isOnGround)
-                velocity += -targetUp * (wallRunPushForce * deltaTime);
+            // Push down towards the ground
+            if (deltaTime > 0f && verticalVelocity < wallRunEscapeVelocity)
+            {
+                float averageDistance = Vector3.Distance((frontLeftHit + frontRightHit + backHit) / numSuccessfulCollisions, position);
+                float forceMultiplier = wallRunPushForceByUprightness.Evaluate(Mathf.Acos(Vector3.Dot(targetUp, Vector3.up)) * Mathf.Rad2Deg);
+                velocity += -targetUp * (averageDistance / deltaTime * forceMultiplier);
+            }
         }
-        else
-            targetUp = Vector3.up;
 
         // Rotate towards our target
         if (Vector3.Angle(up, targetUp) > 0f)

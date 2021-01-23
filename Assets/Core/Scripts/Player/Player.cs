@@ -62,12 +62,6 @@ public class Player : NetworkBehaviour
     public float hurtDefaultHorizontalKnockback = 5;
     public float hurtDefaultVerticalKnockback = 5;
 
-    [Header("I-frames")]
-    public float hitInvincibilityDuration = 1.5f;
-
-    public float hitInvincibilityBlinkRate = 25f;
-    private float invincibilityTimeRemaining;
-
     // Components
     /// <summary>
     /// Player movement component
@@ -151,11 +145,6 @@ public class Player : NetworkBehaviour
 
             DropRings();
         }
-    }
-
-    public void StartInvincibilityTime()
-    {
-        invincibilityTimeRemaining = hitInvincibilityDuration;
     }
 
     public void DropRings()
