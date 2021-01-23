@@ -353,11 +353,13 @@ MonoBehaviour:
     pitchVariance: 0
   droppedRingPrefab: {fileID: 1152841599159748358, guid: 317c876dc6b60cf4ab9e2b16896200a5, type: 3}
   droppedRingSpawnPoint: {fileID: 3310946930297574031}
-  maxDroppableRings: 20
-  ringDropLayers: 3
-  ringDropCloseVerticalVelocity: 4
-  ringDropFarVerticalVelocity: 4.5
-  ringDropHorizontalVelocity: 3
+  ringDropLayers:
+  - verticalSpeed: 5
+    horizontalSpeed: 2.5
+    maxNumRings: 8
+  - verticalSpeed: 8
+    horizontalSpeed: 2
+    maxNumRings: 16
   hurtDefaultHorizontalKnockback: 7
   hurtDefaultVerticalKnockback: 3.8
   movement: {fileID: 0}
