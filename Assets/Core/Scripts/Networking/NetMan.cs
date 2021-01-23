@@ -73,6 +73,8 @@ public class NetMan : NetworkManager
     {
         base.OnClientDisconnect(conn);
         onClientDisconnect?.Invoke(conn);
+
+        StopClient();
     }
 
     public override void OnServerConnect(NetworkConnection conn)
@@ -83,8 +85,8 @@ public class NetMan : NetworkManager
 
     public override void OnServerDisconnect(NetworkConnection conn)
     {
-        base.OnServerDisconnect(conn);
         onServerDisconnect?.Invoke(conn);
+        base.OnServerDisconnect(conn);
     }
 
     public override void OnStartServer()

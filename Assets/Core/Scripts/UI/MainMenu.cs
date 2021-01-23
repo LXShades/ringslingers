@@ -8,7 +8,7 @@ public class MainMenu : MonoBehaviour
     public InputField ipAddress;
     public Button joinButton;
     public Button hostButton;
-    public string defaultHostScene;
+    public GameObject waitMessage;
 
     // Start is called before the first frame update
     void Start()
@@ -17,18 +17,41 @@ public class MainMenu : MonoBehaviour
         hostButton.onClick.AddListener(OnHostClicked);
     }
 
+    private void Update()
+    {
+        Netplay.singleton.localPlayerIntendedName = playerName.text;
+    }
+
     private void OnJoinClicked()
     {
+        SetMenuEnabled(false);
+
+        NetMan.singleton.onClientDisconnect -= OnConnectionFailed;
+        NetMan.singleton.onClientDisconnect += OnConnectionFailed;
         Netplay.singleton.ConnectToServer(ipAddress.text);
     }
 
     private void OnHostClicked()
     {
-        AsyncOperation op = SceneManager.LoadSceneAsync(defaultHostScene);
+        SetMenuEnabled(false);
+
+        AsyncOperation op = SceneManager.LoadSceneAsync(GameManager.singleton.defaultHostScene);
 
         op.completed += (AsyncOperation) =>
         {
             Netplay.singleton.HostServer();
         };
+    }
+
+    private void SetMenuEnabled(bool enabled)
+    {
+        joinButton.interactable = enabled;
+        hostButton.interactable = enabled;
+        waitMessage.SetActive(!enabled);
+    }
+
+    private void OnConnectionFailed(Mirror.NetworkConnection conn)
+    {
+        SetMenuEnabled(true);
     }
 }

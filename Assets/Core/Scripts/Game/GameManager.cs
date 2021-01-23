@@ -25,6 +25,9 @@ public class GameManager : MonoBehaviour
     [Header("Game Settings")]
     public NetGameState defaultNetGameState;
 
+    public string defaultHostScene;
+    public string defaultMenuScene;
+
     [Tooltip("How long until items respawn, in seconds")]
     public float itemRespawnTime = 20;
     public GameObject playerPrefab;
@@ -75,6 +78,11 @@ public class GameManager : MonoBehaviour
         GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
     }
 
+    private void Start()
+    {
+        NetMan.singleton.onClientDisconnect += OnClientDisconnected;
+    }
+
     void Update()
     {
         Cursor.lockState = (isPaused || SceneManager.GetActiveScene().buildIndex == 1) ? CursorLockMode.None : CursorLockMode.Locked;
@@ -108,6 +116,12 @@ public class GameManager : MonoBehaviour
             input.Disable();
             areInputsEnabled = false;
         }
+    }
+
+    private void OnClientDisconnected(Mirror.NetworkConnection conn)
+    {
+        // go back to the main menu
+        SceneManager.LoadSceneAsync(defaultMenuScene);
     }
 
     public void SuppressGameplayInputs()

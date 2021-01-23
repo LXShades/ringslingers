@@ -57,8 +57,22 @@
 + Add a "Center camera" button
 + Fix broken invincibility time
 + Disable movement while typing chatbox
-- Should be able to join servers, etc without problems.
++ Should be able to join servers, etc without problems.
++ Disable main menu UI while waiting for connect/host
++ Fix animation glitch at high frame rates
++ Go back to the main menu when server shuts down
++ Add hit messages
++ Add join/leave messages
++ Fix player name selection doing nothing
 - Add weapon ring drop
+
+
+- Fix permanent errors when a client leaves
+
+- Identify high packet rate cause
+minor:
+- Fix invisible characters showing in first-person
+- Fix invincibility flicker not working when railing
 
 Post-playtest:
 - Add rename ability

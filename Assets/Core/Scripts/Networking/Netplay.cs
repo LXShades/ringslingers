@@ -53,6 +53,8 @@ public class Netplay : MonoBehaviour
 
     public PlayerClient localClient => NetworkClient.connection.identity.GetComponent<PlayerClient>();
 
+    public string localPlayerIntendedName { get; set; }
+
     public Player localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
 
     /// <summary>
@@ -262,10 +264,19 @@ public class Netplay : MonoBehaviour
     private void OnServerConnected(NetworkConnection connection)
     {
         Log.Write("A client has connected!");
+        MessageFeed.Post($"<player>Player {connection.connectionId}</player> has joined the game!");
     }
 
     private void OnServerDisconnected(NetworkConnection connection)
     {
+        foreach (NetworkIdentity identity in connection.clientOwnedObjects)
+        {
+            if (identity != null && identity.TryGetComponent(out Player clientPlayer))
+            {
+                MessageFeed.Post($"<player>{clientPlayer.playerName}</player> has left the game.");
+            }
+        }
+
         Log.Write("A client has disconnected");
     }
 

@@ -154,8 +154,12 @@ public class Player : NetworkBehaviour
                 // Give score to the attacker if possible
                 if (attackerAsPlayer)
                     attackerAsPlayer.score += 50;
+
+                // Add the hit message
+                MessageFeed.Post($"<player>{attackerAsPlayer.playerName}</player> hit <player>{playerName}</player>!");
             }
 
+            // Drop some rings
             DropRings();
         }
     }
@@ -200,6 +204,9 @@ public class Player : NetworkBehaviour
     {
         string updatedName = newName;
         int currentSuffix = 0;
+
+        if (string.IsNullOrWhiteSpace(updatedName))
+            updatedName = "Anonymous";
 
         while (System.Array.Exists(Netplay.singleton.players, a => a != null && a != this && a.playerName == updatedName))
         {

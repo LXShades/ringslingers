@@ -19,10 +19,24 @@ public class PlayerClient : NetworkBehaviour
         }
     }
 
+    public override void OnStartLocalPlayer()
+    {
+        // Request our name upon joining
+        base.OnStartLocalPlayer();
+
+        CmdTryRename(Netplay.singleton.localPlayerIntendedName);
+    }
+
     [Command]
     public void CmdSendMessage(string message)
     {
         message = message.Replace("</noparse>", "lol"); // plz don't
         MessageFeed.Post($"<<player>{player?.playerName}</player>>: <noparse>{message}</noparse>");
+    }
+
+    [Command]
+    private void CmdTryRename(string newName)
+    {
+        player?.Rename(newName);
     }
 }
