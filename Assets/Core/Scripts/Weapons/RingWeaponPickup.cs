@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class RingWeaponPickup : MonoBehaviour
 {
     public RingWeaponSettings weaponType;
+
+    public bool overrideAmmo = false;
+    public float ammo = 0f;
 
     private void Awake()
     {
@@ -17,6 +17,7 @@ public class RingWeaponPickup : MonoBehaviour
 
     private void OnRingPickedUp(Player player)
     {
-        player.GetComponent<RingShooting>().AddWeaponAmmo(weaponType);
+        if (Mirror.NetworkServer.active)
+            player.GetComponent<RingShooting>().AddWeaponAmmo(weaponType, overrideAmmo, ammo);
     }
 }

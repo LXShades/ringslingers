@@ -1,13 +1,13 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class Ring : MonoBehaviour, ISpawnCallbacks
+public class Ring : NetworkBehaviour, ISpawnCallbacks
 {
-    [Header("Ring")]
     [Tooltip("Speed that this ring spins at, in degrees per second")] public float spinSpeed = 180;
     public float hoverHeight = 0.375f;
 
     [Header("Dropped rings")]
+    [SyncVar]
     public bool isDroppedRing = false;
 
     public float pickupWarmupDuration = 0.75f;
@@ -19,6 +19,9 @@ public class Ring : MonoBehaviour, ISpawnCallbacks
 
     // Components
     private RespawnableItem respawnableItem;
+    private DespawnAfterDuration despawn;
+    private SyncMovement syncMovement;
+    private Movement movement;
 
     public delegate void OnPickup(Player player);
     public OnPickup onPickup;
@@ -31,14 +34,10 @@ public class Ring : MonoBehaviour, ISpawnCallbacks
 
     void Awake()
     {
-        // Hover above the ground
-        RaycastHit hit;
-        if (Physics.Raycast(transform.position, -Vector3.up, out hit, hoverHeight, ~0, QueryTriggerInteraction.Ignore))
-        {
-            transform.position = hit.point + new Vector3(0, hoverHeight, 0);
-        }
-
         respawnableItem = GetComponent<RespawnableItem>();
+        despawn = GetComponent<DespawnAfterDuration>();
+        syncMovement = GetComponent<SyncMovement>();
+        movement = GetComponent<Movement>();
 
         if (respawnableItem)
         {
@@ -47,6 +46,26 @@ public class Ring : MonoBehaviour, ISpawnCallbacks
         }
 
         awakeTime = Time.unscaledTime;
+    }
+
+    void Start()
+    {
+        // dropped rings and level item rings behave quite differently, but can share the same prefab
+        // meaning we can make a variant for weapon rings etc without making things super complex
+        despawn.enabled = isDroppedRing;
+        syncMovement.enabled = isDroppedRing;
+        movement.enabled = isDroppedRing;
+        respawnableItem.enabled = !isDroppedRing;
+
+        // Hover above the ground
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, -Vector3.up, out hit, hoverHeight, ~0, QueryTriggerInteraction.Ignore))
+        {
+            transform.position = hit.point + new Vector3(0, hoverHeight, 0);
+        }
+
+        if (!isDroppedRing && respawnableItem)
+            respawnableItem.SetSpawnPosition(transform.position);
     }
 
     void Update()

@@ -103,14 +103,17 @@ public class RingShooting : NetworkBehaviour
         hasFiredOnThisClick &= player.input.btnFire;
     }
 
-    public void AddWeaponAmmo(RingWeaponSettings weaponType)
+    public void AddWeaponAmmo(RingWeaponSettings weaponType, bool doOverrideAmmo, float ammoOverride)
     {
+        float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.ammoOnPickup;
+
         for (int i = 0; i < weapons.Count; i++)
         {
             if (weapons[i].weaponType == weaponType)
             {
                 RingWeapon weapon = weapons[i];
-                weapon.ammo = Mathf.Min(weapon.ammo + weaponType.ammoOnPickup, weaponType.maxAmmo);
+
+                weapon.ammo = Mathf.Min(weapon.ammo + ammoToAdd, weaponType.maxAmmo);
                 weapons[i] = weapon;
                 return;
             }

@@ -10,6 +10,11 @@ public class RingWeaponSettings : ScriptableObject, ILookupableAsset
     public GameObject prefab;
 
     /// <summary>
+    /// Prefab used to drop the weapon when hit
+    /// </summary>
+    public GameObject droppedRingPrefab;
+
+    /// <summary>
     /// Image representing the weapon in the in-game HUD
     /// </summary>
     public Sprite uiIcon;

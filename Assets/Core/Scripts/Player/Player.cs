@@ -136,7 +136,7 @@ public class Player : NetworkBehaviour
         Hurt(instigator, force);
     }
 
-    public void Hurt(GameObject instigator, Vector3 force)
+    private void Hurt(GameObject instigator, Vector3 force)
     {
         if (force.sqrMagnitude <= Mathf.Epsilon)
             force = -transform.forward.Horizontal() * hurtDefaultHorizontalKnockback;
@@ -185,10 +185,32 @@ public class Player : NetworkBehaviour
             {
                 float horizontalAngle = i * Mathf.PI * 2f / currentNumToDrop;
                 Movement ringMovement = Spawner.Spawn(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
+                Ring ring = ringMovement?.GetComponent<Ring>();
 
-                Debug.Assert(ringMovement);
+                Debug.Assert(ringMovement && ring);
+
                 ringMovement.velocity = new Vector3(Mathf.Sin(horizontalAngle) * horizontalVelocity, verticalVelocity, Mathf.Cos(horizontalAngle) * horizontalVelocity);
+                ring.isDroppedRing = true;
+
                 numDropped++;
+            }
+        }
+
+        // Drop weapons
+        RingShooting ringShooting = GetComponent<RingShooting>();
+        if (ringShooting)
+        {
+            if (ringShooting.weapons.Count > 1 && ringShooting.weapons[1].weaponType.droppedRingPrefab)
+            {
+                GameObject droppedWeapon = Spawner.Spawn(ringShooting.weapons[1].weaponType.droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity);
+
+                if (droppedWeapon && droppedWeapon.TryGetComponent(out RingWeaponPickup weaponPickup) && droppedWeapon.TryGetComponent(out Ring weaponRing))
+                {
+                    weaponPickup.overrideAmmo = true;
+                    weaponPickup.ammo = ringShooting.weapons[1].ammo;
+                    weaponRing.isDroppedRing = true;
+                    ringShooting.weapons.RemoveAt(1);
+                }
             }
         }
 

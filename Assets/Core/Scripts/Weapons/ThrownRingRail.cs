@@ -23,7 +23,7 @@ public class ThrownRingRail : ThrownRing
 
         // Shoot the rail real far like
         float closestDistance = maxRange;
-        Player closestPlayer = null;
+        Damageable closestDamageable = null;
         endPoint.transform.position = spawnPosition + direction * maxRange;
         endPoint.transform.up = -direction;
 
@@ -31,16 +31,16 @@ public class ThrownRingRail : ThrownRing
         int numHits = Physics.RaycastNonAlloc(spawnPosition, direction, hits, maxRange, collisionLayers, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < numHits; i++)
         {
-            Player player = hits[i].collider.GetComponentInParent<Player>();
-            if (player != owner && hits[i].distance < closestDistance)
+            Damageable damageable = hits[i].collider.GetComponentInParent<Damageable>();
+            if (damageable.gameObject != owner.gameObject && hits[i].distance < closestDistance)
             {
                 closestDistance = hits[i].distance;
-                closestPlayer = player;
+                closestDamageable = damageable;
                 endPoint.transform.position = hits[i].point;
             }
         }
 
-        if (closestPlayer)
-            closestPlayer.Hurt(owner.gameObject, direction);
+        if (closestDamageable)
+            closestDamageable.TryDamage(owner.gameObject, direction);
     }
 }

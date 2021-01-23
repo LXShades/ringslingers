@@ -58,6 +58,11 @@ public class RespawnableItem : NetworkBehaviour
         isSpawned = true;
     }
 
+    public void SetSpawnPosition(Vector3 position)
+    {
+        originalPosition = position;
+    }
+
     private void OnIsSpawnedChanged(bool oldVal, bool newVal)
     {
         _isSpawned = newVal;

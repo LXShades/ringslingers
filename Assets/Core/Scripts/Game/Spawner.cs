@@ -30,6 +30,9 @@ public class Spawner : MonoBehaviour
 
         foreach (GameObject spawnable in spawnablePrefabs)
         {
+            if (spawnable == null)
+                continue; // it can happen
+
             prefabByGuid.Add(spawnable.GetComponent<NetworkIdentity>().assetId, spawnable);
         }
 
@@ -55,6 +58,9 @@ public class Spawner : MonoBehaviour
         // Register custom spawn handlers
         foreach (var prefab in spawnablePrefabs)
         {
+            if (prefab == null)
+                continue;
+
             ClientScene.RegisterSpawnHandler(prefab.GetComponent<NetworkIdentity>().assetId, SpawnHandler, UnspawnHandler, PostSpawnHandler);
         }
     }
