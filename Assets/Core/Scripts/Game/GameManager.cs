@@ -60,6 +60,9 @@ public class GameManager : MonoBehaviour
     }
     private bool _isPaused = false;
 
+    private bool areInputsEnabled = false;
+    private bool doSuppressGameplayInputs = false;
+
     private PlayerCamera cachedCamera = null;
 
     private void Awake()
@@ -67,13 +70,9 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         input = new PlayerControls();
-        input.Enable();
+        EnableInputs();
 
         GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
-    }
-
-    private void Start()
-    {
     }
 
     void Update()
@@ -82,6 +81,38 @@ public class GameManager : MonoBehaviour
 
         // Do debug stuff
         RunDebugCommands();
+    }
+
+    private void LateUpdate()
+    {
+        if (doSuppressGameplayInputs)
+            DisableInputs();
+        else
+            EnableInputs();
+        doSuppressGameplayInputs = false;
+    }
+
+    private void EnableInputs()
+    {
+        if (!areInputsEnabled)
+        {
+            input.Enable();
+            areInputsEnabled = true;
+        }
+    }
+
+    private void DisableInputs()
+    {
+        if (areInputsEnabled)
+        {
+            input.Disable();
+            areInputsEnabled = false;
+        }
+    }
+
+    public void SuppressGameplayInputs()
+    {
+        doSuppressGameplayInputs = true;
     }
 
     #region Debug

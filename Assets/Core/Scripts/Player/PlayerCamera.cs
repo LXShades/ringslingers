@@ -105,13 +105,11 @@ public class PlayerCamera : MonoBehaviour
 
                 transform.position = targetPosition;
 
-                if (!currentPlayer.characterModel.enabled)
-                    currentPlayer.characterModel.enabled = true; // show our own model in third-person
+                currentPlayer.isInvisible = false; // show our own model in third-person
             }
             else
             {
-                if (currentPlayer.characterModel.enabled)
-                    currentPlayer.characterModel.enabled = false; // hide our own model in first-person
+                currentPlayer.isInvisible = true; // hide our own model in first-person
             }
 
             // Apply eye bob

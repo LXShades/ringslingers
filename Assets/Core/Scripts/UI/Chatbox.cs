@@ -29,6 +29,9 @@ public class Chatbox : MonoBehaviour
             chatInput.ActivateInputField();
             chatInput.Select();
         }
+
+        if (chatInput.gameObject.activeInHierarchy)
+            GameManager.singleton.SuppressGameplayInputs();
     }
 
     public void OnChatBoxSubmitted(string text)

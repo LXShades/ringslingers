@@ -13,6 +13,11 @@ public class Damageable : NetworkBehaviour
     public float hitInvincibilityBlinkRate = 25f;
     private float invincibilityTimeRemaining;
 
+    public bool autoPopulateRenderers = true;
+    public Renderer[] affectedRenderers = new Renderer[0];
+
+    public bool isInvincible => invincibilityTimeRemaining > 0f;
+
     private void Update()
     {
         // Invincibility blinky
@@ -20,17 +25,24 @@ public class Damageable : NetworkBehaviour
         {
             invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - Time.deltaTime, 0);
 
-            Renderer renderer = GetComponentInChildren<Renderer>();
-            if (renderer && invincibilityTimeRemaining > 0)
-                renderer.enabled = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
+            bool enableRenderers;
+
+            if (invincibilityTimeRemaining > 0)
+                enableRenderers = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
             else
-                renderer.enabled = true; // we finished blinky blinkying
+                enableRenderers = true; // we finished blinky blinkying
+
+            foreach (Renderer renderer in affectedRenderers)
+                renderer.enabled = enableRenderers;
         }
     }
 
     public void TryDamage(GameObject instigator, Vector3 force = default)
     {
-        OnDamage(instigator, force);
+        if (invincibilityTimeRemaining <= 0f)
+        {
+            OnDamage(instigator, force);
+        }
     }
 
     // currently unused
@@ -44,5 +56,10 @@ public class Damageable : NetworkBehaviour
     {
         invincibilityTimeRemaining = hitInvincibilityDuration;
         onLocalDamaged?.Invoke(instigator, force);
+    }
+    private void OnValidate()
+    {
+        if (autoPopulateRenderers)
+            affectedRenderers = GetComponentsInChildren<Renderer>();
     }
 }

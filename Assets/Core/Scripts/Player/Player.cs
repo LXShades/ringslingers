@@ -71,6 +71,8 @@ public class Player : NetworkBehaviour
     [HideInInspector] public CharacterMovement movement;
     [HideInInspector] public Damageable damageable;
 
+    public bool isInvisible { get; set; }
+
     public float localTime = -1;
 
     void Awake()
@@ -99,6 +101,15 @@ public class Player : NetworkBehaviour
         {
             lastInput = input;
             input = PlayerInput.MakeLocalInput(lastInput, GetComponent<CharacterMovement>().up);
+        }
+
+        if (isInvisible)
+        {
+            characterModel.enabled = false;
+        }
+        else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
+        {
+            characterModel.enabled = true;
         }
     }
 
