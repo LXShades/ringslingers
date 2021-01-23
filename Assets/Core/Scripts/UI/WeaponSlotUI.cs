@@ -17,6 +17,7 @@ public class WeaponSlotUI : MonoBehaviour
                 icon.sprite = weapon.weaponType.uiIcon;
             if (((int)weapon.ammo).ToString() != ammoRemaining.text)
                 ammoRemaining.text = ((int)weapon.ammo).ToString();
+
             if (!ammoRemaining.enabled)
             {
                 ammoRemaining.enabled = true;

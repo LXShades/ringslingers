@@ -65,9 +65,9 @@ public class Spawner : MonoBehaviour
         {
             foreach (GameObject obj in scene.GetRootGameObjects())
             {
-                foreach (Transform child in obj.transform)
+                foreach (Transform child in obj.GetComponentsInChildren<Transform>())
                 {
-                    if (child.GetComponent<NetworkBehaviour>())
+                    if (child.GetComponent<NetworkIdentity>())
                     {
                         SyncActionSystem.RegisterSyncActions(child.gameObject);
                     }

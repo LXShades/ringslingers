@@ -17,6 +17,8 @@ public class ThrownRing : NetworkBehaviour
 
     private float spawnTime;
 
+    private bool isDead = false;
+
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -80,8 +82,10 @@ public class ThrownRing : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (Time.time - spawnTime < 0.1f)
-            return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
+        if (isDead)
+            return; // Unity physics bugs are pain
+        //if (Time.time - spawnTime < 0.1f)
+            //return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
         if (collision.collider.gameObject == owner)
             return; // don't collide with the player who threw the ring
 
@@ -104,6 +108,7 @@ public class ThrownRing : NetworkBehaviour
         }
 
         Spawner.Despawn(gameObject);
+        isDead = true;
     }
 
     private void OnPredictionSuccessful()

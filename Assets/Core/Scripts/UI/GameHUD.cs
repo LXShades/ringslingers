@@ -81,7 +81,7 @@ public class GameHUD : MonoBehaviour
                 weaponSlots[i].weapon = ringShooting.weapons[i + 1]; // skip default weapon
                 weaponSlots[i].hasWeapon = true;
             }
-            for (int j = ringShooting.weapons.Count; j < weaponSlots.Length; j++)
+            for (int j = ringShooting.weapons.Count - 1 /* skip default weapon */; j < weaponSlots.Length; j++)
                 weaponSlots[j].hasWeapon = false;
 
             // Debug stuff
