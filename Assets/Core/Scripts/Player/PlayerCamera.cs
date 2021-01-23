@@ -20,6 +20,13 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     public float eyeHeight = 0.6f;
 
+    /// <summary>
+    /// What does the camera collide with to keep the target in view?
+    /// </summary>
+    public LayerMask collisionLayers;
+
+    public float collisionRadius = 0.1f;
+
     [Header("Head bob")]
     /// <summary>
     /// The height (positive and negative) of eye bobs
@@ -91,14 +98,20 @@ public class PlayerCamera : MonoBehaviour
             // Apply third-person view
             if (thirdPersonDistance > 0f)
             {
-                transform.position -= transform.forward * thirdPersonDistance;
+                Vector3 targetPosition = transform.position - transform.forward * thirdPersonDistance;
+                
+                if (Physics.Raycast(transform.position, targetPosition - transform.position, out RaycastHit hit, thirdPersonDistance, collisionLayers, QueryTriggerInteraction.Ignore))
+                    targetPosition = hit.point + hit.normal * collisionRadius;
+
+                transform.position = targetPosition;
+
                 if (!currentPlayer.characterModel.enabled)
-                    currentPlayer.characterModel.enabled = true;
+                    currentPlayer.characterModel.enabled = true; // show our own model in third-person
             }
             else
             {
                 if (currentPlayer.characterModel.enabled)
-                    currentPlayer.characterModel.enabled = false;
+                    currentPlayer.characterModel.enabled = false; // hide our own model in first-person
             }
 
             // Apply eye bob
