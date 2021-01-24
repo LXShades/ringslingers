@@ -197,7 +197,7 @@ public class Netplay : MonoBehaviour
 
     private void OnServerPingMessageReceived(NetworkConnection source, PingMessage message)
     {
-        source.Send(message); // pong!
+        source.Send(message, message.isReliable ? Channels.DefaultReliable : Channels.DefaultUnreliable); // pong!
     }
     #endregion
 

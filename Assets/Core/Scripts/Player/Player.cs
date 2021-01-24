@@ -104,13 +104,9 @@ public class Player : NetworkBehaviour
         }
 
         if (isInvisible)
-        {
             characterModel.enabled = false;
-        }
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
-        {
             characterModel.enabled = true;
-        }
     }
 
     public void Respawn()

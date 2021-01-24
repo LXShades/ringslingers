@@ -2,6 +2,98 @@
 using System;
 using UnityEngine;
 
+public static class Compressor
+{
+    const int kBitsPerComponent = 8;
+    const int kMaskPerComponent = ~(~0 << kBitsPerComponent);
+    const int kMultiplierPerComponent = ~(~0 << (kBitsPerComponent - 1));
+
+    public static int CompressQuaternion(Quaternion quaternion)
+    {
+        int result = 0;
+
+        result |= ((int)(quaternion.x * kMultiplierPerComponent) & kMaskPerComponent);
+        result |= ((int)(quaternion.y * kMultiplierPerComponent) & kMaskPerComponent) << kBitsPerComponent;
+        result |= ((int)(quaternion.z * kMultiplierPerComponent) & kMaskPerComponent) << (kBitsPerComponent * 2);
+        result |= ((int)(quaternion.w * kMultiplierPerComponent) & kMaskPerComponent) << (kBitsPerComponent * 3);
+
+        return result;
+    }
+
+    public static Quaternion DecompressQuaternion(int quaternion)
+    {
+        Quaternion result = default;
+
+        result.x = (quaternion << (32 - kBitsPerComponent) >> (32 - kBitsPerComponent)) / (float)kMultiplierPerComponent;
+        result.y = (quaternion << (24 - kBitsPerComponent) >> (32 - kBitsPerComponent)) / (float)kMultiplierPerComponent;
+        result.z = (quaternion << (16 - kBitsPerComponent) >> (32 - kBitsPerComponent)) / (float)kMultiplierPerComponent;
+        result.w = (quaternion << (8  - kBitsPerComponent) >> (32 - kBitsPerComponent)) / (float)kMultiplierPerComponent;
+
+        return result;
+    }
+
+    public static int CompressNormal24(Vector3 normalVector)
+    {
+        int result = 0;
+
+        result |= ((int)(normalVector.x * kMultiplierPerComponent) & kMaskPerComponent);
+        result |= ((int)(normalVector.y * kMultiplierPerComponent) & kMaskPerComponent) << kBitsPerComponent;
+        result |= ((int)(normalVector.z * kMultiplierPerComponent) & kMaskPerComponent) << (kBitsPerComponent * 2);
+
+        return result;
+    }
+
+    public static Vector3 DecompressNormal24(int normalVector)
+    {
+        Vector3 result = default;
+
+        result.x = (normalVector << (32 - kBitsPerComponent) >> (32 - kBitsPerComponent)) / (float)kMultiplierPerComponent;
+        result.y = (normalVector << (24 - kBitsPerComponent) >> (32 - kBitsPerComponent)) / (float)kMultiplierPerComponent;
+        result.z = (normalVector << (16 - kBitsPerComponent) >> (32 - kBitsPerComponent)) / (float)kMultiplierPerComponent;
+
+        return result;
+    }
+
+    public static short CompressNormal16(Vector3 normalVector)
+    {
+        int result = 0;
+
+        result |= ((int)(normalVector.x * 63f) & ~(~0 << 7));
+        result |= ((int)(normalVector.z * 63f) & ~(~0 << 7)) << 7;
+        result |= (normalVector.y >= 0f ? 1 : 0) << 14;
+
+        return (short)result;
+    }
+
+    public static Vector3 DecompressNormal16(short _normalVector)
+    {
+        Vector3 result = default;
+        int normalVector = (int)_normalVector; // we're working in an int context while shifting, usually
+        float ySign = (normalVector & (1 << 14)) == 0 ? -1f : 1f;
+
+        result.x = (normalVector << (32 - 7) >> (32 - 7)) / 63f;
+        result.z = (normalVector << (25 - 7) >> (32 - 7)) / 63f;
+
+        result.y = Mathf.Sqrt(1 - result.x * result.x - result.z * result.z) * ySign;
+
+        return result;
+    }
+
+    public static int UnitFloatToBits(float value, int numBits)
+    {
+        float multiplier = (1 << (numBits - 1)) - 1f;
+        int result = (int)(value * multiplier);
+        return (value >= 0f ? result : result | (1 << (numBits - 1))) & ~(~0 << numBits);
+    }
+
+    public static float BitsToUnitFloat(int value, int numBits)
+    {
+        float multiplier = (1 << (numBits - 1)) - 1f;
+        float result = (value << (32 - numBits) >> (32 - numBits)) / multiplier;
+        return result;
+    }
+} 
+
 public class PlayerController : NetworkBehaviour
 {
     [Serializable]
@@ -13,6 +105,26 @@ public class PlayerController : NetworkBehaviour
         public Vector3 velocity;
         public Vector3 up;
         public CharacterMovement.State state;
+
+        public void Serialize(NetworkWriter writer)
+        {
+            writer.WriteSingle(time);
+            writer.WriteVector3(position);
+            writer.WriteInt32(Compressor.CompressQuaternion(rotation));
+            writer.WriteVector3(velocity);
+            writer.WriteInt16(Compressor.CompressNormal16(up));
+            writer.Write((byte)state);
+        }
+
+        public void Deserialize(NetworkReader reader)
+        {
+            time = reader.ReadSingle();
+            position = reader.ReadVector3();
+            rotation = Compressor.DecompressQuaternion(reader.ReadInt32());
+            velocity = reader.ReadVector3();
+            up = Compressor.DecompressNormal16(reader.ReadInt16());
+            state = (CharacterMovement.State)reader.ReadByte();
+        }
 
         public bool Equals(MoveState other)
         {
@@ -437,5 +549,20 @@ public class PlayerController : NetworkBehaviour
             return output;
         }
         return "no player found";
+    }
+}
+
+public static class MoveStateReaderWriter
+{
+    public static void WriteMoveState(this NetworkWriter writer, PlayerController.MoveState state)
+    {
+        state.Serialize(writer);
+    }
+
+    public static PlayerController.MoveState ReadMoveState(this NetworkReader reader)
+    {
+        PlayerController.MoveState state = default;
+        state.Deserialize(reader);
+        return state;
     }
 }

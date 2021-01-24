@@ -87,19 +87,21 @@ public struct PlayerInput : IEquatable<PlayerInput>
 
     public void Serialize(NetworkWriter writer)
     {
-        writer.WriteSingle(moveHorizontalAxis);
-        writer.WriteSingle(moveVerticalAxis);
-        writer.WriteSingle(horizontalAim);
-        writer.WriteSingle(verticalAim);
+        writer.WriteInt16((short)(Compressor.UnitFloatToBits(moveHorizontalAxis, 8) | (Compressor.UnitFloatToBits(moveVerticalAxis, 8) << 8)));
+        writer.WriteInt32((Compressor.UnitFloatToBits(horizontalAim / 360f, 16) | (Compressor.UnitFloatToBits(verticalAim / 360f, 16) << 16)));
+
         writer.WriteByte((byte)((btnJump ? 1 : 0) | (btnFire ? 2 : 0)));
     }
 
     public void Deserialize(NetworkReader reader)
     {
-        moveHorizontalAxis = reader.ReadSingle();
-        moveVerticalAxis = reader.ReadSingle();
-        horizontalAim = reader.ReadSingle();
-        verticalAim = reader.ReadSingle();
+        short movement = reader.ReadInt16();
+        int aim = reader.ReadInt32();
+
+        moveHorizontalAxis = Compressor.BitsToUnitFloat(movement << 8 >> 8, 8);
+        moveVerticalAxis = Compressor.BitsToUnitFloat(movement >> 8, 8);
+        horizontalAim = Compressor.BitsToUnitFloat(aim << 16 >> 16, 16) * 360f;
+        verticalAim = Compressor.BitsToUnitFloat(aim >> 16, 16) * 360f;
 
         byte buttons = reader.ReadByte();
         btnJump = (buttons & 1) != 0;
