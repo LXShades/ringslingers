@@ -182,6 +182,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeUntilDespawn: 7
+  affectedRenderers:
+  - {fileID: 9120248190413993234}
   blinkRateOverTime:
     serializedVersion: 2
     m_Curve:

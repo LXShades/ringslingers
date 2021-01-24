@@ -6,6 +6,7 @@ public class DespawnAfterDuration : MonoBehaviour
     public float timeUntilDespawn = 1f;
 
     [Header("Blinking")]
+    public Renderer[] affectedRenderers = new Renderer[0];
     public AnimationCurve blinkRateOverTime = AnimationCurve.Linear(0, 0, 1, 10);
 
     private float despawnTimeRemaining;
@@ -14,13 +15,9 @@ public class DespawnAfterDuration : MonoBehaviour
     [Header("Sounds")]
     public GameSound despawnSound = new GameSound();
 
-    // Components
-    private Renderer myRenderer;
-
     void Awake()
     {
         despawnTimeRemaining = timeUntilDespawn;
-        myRenderer = GetComponent<Renderer>();
     }
 
     void Update()
@@ -29,23 +26,26 @@ public class DespawnAfterDuration : MonoBehaviour
         despawnTimeRemaining -= Time.deltaTime;
 
         // Blink!
-        if (myRenderer)
+        if (affectedRenderers != null && affectedRenderers.Length > 0)
         {
             float rate = blinkRateOverTime.Evaluate(timeUntilDespawn - despawnTimeRemaining);
 
             perBlinkTimer += Time.deltaTime;
 
-            if (rate > 0)
+            foreach (Renderer renderer in affectedRenderers)
             {
-                if (perBlinkTimer >= 1f / rate)
+                if (rate > 0)
                 {
-                    myRenderer.enabled = !myRenderer.enabled;
-                    perBlinkTimer = 0f;
+                    if (perBlinkTimer >= 1f / rate)
+                    {
+                        renderer.enabled = !renderer.enabled;
+                        perBlinkTimer = 0f;
+                    }
                 }
-            }
-            else
-            {
-                myRenderer.enabled = true;
+                else
+                {
+                    renderer.enabled = true;
+                }
             }
         }
 
