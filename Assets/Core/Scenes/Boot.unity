@@ -218,7 +218,7 @@ MonoBehaviour:
   MaximumPacketSize: 1200
   Channels: 0100000002000000
   StatisticsCalculationInterval: 3
-  ClientLatencySimulationEnabled: 1
+  ClientLatencySimulationEnabled: 0
   ClientLatencySimulationDelayMs: 150
   ClientLatencySimulationJitterMs: 53
 --- !u!114 &779978514
@@ -330,7 +330,7 @@ MonoBehaviour:
   defaultNetGameState: {fileID: 405845045499339879, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
   defaultHostScene: MeadowMatch
   defaultMenuScene: MainMenu
-  itemRespawnTime: 3
+  itemRespawnTime: 20
   playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
   gravity: 9.5703125
   fracunitsPerM: 64

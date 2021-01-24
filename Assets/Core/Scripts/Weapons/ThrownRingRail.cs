@@ -40,10 +40,7 @@ public class ThrownRingRail : ThrownRing
             }
         }
 
-        if (Mirror.NetworkServer.active)
-        {
-            if (closestDamageable)
-                closestDamageable.TryDamage(owner.gameObject, direction);
-        }
+        if (closestDamageable)
+            closestDamageable.TryDamage(owner.gameObject, direction);
     }
 }

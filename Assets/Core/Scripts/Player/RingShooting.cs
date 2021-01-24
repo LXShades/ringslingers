@@ -120,7 +120,7 @@ public class RingShooting : NetworkBehaviour
         }
 
         // no weapon was found - add to our list
-        weapons.Add(new RingWeapon() { weaponType = weaponType, ammo = weaponType.ammoOnPickup });
+        weapons.Add(new RingWeapon() { weaponType = weaponType, ammo = ammoToAdd });
     }
 
     private bool CanThrowRing() => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond;
