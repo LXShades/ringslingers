@@ -9,9 +9,9 @@ public class RingWeaponPickup : MonoBehaviour
 
     private void Awake()
     {
-        if (GetComponent<Ring>())
+        if (TryGetComponent(out Ring ring))
         {
-            GetComponent<Ring>().onPickup += OnRingPickedUp;
+            ring.onPickup += OnRingPickedUp;
         }
     }
 

@@ -32,7 +32,7 @@ public class ThrownRingRail : ThrownRing
         for (int i = 0; i < numHits; i++)
         {
             Damageable damageable = hits[i].collider.GetComponentInParent<Damageable>();
-            if (damageable.gameObject != owner.gameObject && hits[i].distance < closestDistance)
+            if (damageable && damageable.gameObject != owner.gameObject && hits[i].distance < closestDistance)
             {
                 closestDistance = hits[i].distance;
                 closestDamageable = damageable;

@@ -91,10 +91,9 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
                 if (!isDroppedRing)
                     respawnableItem.Despawn();
                 else
-                {
                     Spawner.Despawn(gameObject); // we aren't going to respawn here
-                    canPickup = false; // HACK: collider calls can happen even after despawning...
-                }
+
+                canPickup = false; // HACK: collider calls can happen even after despawning...WHY?? (oh maybe because two colliders on the player... ohhhhh)
 
                 onPickup?.Invoke(otherPlayer);
             }
@@ -125,5 +124,6 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
     private void OnRespawn()
     {
         probablePickedUpPlayer = null;
+        canPickup = true;
     }
 }
