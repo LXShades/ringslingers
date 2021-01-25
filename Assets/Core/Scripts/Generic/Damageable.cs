@@ -4,7 +4,7 @@ using UnityEngine.Events;
 
 public class Damageable : NetworkBehaviour
 {
-    public UnityEvent<GameObject, Vector3> onLocalDamaged;
+    public UnityEvent<GameObject, Vector3, bool> onLocalDamaged;
 
     [Header("I-frames")]
     public float hitInvincibilityDuration = 1.5f;
@@ -37,26 +37,29 @@ public class Damageable : NetworkBehaviour
         }
     }
 
-    public void TryDamage(GameObject instigator, Vector3 force = default)
+    public void TryDamage(GameObject instigator, Vector3 force = default, bool instaKill = false)
     {
         if (invincibilityTimeRemaining <= 0f)
         {
-            OnDamage(instigator, force);
+            OnDamage(instigator, force, instaKill);
         }
     }
 
-    // currently unused
     [ClientRpc]
-    private void RpcDamage(GameObject instigator, Vector3 force)
+    private void RpcStartInvincibilityTime(float duration)
     {
-        OnDamage(instigator, force);
+        invincibilityTimeRemaining = duration;
     }
 
-    private void OnDamage(GameObject instigator, Vector3 force)
+    private void OnDamage(GameObject instigator, Vector3 force, bool instaKill)
     {
-        invincibilityTimeRemaining = hitInvincibilityDuration;
-        onLocalDamaged?.Invoke(instigator, force);
+        if (NetworkServer.active)
+        {
+            RpcStartInvincibilityTime(hitInvincibilityDuration);
+        }
+        onLocalDamaged?.Invoke(instigator, force, instaKill);
     }
+
     private void OnValidate()
     {
         if (autoPopulateRenderers)

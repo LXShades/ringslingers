@@ -14,6 +14,15 @@ gravity: 0.5
 jumpfactor: 1
 actionspd: 60
 
+Rail refire: 0.673
+Bounce refire: 4.375
+Automatic refire: 0.057
+Explode refire: 0.673
+Grenade refire: 3
+Scatter refire: 1.5
+Normal refire: 4.375‬
+
+
 // thok
 						// Catapult the player
 						fixed_t actionspd = player->actionspd;

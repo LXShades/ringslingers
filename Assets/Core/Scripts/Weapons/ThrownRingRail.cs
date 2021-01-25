@@ -31,12 +31,16 @@ public class ThrownRingRail : ThrownRing
         int numHits = Physics.RaycastNonAlloc(spawnPosition, direction, hits, maxRange, collisionLayers, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < numHits; i++)
         {
-            Damageable damageable = hits[i].collider.GetComponentInParent<Damageable>();
-            if (damageable && damageable.gameObject != owner.gameObject && hits[i].distance < closestDistance)
+            if (hits[i].distance < closestDistance)
             {
-                closestDistance = hits[i].distance;
-                closestDamageable = damageable;
+                Damageable damageable = hits[i].collider.GetComponentInParent<Damageable>();
+                if (damageable && damageable.gameObject != owner.gameObject)
+                    closestDamageable = damageable;
+                else
+                    closestDamageable = null;
+
                 endPoint.transform.position = hits[i].point;
+                closestDistance = hits[i].distance;
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 /// <summary>
@@ -135,17 +136,32 @@ public class GameManager : MonoBehaviour
     void RunDebugCommands()
     {
         // Debug controls
-        QualitySettings.vSyncCount = 0;
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-            Application.targetFrameRate = 10;
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-            Application.targetFrameRate = 30;
+        if (Keyboard.current.lKey.isPressed)
+        {
+            int targetFrameRate = -1;
+            if (Keyboard.current.digit1Key.wasPressedThisFrame)
+                targetFrameRate = 10;
+            if (Keyboard.current.digit2Key.wasPressedThisFrame)
+                targetFrameRate = 30;
+            if (Keyboard.current.digit3Key.wasPressedThisFrame)
+                targetFrameRate = 60;
+            if (Keyboard.current.digit4Key.wasPressedThisFrame)
+                targetFrameRate = 144;
+            if (Keyboard.current.digit5Key.wasPressedThisFrame)
+                targetFrameRate = 1;
+            if (Keyboard.current.digit6Key.wasPressedThisFrame)
+                targetFrameRate = 0;
 
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-            Application.targetFrameRate = 60;
-
-        if (Input.GetKeyDown(KeyCode.Alpha4))
-            Application.targetFrameRate = 144;
+            if (targetFrameRate != -1 && targetFrameRate != 1)
+            {
+                Application.targetFrameRate = targetFrameRate;
+                QualitySettings.vSyncCount = 0;
+            }
+            else if (targetFrameRate == 1)
+            {
+                QualitySettings.vSyncCount = 1;
+            }
+        }
     }
     #endregion
 }

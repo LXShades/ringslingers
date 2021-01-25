@@ -213,12 +213,13 @@ MonoBehaviour:
   ServerBindAddress: 127.0.0.1
   CommunicationPort: 5029
   MaximumPeerCCU: 100
+  PollTiming: 1
   EnetServerPollTimeout: 1
   EnetClientPollTimeout: 1
   MaximumPacketSize: 1200
   Channels: 0100000002000000
   StatisticsCalculationInterval: 3
-  ClientLatencySimulationEnabled: 0
+  ClientLatencySimulationEnabled: 1
   ClientLatencySimulationDelayMs: 150
   ClientLatencySimulationJitterMs: 53
 --- !u!114 &779978514

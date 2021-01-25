@@ -109,27 +109,46 @@ public class Player : NetworkBehaviour
             characterModel.enabled = true;
     }
 
+    private static int nextSpawner = 0;
+
     public void Respawn()
     {
-        GameObject[] spawners = GameObject.FindGameObjectsWithTag("PlayerSpawn");
-
-        if (spawners.Length > 0)
+        if (NetworkServer.active)
         {
-            GameObject spawnPoint = spawners[Random.Range(0, spawners.Length)];
+            GameObject[] spawners = GameObject.FindGameObjectsWithTag("PlayerSpawn");
 
-            transform.position = spawnPoint.transform.position;
-            transform.forward = spawnPoint.transform.forward.Horizontal(); // todo
-        }
-        else
-        {
-            Log.WriteWarning("No player spawners in this stage!");
+            if (spawners.Length > 0)
+            {
+                GameObject spawnPoint = spawners[(nextSpawner++) % spawners.Length];
+
+                transform.position = spawnPoint.transform.position;
+                transform.forward = spawnPoint.transform.forward.Horizontal(); // todo
+
+                movement.velocity = Vector3.zero;
+                movement.state = 0;
+            }
+            else
+            {
+                Log.WriteWarning("No player spawners in this stage!");
+            }
         }
     }
 
-    private void OnDamaged(GameObject instigator, Vector3 force)
+    private void OnDamaged(GameObject instigator, Vector3 force, bool instaKill)
     {
-        // Only the server can really hurt us
-        Hurt(instigator, force);
+        if (instaKill)
+        {
+            GetComponent<PlayerController>().CallEvent((Movement movement, bool isReconciliation) => 
+            {
+                if (!isReconciliation)
+                    Respawn(); 
+            });
+        }
+        else
+        {
+            // Only the server can really hurt us
+            Hurt(instigator, force);
+        }
     }
 
     private void Hurt(GameObject instigator, Vector3 force)

@@ -71,26 +71,27 @@
 + Identify high packet rate cause
 + Fix ring blinking not working
 + Hit blink shouldn't start predictively when railing
-- Kill Y needed in case player goes out of bounds
+======== PLAYTEST! ========
+EFFORT:IMPACT
 
-minor:
-- Fix invisible characters showing in first-person
-needs reproducing:
-- Fix permanent errors when a client leaves
+Fixes/Refinements
++ Fix mipmapping LOW:MID
++ Use Ignorance early update instead of late update LOW:MID
++ Fix flashing effect LOW:MID
++ Change buttons for FPS change LOW:MID
++ Kill Y needed in case player goes out of bounds MID:HIGH
+- Fix rings dropping at 2FPS MID:MID
+ -> probably an issue with disabling Mirror components during runtime? try clumsy.exe?
+- Fullscreen support MID:HIGH
+- Sound effects for other players (hit, ring throw at least) HIGH:MID
+- Death state HIGH:LOW
 
-Post-playtest:
-- Add rename ability
-- Make Sonic model
-- Add loop de loop
-- Add spin
+Features:
+* CTF mode + at least 1 map HIGH:HIGH
+* Combinable rings HIGH:HIGH
 
-Rail refire: 0.673
-Bounce refire: 4.375
-Automatic refire: 0.057
-Explode refire: 0.673
-Grenade refire: 3
-Scatter refire: 1.5
-Normal refire: 4.375‬
+Brand New Features:
+
 
 Technical refinements in the future:
 - Imrpove ring collisions by not using triggers

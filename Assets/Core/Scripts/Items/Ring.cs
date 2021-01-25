@@ -68,6 +68,16 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
             respawnableItem.SetSpawnPosition(transform.position);
     }
 
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        /*despawn.enabled = isDroppedRing;
+        syncMovement.enabled = isDroppedRing;
+        movement.enabled = isDroppedRing;
+        respawnableItem.enabled = !isDroppedRing;*/
+    }
+
     void Update()
     {
         if (isDroppedRing || respawnableItem.isSpawned)
