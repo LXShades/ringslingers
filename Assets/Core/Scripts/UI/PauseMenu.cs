@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class PauseMenu : MonoBehaviour
 {
     public GameObject container;
+
+    public Dropdown resolutions;
 
     private void Update()
     {
@@ -15,5 +18,15 @@ public class PauseMenu : MonoBehaviour
     public void Close()
     {
         GameManager.singleton.isPaused = false;
+    }
+
+    public void SetFullscreenMode(int index)
+    {
+        switch (index)
+        {
+            case 0: Screen.fullScreenMode = FullScreenMode.Windowed; break;
+            case 1: Screen.fullScreenMode = FullScreenMode.ExclusiveFullScreen; break;
+            case 2: Screen.fullScreenMode = FullScreenMode.FullScreenWindow; break;
+        }
     }
 }

@@ -199,13 +199,15 @@ public class Player : NetworkBehaviour
             for (int i = 0; i < currentNumToDrop; i++)
             {
                 float horizontalAngle = i * Mathf.PI * 2f / currentNumToDrop;
-                Movement ringMovement = Spawner.Spawn(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
+                Movement ringMovement = Spawner.StartSpawn(droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity).GetComponent<Movement>();
                 Ring ring = ringMovement?.GetComponent<Ring>();
 
                 Debug.Assert(ringMovement && ring);
 
                 ringMovement.velocity = new Vector3(Mathf.Sin(horizontalAngle) * horizontalVelocity, verticalVelocity, Mathf.Cos(horizontalAngle) * horizontalVelocity);
                 ring.isDroppedRing = true;
+
+                Spawner.FinalizeSpawn(ringMovement.gameObject); // we want to set isDroppedRing before we send the spawn message, the clients need to know at the beginning what kind of ring it is.
 
                 numDropped++;
             }

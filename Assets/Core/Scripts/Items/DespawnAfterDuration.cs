@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using UnityEngine;
 
 public class DespawnAfterDuration : MonoBehaviour
 {
@@ -49,13 +50,16 @@ public class DespawnAfterDuration : MonoBehaviour
             }
         }
 
-        // Destroy! (eventually)
-        if (despawnTimeRemaining <= 0)
+        if (NetworkServer.active)
         {
-            if (despawnSound.clip)
-                GameSounds.PlaySound(gameObject, despawnSound);
+            // Destroy! (eventually)
+            if (despawnTimeRemaining <= 0)
+            {
+                if (despawnSound.clip)
+                    GameSounds.PlaySound(gameObject, despawnSound);
 
-            Spawner.Despawn(gameObject);
+                Spawner.Despawn(gameObject);
+            }
         }
     }
 }

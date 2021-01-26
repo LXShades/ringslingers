@@ -84,6 +84,9 @@ public class Spawner : MonoBehaviour
         RegisterSpawnHandlers();
     }
 
+    /// <summary>
+    /// Starts an object spawn sequence, allowing time for SyncVars to be set
+    /// </summary>
     public static GameObject StartSpawn(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         return Instantiate(prefab, position, rotation);
@@ -105,6 +108,10 @@ public class Spawner : MonoBehaviour
         return obj;
     }
 
+    /// <summary>
+    /// Finalizes and networks a spawn, sending relevant info to clients.
+    /// </summary>
+    /// <param name="target"></param>
     public static void FinalizeSpawn(GameObject target)
     {
         if (NetworkServer.active && target.TryGetComponent(out NetworkIdentity identity))
