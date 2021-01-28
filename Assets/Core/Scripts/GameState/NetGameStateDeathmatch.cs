@@ -1,10 +1,10 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class NetGameStateDeathmatch : NetGameState
+public class NetGameStateCTF : NetGameState
 {
     [Header("Match settings")]
-    public float timeLimit = 5f;
+    public int pointLimit = 5;
     public int intermissionTime = 15;
 
     [Header("Networking settings")]
@@ -14,11 +14,12 @@ public class NetGameStateDeathmatch : NetGameState
 
     public float timeTilRestart => timeRemaining < 0f ? intermissionTime + timeRemaining : 0f;
 
+    public int redTeamPoints { get; private set; }
+    public int blueTeamPoints { get; private set; }
+
     public override void OnAwake()
     {
         base.OnAwake();
-
-        timeRemaining = timeLimit * 60;
     }
 
     public override void OnUpdate()
@@ -27,18 +28,32 @@ public class NetGameStateDeathmatch : NetGameState
 
         if (NetworkServer.active)
         {
-            if ((int)(timeRemaining / secondsPerTimeUpdate - Time.deltaTime) != ((int)(timeRemaining / secondsPerTimeUpdate)))
+            if (redTeamPoints >= pointLimit || blueTeamPoints >= pointLimit)
             {
-                RpcTimeUpdate(timeRemaining);
-            }
+                timeRemaining -= Time.deltaTime;
+                if ((int)(timeRemaining / secondsPerTimeUpdate - Time.deltaTime) != ((int)(timeRemaining / secondsPerTimeUpdate)))
+                {
+                    RpcTimeUpdate(timeRemaining);
+                }
 
-            if ((timeRemaining <= -intermissionTime) != (timeRemaining - Time.deltaTime <= -intermissionTime))
-            {
-                NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+                if (timeRemaining < -intermissionTime)
+                {
+                    NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+                }
             }
         }
+    }
 
-        timeRemaining -= Time.deltaTime;
+    public void AwardPoint(PlayerTeam team)
+    {
+        if (team == PlayerTeam.Red)
+        {
+            redTeamPoints++;
+        }
+        else if (team == PlayerTeam.Blue)
+        {
+            blueTeamPoints++;
+        }
     }
 
     [ClientRpc]

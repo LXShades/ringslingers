@@ -38,6 +38,12 @@ public class Player : NetworkBehaviour
     /// </summary>
     public PlayerInput lastInput;
 
+    [Header("Team and identity")]
+    [SyncVar(hook=nameof(OnTeamChanged))]
+    public PlayerTeam team = PlayerTeam.None;
+
+    public Material[] modelMaterialByTeam = new Material[0];
+
     [Header("Shinies")]
     [SyncVar]
     public int score = 0;
@@ -91,6 +97,11 @@ public class Player : NetworkBehaviour
         if (isLocal)
         {
             Netplay.singleton.localPlayerId = playerId;
+        }
+
+        if (NetGameState.singleton is NetGameStateCTF netGameStateCTF)
+        {
+            team = PlayerTeam.Red; // sure whatever
         }
     }
 
@@ -263,4 +274,21 @@ public class Player : NetworkBehaviour
         playerName = newVal;
         gameObject.name = playerName;
     }
+
+    private void OnTeamChanged(PlayerTeam oldVal, PlayerTeam newVal)
+    {
+        team = newVal;
+
+        if ((int)team < modelMaterialByTeam.Length)
+        {
+            characterModel.sharedMaterial = modelMaterialByTeam[(int)team];
+        }
+    }
 }
+
+public enum PlayerTeam
+{
+    None,
+    Red,
+    Blue
+};

@@ -344,6 +344,11 @@ MonoBehaviour:
     btnJumpReleased: 0
     btnFirePressed: 0
     btnFireReleased: 0
+  team: 0
+  modelMaterialByTeam:
+  - {fileID: 2100000, guid: 4b658bc16d8baf04ab033e9076297f1f, type: 2}
+  - {fileID: 2100000, guid: 9da0a8e5695d2d048a4adbc1e9b660ef, type: 2}
+  - {fileID: 2100000, guid: 4b658bc16d8baf04ab033e9076297f1f, type: 2}
   score: 0
   characterModel: {fileID: 2407978492390594985}
   dropSound:

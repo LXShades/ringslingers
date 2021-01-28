@@ -12,6 +12,10 @@ public class GameHUD : MonoBehaviour
     public Text timeText;
     public WeaponSlotUI[] weaponSlots = new WeaponSlotUI[0];
 
+    [Header("Teams")]
+    public Text redTeamPoints;
+    public Text blueTeamPoints;
+
     [Header("Scoreboard")]
     public GameObject scoreboard;
     public Text scoreboardNames;
@@ -56,11 +60,7 @@ public class GameHUD : MonoBehaviour
 
         numFramesThisSecond++;
 
-        // Player stuff
-        ringsText.text = "0";
-        scoreText.text = "0";
-        timeText.text = "INF";
-
+        // Match stuff
         if (NetGameState.singleton is NetGameStateDeathmatch netGameStateDeathmatch)
         {
             float timeRemaining = Mathf.Max(netGameStateDeathmatch.timeRemaining, 0f);
@@ -68,6 +68,31 @@ public class GameHUD : MonoBehaviour
             timeText.text = $"{(int)timeRemaining / 60}:{((int)timeRemaining % 60).ToString("D2")}";
         }
 
+        // CTF stuff
+        if (NetGameState.singleton is NetGameStateCTF netGameStateCTF)
+        {
+            if (!redTeamPoints.gameObject.activeSelf)
+            {
+                redTeamPoints.gameObject.SetActive(true);
+                blueTeamPoints.gameObject.SetActive(true);
+            }
+
+            redTeamPoints.text = $"RED TEAM\n{netGameStateCTF.redTeamPoints}";
+            blueTeamPoints.text = $"BLUE TEAM\n{netGameStateCTF.blueTeamPoints}";
+        }
+        else
+        {
+            if (redTeamPoints.gameObject.activeInHierarchy)
+            {
+                redTeamPoints.gameObject.SetActive(false);
+                blueTeamPoints.gameObject.SetActive(false);
+            }
+        }
+
+        // Player stuff
+        ringsText.text = "0";
+        scoreText.text = "0";
+        timeText.text = "INF";
 
         if (player)
         {

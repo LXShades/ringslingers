@@ -92,13 +92,15 @@ Fixes/Refinements
  - Send current "gameTime" as received from server, and ping indicating how far we project players
  - Server has a tolerance for rewinding to client position and/or projecting rings. Maybe print out the time difference
  - Package player updates with "gameTime" and combine all into one
- - 
+
 - Sound effects for other players (hit, ring throw at least) HIGH:MID
 - Death state HIGH:LOW
 
 Features:
-* CTF mode + at least 1 map HIGH:HIGH
-* Combinable rings HIGH:HIGH
+- 1 CTF Map MID:HIGH
+- Flag model MID:HIGH
+- CTF mode HIGH:HIGH
+- Combinable rings HIGH:HIGH
 
 Brand New Features:
 
