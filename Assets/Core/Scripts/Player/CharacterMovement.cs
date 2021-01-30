@@ -4,6 +4,12 @@ using UnityEngine;
 [RequireComponent(typeof(Player))]
 public class CharacterMovement : Movement
 {
+    public enum CollisionType
+    {
+        Penetration,
+        Cast
+    }
+
     private Player player;
     private Movement move;
 
@@ -31,9 +37,12 @@ public class CharacterMovement : Movement
     public float wallRunTestDepth = 0.3f;
     public float wallRunTestRadius = 0.4f;
     public float wallRunTestHeight = 0.08f;
+    [Tooltip("Tests the average normal of the three points against the normal of the sensor triangle. If the angle diverges above this amount, the up vector is reset. Used to avoid treating small steps as slopes.")]
+    public float wallRunAngleFromAverageNormalMaxTolerance = 10.0f;
     public Transform rotateableModel;
 
     [Header("Collision")]
+    public CollisionType collisionType = CollisionType.Penetration;
     public float groundTestDistance = 0.05f;
     public float groundingForce = 3f;
     public float groundingEscapeVelocity = 1f;
@@ -386,14 +395,11 @@ public class CharacterMovement : Movement
             // Set target up vector
             targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
 
-            float normalVariance = Mathf.Acos(Mathf.Min(Vector3.Dot(frontLeftNormal, frontRightNormal), Vector3.Dot(frontRightNormal, backNormal), Vector3.Dot(backNormal, frontLeftNormal))) * Mathf.Rad2Deg;
-            if (normalVariance < 10f)
-            {
-                // this is more of a step than a slope, isn't it?
-                targetUp = (frontLeftNormal + frontRightNormal + backNormal).normalized;
-            }
+            // If the polygons comprising the angle diverge strongly from the angle we've determined, recognise it as a step and not a slope
+            float varianceFromAverageNormal = Mathf.Acos(Vector3.Dot((frontLeftNormal + frontRightNormal + backNormal).normalized, targetUp)) * Mathf.Rad2Deg;
 
-            groundNormal = targetUp;
+            if (varianceFromAverageNormal > wallRunAngleFromAverageNormalMaxTolerance)
+                targetUp = (frontLeftNormal + frontRightNormal + backNormal).normalized;
 
             // Push down towards the ground
             if (deltaTime > 0f && verticalVelocity < wallRunEscapeVelocity)
@@ -402,6 +408,9 @@ public class CharacterMovement : Movement
                 float forceMultiplier = wallRunPushForceByUprightness.Evaluate(Mathf.Acos(Vector3.Dot(targetUp, Vector3.up)) * Mathf.Rad2Deg);
                 velocity += -targetUp * (averageDistance / deltaTime * forceMultiplier);
             }
+
+            // this is our new ground normal
+            groundNormal = targetUp;
         }
 
         // Rotate towards our target
@@ -443,19 +452,19 @@ public class CharacterMovement : Movement
         // Perform final movement and collision
         Vector3 originalPosition = transform.position;
         Vector3 originalVelocity = velocity;
+        Vector3 stepVector = up * maxStepHeight;
 
         move.enableCollision = !debugDisableCollision;
 
-        if (maxStepHeight > 0)
+        if (collisionType == CollisionType.Penetration)
         {
-            transform.position += new Vector3(0, maxStepHeight, 0);
-            Physics.SyncTransforms();
+            transform.position += stepVector;
+            originalPosition += stepVector;
+
+            move.MovePenetration(velocity * deltaTime, isReconciliation);
         }
-
-        move.Move(velocity * deltaTime + extraMoveOffset, out RaycastHit _, isReconciliation);
-
-        if (maxStepHeight > 0)
-            move.Move(new Vector3(0, -maxStepHeight, 0), out RaycastHit __, isReconciliation);
+        else
+            move.Move(velocity * deltaTime + extraMoveOffset, out RaycastHit _, isReconciliation);
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
         {
@@ -475,6 +484,12 @@ public class CharacterMovement : Movement
 
             // don't let velocity exceed its original magnitude, that's another fishy sign
             velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
+        }
+
+        if (collisionType == CollisionType.Penetration)
+        {
+            move.MovePenetration(-stepVector, isReconciliation);
+            originalPosition -= stepVector;
         }
 
         if (showDebugLines)

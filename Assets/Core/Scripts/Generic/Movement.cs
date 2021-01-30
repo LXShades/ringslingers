@@ -25,10 +25,18 @@ public class Movement : MonoBehaviour
 
     public float gravityMultiplier = 1f;
 
+    [Header("Debugging")]
+    public bool enableMoveDebugShapes = false;
+
     /// <summary>
     /// The current velocity of the object
     /// </summary>
     [HideInInspector] public Vector3 velocity;
+
+    HashSet<IMovementCollisions> movementCollisions = new HashSet<IMovementCollisions>();
+    RaycastHit[] hits = new RaycastHit[16];
+
+    RaycastHit[] hitBuffer = new RaycastHit[128];
 
     void Update()
     {
@@ -52,9 +60,6 @@ public class Movement : MonoBehaviour
         }
     }
 
-    HashSet<IMovementCollisions> movementCollisions = new HashSet<IMovementCollisions>();
-    RaycastHit[] hits = new RaycastHit[16];
-
     /// <summary>
     /// Moves with collision checking. Can be a computationally expensive operation
     /// </summary>
@@ -71,7 +76,6 @@ public class Movement : MonoBehaviour
             return true; // that was easy
         }
 
-        const bool kDrawDebug = false;
         const float kSkin = 0.005f;
         const int kNumIterations = 3;
         Vector3 currentMovement = offset;
@@ -87,25 +91,22 @@ public class Movement : MonoBehaviour
             float kPullback = iteration == 0 ? 1f : 0f;
             Vector3 normalMovement = currentMovement.normalized;
 
-            int numHits = ColliderCast(hits, transform.position, normalMovement, currentMovementMagnitude + kSkin, blockingCollisionLayers, QueryTriggerInteraction.Collide, kPullback, kDrawDebug, colorByStage[iteration]);
+            int numHits = ColliderCast(hits, transform.position, normalMovement, currentMovementMagnitude + kSkin, blockingCollisionLayers, QueryTriggerInteraction.Collide, kPullback, enableMoveDebugShapes, colorByStage[iteration]);
             float lowestDist = currentMovementMagnitude + kSkin;
             int lowestHitId = -1;
 
+            // find closest blocking collider
             for (int i = 0; i < numHits; i++)
             {
-                if (true) //hits[i].distance >= -0.001f) - basically, when collider rotation is possible, things can break... colliders can rotate through the ground
+                if (!hits[i].collider.isTrigger && hits[i].distance < lowestDist)
                 {
-                    // find closest blocking collider
-                    if (!hits[i].collider.isTrigger && hits[i].distance < lowestDist)
-                    {
-                        lowestDist = hits[i].distance;
-                        lowestHitId = i;
-                    }
-
-                    // acknowledge all collided movementcollision objects
-                    foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
-                        movementCollisions.Add(movementCollision);
+                    lowestDist = hits[i].distance;
+                    lowestHitId = i;
                 }
+
+                // acknowledge all collided movementcollision objects
+                foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
+                    movementCollisions.Add(movementCollision);
             }
 
             // Identify the closest blocking collisiond
@@ -126,7 +127,7 @@ public class Movement : MonoBehaviour
                     currentMovement += hit.normal * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - hit.distance)) + kSkin);
                 }
 
-                if (kDrawDebug)
+                if (enableMoveDebugShapes)
                 {
                     Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
                     DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
@@ -135,7 +136,7 @@ public class Movement : MonoBehaviour
             }
             else
             {
-                if (kDrawDebug)
+                if (enableMoveDebugShapes)
                 {
                     Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
                     DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
@@ -157,7 +158,83 @@ public class Movement : MonoBehaviour
         return hasHitOccurred;
     }
 
-    RaycastHit[] hitBuffer = new RaycastHit[128];
+    Collider[] nearbyColliderBuffer = new Collider[24];
+
+    public void MovePenetration(Vector3 offset, bool isReconciliation)
+    {
+        if (!enableCollision)
+        {
+            transform.position += offset;
+            return; // done
+        }
+
+        float colliderExtentFromCentre = CalculateColliderExtentFromOrigin() + offset.magnitude;
+        int numSteps = 3;
+        Vector3 currentPosition = transform.position;
+
+        movementCollisions.Clear();
+
+        // detect nearby colliders
+        int numCollidersToTest = Physics.OverlapSphereNonAlloc(transform.position, colliderExtentFromCentre, nearbyColliderBuffer, blockingCollisionLayers, QueryTriggerInteraction.Collide);
+
+        for (int step = 0; step < numSteps; step++)
+        {
+            currentPosition += offset / numSteps;
+
+            for (int iteration = 0; iteration < 3; iteration++)
+            {
+                foreach (Collider collider in colliders)
+                {
+                    for (int i = 0; i < numCollidersToTest; i++)
+                    {
+                        if (collider.gameObject == nearbyColliderBuffer[i].gameObject)
+                            continue; // please don't collide with yourself
+
+                        if (Physics.ComputePenetration(collider, currentPosition, transform.rotation, nearbyColliderBuffer[i], nearbyColliderBuffer[i].transform.position, nearbyColliderBuffer[i].transform.rotation, out Vector3 direction, out float distance))
+                        {
+                            foreach (IMovementCollisions movementCollision in nearbyColliderBuffer[i].GetComponents<IMovementCollisions>())
+                                movementCollisions.Add(movementCollision);
+
+                            if (!collider.isTrigger)
+                            {
+                                currentPosition += direction * distance;
+
+                                goto NextIteration;
+                            }
+                        }
+                    }
+                }
+                break;
+                NextIteration:;
+            }
+        }
+
+        transform.position = currentPosition;
+
+        foreach (IMovementCollisions collisions in movementCollisions)
+        {
+            collisions.OnMovementCollidedBy(this, isReconciliation);
+        }
+    }
+
+    private float CalculateColliderExtentFromOrigin()
+    {
+        float extent = 0f;
+        foreach (Collider collider in colliders)
+        {
+            if (collider is SphereCollider colliderAsSphere)
+            {
+                extent = Mathf.Max(extent, Vector3.Distance(transform.position, transform.TransformPoint(colliderAsSphere.center + Vector3.up * colliderAsSphere.radius)));
+            }
+            else if (collider is CapsuleCollider colliderAsCapsule)
+            {
+                extent = Mathf.Max(extent, Vector3.Distance(transform.position, transform.TransformPoint(colliderAsCapsule.center + Vector3.up * (colliderAsCapsule.height * 0.5f + colliderAsCapsule.radius))));
+                extent = Mathf.Max(extent, Vector3.Distance(transform.position, transform.TransformPoint(colliderAsCapsule.center - Vector3.up * (colliderAsCapsule.height * 0.5f + colliderAsCapsule.radius))));
+            }
+        }
+
+        return extent;
+    }
 
     public int ColliderCast(RaycastHit[] hitsOut, Vector3 startPosition, Vector3 castDirection, float castMaxDistance, int layers, QueryTriggerInteraction queryTriggerInteraction, float pullback = 0f, bool drawDebug = false, Color drawDebugColor = default)
     {
@@ -170,12 +247,19 @@ public class Movement : MonoBehaviour
 
         toWorld = Matrix4x4.Translate(startPosition - transform.position) * toWorld;
 
+        if (drawDebug)
+        {
+            //DebugExtension.DebugCapsule(startPosition - castDirection * radius, toWorld.MultiplyPoint(sphere.center) + castDirection * (castMaxDistance + radius), drawDebugColor, radius);
+        }
+
         foreach (Collider collider in colliders)
         {
             int colliderNumHits = 0;
+
             if (collider is SphereCollider sphere)
             {
                 float radius = sphere.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z);
+
                 colliderNumHits = Physics.SphereCastNonAlloc(
                     toWorld.MultiplyPoint(sphere.center),
                     radius,
@@ -187,7 +271,7 @@ public class Movement : MonoBehaviour
 
                 if (drawDebug)
                 {
-                    DebugExtension.DebugCapsule(toWorld.MultiplyPoint(sphere.center) - castDirection * radius, toWorld.MultiplyPoint(sphere.center) + castDirection * (castMaxDistance + radius), drawDebugColor, radius);
+                    DebugExtension.DebugCapsule(toWorld.MultiplyPoint(sphere.center), toWorld.MultiplyPoint(sphere.center) + castDirection * castMaxDistance, drawDebugColor, radius);
                 }
             }
             else if (collider is CapsuleCollider capsule)
@@ -197,12 +281,17 @@ public class Movement : MonoBehaviour
 
                 colliderNumHits = Physics.CapsuleCastNonAlloc(
                     center + up, center - up,
-                    capsule.radius * 0.5f * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
+                    capsule.radius * Mathf.Max(Mathf.Max(transform.lossyScale.x, transform.lossyScale.y), transform.lossyScale.z),
                     castDirection,
                     hitBuffer,
                     castMaxDistance,
                     layers,
                     queryTriggerInteraction);
+
+                if (drawDebug)
+                {
+                    DebugExtension.DebugCapsule(center - castDirection * capsule.radius, center + castDirection * (castMaxDistance + capsule.radius), drawDebugColor, capsule.radius);
+                }
             }
             else
             {

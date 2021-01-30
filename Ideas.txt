@@ -85,6 +85,10 @@ Fixes/Refinements
 + Fix rings dropping at 2FPS MID:MID
  -> probably an issue with disabling Mirror components during runtime? try clumsy.exe?
  -> result: nope - it was Spawn being called with syncvars being assigned too late.
++ Fix physics HIGH:MIDHIGH
+ + Needs to step up onto steps properly without affecting velocity
+ + Needs to stop bouncing off of corners
+ + Needs to still be able to run up walls
 - Find out why rings are hitting in different positions
  -> send collided point from server and tell the client where it was as a debug circle
  -> Client sets its own debug circle where its own ring hits

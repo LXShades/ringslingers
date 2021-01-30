@@ -384,7 +384,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enableCollision: 1
   colliders:
-  - {fileID: 1784313262649898792}
+  - {fileID: 4408426014098253173}
   blockingCollisionLayers:
     serializedVersion: 2
     m_Bits: 1335
@@ -392,6 +392,7 @@ MonoBehaviour:
   bounceFactor: 0
   bounceFriction: 0
   gravityMultiplier: 1
+  enableMoveDebugShapes: 0
   velocity: {x: 0, y: 0, z: 0}
   accelStart: 96
   acceleration: 40
@@ -442,6 +443,7 @@ MonoBehaviour:
   wallRunTestDepth: 0.69
   wallRunTestRadius: 0.22
   wallRunTestHeight: 0.14
+  wallRunAngleFromAverageNormalMaxTolerance: 10
   rotateableModel: {fileID: 1526902982376324854}
   groundTestDistance: 0.05
   groundingForce: 1
@@ -449,7 +451,7 @@ MonoBehaviour:
   landableCollisionLayers:
     serializedVersion: 2
     m_Bits: 311
-  maxStepHeight: 0
+  maxStepHeight: 0.3125
   actionSpeed: 60
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}

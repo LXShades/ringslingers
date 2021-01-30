@@ -329,6 +329,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!1001 &16527408
@@ -443,6 +447,101 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8790054436279706090, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
   m_PrefabInstance: {fileID: 19860075}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &19901678
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 19901682}
+  - component: {fileID: 19901681}
+  - component: {fileID: 19901680}
+  - component: {fileID: 19901679}
+  m_Layer: 0
+  m_Name: Cube (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &19901679
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 19901678}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &19901680
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 19901678}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &19901681
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 19901678}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &19901682
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 19901678}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.919, y: -0.80859, z: 5.6437}
+  m_LocalScale: {x: 1.8055, y: 1.8055, z: 1.8055}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 16
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &26586815
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -688,6 +787,101 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7417625176924647797, guid: 552176c118c313f44975daa1f9c571d5, type: 3}
   m_PrefabInstance: {fileID: 46028518}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &51722518
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 51722522}
+  - component: {fileID: 51722521}
+  - component: {fileID: 51722520}
+  - component: {fileID: 51722519}
+  m_Layer: 0
+  m_Name: Cube (2)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &51722519
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51722518}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &51722520
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51722518}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &51722521
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51722518}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &51722522
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 51722518}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.919, y: -0.6822, z: 7.1874}
+  m_LocalScale: {x: 1.8055, y: 1.8055, z: 1.8055}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 17
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &51841928
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1855,7 +2049,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-22124
+  m_Name: pb_Mesh815238
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -2108,6 +2302,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -2558,6 +2756,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -3746,6 +3948,101 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8546800797388012053, guid: 5f4b08bc9bff14d4cb749324a2531f55, type: 3}
   m_PrefabInstance: {fileID: 444323408}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &444675126
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 444675130}
+  - component: {fileID: 444675129}
+  - component: {fileID: 444675128}
+  - component: {fileID: 444675127}
+  m_Layer: 0
+  m_Name: Cube
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &444675127
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444675126}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &444675128
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444675126}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &444675129
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444675126}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &444675130
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 444675126}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.919, y: -0.879, z: 4.2787}
+  m_LocalScale: {x: 1.8055, y: 1.8055, z: 1.8055}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 15
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &456944991
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4100,6 +4397,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -7326,6 +7627,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!1001 &774251269
@@ -10188,7 +10493,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4452223810734476168, guid: 653cdbe8668720944a5cb053bad4b35a, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -16.60028
+      value: -16.600342
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 653cdbe8668720944a5cb053bad4b35a, type: 3}
@@ -10908,7 +11213,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-20030
+  m_Name: pb_Mesh815258
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -15866,6 +16171,101 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
+--- !u!1 &1486868696
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1486868700}
+  - component: {fileID: 1486868699}
+  - component: {fileID: 1486868698}
+  - component: {fileID: 1486868697}
+  m_Layer: 0
+  m_Name: Cube (3)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &1486868697
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486868696}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &1486868698
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486868696}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1486868699
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486868696}
+  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &1486868700
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1486868696}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -10.919, y: -0.43124002, z: 8.5523}
+  m_LocalScale: {x: 1.8055, y: 1.8055, z: 1.8055}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 18
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1497062148
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -22392,6 +22792,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!1001 &1582770587
@@ -22542,6 +22946,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -22748,6 +23156,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -23324,6 +23736,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!4 &1678245400 stripped
@@ -23580,6 +23996,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!1001 &1704869104
@@ -23770,6 +24190,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!4 &1746644148 stripped
@@ -23853,6 +24277,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!4 &1755088892 stripped
@@ -23922,6 +24350,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -24400,6 +24832,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -25170,6 +25606,10 @@ PrefabInstance:
       propertyPath: springAbsolutely
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
 --- !u!1001 &1930391708
@@ -25320,7 +25760,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-26690
+  m_Name: pb_Mesh815384
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -25640,6 +26080,10 @@ PrefabInstance:
     - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
       propertyPath: springAbsolutely
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9112526478686356998, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
+      propertyPath: springForce
+      value: 18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
@@ -26261,7 +26705,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-23252
+  m_Name: pb_Mesh814914
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2

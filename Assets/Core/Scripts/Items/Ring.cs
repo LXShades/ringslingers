@@ -57,9 +57,11 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
         movement.enabled = isDroppedRing;
         respawnableItem.enabled = !isDroppedRing;
 
+        transform.rotation = Quaternion.Euler(new Vector3(0, transform.rotation.eulerAngles.y, 0)); // always start upright
+
         // Hover above the ground
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, -Vector3.up, out hit, hoverHeight, ~0, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(transform.position + Vector3.up * 0.2f, -Vector3.up, out hit, hoverHeight, ~0, QueryTriggerInteraction.Ignore))
         {
             transform.position = hit.point + new Vector3(0, hoverHeight, 0);
         }
