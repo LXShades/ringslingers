@@ -39,6 +39,9 @@ public class CharacterMovement : Movement
     public float groundingEscapeVelocity = 1f;
     public LayerMask landableCollisionLayers;
 
+    [Header("Step")]
+    public float maxStepHeight = 0.4f;
+
     [Header("Abilities")]
     public float actionSpeed = 60;
 
@@ -92,6 +95,8 @@ public class CharacterMovement : Movement
 
     public Vector3 wallRunNormal { get; private set; }
 
+    private Vector3 extraMoveOffset;
+
     /// <summary>
     /// Current up vector
     /// </summary>
@@ -124,6 +129,7 @@ public class CharacterMovement : Movement
             DebugPauseStart();
 
         this.isReconciling = isReconciliation;
+        this.extraMoveOffset = Vector3.zero;
 
         // Check whether on ground
         bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal);
@@ -132,12 +138,14 @@ public class CharacterMovement : Movement
 
         if (wasGroundDetected)
         {
-            groundNormal = _groundNormal;
+            if (!enableWallRun)
+                groundNormal = _groundNormal;
             groundDistance = _groundDistance;
         }
         else
         {
-            groundNormal = Vector3.up;
+            if (!enableWallRun)
+                groundNormal = Vector3.up;
             groundDistance = float.MaxValue;
         }
 
@@ -178,38 +186,8 @@ public class CharacterMovement : Movement
         // 3D rotation - do this after movement to encourage push down
         ApplyRotation(deltaTime, input);
 
-        // Perform final movement and collision
-        Vector3 originalPosition = transform.position;
-        Vector3 originalVelocity = velocity;
-
-        move.enableCollision = !debugDisableCollision;
-        move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
-
-        if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
-        {
-            // recalculate velocity. but some collisions will force us out of the ground, etc..
-            // normally we'd do this...
-            //  -> velocity = (transform.position - originalPosition) / deltaTime;
-            // but instead, let's restrict the pushback to the opposite of the vector and no further
-            // in other words the dot product of velocityNormal and pushAway should be <= 0 >= -1
-            Vector3 offset = originalVelocity * deltaTime;
-            Vector3 pushAwayVector = transform.position - (originalPosition + offset);
-
-            velocity += pushAwayVector / deltaTime;
-
-            // don't let velocity invert, that's a fishy sign
-            if (Vector3.Dot(velocity, originalVelocity) < 0f)
-                velocity -= originalVelocity.normalized * Vector3.Dot(velocity, originalVelocity.normalized);
-
-            // don't let velocity exceed its original magnitude, that's another fishy sign
-            velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
-        }
-
-        if (showDebugLines)
-        {
-            DebugExtension.DebugCapsule(originalPosition, originalPosition + originalVelocity * deltaTime, Color.red, 0.1f);
-            DebugExtension.DebugCapsule(originalPosition, originalPosition + velocity * deltaTime, Color.blue, 0.1f);
-        }
+        // Final movement
+        ApplyFinalMovement(deltaTime, isReconciliation);
 
         if (!isReconciliation)
             DebugPauseEnd();
@@ -367,6 +345,7 @@ public class CharacterMovement : Movement
         Vector3 frontLeft = position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
         Vector3 back = position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
         Vector3 frontLeftHit = default, frontRightHit = default, backHit = default;
+        Vector3 frontLeftNormal = default, frontRightNormal = default, backNormal = default;
         int numSuccessfulCollisions = 0;
 
         // Detect our target rotation using three sensors
@@ -377,9 +356,22 @@ public class CharacterMovement : Movement
 
             if (Physics.Raycast(start, -up, out RaycastHit hit, wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore))
             {
-                if (i == 0) frontLeftHit = hit.point;
-                if (i == 1) frontRightHit = hit.point;
-                if (i == 2) backHit = hit.point;
+                switch (i)
+                {
+                    case 0:
+                        frontLeftHit = hit.point;
+                        frontLeftNormal = hit.normal;
+                        break;
+                    case 1:
+                        frontRightHit = hit.point;
+                        frontRightNormal = hit.normal;
+                        break;
+                    case 2:
+                        backHit = hit.point;
+                        backNormal = hit.normal;
+                        break;
+                }
+                
                 numSuccessfulCollisions++;
                 color = Color.green;
             }
@@ -393,6 +385,15 @@ public class CharacterMovement : Movement
         {
             // Set target up vector
             targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
+
+            float normalVariance = Mathf.Acos(Mathf.Min(Vector3.Dot(frontLeftNormal, frontRightNormal), Vector3.Dot(frontRightNormal, backNormal), Vector3.Dot(backNormal, frontLeftNormal))) * Mathf.Rad2Deg;
+            if (normalVariance < 10f)
+            {
+                // this is more of a step than a slope, isn't it?
+                targetUp = (frontLeftNormal + frontRightNormal + backNormal).normalized;
+            }
+
+            groundNormal = targetUp;
 
             // Push down towards the ground
             if (deltaTime > 0f && verticalVelocity < wallRunEscapeVelocity)
@@ -412,7 +413,7 @@ public class CharacterMovement : Movement
         }
 
         // Apply final rotation
-        transform.rotation = Quaternion.LookRotation(input.aimDirection.AlongPlane(groundNormal), up);
+        transform.rotation = Quaternion.LookRotation(input.aimDirection.AlongPlane(up), up);
 
         // change look rotation with rotation?
         //player.input.aimDirection = Quaternion.FromToRotation(lastUp, up) * player.input.aimDirection;// test?
@@ -437,6 +438,52 @@ public class CharacterMovement : Movement
         }
     }
 
+    private void ApplyFinalMovement(float deltaTime, bool isReconciliation)
+    {
+        // Perform final movement and collision
+        Vector3 originalPosition = transform.position;
+        Vector3 originalVelocity = velocity;
+
+        move.enableCollision = !debugDisableCollision;
+
+        if (maxStepHeight > 0)
+        {
+            transform.position += new Vector3(0, maxStepHeight, 0);
+            Physics.SyncTransforms();
+        }
+
+        move.Move(velocity * deltaTime + extraMoveOffset, out RaycastHit _, isReconciliation);
+
+        if (maxStepHeight > 0)
+            move.Move(new Vector3(0, -maxStepHeight, 0), out RaycastHit __, isReconciliation);
+
+        if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
+        {
+            // recalculate velocity. but some collisions will force us out of the ground, etc..
+            // normally we'd do this...
+            //  -> velocity = (transform.position - originalPosition) / deltaTime;
+            // but instead, let's restrict the pushback to the opposite of the vector and no further
+            // in other words the dot product of velocityNormal and pushAway should be <= 0 >= -1
+            Vector3 offset = originalVelocity * deltaTime;
+            Vector3 pushAwayVector = transform.position - (originalPosition + offset);
+
+            velocity += pushAwayVector / deltaTime;
+
+            // don't let velocity invert, that's a fishy sign
+            if (Vector3.Dot(velocity, originalVelocity) < 0f)
+                velocity -= originalVelocity.normalized * Vector3.Dot(velocity, originalVelocity.normalized);
+
+            // don't let velocity exceed its original magnitude, that's another fishy sign
+            velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
+        }
+
+        if (showDebugLines)
+        {
+            DebugExtension.DebugCapsule(originalPosition, originalPosition + originalVelocity * deltaTime, Color.red, 0.1f);
+            DebugExtension.DebugCapsule(originalPosition, originalPosition + velocity * deltaTime, Color.blue, 0.1f);
+        }
+    }
+
     public void SpringUp(float force, Vector3 direction, bool doSpringAbsolutely)
     {
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
@@ -449,13 +496,16 @@ public class CharacterMovement : Movement
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.blue;
-        Vector3 frontRight = transform.position + (transform.forward + transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
-        Vector3 frontLeft = transform.position + (transform.forward - transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
-        Vector3 back = transform.position - transform.forward * wallRunTestRadius + transform.up * wallRunTestHeight;
+        if (!Application.isPlaying) // don't show with the other debug lines
+        {
+            Gizmos.color = Color.blue;
+            Vector3 frontRight = transform.position + (transform.forward + transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
+            Vector3 frontLeft = transform.position + (transform.forward - transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
+            Vector3 back = transform.position - transform.forward * wallRunTestRadius + transform.up * wallRunTestHeight;
 
-        Gizmos.DrawLine(frontRight, frontRight - transform.up * wallRunTestDepth);
-        Gizmos.DrawLine(frontLeft, frontLeft - transform.up * wallRunTestDepth);
-        Gizmos.DrawLine(back, back- transform.up * wallRunTestDepth);
+            Gizmos.DrawLine(frontRight, frontRight - transform.up * wallRunTestDepth);
+            Gizmos.DrawLine(frontLeft, frontLeft - transform.up * wallRunTestDepth);
+            Gizmos.DrawLine(back, back - transform.up * wallRunTestDepth);
+        }
     }
 }
