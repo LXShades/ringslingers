@@ -1,11 +1,12 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class NetGameStateDeathmatch : NetGameState
+public class NetGameStateCTF : NetGameState
 {
     [Header("Match settings")]
-    public float timeLimit = 5f;
+    public int pointLimit = 5;
     public int intermissionTime = 15;
+    public int playerPointsPerCapture = 250;
 
     [Header("Networking settings")]
     public int secondsPerTimeUpdate = 5;
@@ -14,11 +15,20 @@ public class NetGameStateDeathmatch : NetGameState
 
     public float timeTilRestart => timeRemaining < 0f ? intermissionTime + timeRemaining : 0f;
 
+    public int redTeamPoints => _redTeamPoints;
+    public int blueTeamPoints => _blueTeamPoints;
+
+    [SyncVar] private int _redTeamPoints;
+    [SyncVar] private int _blueTeamPoints;
+
+    public TheFlag redFlag { get; set; }
+    public TheFlag blueFlag { get; set; }
+
+    public override bool HasRoundFinished => redTeamPoints >= pointLimit || blueTeamPoints >= pointLimit;
+
     public override void OnAwake()
     {
         base.OnAwake();
-
-        timeRemaining = timeLimit * 60;
     }
 
     public override void OnUpdate()
@@ -27,18 +37,68 @@ public class NetGameStateDeathmatch : NetGameState
 
         if (NetworkServer.active)
         {
-            if ((int)(timeRemaining / secondsPerTimeUpdate - Time.deltaTime) != ((int)(timeRemaining / secondsPerTimeUpdate)))
+            if (HasRoundFinished)
             {
-                RpcTimeUpdate(timeRemaining);
-            }
+                timeRemaining -= Time.deltaTime;
+                if ((int)(timeRemaining / secondsPerTimeUpdate - Time.deltaTime) != ((int)(timeRemaining / secondsPerTimeUpdate)))
+                {
+                    RpcTimeUpdate(timeRemaining);
+                }
 
-            if ((timeRemaining <= -intermissionTime) != (timeRemaining - Time.deltaTime <= -intermissionTime))
+                if (timeRemaining < -intermissionTime)
+                {
+                    NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+                }
+            }
+        }
+    }
+
+    public void AwardPoint(PlayerTeam team)
+    {
+        if (team == PlayerTeam.Red)
+        {
+            _redTeamPoints++;
+        }
+        else if (team == PlayerTeam.Blue)
+        {
+            _blueTeamPoints++;
+        }
+    }
+
+    public TheFlag GetTeamFlag(PlayerTeam team)
+    {
+        if (team == PlayerTeam.Red)
+            return redFlag;
+        else if (team == PlayerTeam.Blue)
+            return blueFlag;
+        else
+            return null;
+    }
+
+    public PlayerTeam FindBestTeamToJoin()
+    {
+        int numReds = 0, numBlues = 0;
+
+        foreach (Player player in Netplay.singleton.players)
+        {
+            if (player != null)
             {
-                NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+                if (player.team == PlayerTeam.Red)
+                    numReds++;
+                if (player.team == PlayerTeam.Blue)
+                    numBlues++;
             }
         }
 
-        timeRemaining -= Time.deltaTime;
+        if (numReds > numBlues)
+            return PlayerTeam.Blue;
+        else if (numBlues > numReds)
+            return PlayerTeam.Red;
+        else
+        {
+            // we could go random, but it would be nice for this to be more predictable, so here's a "tag team" strategy
+            return ((numReds / 2) & 1) == 0 ? PlayerTeam.Red : PlayerTeam.Blue;
+        }
     }
 
     [ClientRpc]

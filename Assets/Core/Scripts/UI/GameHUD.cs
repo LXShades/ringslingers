@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
@@ -18,8 +19,8 @@ public class GameHUD : MonoBehaviour
 
     [Header("Scoreboard")]
     public GameObject scoreboard;
-    public Text scoreboardNames;
-    public Text scoreboardScores;
+    public TextMeshProUGUI scoreboardNames;
+    public TextMeshProUGUI scoreboardScores;
 
     [Header("Win screen")]
     public GameObject winScreen;
@@ -28,7 +29,7 @@ public class GameHUD : MonoBehaviour
     [Header("Debug")]
     public Text connectStatusText;
     public Text debugText;
-    public TMPro.TextMeshProUGUI debugLogText;
+    public TextMeshProUGUI debugLogText;
 
     public int numLogLines = 5;
     public bool showHarmlessLogs = true;
@@ -56,7 +57,7 @@ public class GameHUD : MonoBehaviour
             return;
 
         Player player = GameManager.singleton.camera.currentPlayer;
-        bool isMatchFinished = NetGameState.singleton as NetGameStateDeathmatch != null && (NetGameState.singleton as NetGameStateDeathmatch).timeRemaining <= 0;
+        bool isMatchFinished = NetGameState.singleton != null ? NetGameState.singleton.HasRoundFinished : false;
 
         numFramesThisSecond++;
 
@@ -129,6 +130,7 @@ public class GameHUD : MonoBehaviour
         {
             // Refresh scoreboard info
             Player[] orderedPlayers = (Player[])Netplay.singleton.players.Clone();
+            bool useTeamColours = NetGameState.singleton is NetGameStateCTF;
 
             System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : 0) - (b ? b.score : 0) > 0 ? -1 : 1);
 
@@ -140,8 +142,23 @@ public class GameHUD : MonoBehaviour
                 if (scoreboardPlayer == null)
                     break;
 
-                scoreboardNames.text += $"{scoreboardPlayer.playerName}\n";
-                scoreboardScores.text += $"{scoreboardPlayer.score}\n";
+                if (!useTeamColours)
+                {
+                    scoreboardNames.text += $"{scoreboardPlayer.playerName}\n";
+                    scoreboardScores.text += $"{scoreboardPlayer.score}\n";
+                }
+                else
+                {
+                    string teamColour = "<color=#7f7f7f>";
+
+                    if (scoreboardPlayer.team == PlayerTeam.Red)
+                        teamColour = "<color=red>";
+                    else if (scoreboardPlayer.team == PlayerTeam.Blue)
+                        teamColour = "<color=blue>";
+
+                    scoreboardNames.text += $"{teamColour}{scoreboardPlayer.playerName}</color>\n";
+                    scoreboardScores.text += $"{teamColour}{scoreboardPlayer.score}</color>\n";
+                }
             }
         }
 

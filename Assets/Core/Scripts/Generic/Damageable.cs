@@ -11,10 +11,15 @@ public class Damageable : NetworkBehaviour
 
     public bool doInvincibilityBlink = true;
     public float hitInvincibilityBlinkRate = 25f;
-    private float invincibilityTimeRemaining;
+    public float invincibilityTimeRemaining { get; private set; }
 
+    [Header("Visuals")]
     public bool autoPopulateRenderers = true;
     public Renderer[] affectedRenderers = new Renderer[0];
+
+    [Header("Teams")]
+    [Tooltip("Except when -1 (neutral), objects with the same damage team won't hurt each other")]
+    public int damageTeam = -1;
 
     public bool isInvincible => invincibilityTimeRemaining > 0f;
 
@@ -39,6 +44,12 @@ public class Damageable : NetworkBehaviour
 
     public void TryDamage(GameObject instigator, Vector3 force = default, bool instaKill = false)
     {
+        if (instigator.TryGetComponent(out Damageable instigatorDamageable))
+        {
+            if (instigatorDamageable.damageTeam == damageTeam && damageTeam != -1)
+                return; // hit by someone on the same team
+        }
+
         if (invincibilityTimeRemaining <= 0f || instaKill)
         {
             OnDamage(instigator, force, instaKill);

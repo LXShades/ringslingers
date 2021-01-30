@@ -101,9 +101,21 @@ Fixes/Refinements
 - Death state HIGH:LOW
 
 Features:
-- 1 CTF Map MID:HIGH
-- Flag model MID:HIGH
-- CTF mode HIGH:HIGH
++ 1 CTF Map MID:HIGH
++ Flag model MID:HIGH
++ CTF mode HIGH:HIGH
++ Autoselect team
++ Disable friendly fire
++ Disable special abilities when holding the flag
++ Synchronise team points
++ Put away the flag on clients when captured
++ Can't capture the flag without our own flag
++ Add team colours to scoreboard
+- Make sure flag holder shows (should be fixed now)
+- Flag drop sequence
+- Flag return sequence
+- Add flag holder to HUD
+- HUD Alert when flag is captured
 - Combinable rings HIGH:HIGH
 
 Brand New Features:

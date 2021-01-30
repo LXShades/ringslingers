@@ -7,32 +7,12 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_LocalRotation.w
+    - target: {fileID: 3111956062486528451, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
+      propertyPath: m_Materials.Array.data[0]
+      value: 
+      objectReference: {fileID: 2100000, guid: 783dd368aa776194980b508913b4375e, type: 2}
+    - target: {fileID: 3368029225196881782, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
+      propertyPath: team
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5057909009803330587, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
@@ -53,7 +33,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5582948268396191393, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
       propertyPath: m_Name
-      value: Flag
+      value: RedFlag
+      objectReference: {fileID: 0}
+    - target: {fileID: 8734837860526907390, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
+      propertyPath: m_AssetId
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a6538f33c4769044d95b5759269e50a0, type: 3}

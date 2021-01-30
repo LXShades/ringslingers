@@ -316,7 +316,7 @@ public class CharacterMovement : Movement
                     GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
-            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped))
+            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.isHoldingFlag)
             {
                 // Thok
                 velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));

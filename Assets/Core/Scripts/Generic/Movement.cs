@@ -195,7 +195,7 @@ public class Movement : MonoBehaviour
                             foreach (IMovementCollisions movementCollision in nearbyColliderBuffer[i].GetComponents<IMovementCollisions>())
                                 movementCollisions.Add(movementCollision);
 
-                            if (!collider.isTrigger)
+                            if (!nearbyColliderBuffer[i].isTrigger)
                             {
                                 currentPosition += direction * distance;
 

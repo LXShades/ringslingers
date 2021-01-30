@@ -40,7 +40,17 @@ public class Player : NetworkBehaviour
 
     [Header("Team and identity")]
     [SyncVar(hook=nameof(OnTeamChanged))]
-    public PlayerTeam team = PlayerTeam.None;
+    private PlayerTeam _team = PlayerTeam.None;
+
+    public PlayerTeam team
+    {
+        set
+        {
+            _team = value;
+            damageable.damageTeam = (int)_team;
+        }
+        get => _team;
+    }
 
     public Material[] modelMaterialByTeam = new Material[0];
 
@@ -57,6 +67,7 @@ public class Player : NetworkBehaviour
 
     [Header("Visuals")]
     public Renderer characterModel;
+    public Transform flagHoldBone;
 
     [Header("Ring drop")]
     public GameSound dropSound = new GameSound();
@@ -79,6 +90,16 @@ public class Player : NetworkBehaviour
 
     public bool isInvisible { get; set; }
 
+    public bool isHoldingFlag
+    {
+        get
+        {
+            if (NetGameState.singleton is NetGameStateCTF gameStateCTF && gameStateCTF.redFlag && gameStateCTF.blueFlag)
+                return gameStateCTF.blueFlag.currentCarrier == playerId || gameStateCTF.redFlag.currentCarrier == playerId;
+            return false;
+        }
+    }
+
     public float localTime = -1;
 
     void Awake()
@@ -99,10 +120,8 @@ public class Player : NetworkBehaviour
             Netplay.singleton.localPlayerId = playerId;
         }
 
-        if (NetGameState.singleton is NetGameStateCTF netGameStateCTF)
-        {
-            team = PlayerTeam.Red; // sure whatever
-        }
+        if (NetworkServer.active && NetGameState.singleton is NetGameStateCTF netGameStateCTF)
+            team = netGameStateCTF.FindBestTeamToJoin();
     }
 
     void Update()

@@ -1,10 +1,10 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class NetGameStateCTF : NetGameState
+public class NetGameStateDeathmatch : NetGameState
 {
     [Header("Match settings")]
-    public int pointLimit = 5;
+    public float timeLimit = 5f;
     public int intermissionTime = 15;
 
     [Header("Networking settings")]
@@ -14,12 +14,13 @@ public class NetGameStateCTF : NetGameState
 
     public float timeTilRestart => timeRemaining < 0f ? intermissionTime + timeRemaining : 0f;
 
-    public int redTeamPoints { get; private set; }
-    public int blueTeamPoints { get; private set; }
+    public override bool HasRoundFinished => timeRemaining <= 0f;
 
     public override void OnAwake()
     {
         base.OnAwake();
+
+        timeRemaining = timeLimit * 60;
     }
 
     public override void OnUpdate()
@@ -28,32 +29,18 @@ public class NetGameStateCTF : NetGameState
 
         if (NetworkServer.active)
         {
-            if (redTeamPoints >= pointLimit || blueTeamPoints >= pointLimit)
+            if ((int)(timeRemaining / secondsPerTimeUpdate - Time.deltaTime) != ((int)(timeRemaining / secondsPerTimeUpdate)))
             {
-                timeRemaining -= Time.deltaTime;
-                if ((int)(timeRemaining / secondsPerTimeUpdate - Time.deltaTime) != ((int)(timeRemaining / secondsPerTimeUpdate)))
-                {
-                    RpcTimeUpdate(timeRemaining);
-                }
+                RpcTimeUpdate(timeRemaining);
+            }
 
-                if (timeRemaining < -intermissionTime)
-                {
-                    NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
-                }
+            if ((timeRemaining <= -intermissionTime) != (timeRemaining - Time.deltaTime <= -intermissionTime))
+            {
+                NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
             }
         }
-    }
 
-    public void AwardPoint(PlayerTeam team)
-    {
-        if (team == PlayerTeam.Red)
-        {
-            redTeamPoints++;
-        }
-        else if (team == PlayerTeam.Blue)
-        {
-            blueTeamPoints++;
-        }
+        timeRemaining -= Time.deltaTime;
     }
 
     [ClientRpc]
