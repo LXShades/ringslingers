@@ -39,7 +39,7 @@ public class Damageable : NetworkBehaviour
 
     public void TryDamage(GameObject instigator, Vector3 force = default, bool instaKill = false)
     {
-        if (invincibilityTimeRemaining <= 0f)
+        if (invincibilityTimeRemaining <= 0f || instaKill)
         {
             OnDamage(instigator, force, instaKill);
         }
