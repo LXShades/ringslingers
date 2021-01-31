@@ -3,8 +3,17 @@ using UnityEngine;
 
 public class ThrownRing : NetworkBehaviour
 {
+    public enum SpinAxisType
+    {
+        Up,
+        Forward,
+        Wobble
+    }
+
     [SyncVar]
     [HideInInspector] public RingWeaponSettings settings;
+
+    public SpinAxisType spinAxisType = SpinAxisType.Wobble;
 
     private Vector3 spinAxis;
 
@@ -34,8 +43,19 @@ public class ThrownRing : NetworkBehaviour
     {
         float axisWobble = 0.5f;
 
-        spinAxis = Vector3.up + Vector3.right * Random.Range(-axisWobble, axisWobble) + Vector3.forward * Random.Range(-axisWobble, axisWobble);
-        spinAxis.Normalize();
+        switch (spinAxisType)
+        {
+            case SpinAxisType.Wobble:
+                spinAxis = Vector3.up + Vector3.right * Random.Range(-axisWobble, axisWobble) + Vector3.forward * Random.Range(-axisWobble, axisWobble);
+                spinAxis.Normalize();
+                break;
+            case SpinAxisType.Forward:
+                spinAxis = velocity.normalized;
+                break;
+            case SpinAxisType.Up:
+                spinAxis = Vector3.up;
+                break;
+        }
 
         if (settings == null)
         {
@@ -47,6 +67,20 @@ public class ThrownRing : NetworkBehaviour
         {
             // shoot further ahead
             Simulate(Netplay.singleton.unreliablePing);
+        }
+
+        // colour the ring
+        if (owner.TryGetComponent(out Player owningPlayer))
+        {
+            switch (owningPlayer.team)
+            {
+                case PlayerTeam.Red:
+                    GetComponentInChildren<Renderer>().material.color = new Color(1, 0, 0);
+                    break;
+                case PlayerTeam.Blue:
+                    GetComponentInChildren<Renderer>().material.color = new Color(0, 0, 1);
+                    break;
+            }
         }
     }
 
@@ -89,9 +123,6 @@ public class ThrownRing : NetworkBehaviour
         if (collision.collider.gameObject == owner)
             return; // don't collide with the player who threw the ring
 
-        // Play despawn sound
-        GameSounds.PlaySound(gameObject, settings.despawnSound);
-
         // Hurt any players we collided with
         if (collision.collider.TryGetComponent(out Damageable damageable) && owner)
         {
@@ -106,6 +137,9 @@ public class ThrownRing : NetworkBehaviour
             if (thrownRing.owner == owner)
                 return; // don't collide with our other rings
         }
+
+        // Play despawn sound
+        GameSounds.PlaySound(gameObject, settings.despawnSound);
 
         Spawner.Despawn(gameObject);
         isDead = true;

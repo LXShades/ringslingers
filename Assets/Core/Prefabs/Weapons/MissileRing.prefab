@@ -5009,6 +5009,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.1
   settings: {fileID: 0}
+  spinAxisType: 2
 --- !u!114 &6170419100613418712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5022,6 +5023,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeUntilDespawn: 10
+  affectedRenderers: []
   blinkRateOverTime:
     serializedVersion: 2
     m_Curve:
@@ -5110,6 +5112,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 297f87762d9d329459c9c170a9b86528, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  expiryTime: 0.5
 --- !u!1 &8834875230180653457
 GameObject:
   m_ObjectHideFlags: 0
