@@ -206,7 +206,7 @@ public class Movement : MonoBehaviour
 
                             if (!nearbyColliderBuffer[i].isTrigger)
                             {
-                                currentPosition += direction * distance;
+                                currentPosition += direction * (distance + 0.001f); // tiny buffer to fix capsule cast used for feet detection, annoying but pretty much necessary because casts are dumb
 
                                 goto NextIteration;
                             }

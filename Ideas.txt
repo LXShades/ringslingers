@@ -99,6 +99,7 @@ Fixes/Refinements
 
 - Sound effects for other players (hit, ring throw at least) HIGH:MID
 - Death state HIGH:LOW
++ Getting hit into a corner freezes you
 
 Features:
 + 1 CTF Map MID:HIGH
@@ -115,11 +116,18 @@ Features:
 + Flag return sequence
 + Flag should blink while it can't be picked up
 + Invincible players shouldn't be able to pick up the flag
-- Make sure flag holder shows (should be fixed now)
-- Remove debug M key
++ Make sure flag holder shows (should be fixed now)
++ Fix instant pickup after drop bug
++ fix clients not seeing their own flag
++ fix flag blink now not working...
++ Movement.SyncNow
++ Flag should return to base when hitting death zone
++ Team spawns
 - Add flag holder to HUD
 - HUD Alert when flag is captured
+- Ring colour should reflect team of thrower
 - Combinable rings HIGH:HIGH
+- Remove debug M key
 
 Brand New Features:
 

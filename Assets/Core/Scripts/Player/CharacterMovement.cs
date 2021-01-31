@@ -162,7 +162,7 @@ public class CharacterMovement : Movement
         ApplyGrounding();
 
         // Add/remove states depending on whether isOnGround
-        if (isOnGround && velocity.y <= 0f)
+        if (isOnGround && velocity.AlongAxis(up) <= 0.5f)
         {
             if (state.HasFlag(State.Pained))
             {
@@ -233,19 +233,18 @@ public class CharacterMovement : Movement
 
         if (!debugDisableCollision)
         {
-            const float kUpTestDistance = 0.05f; // buffer in case slightly slipping through, awkward physics prevention etc
             RaycastHit[] hits = new RaycastHit[10];
-            int numHits = move.ColliderCast(hits, transform.position + up * kUpTestDistance, -up.normalized, testDistance + kUpTestDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore);
-            float closestGroundDistance = kUpTestDistance + testDistance;
+            int numHits = move.ColliderCast(hits, transform.position, -up, testDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
+            float closestGroundDistance = testDistance;
             bool isFound = false;
 
             for (int i = 0; i < numHits; i++)
             {
-                if (hits[i].collider.GetComponentInParent<CharacterMovement>() != this && hits[i].distance - kUpTestDistance < closestGroundDistance)
+                if (hits[i].collider.GetComponentInParent<CharacterMovement>() != this && hits[i].distance <= closestGroundDistance + Mathf.Epsilon)
                 {
                     isFound = true;
                     groundNormal = hits[i].normal;
-                    foundDistance = hits[i].distance - kUpTestDistance;
+                    foundDistance = hits[i].distance;
                     closestGroundDistance = foundDistance;
                 }
             }

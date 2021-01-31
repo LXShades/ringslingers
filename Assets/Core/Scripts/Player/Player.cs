@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -21,7 +22,7 @@ public class Player : NetworkBehaviour
     /// <summary>
     /// Player ID
     /// </summary>
-    [SyncVar] public int playerId;
+    [SyncVar(hook=nameof(OnPlayerIdChanged))] public int playerId;
 
     /// <summary>
     /// Is this the locally-controlled player?
@@ -124,12 +125,13 @@ public class Player : NetworkBehaviour
         Netplay.singleton.players[playerId] = this;
 
         if (isLocal)
-        {
             Netplay.singleton.localPlayerId = playerId;
-        }
 
         if (NetworkServer.active && NetGameState.singleton is NetGameStateCTF netGameStateCTF)
             team = netGameStateCTF.FindBestTeamToJoin();
+
+        if (NetworkServer.active)
+            Respawn();
     }
 
     void Update()
@@ -156,11 +158,13 @@ public class Player : NetworkBehaviour
     {
         if (NetworkServer.active)
         {
-            GameObject[] spawners = GameObject.FindGameObjectsWithTag("PlayerSpawn");
+            List<PlayerSpawn> spawners = new List<PlayerSpawn>(GameObject.FindObjectsOfType<PlayerSpawn>());
 
-            if (spawners.Length > 0)
+            spawners.RemoveAll(s => s.team != team);
+
+            if (spawners.Count > 0)
             {
-                GameObject spawnPoint = spawners[(nextSpawner++) % spawners.Length];
+                PlayerSpawn spawnPoint = spawners[(nextSpawner++) % spawners.Count];
 
                 transform.position = spawnPoint.transform.position;
                 transform.forward = spawnPoint.transform.forward.Horizontal(); // todo
@@ -170,7 +174,7 @@ public class Player : NetworkBehaviour
             }
             else
             {
-                Log.WriteWarning("No player spawners in this stage!");
+                Log.WriteWarning("No player spawners compatible with this team in this stage!");
             }
         }
     }
@@ -193,7 +197,7 @@ public class Player : NetworkBehaviour
                 force.SetHorizontal(force.Horizontal().normalized * hurtDefaultHorizontalKnockback);
 
             // predict our hit
-            GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force + new Vector3(0, hurtDefaultVerticalKnockback, 0)));
+            GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force + (movement as CharacterMovement).up * hurtDefaultVerticalKnockback));
 
             // only the server can do the rest (ring drop, score, etc)
             if (NetworkServer.active)
@@ -318,6 +322,13 @@ public class Player : NetworkBehaviour
         {
             characterModel.sharedMaterial = modelMaterialByTeam[(int)team];
         }
+    }
+
+    private void OnPlayerIdChanged(int oldVal, int newVal)
+    {
+        playerId = newVal;
+
+        Netplay.singleton.players[playerId] = this;
     }
 }
 

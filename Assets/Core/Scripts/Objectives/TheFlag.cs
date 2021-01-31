@@ -24,7 +24,13 @@ public class TheFlag : NetworkBehaviour
 
     // State
     [SyncVar]
-    private State state = State.Idle;
+    private State _state = State.Idle;
+
+    public State state
+    {
+        get => _state;
+        private set => _state = value;
+    }
 
     // Dropped state
     private float dropRespawnCountdown;
@@ -43,12 +49,14 @@ public class TheFlag : NetworkBehaviour
     // Components
     private Movement movement;
     private Blinker blinker;
+    private SyncMovement syncMovement;
 
     private void Awake()
     {
         basePosition = transform.position;
         movement = GetComponent<Movement>();
         blinker = GetComponent<Blinker>();
+        syncMovement = GetComponent<SyncMovement>();
     }
 
     private void Start()
@@ -84,9 +92,13 @@ public class TheFlag : NetworkBehaviour
                 else
                 {
                     // uh, that's weird, no one's carrying it?
-                    ReturnToBase();
+                    ReturnToBase(true);
                 }
             }
+            else
+                transform.SetParent(null, false);
+
+            attachedToPlayer = currentCarrier;
         }
 
         switch (state)
@@ -95,12 +107,8 @@ public class TheFlag : NetworkBehaviour
                 // respawn sequence
                 dropRespawnCountdown -= Time.deltaTime;
 
-                if (dropRespawnCountdown <= 0f)
-                {
-                    MessageFeed.Post($"The {team.ToColoredString()} flag has returned to base.");
-
-                    ReturnToBase();
-                }
+                if (NetworkServer.active && dropRespawnCountdown <= 0f)
+                    ReturnToBase(true);
 
                 movement.SimulateDefault(Time.deltaTime);
                 break;
@@ -120,7 +128,6 @@ public class TheFlag : NetworkBehaviour
                 {
                     state = State.Carrying;
                     currentCarrier = player.playerId;
-                    movement.useManualPhysics = true;
 
                     MessageFeed.Post($"<player>{player.playerName}</player> picked up the {team.ToColoredString()} flag!");
                 }
@@ -131,13 +138,13 @@ public class TheFlag : NetworkBehaviour
                 {
                     MessageFeed.Post($"<player>{player.playerName}</player> returned the {team.ToColoredString()} flag to base!");
 
-                    ReturnToBase();
+                    ReturnToBase(false);
                 }
             }
         }
     }
 
-    public void ReturnToBase()
+    public void ReturnToBase(bool postReturnMessage)
     {
         transform.SetParent(null, false);
         transform.position = basePosition;
@@ -150,7 +157,13 @@ public class TheFlag : NetworkBehaviour
         blinker.timeRemaining = 0f;
 
         if (NetworkServer.active)
+        {
+            if (postReturnMessage)
+                MessageFeed.Post($"The {team.ToColoredString()} flag has returned to base.");
+
             currentCarrier = -1;
+            syncMovement.SyncNow();
+        }
     }
 
     public void Drop()
@@ -178,6 +191,7 @@ public class TheFlag : NetworkBehaviour
                     attachedToPlayer = -1;
                     state = State.Dropped;
 
+                    syncMovement.SyncNow();
                     RpcDrop(dropRespawnCountdown);
 
                     MessageFeed.Post($"<player>{carryingPlayer.playerName}</player> dropped the {team.ToColoredString()} flag.");
@@ -190,6 +204,7 @@ public class TheFlag : NetworkBehaviour
         }
     }
 
+    [ClientRpc(channel = Channels.DefaultUnreliable)]
     private void RpcDrop(float blinkTime)
     {
         blinker.timeRemaining = blinkTime;

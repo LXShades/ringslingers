@@ -66,6 +66,7 @@ public class Damageable : NetworkBehaviour
     {
         if (NetworkServer.active)
         {
+            invincibilityTimeRemaining = hitInvincibilityDuration;
             RpcStartInvincibilityTime(hitInvincibilityDuration);
         }
         onLocalDamaged?.Invoke(instigator, force, instaKill);

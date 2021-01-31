@@ -29,16 +29,27 @@ public class SyncMovement : NetworkBehaviour
         {
             if (Time.unscaledTime - lastUpdateTime > 1f / updatesPerSecond)
             {
-                RpcMovementUpdate(new SyncMovementUpdate()
-                {
-                    localPosition = transform.localPosition,
-                    localRotation = transform.localRotation,
-                    velocity = movement.velocity
-                });
-
-                lastUpdateTime = Time.unscaledTime;
+                SyncNow();
             }
         }
+    }
+
+    public void SyncNow()
+    {
+        if (!NetworkServer.active)
+        {
+            Log.WriteWarning("Only server should do this");
+            return;
+        }
+
+        RpcMovementUpdate(new SyncMovementUpdate()
+        {
+            localPosition = transform.localPosition,
+            localRotation = transform.localRotation,
+            velocity = movement.velocity
+        });
+
+        lastUpdateTime = Time.unscaledTime;
     }
 
     [ClientRpc(channel = Channels.DefaultUnreliable)]

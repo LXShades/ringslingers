@@ -10,21 +10,15 @@ public class TeamBase : MonoBehaviour
         {
             if (other.TryGetComponent(out Player player) && NetGameState.singleton is NetGameStateCTF stateCTF)
             {
-                TheFlag playerFlag = null;
                 TheFlag ourFlag = stateCTF.GetTeamFlag(team);
-                if (stateCTF.redFlag.currentCarrier == player.playerId)
-                    playerFlag = stateCTF.redFlag;
-                else if (stateCTF.blueFlag.currentCarrier == player.playerId)
-                    playerFlag = stateCTF.blueFlag;
 
-
-                if (playerFlag != null && playerFlag.team != team && ourFlag?.currentCarrier == -1)
+                if (player.holdingFlag != null && player.team == team && ourFlag?.state == TheFlag.State.Idle)
                 {
-                    MessageFeed.Post($"<player>{player.playerName}</player> captured the flag!");
+                    MessageFeed.Post($"<player>{player.playerName}</player> captured the {player.holdingFlag.team.ToColoredString()} flag!");
 
                     stateCTF.AwardPoint(team);
                     player.score += stateCTF.playerPointsPerCapture;
-                    playerFlag.ReturnToBase();
+                    player.holdingFlag.ReturnToBase(false);
                 }
             }
         }

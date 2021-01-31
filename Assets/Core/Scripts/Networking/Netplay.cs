@@ -322,8 +322,6 @@ public class Netplay : MonoBehaviour
 
         player.Rename($"Fred");
 
-        player.Respawn();
-
         Log.Write($"{player.playerName} ({player.playerId}) has entered the game");
 
         return player;
