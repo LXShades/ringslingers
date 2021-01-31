@@ -149,12 +149,7 @@ public class GameHUD : MonoBehaviour
                 }
                 else
                 {
-                    string teamColour = "<color=#7f7f7f>";
-
-                    if (scoreboardPlayer.team == PlayerTeam.Red)
-                        teamColour = "<color=red>";
-                    else if (scoreboardPlayer.team == PlayerTeam.Blue)
-                        teamColour = "<color=blue>";
+                    string teamColour = scoreboardPlayer.team.ToFontColor();
 
                     scoreboardNames.text += $"{teamColour}{scoreboardPlayer.playerName}</color>\n";
                     scoreboardScores.text += $"{teamColour}{scoreboardPlayer.score}</color>\n";

@@ -42,21 +42,30 @@ public class Movement : MonoBehaviour
     {
         if (!useManualPhysics)
         {
-            // Do le gravity
-            velocity.y -= GameManager.singleton.gravity * Time.deltaTime * gravityMultiplier;
+            SimulateDefault(Time.deltaTime);
+        }
+    }
 
-            // Do le move
-            RaycastHit hit;
+    /// <summary>
+    /// Runs a default physics simulation (gravity, bounces, etc according to public parameters)
+    /// </summary>
+    /// <param name="deltaTime"></param>
+    public void SimulateDefault(float deltaTime)
+    {
+        // Do le gravity
+        velocity.y -= GameManager.singleton.gravity * deltaTime * gravityMultiplier;
 
-            if (Move(velocity * Time.deltaTime, out hit))
-            {
-                Vector3 resistanceVector = hit.normal * (-Vector3.Dot(hit.normal, velocity) * (1f + bounceFactor));
-                Vector3 frictionVector = -velocity * bounceFriction;
+        // Do le move
+        RaycastHit hit;
 
-                frictionVector -= hit.normal * Vector3.Dot(hit.normal, frictionVector);
+        if (Move(velocity * deltaTime, out hit))
+        {
+            Vector3 resistanceVector = hit.normal * (-Vector3.Dot(hit.normal, velocity) * (1f + bounceFactor));
+            Vector3 frictionVector = -velocity * bounceFriction;
 
-                velocity += resistanceVector + frictionVector;
-            }
+            frictionVector -= hit.normal * Vector3.Dot(hit.normal, frictionVector);
+
+            velocity += resistanceVector + frictionVector;
         }
     }
 

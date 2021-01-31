@@ -111,9 +111,12 @@ Features:
 + Put away the flag on clients when captured
 + Can't capture the flag without our own flag
 + Add team colours to scoreboard
++ Flag drop sequence
++ Flag return sequence
++ Flag should blink while it can't be picked up
++ Invincible players shouldn't be able to pick up the flag
 - Make sure flag holder shows (should be fixed now)
-- Flag drop sequence
-- Flag return sequence
+- Remove debug M key
 - Add flag holder to HUD
 - HUD Alert when flag is captured
 - Combinable rings HIGH:HIGH
@@ -122,10 +125,7 @@ Brand New Features:
 
 
 Technical refinements in the future:
-- Imrpove ring collisions by not using triggers
-- Interpolate thrown rings
 - Refine acceleration, this currently varies by frame rate
-- Reuse BinaryWriters in SyncedObject.Serialize
 
 Additional touches:
 - Fireworks when hitting someone in the air

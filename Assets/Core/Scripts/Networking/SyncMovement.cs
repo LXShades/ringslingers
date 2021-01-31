@@ -6,8 +6,8 @@ public class SyncMovement : NetworkBehaviour
 {
     public struct SyncMovementUpdate
     {
-        public Vector3 position;
-        public Quaternion rotation;
+        public Vector3 localPosition;
+        public Quaternion localRotation;
         public Vector3 velocity;
     }
 
@@ -31,8 +31,8 @@ public class SyncMovement : NetworkBehaviour
             {
                 RpcMovementUpdate(new SyncMovementUpdate()
                 {
-                    position = transform.position,
-                    rotation = transform.rotation,
+                    localPosition = transform.localPosition,
+                    localRotation = transform.localRotation,
                     velocity = movement.velocity
                 });
 
@@ -44,8 +44,8 @@ public class SyncMovement : NetworkBehaviour
     [ClientRpc(channel = Channels.DefaultUnreliable)]
     private void RpcMovementUpdate(SyncMovementUpdate update)
     {
-        transform.position = update.position;
-        transform.rotation = update.rotation;
+        transform.localPosition = update.localPosition;
+        transform.localRotation = update.localRotation;
         movement.velocity = update.velocity;
     }
 }

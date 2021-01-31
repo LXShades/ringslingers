@@ -1,5 +1,6 @@
 ﻿using Mirror;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Player : NetworkBehaviour
 {
@@ -90,13 +91,20 @@ public class Player : NetworkBehaviour
 
     public bool isInvisible { get; set; }
 
-    public bool isHoldingFlag
+    public bool isHoldingFlag => holdingFlag != null;
+
+    public TheFlag holdingFlag
     {
         get
         {
             if (NetGameState.singleton is NetGameStateCTF gameStateCTF && gameStateCTF.redFlag && gameStateCTF.blueFlag)
-                return gameStateCTF.blueFlag.currentCarrier == playerId || gameStateCTF.redFlag.currentCarrier == playerId;
-            return false;
+            {
+                if (gameStateCTF.blueFlag.currentCarrier == playerId)
+                    return gameStateCTF.blueFlag;
+                if (gameStateCTF.redFlag.currentCarrier == playerId)
+                    return gameStateCTF.redFlag;
+            }
+            return null;
         }
     }
 
@@ -137,6 +145,9 @@ public class Player : NetworkBehaviour
             characterModel.enabled = false;
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = true;
+
+        if (Keyboard.current.mKey.wasPressedThisFrame)
+            damageable.TryDamage(null);
     }
 
     private static int nextSpawner = 0;
@@ -176,36 +187,41 @@ public class Player : NetworkBehaviour
         }
         else
         {
-            // Only the server can really hurt us
-            Hurt(instigator, force);
+            if (force.sqrMagnitude <= Mathf.Epsilon)
+                force = -transform.forward.Horizontal() * hurtDefaultHorizontalKnockback;
+            else if (force.Horizontal().magnitude < hurtDefaultHorizontalKnockback)
+                force.SetHorizontal(force.Horizontal().normalized * hurtDefaultHorizontalKnockback);
+
+            // predict our hit
+            GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force + new Vector3(0, hurtDefaultVerticalKnockback, 0)));
+
+            // only the server can do the rest (ring drop, score, etc)
+            if (NetworkServer.active)
+            {
+                if (instigator && instigator.TryGetComponent(out Player attackerAsPlayer))
+                {
+                    // Give score to the attacker if possible
+                    if (attackerAsPlayer)
+                        attackerAsPlayer.score += 50;
+
+                    // Add the hit message
+                    MessageFeed.Post($"<player>{attackerAsPlayer.playerName}</player> hit <player>{playerName}</player>!");
+                }
+
+                // Drop some rings
+                DropRings();
+            }
         }
-    }
 
-    private void Hurt(GameObject instigator, Vector3 force)
-    {
-        if (force.sqrMagnitude <= Mathf.Epsilon)
-            force = -transform.forward.Horizontal() * hurtDefaultHorizontalKnockback;
-        else if (force.Horizontal().magnitude < hurtDefaultHorizontalKnockback)
-            force.SetHorizontal(force.Horizontal().normalized * hurtDefaultHorizontalKnockback);
-
-        // predict our hit
-        GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force + new Vector3(0, hurtDefaultVerticalKnockback, 0)));
-
-        // only the server can do the rest (ring drop, score, etc)
         if (NetworkServer.active)
         {
-            if (instigator && instigator.TryGetComponent(out Player attackerAsPlayer))
+            if (NetGameState.singleton is NetGameStateCTF gameStateCTF)
             {
-                // Give score to the attacker if possible
-                if (attackerAsPlayer)
-                    attackerAsPlayer.score += 50;
-
-                // Add the hit message
-                MessageFeed.Post($"<player>{attackerAsPlayer.playerName}</player> hit <player>{playerName}</player>!");
+                if (holdingFlag)
+                {
+                    holdingFlag.Drop();
+                }
             }
-
-            // Drop some rings
-            DropRings();
         }
     }
 
@@ -311,3 +327,32 @@ public enum PlayerTeam
     Red,
     Blue
 };
+
+public static class PlayerTeamExtensions
+{
+    public static string ToFontColor(this PlayerTeam team)
+    {
+        switch (team)
+        {
+            case PlayerTeam.Red:
+                return "<color=red>";
+            case PlayerTeam.Blue:
+                return "<color=blue>";
+        }
+
+        return "<color=#7f7f7f>";
+    }
+
+    public static string ToColoredString(this PlayerTeam team)
+    {
+        switch (team)
+        {
+            case PlayerTeam.Red:
+                return "<color=red>red</color>";
+            case PlayerTeam.Blue:
+                return "<color=blue>blue</color>";
+        }
+
+        return "<color=7f7f7f>neutral</color>";
+    }
+}

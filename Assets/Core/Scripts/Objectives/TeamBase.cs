@@ -4,7 +4,7 @@ public class TeamBase : MonoBehaviour
 {
     public PlayerTeam team;
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerStay(Collider other)
     {
         if (Mirror.NetworkServer.active)
         {

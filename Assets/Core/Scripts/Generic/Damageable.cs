@@ -44,7 +44,7 @@ public class Damageable : NetworkBehaviour
 
     public void TryDamage(GameObject instigator, Vector3 force = default, bool instaKill = false)
     {
-        if (instigator.TryGetComponent(out Damageable instigatorDamageable))
+        if (instigator && instigator.TryGetComponent(out Damageable instigatorDamageable))
         {
             if (instigatorDamageable.damageTeam == damageTeam && damageTeam != -1)
                 return; // hit by someone on the same team
