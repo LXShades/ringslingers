@@ -14,11 +14,7 @@ public class TeamBase : MonoBehaviour
 
                 if (player.holdingFlag != null && player.team == team && ourFlag?.state == TheFlag.State.Idle)
                 {
-                    MessageFeed.Post($"<player>{player.playerName}</player> captured the {player.holdingFlag.team.ToColoredString()} flag!");
-
-                    stateCTF.AwardPoint(team);
-                    player.score += stateCTF.playerPointsPerCapture;
-                    player.holdingFlag.ReturnToBase(false);
+                    player.holdingFlag.Capture(player);
                 }
             }
         }

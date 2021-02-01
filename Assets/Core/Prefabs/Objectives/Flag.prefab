@@ -233,7 +233,22 @@ MonoBehaviour:
   syncInterval: 0.1
   team: 0
   pickupSound:
-    clip: {fileID: 0}
+    clip: {fileID: 8300000, guid: 69cb9934c6c92854799e63ef3b526815, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+  returnedSound:
+    clip: {fileID: 8300000, guid: f28b5dea36272c84b9df2a07239d3b53, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+  capturedByEnemySound:
+    clip: {fileID: 8300000, guid: 59317df1bf9ddb748b3cb44b64f94f68, type: 3}
+    volume: 1
+    pitch: 1
+    pitchVariance: 0
+  capturedByAllySound:
+    clip: {fileID: 8300000, guid: 30de750b237176542bb110a9149322f3, type: 3}
     volume: 1
     pitch: 1
     pitchVariance: 0

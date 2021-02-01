@@ -10,10 +10,20 @@ public class TheFlag : NetworkBehaviour
         Carrying
     }
 
+    public enum FlagSoundIndex
+    {
+        Pickup,
+        Returned,
+        Captured
+    }
+
     [Header("Flag setup")]
     public PlayerTeam team;
 
     public GameSound pickupSound;
+    public GameSound returnedSound;
+    public GameSound capturedByEnemySound;
+    public GameSound capturedByAllySound;
 
 
     [Header("Drop")]
@@ -130,6 +140,7 @@ public class TheFlag : NetworkBehaviour
                     currentCarrier = player.playerId;
 
                     MessageFeed.Post($"<player>{player.playerName}</player> picked up the {team.ToColoredString()} flag!");
+                    RpcPlaySound(FlagSoundIndex.Pickup);
                 }
 
                 // return the slab
@@ -139,8 +150,25 @@ public class TheFlag : NetworkBehaviour
                     MessageFeed.Post($"<player>{player.playerName}</player> returned the {team.ToColoredString()} flag to base!");
 
                     ReturnToBase(false);
+
+                    if (Netplay.singleton.localPlayer?.team == team)
+                        RpcPlaySound(FlagSoundIndex.Returned);
                 }
             }
+        }
+    }
+
+    public void Capture(Player player)
+    {
+        if (NetworkServer.active && NetGameState.singleton is NetGameStateCTF stateCTF)
+        {
+            MessageFeed.Post($"<player>{player.playerName}</player> captured the {team.ToColoredString()} flag!");
+
+            stateCTF.AwardPoint(player.team);
+            player.score += stateCTF.playerPointsPerCapture;
+            player.holdingFlag.ReturnToBase(false);
+
+            RpcPlaySound(FlagSoundIndex.Captured);
         }
     }
 
@@ -208,5 +236,25 @@ public class TheFlag : NetworkBehaviour
     private void RpcDrop(float blinkTime)
     {
         blinker.timeRemaining = blinkTime;
+    }
+
+    [ClientRpc]
+    private void RpcPlaySound(FlagSoundIndex soundIndex)
+    {
+        switch (soundIndex)
+        {
+            case FlagSoundIndex.Pickup:
+                GameSounds.PlaySound(gameObject, pickupSound);
+                break;
+            case FlagSoundIndex.Returned:
+                GameSounds.PlaySound(gameObject, returnedSound);
+                break;
+            case FlagSoundIndex.Captured:
+                if (Netplay.singleton.localPlayer?.team == team)
+                    GameSounds.PlaySound(null, capturedByEnemySound);
+                else
+                    GameSounds.PlaySound(null, capturedByAllySound);
+                break;
+        }
     }
 }

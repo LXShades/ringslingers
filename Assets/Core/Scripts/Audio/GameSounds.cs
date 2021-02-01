@@ -87,10 +87,18 @@ public class GameSounds : MonoBehaviour
         sources[currentChannel].clip = sound.clip;
         sources[currentChannel].volume = sound.volume;
         sources[currentChannel].pitch = sound.pitch + Random.Range(-sound.pitchVariance, sound.pitchVariance);
-        sources[currentChannel].Play();
         sourceAttachments[currentChannel] = source;
         if (source)
+        {
             sources[currentChannel].transform.position = source.transform.position;
+            sources[currentChannel].spatialBlend = 1f;
+        }
+        else
+        {
+            sources[currentChannel].spatialBlend = 0f;
+        }
+
+        sources[currentChannel].Play();
     }
 }
 
