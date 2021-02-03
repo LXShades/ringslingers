@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 /// <summary>
 /// An ObjectSpawner that spawns objects along a line
 /// </summary>
+[SelectionBase]
 [ExecuteInEditMode]
 public class LineMaker : ObjectSpawner
 {
@@ -33,8 +32,19 @@ public class LineMaker : ObjectSpawner
 [CanEditMultipleObjects]
 public class LineMakerEditor : Editor
 {
+    private bool hasLinePositionChanged = false;
+
     void OnSceneGUI()
     {
+        if (Event.current.type == EventType.MouseUp)
+        {
+            if (hasLinePositionChanged)
+            {
+                EditorUtility.SetDirty(target);
+                hasLinePositionChanged = false;
+            }
+        }
+
         // Let the user move the end of the line
         LineMaker lineMaker = target as LineMaker;
         Vector3 globalLinePosition = lineMaker.transform.TransformPoint(lineMaker.line);
@@ -44,6 +54,12 @@ public class LineMakerEditor : Editor
             
         if (EditorGUI.EndChangeCheck())
         {
+            if (!hasLinePositionChanged)
+            {
+                Undo.RecordObject(target, "Move line spawner endpoint");
+                hasLinePositionChanged = true;
+            }
+
             lineMaker.line = lineMaker.transform.InverseTransformPoint(globalLinePosition);
             lineMaker.RefreshChildren();
         }

@@ -319,7 +319,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8266176094919211856}
-  m_LocalRotation: {x: -0, y: 0.370947, z: -0, w: 0.9286541}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 50.06, y: 0.056, z: -15.45}
   m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
   m_Children:
@@ -329,7 +329,7 @@ Transform:
   - {fileID: 2471498761054329904}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 43.548, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &9112526478686356999
 Animator:
   serializedVersion: 3
@@ -362,6 +362,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   springForce: 10.9375
+  springAbsolutely: 0
   springSound:
     clip: {fileID: 8300000, guid: bea3bd06b69d6574687ef74c64f82e9e, type: 3}
     volume: 0.5

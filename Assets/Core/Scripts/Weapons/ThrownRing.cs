@@ -141,8 +141,16 @@ public class ThrownRing : NetworkBehaviour
         // Play despawn sound
         GameSounds.PlaySound(gameObject, settings.despawnSound);
 
-        Spawner.Despawn(gameObject);
+        if (owner && owner.TryGetComponent(out Player ownerPlayer))
+        {
+            if (NetworkServer.active)
+                ownerPlayer.RpcNotifyRingDespawnedAt(transform.position);
+            else
+                ownerPlayer.LocalNotifyRingDespawnedAt(transform.position);
+        }
+
         isDead = true;
+        Spawner.Despawn(gameObject);
     }
 
     private void OnPredictionSuccessful()

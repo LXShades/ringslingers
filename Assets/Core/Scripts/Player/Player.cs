@@ -150,6 +150,34 @@ public class Player : NetworkBehaviour
 
         if (Keyboard.current.mKey.wasPressedThisFrame)
             damageable.TryDamage(null);
+
+        foreach (Vector3 pos in ringDespawnedPositions)
+        {
+            DebugExtension.DebugPoint(pos, Color.green, 0.25f, 0.1f);
+        }
+        foreach (Vector3 pos in serverRingDespawnedPositions)
+        {
+            DebugExtension.DebugPoint(pos, Color.blue, 0.25f, 0.1f);
+        }
+    }
+
+    // debugging to test accuracy of ring throw timing
+    private List<Vector3> ringDespawnedPositions = new List<Vector3>();
+    private List<Vector3> serverRingDespawnedPositions = new List<Vector3>();
+    public int maxNumRingDespawnedPositions = 5;
+
+    [ClientRpc]
+    public void RpcNotifyRingDespawnedAt(Vector3 position)
+    {
+        ringDespawnedPositions.Add(position);
+        if (ringDespawnedPositions.Count > maxNumRingDespawnedPositions)
+            ringDespawnedPositions.RemoveAt(0);
+    }
+    public void LocalNotifyRingDespawnedAt(Vector3 position)
+    {
+        serverRingDespawnedPositions.Add(position);
+        if (serverRingDespawnedPositions.Count > maxNumRingDespawnedPositions)
+            serverRingDespawnedPositions.RemoveAt(0);
     }
 
     private static int nextSpawner = 0;

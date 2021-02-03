@@ -25,11 +25,6 @@ public class RingShooting : NetworkBehaviour
     public Transform spawnPosition;
 
     /// <summary>
-    /// Nudges the ring forward by this amount upon initial spawn
-    /// </summary>
-    public float spawnNudge = 0.469f;
-
-    /// <summary>
     /// When the last ring was fired
     /// </summary>
     private float lastFiredRingTime = -1;
@@ -146,7 +141,10 @@ public class RingShooting : NetworkBehaviour
     private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon)
     {
         if (!CanThrowRing() || Vector3.Distance(position, spawnPosition.position) > 2f)
+        {
+            Log.WriteWarning($"Discarding ring throw: dist is {Vector3.Distance(position, spawnPosition.position)} CanThrow: {CanThrowRing()}");
             return; // invalid throw
+        }
 
         equippedWeaponIndex = equippedWeapon;
 
