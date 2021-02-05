@@ -199,12 +199,20 @@ public class Player : NetworkBehaviour
 
                 movement.velocity = Vector3.zero;
                 movement.state = 0;
+
+                TargetRespawn(spawnPoint.transform.forward);
             }
             else
             {
                 Log.WriteWarning("No player spawners compatible with this team in this stage!");
             }
         }
+    }
+
+    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    private void TargetRespawn(Vector3 direction)
+    {
+        input.aimDirection = direction.Horizontal().normalized;
     }
 
     private void OnDamaged(GameObject instigator, Vector3 force, bool instaKill)

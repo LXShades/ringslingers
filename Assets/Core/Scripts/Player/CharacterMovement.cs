@@ -39,6 +39,7 @@ public class CharacterMovement : Movement
     public float wallRunTestHeight = 0.08f;
     [Tooltip("Tests the average normal of the three points against the normal of the sensor triangle. If the angle diverges above this amount, the up vector is reset. Used to avoid treating small steps as slopes.")]
     public float wallRunAngleFromAverageNormalMaxTolerance = 10.0f;
+    public bool wallRunCameraAssist = true;
     public Transform rotateableModel;
 
     [Header("Collision")]
@@ -82,6 +83,15 @@ public class CharacterMovement : Movement
         set => velocity.SetAlongPlane(groundNormal, value);
     }
 
+    /// <summary>
+    /// Returns the velocity vector along the plane of your character's up vector
+    /// </summary>
+    public Vector3 runVelocity
+    {
+        get => velocity.AlongPlane(up);
+        set => velocity.SetAlongPlane(up, value);
+    }
+
     public float verticalVelocity
     {
         get => velocity.AlongAxis(up);
@@ -109,7 +119,20 @@ public class CharacterMovement : Movement
     /// <summary>
     /// Current up vector
     /// </summary>
-    public Vector3 up { get; set; } = Vector3.up;
+    public Vector3 up
+    {
+        get => _up;
+        set
+        {
+            // change look rotation with rotation?
+            if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
+                player.input.aimDirection = Quaternion.FromToRotation(_up, value) * player.input.aimDirection;
+
+            _up = value;
+
+        }
+    }
+    private Vector3 _up = Vector3.up;
 
     private Vector3 gravityDirection = new Vector3(0, -1, 0);
 
@@ -153,8 +176,7 @@ public class CharacterMovement : Movement
         }
         else
         {
-            if (!enableWallRun)
-                groundNormal = Vector3.up;
+            groundNormal = Vector3.up;
             groundDistance = float.MaxValue;
         }
 
@@ -346,6 +368,7 @@ public class CharacterMovement : Movement
         }
 
         Vector3 targetUp = Vector3.up;
+        Vector3 lastUp = up;
 
         // We need to look ahead a bit so that we can push towards the ground after we've moved
         Vector3 position = transform.position + velocity * deltaTime;
@@ -422,9 +445,6 @@ public class CharacterMovement : Movement
 
         // Apply final rotation
         transform.rotation = Quaternion.LookRotation(input.aimDirection.AlongPlane(up), up);
-
-        // change look rotation with rotation?
-        //player.input.aimDirection = Quaternion.FromToRotation(lastUp, up) * player.input.aimDirection;// test?
     }
 
     private void ApplyGravity(float deltaTime)
@@ -452,18 +472,20 @@ public class CharacterMovement : Movement
         Vector3 originalPosition = transform.position;
         Vector3 originalVelocity = velocity;
         Vector3 stepVector = up * maxStepHeight;
+        bool stepUp = maxStepHeight > 0f;
 
         move.enableCollision = !debugDisableCollision;
 
-        if (collisionType == CollisionType.Penetration)
-        {
+        if (stepUp)
             transform.position += stepVector;
-            originalPosition += stepVector;
 
+        if (collisionType == CollisionType.Penetration)
             move.MovePenetration(velocity * deltaTime, isReconciliation);
-        }
         else
             move.Move(velocity * deltaTime + extraMoveOffset, out RaycastHit _, isReconciliation);
+
+        if (stepUp)
+            move.MovePenetration(-stepVector, isReconciliation);
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
         {
@@ -481,14 +503,12 @@ public class CharacterMovement : Movement
             if (Vector3.Dot(velocity, originalVelocity) < 0f)
                 velocity -= originalVelocity.normalized * Vector3.Dot(velocity, originalVelocity.normalized);
 
-            // don't let velocity exceed its original magnitude, that's another fishy sign
-            velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
-        }
+            // don't accumulate vertical velocity from stepping up, that's another fishy sign
+            if (stepUp && velocity.AlongAxis(stepVector) > originalVelocity.AlongAxis(stepVector))
+                velocity.SetAlongAxis(stepVector, originalVelocity.AlongAxis(stepVector));
 
-        if (collisionType == CollisionType.Penetration)
-        {
-            move.MovePenetration(-stepVector, isReconciliation);
-            originalPosition -= stepVector;
+            // overall, don't let velocity exceed its original magnitude, its a sign made of fish
+            velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
         }
 
         if (showDebugLines)
