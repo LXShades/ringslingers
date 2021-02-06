@@ -65,6 +65,8 @@ public class LevelDatabase : ScriptableObject
         }
 
         levels = levelList.ToArray();
+        EditorUtility.SetDirty(this);
+        AssetDatabase.SaveAssets();
     }
 
     private LevelConfiguration FindConfigurationInScene(Scene scene)
