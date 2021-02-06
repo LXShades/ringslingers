@@ -23,11 +23,11 @@ public class GameManager : MonoBehaviour
     }
     private static GameManager _singleton;
 
-    [Header("Game Settings")]
-    public NetGameState defaultNetGameState;
-
-    public string defaultHostScene;
+    [Header("Level Settings")]
     public string defaultMenuScene;
+    public string defaultHostScene;
+
+    public LevelDatabase levelDatabase;
 
     [Tooltip("How long until items respawn, in seconds")]
     public float itemRespawnTime = 20;

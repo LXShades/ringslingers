@@ -4,7 +4,7 @@ public class CharacterAnimation : MonoBehaviour
 {
     private CharacterMovement movement;
     private Player player;
-    private Animator animation;
+    private new Animator animation;
 
     [Header("Body parts")]
     public Transform root;

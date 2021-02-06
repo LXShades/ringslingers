@@ -29,4 +29,9 @@ public class PauseMenu : MonoBehaviour
             case 2: Screen.fullScreenMode = FullScreenMode.FullScreenWindow; break;
         }
     }
+
+    public void GoNextLevel()
+    {
+        Netplay.singleton.ServerNextMap();
+    }
 }

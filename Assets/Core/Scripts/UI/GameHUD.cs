@@ -61,6 +61,7 @@ public class GameHUD : MonoBehaviour
 
         numFramesThisSecond++;
 
+        timeText.text = "INF";
         // Match stuff
         if (NetGameState.singleton is NetGameStateDeathmatch netGameStateDeathmatch)
         {
@@ -93,7 +94,6 @@ public class GameHUD : MonoBehaviour
         // Player stuff
         ringsText.text = "0";
         scoreText.text = "0";
-        timeText.text = "INF";
 
         if (player)
         {

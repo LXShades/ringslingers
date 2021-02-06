@@ -92,11 +92,12 @@ Fixes/Refinements
 - Find out why rings are hitting in different positions
  -> send collided point from server and tell the client where it was as a debug circle
  -> Client sets its own debug circle where its own ring hits
-- Improve hit detection
+- Level switch button MED:HIGH
+- Improve hit detection HIGH:MEDHIGH
  - Send current "gameTime" as received from server, and ping indicating how far we project players
  - Server has a tolerance for rewinding to client position and/or projecting rings. Maybe print out the time difference
  - Package player updates with "gameTime" and combine all into one
-- Fix shaking on tight slopes
+- Fix shaking on tight slopes HIGH:MED
 
 - Sound effects for other players (hit, ring throw at least) HIGH:MID
 - Death state HIGH:LOW

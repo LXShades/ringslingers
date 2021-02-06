@@ -118,7 +118,7 @@ public class Netplay : MonoBehaviour
         NetworkClient.RegisterHandler<PingMessage>(OnClientPingMessageReceived);
         NetworkServer.RegisterHandler<PingMessage>(OnServerPingMessageReceived);
 
-        SceneManager.activeSceneChanged += (Scene old, Scene neww) => StartMatch();
+        SceneManager.activeSceneChanged += OnSceneChanged;
         net.onServerStarted += StartMatch;
 
         msTime = 0;
@@ -142,7 +142,37 @@ public class Netplay : MonoBehaviour
         }
     }
 
+    public void ServerNextMap()
+    {
+        if (!NetworkServer.active)
+        {
+            Log.WriteWarning("Only the server can change the map");
+            return;
+        }
+
+        LevelDatabase db = GameManager.singleton.levelDatabase;
+
+        if (db.levels.Length == 0)
+            return;
+
+        int currentLevelIndex = -1;
+
+        for (int i = 0; i < db.levels.Length; i++)
+        {
+            if (db.levels[i].path.ToLower() == SceneManager.GetActiveScene().path.ToLower())
+                currentLevelIndex = i;
+        }
+
+        currentLevelIndex = (currentLevelIndex + 1) % db.levels.Length;
+        NetMan.singleton.ServerChangeScene(db.levels[currentLevelIndex].path);
+    }
+
     #region Game
+    private void OnSceneChanged(Scene oldScene, Scene newScene)
+    {
+        StartMatch();
+    }
+
     /// <summary>
     /// Called when the level starts or a server starts
     /// </summary>
@@ -150,7 +180,16 @@ public class Netplay : MonoBehaviour
     {
         if (NetworkServer.active)
         {
-            NetGameState.SetNetGameState(GameManager.singleton.defaultNetGameState.gameObject);
+            LevelConfigurationComponent config = FindObjectOfType<LevelConfigurationComponent>();
+
+            if (config != null)
+            {
+                NetGameState.SetNetGameState(config.configuration.defaultGameModePrefab);
+            }
+            else
+            {
+                Debug.LogError("We can't play this map. There's no game mode setup!");
+            }
         }
     }
     #endregion
