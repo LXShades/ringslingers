@@ -120,7 +120,16 @@ public class GameHUD : MonoBehaviour
             debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing * 1000f)}ms (reliable: {(int)(Netplay.singleton.reliablePing)})" +
                 $"\nFPS: {lastFps}" +
                 $"\n{Netplay.singleton.netStat}\nVelocity: {player.movement.velocity} ({player.movement.velocity.magnitude:F2})\nGround: {player.movement.isOnGround}\nGroundNml: {player.movement.groundNormal}\n" +
-                $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}";
+                $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}\n";
+
+            // debug stuff for other players in the same scene
+            foreach (var otherPlayer in FindObjectsOfType<Player>())
+            {
+                if (otherPlayer != Netplay.singleton.localPlayer)
+                {
+                    debugText.text += $"{otherPlayer.playerName}:\n{otherPlayer.GetComponent<PlayerController>().moveStateFlow}";
+                }
+            }
         }
 
         // Scoreboard stuff

@@ -374,7 +374,6 @@ MonoBehaviour:
     btnJumpReleased: 0
     btnFirePressed: 0
     btnFireReleased: 0
-  team: 0
   modelMaterialByTeam:
   - {fileID: 2100000, guid: 4b658bc16d8baf04ab033e9076297f1f, type: 2}
   - {fileID: 2100000, guid: 9da0a8e5695d2d048a4adbc1e9b660ef, type: 2}
@@ -401,6 +400,7 @@ MonoBehaviour:
   movement: {fileID: 0}
   damageable: {fileID: 0}
   localTime: -1
+  maxNumRingDespawnedPositions: 5
 --- !u!114 &7352825796714013435
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -475,6 +475,7 @@ MonoBehaviour:
   wallRunTestRadius: 0.22
   wallRunTestHeight: 0.14
   wallRunAngleFromAverageNormalMaxTolerance: 10
+  wallRunCameraAssist: 1
   rotateableModel: {fileID: 1526902982376324854}
   collisionType: 0
   groundTestDistance: 0.05
@@ -520,7 +521,7 @@ MonoBehaviour:
   maxDeltaTime: 0.5
   extrapolateRemoteInput: 1
   maxRemotePrediction: 0.5
-  remotePredictionTimeStep: 0.1
+  remotePredictionTimeStep: 0.067
   alwaysReconcile: 0
   reconcilationPositionTolerance: 0
   printReconcileInfo: 0
@@ -545,7 +546,6 @@ MonoBehaviour:
     ammo: 0
     isInfinite: 1
   spawnPosition: {fileID: 3310946930297574031}
-  spawnNudge: 0.469
 --- !u!114 &933529237501604302
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -571,6 +571,7 @@ MonoBehaviour:
   - {fileID: 8063423744937777608}
   - {fileID: 2407978492390594985}
   - {fileID: 3454492979416601205}
+  damageTeam: -1
 --- !u!114 &7641004092905895223
 MonoBehaviour:
   m_ObjectHideFlags: 0
