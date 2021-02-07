@@ -164,7 +164,7 @@ public class Netplay : MonoBehaviour
         }
 
         currentLevelIndex = (currentLevelIndex + 1) % db.levels.Length;
-        NetMan.singleton.ServerChangeScene(db.levels[currentLevelIndex].path);
+        NetMan.singleton.ServerChangeScene(db.levels[currentLevelIndex].path, true);
     }
 
     #region Game

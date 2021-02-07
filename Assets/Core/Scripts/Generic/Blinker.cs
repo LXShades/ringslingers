@@ -17,7 +17,7 @@ public class Blinker : MonoBehaviour
         if (timeRemaining > 0f)
         {
             // Countdown!
-            timeRemaining -= Time.deltaTime;
+            timeRemaining = Mathf.Max(timeRemaining - Time.deltaTime, 0f);
 
             // Blink!
             if (affectedRenderers != null && affectedRenderers.Length > 0)
@@ -44,9 +44,16 @@ public class Blinker : MonoBehaviour
                     renderer.enabled = blinkRenderEnabled;
                 }
             }
+        }
+        else if (!blinkRenderEnabled)
+        {
+            // blinking was stopped externally but we're still invisible, fix that
+            blinkRenderEnabled = true;
 
-            if (timeRemaining < 0f)
-                timeRemaining = 0f;
+            foreach (Renderer renderer in affectedRenderers)
+            {
+                renderer.enabled = blinkRenderEnabled;
+            }
         }
     }
 

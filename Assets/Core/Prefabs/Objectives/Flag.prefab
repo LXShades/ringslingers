@@ -252,8 +252,8 @@ MonoBehaviour:
     volume: 1
     pitch: 1
     pitchVariance: 0
-  dropHorizontalVelocity: 8
-  dropVerticalVelocity: 8
+  dropHorizontalVelocity: 5
+  dropVerticalVelocity: 4
   dropRespawnCountdownDuration: 15
 --- !u!136 &6683689043032468155
 CapsuleCollider:
@@ -286,7 +286,7 @@ MonoBehaviour:
   - {fileID: 6683689043032468155}
   blockingCollisionLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 1591
   useManualPhysics: 1
   bounceFactor: 0.3
   bounceFriction: 0.5

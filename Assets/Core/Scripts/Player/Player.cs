@@ -1,7 +1,6 @@
 ﻿using Mirror;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class Player : NetworkBehaviour
 {
@@ -147,9 +146,6 @@ public class Player : NetworkBehaviour
             characterModel.enabled = false;
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = true;
-
-        if (Keyboard.current.mKey.wasPressedThisFrame)
-            damageable.TryDamage(null);
 
         foreach (Vector3 pos in ringDespawnedPositions)
         {

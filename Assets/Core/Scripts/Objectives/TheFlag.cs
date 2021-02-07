@@ -106,7 +106,10 @@ public class TheFlag : NetworkBehaviour
                 }
             }
             else
+            {
                 transform.SetParent(null, false);
+                blinker.timeRemaining = 0f;
+            }
 
             attachedToPlayer = currentCarrier;
         }
@@ -125,16 +128,16 @@ public class TheFlag : NetworkBehaviour
         }
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnTriggerStay(Collider other) // using Stay because an invincible player may stand and wait til they can pick up the flag
     {
-        if (NetworkServer.active)
+        if (NetworkServer.active && currentCarrier == -1)
         {
             Player player = other.GetComponent<Player>();
 
             if (player && !player.damageable.isInvincible)
             {
                 // pick up the flag
-                if (currentCarrier == -1 && player.team != team)
+                if (player.team != team)
                 {
                     state = State.Carrying;
                     currentCarrier = player.playerId;
@@ -145,7 +148,7 @@ public class TheFlag : NetworkBehaviour
 
                 // return the slab
                 // ...flag
-                if (currentCarrier == -1 && state == State.Dropped && player.team == team)
+                if (state == State.Dropped && player.team == team)
                 {
                     MessageFeed.Post($"<player>{player.playerName}</player> returned the {team.ToColoredString()} flag to base!");
 
@@ -191,7 +194,20 @@ public class TheFlag : NetworkBehaviour
 
             currentCarrier = -1;
             syncMovement.SyncNow();
+
+            RpcReturnToBase();
         }
+    }
+
+    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    private void RpcReturnToBase()
+    {
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.team == team)
+        {
+            GameSounds.PlaySound(null, returnedSound);
+        }
+
+        blinker.timeRemaining = 0f; // stop a le blink
     }
 
     public void Drop()
@@ -205,11 +221,11 @@ public class TheFlag : NetworkBehaviour
                 if (carryingPlayer != null)
                 {
                     // begin movement
-                    Vector2 dropDirection = Random.insideUnitCircle;
+                    Vector2 dropDirection = Random.insideUnitCircle.normalized;
 
                     transform.SetParent(null, false);
                     transform.position = carryingPlayer.transform.position;
-                    movement.velocity = new Vector3(dropDirection.x * dropHorizontalVelocity, dropDirection.y * dropVerticalVelocity, dropDirection.y * dropHorizontalVelocity);
+                    movement.velocity = new Vector3(dropDirection.x * dropHorizontalVelocity, dropVerticalVelocity, dropDirection.y * dropHorizontalVelocity);
 
                     // start countdown
                     dropRespawnCountdown = dropRespawnCountdownDuration;

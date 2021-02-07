@@ -36,7 +36,7 @@ public class NetGameStateDeathmatch : NetGameState
 
             if ((timeRemaining <= -intermissionTime) != (timeRemaining - Time.deltaTime <= -intermissionTime))
             {
-                NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+                NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path, true);
             }
         }
 

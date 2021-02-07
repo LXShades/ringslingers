@@ -47,7 +47,7 @@ public class NetGameStateCTF : NetGameState
 
                 if (timeRemaining < -intermissionTime)
                 {
-                    NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path);
+                    NetMan.singleton.ServerChangeScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path, true);
                 }
             }
         }
