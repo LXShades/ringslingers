@@ -484,7 +484,7 @@ MonoBehaviour:
   landableCollisionLayers:
     serializedVersion: 2
     m_Bits: 311
-  maxStepHeight: 0.3125
+  maxStepHeight: 0.15
   actionSpeed: 60
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
@@ -497,7 +497,6 @@ MonoBehaviour:
     pitch: 1
     pitchVariance: 0.05
   debugDisableCollision: 0
-  axis: {x: 5, y: 5, z: 0}
 --- !u!114 &647324544927865860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -631,9 +630,9 @@ CapsuleCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   m_Radius: 0.37
-  m_Height: 1
+  m_Height: 0.9
   m_Direction: 1
-  m_Center: {x: 0, y: 0.5, z: 0}
+  m_Center: {x: 0, y: 0.45, z: 0}
 --- !u!135 &1784313262649898792
 SphereCollider:
   m_ObjectHideFlags: 0

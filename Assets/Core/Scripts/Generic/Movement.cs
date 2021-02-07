@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Movement : MonoBehaviour
@@ -69,11 +70,18 @@ public class Movement : MonoBehaviour
         }
     }
 
+    [Flags]
+    public enum MoveFlags
+    {
+        None = 0,
+        NoSlide = 1
+    }
+
     /// <summary>
     /// Moves with collision checking. Can be a computationally expensive operation
     /// </summary>
     /// <param name="offset"></param>
-    public bool Move(Vector3 offset, out RaycastHit hitOut, bool isReconciliation = false)
+    public bool Move(Vector3 offset, out RaycastHit hitOut, bool isReconciliation = false, MoveFlags flags = MoveFlags.None)
     {
         hitOut = new RaycastHit();
 
@@ -82,18 +90,18 @@ public class Movement : MonoBehaviour
         if (!enableCollision)
         {
             transform.position += offset;
-            return true; // that was easy
+            return false; // that was easy
         }
 
         const float kSkin = 0.005f;
-        const int kNumIterations = 3;
+        int numIterations = (flags & MoveFlags.NoSlide) != 0 ? 1 : 3; // final iteration always blocks without slide, so just use one iteration
+        Color[] colorByStage = new Color[] { Color.red, Color.green, Color.blue, Color.yellow };
         Vector3 currentMovement = offset;
         bool hasHitOccurred = false;
-        Color[] colorByStage = new Color[] { Color.red, Color.green, Color.blue, Color.yellow };
 
         movementCollisions.Clear();
 
-        for (int iteration = 0; iteration < kNumIterations; iteration++)
+        for (int iteration = 0; iteration < numIterations; iteration++)
         {
             RaycastHit hit;
             float currentMovementMagnitude = currentMovement.magnitude;
@@ -125,7 +133,7 @@ public class Movement : MonoBehaviour
                 hitOut = hit;
                 hasHitOccurred = true;
 
-                if (iteration == kNumIterations - 1)
+                if (iteration == numIterations - 1)
                 {
                     // final collision: block further movement entirely
                     currentMovement = currentMovement.normalized * (hit.distance - kSkin);

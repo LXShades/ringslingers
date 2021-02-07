@@ -224,8 +224,6 @@ public class CharacterMovement : Movement
             DebugPauseEnd();
     }
 
-    public Vector3 axis;
-
     private void DebugPauseStart()
     {
         if (Application.isEditor && UnityEngine.InputSystem.Keyboard.current.pKey.wasPressedThisFrame)
@@ -368,7 +366,6 @@ public class CharacterMovement : Movement
         }
 
         Vector3 targetUp = Vector3.up;
-        Vector3 lastUp = up;
 
         // We need to look ahead a bit so that we can push towards the ground after we've moved
         Vector3 position = transform.position + velocity * deltaTime;
@@ -471,13 +468,13 @@ public class CharacterMovement : Movement
         // Perform final movement and collision
         Vector3 originalPosition = transform.position;
         Vector3 originalVelocity = velocity;
-        Vector3 stepVector = up * maxStepHeight;
+        Vector3 stepUpVector = up * maxStepHeight;
         bool stepUp = maxStepHeight > 0f;
 
         move.enableCollision = !debugDisableCollision;
 
         if (stepUp)
-            transform.position += stepVector;
+            transform.position += stepUpVector;
 
         if (collisionType == CollisionType.Penetration)
             move.MovePenetration(velocity * deltaTime, isReconciliation);
@@ -485,7 +482,22 @@ public class CharacterMovement : Movement
             move.Move(velocity * deltaTime + extraMoveOffset, out RaycastHit _, isReconciliation);
 
         if (stepUp)
-            move.MovePenetration(-stepVector, isReconciliation);
+        {
+            Vector3 stepReturn = -stepUpVector;
+            bool doStepDownwards = false;
+
+            if (velocity.y <= groundingForce + 0.001f)
+            {
+                stepReturn -= stepUpVector; // step _down_ as well
+                doStepDownwards = true;
+            }
+
+            if (!move.Move(stepReturn, out RaycastHit _, isReconciliation, MoveFlags.NoSlide) && doStepDownwards)
+            {
+                // we didn't hit a step on the way down? then don't step downwards
+                transform.position += stepUpVector;
+            }
+        }
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
         {
@@ -504,8 +516,8 @@ public class CharacterMovement : Movement
                 velocity -= originalVelocity.normalized * Vector3.Dot(velocity, originalVelocity.normalized);
 
             // don't accumulate vertical velocity from stepping up, that's another fishy sign
-            if (stepUp && velocity.AlongAxis(stepVector) > originalVelocity.AlongAxis(stepVector))
-                velocity.SetAlongAxis(stepVector, originalVelocity.AlongAxis(stepVector));
+            if (stepUp && velocity.AlongAxis(stepUpVector) > originalVelocity.AlongAxis(stepUpVector))
+                velocity.SetAlongAxis(stepUpVector, originalVelocity.AlongAxis(stepUpVector));
 
             // overall, don't let velocity exceed its original magnitude, its a sign made of fish
             velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
