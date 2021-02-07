@@ -350,7 +350,7 @@ public class PlayerController : NetworkBehaviour
             inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
 
             // Run latest prediction
-            float predictionAmount = Mathf.Min(maxRemotePrediction, localLatencyAvg + moveStateFlow.currentDelay);
+            float predictionAmount = Mathf.Min(maxRemotePrediction, localLatencyAvg + moveStateFlow.currentDelay - 1f/60f);
 
             if (extrapolateRemoteInput)
                 predictionAmount -= Time.deltaTime; // we're gonna replay this again anyway
