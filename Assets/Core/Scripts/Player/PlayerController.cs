@@ -1,5 +1,6 @@
 ﻿using Mirror;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : NetworkBehaviour
@@ -19,8 +20,10 @@ public class PlayerController : NetworkBehaviour
             writer.WriteSingle(time);
             writer.WriteVector3(position);
             writer.WriteInt32(Compressor.CompressQuaternion(rotation));
+            //writer.WriteQuaternion(rotation);
             writer.WriteVector3(velocity);
             writer.WriteInt16(Compressor.CompressNormal16(up));
+            //writer.WriteVector3(up);
             writer.Write((byte)state);
         }
 
@@ -29,8 +32,10 @@ public class PlayerController : NetworkBehaviour
             time = reader.ReadSingle();
             position = reader.ReadVector3();
             rotation = Compressor.DecompressQuaternion(reader.ReadInt32());
+            //rotation = reader.ReadQuaternion();
             velocity = reader.ReadVector3();
             up = Compressor.DecompressNormal16(reader.ReadInt16());
+            //up = reader.ReadVector3();
             state = (CharacterMovement.State)reader.ReadByte();
         }
 
@@ -113,6 +118,9 @@ public class PlayerController : NetworkBehaviour
 
     private Player player;
     private CharacterMovement movement;
+
+    private static List<float> localLatencies = new List<float>();
+    private static float localLatencyAvg;
 
     private void Start()
     {
@@ -342,7 +350,7 @@ public class PlayerController : NetworkBehaviour
             inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
 
             // Run latest prediction
-            float predictionAmount = Mathf.Min(maxRemotePrediction, Netplay.singleton.unreliablePing + moveStateFlow.currentDelay);
+            float predictionAmount = Mathf.Min(maxRemotePrediction, localLatencyAvg + moveStateFlow.currentDelay);
 
             if (extrapolateRemoteInput)
                 predictionAmount -= Time.deltaTime; // we're gonna replay this again anyway
@@ -367,6 +375,15 @@ public class PlayerController : NetworkBehaviour
         }
         else
         {
+            // HACKY: average player forward projection
+            localLatencies.Add(clientTime - moveState.time);
+            if (localLatencies.Count > 10)
+                localLatencies.RemoveAt(0);
+            localLatencyAvg = 0;
+            for (int i = 0; i < localLatencies.Count; i++)
+                localLatencyAvg += localLatencies[i];
+            localLatencyAvg /= localLatencies.Count;
+
             TryReconcile(moveState);
         }
     }

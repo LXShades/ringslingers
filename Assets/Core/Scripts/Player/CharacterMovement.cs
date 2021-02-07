@@ -112,10 +112,6 @@ public class CharacterMovement : Movement
 
     public float groundDistance { get; private set; }
 
-    public Vector3 wallRunNormal { get; private set; }
-
-    private Vector3 extraMoveOffset;
-
     /// <summary>
     /// Current up vector
     /// </summary>
@@ -125,8 +121,8 @@ public class CharacterMovement : Movement
         set
         {
             // change look rotation with rotation?
-            if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
-                player.input.aimDirection = Quaternion.FromToRotation(_up, value) * player.input.aimDirection;
+            //if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
+                //player.input.aimDirection = Quaternion.FromToRotation(_up, value) * player.input.aimDirection;
 
             _up = value;
 
@@ -138,10 +134,7 @@ public class CharacterMovement : Movement
 
     private bool showDebugLines => Application.platform == RuntimePlatform.WindowsEditor;
 
-    // whether we're currently reconciling movement
-    private bool isReconciling = false;
-
-    // debugging collision step
+    // debugging movement frame step
     private bool doStep = false;
 
     private Vector3 debugPausePosition;
@@ -157,11 +150,10 @@ public class CharacterMovement : Movement
 
     public void TickMovement(float deltaTime, PlayerInput input, bool isReconciliation = false)
     {
+        Physics.SyncTransforms();
+
         if (!isReconciliation)
             DebugPauseStart();
-
-        this.isReconciling = isReconciliation;
-        this.extraMoveOffset = Vector3.zero;
 
         // Check whether on ground
         bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal);
@@ -212,7 +204,7 @@ public class CharacterMovement : Movement
             groundVelocity = Vector3.zero;
 
         // Jump button
-        HandleJumpAbilities(input);
+        HandleJumpAbilities(input, isReconciliation);
 
         // 3D rotation - do this after movement to encourage push down
         ApplyRotation(deltaTime, input);
@@ -319,7 +311,7 @@ public class CharacterMovement : Movement
         velocity = force;
     }
 
-    private void HandleJumpAbilities(PlayerInput input)
+    private void HandleJumpAbilities(PlayerInput input, bool isReconciliation)
     {
         if (state.HasFlag(State.Pained))
             return;
@@ -331,7 +323,7 @@ public class CharacterMovement : Movement
                 // Jump
                 velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM);
 
-                if (!isReconciling)
+                if (!isReconciliation)
                     GameSounds.PlaySound(gameObject, jumpSound);
                 state |= State.Jumped;
             }
@@ -340,7 +332,7 @@ public class CharacterMovement : Movement
                 // Thok
                 velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
-                if (!isReconciling)
+                if (!isReconciliation)
                     GameSounds.PlaySound(gameObject, thokSound);
                 state |= State.Thokked;
             }
@@ -479,14 +471,14 @@ public class CharacterMovement : Movement
         if (collisionType == CollisionType.Penetration)
             move.MovePenetration(velocity * deltaTime, isReconciliation);
         else
-            move.Move(velocity * deltaTime + extraMoveOffset, out RaycastHit _, isReconciliation);
+            move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
 
         if (stepUp)
         {
             Vector3 stepReturn = -stepUpVector;
             bool doStepDownwards = false;
 
-            if (velocity.y <= groundingForce + 0.001f)
+            if (velocity.y <= groundingForce + 0.001f && isOnGround)
             {
                 stepReturn -= stepUpVector; // step _down_ as well
                 doStepDownwards = true;
