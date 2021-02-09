@@ -1,5 +1,4 @@
 ﻿using Mirror;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -58,11 +57,6 @@ public class Netplay : MonoBehaviour
     public Player localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
 
     /// <summary>
-    /// Used by the server. Used to defer new player creation
-    /// </summary>
-    private readonly Dictionary<int, int> playerIdFromConnectionId = new Dictionary<int, int>();
-
-    /// <summary>
     /// Player objects by ID. Will contains null gaps
     /// </summary>
     public Player[] players = new Player[kMaxNumPlayers];
@@ -109,8 +103,6 @@ public class Netplay : MonoBehaviour
 
         net.onServerConnect += OnServerConnected;
         net.onServerDisconnect += OnServerDisconnected;
-
-        net.onServerAddPlayer += OnNewPlayer;
 
         NetworkDiagnostics.InMessageEvent += NetworkDiagnostics_InMessageEvent;
         NetworkDiagnostics.OutMessageEvent += NetworkDiagnostics_OutMessageEvent;
@@ -246,11 +238,13 @@ public class Netplay : MonoBehaviour
     /// </summary>
     public int GetPlayerIdFromConnectionId(int connectionId)
     {
-        if (!NetworkServer.active) // only the server has accurate connection IDs
-            return -1;
+        if (NetworkServer.active && NetworkServer.connections.TryGetValue(connectionId, out NetworkConnectionToClient connection))
+        {
+            int? id = connection.identity?.GetComponent<PlayerClient>()?.playerId;
 
-        if (playerIdFromConnectionId.TryGetValue(connectionId, out int playerId))
-            return playerId;
+            if (id != null)
+                return (int)id;
+        }
 
         return -1;
     }
@@ -317,19 +311,6 @@ public class Netplay : MonoBehaviour
         }
 
         Log.Write("A client has disconnected");
-    }
-
-    private void OnNewPlayer(NetworkConnection connection)
-    {
-        if (connection.identity)
-        {
-            // spawn the player
-            Player newPlayer = AddPlayer(-1);
-            newPlayer.GetComponent<NetworkIdentity>().AssignClientAuthority(connection);
-
-            playerIdFromConnectionId[connection.connectionId] = newPlayer ? newPlayer.playerId : -1;
-            connection.identity.GetComponent<PlayerClient>().playerId = newPlayer ? newPlayer.playerId : -1;
-        }
     }
     #endregion
 

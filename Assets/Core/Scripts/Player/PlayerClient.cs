@@ -9,6 +9,33 @@ public class PlayerClient : NetworkBehaviour
 
     private Player player => playerId != -1 ? Netplay.singleton.players[playerId] : null;
 
+    public override void OnStartServer()
+    {
+        NetworkConnection connection = netIdentity.connectionToClient;
+
+        // spawn the player
+        Player newPlayer = Netplay.singleton.AddPlayer(-1);
+        newPlayer.netIdentity.AssignClientAuthority(connection);
+
+        playerId = newPlayer ? newPlayer.playerId : -1;
+
+        base.OnStartServer();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+    }
+
+    public override void OnStartLocalPlayer()
+    {
+        // Request our name upon joining
+        base.OnStartLocalPlayer();
+
+        Netplay.singleton.localPlayerId = playerId;
+        CmdTryRename(Netplay.singleton.localPlayerIntendedName);
+    }
+
     void OnPlayerIdChanged(int oldValue, int newValue)
     {
         playerId = newValue;
@@ -17,14 +44,6 @@ public class PlayerClient : NetworkBehaviour
         {
             Netplay.singleton.localPlayerId = newValue;
         }
-    }
-
-    public override void OnStartLocalPlayer()
-    {
-        // Request our name upon joining
-        base.OnStartLocalPlayer();
-
-        CmdTryRename(Netplay.singleton.localPlayerIntendedName);
     }
 
     [Command]
