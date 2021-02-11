@@ -226,7 +226,7 @@ MonoBehaviour:
   MaximumPacketSize: 1200
   Channels: 0100000002000000
   StatisticsCalculationInterval: 3
-  EnableLatencySimulation: 0
+  EnableLatencySimulation: -1
   LatencySimulationDelayMs: 76
   LatencySimulationJitterMs: 68
 --- !u!114 &779978514
@@ -275,23 +275,6 @@ MonoBehaviour:
   pingsPerSecond: 2
   playerTickrate: 30
   localPlayerId: -1
-  players:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
 --- !u!4 &779978516
 Transform:
   m_ObjectHideFlags: 0

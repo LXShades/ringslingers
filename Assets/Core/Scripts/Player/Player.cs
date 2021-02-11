@@ -116,21 +116,32 @@ public class Player : NetworkBehaviour
         damageable = GetComponent<Damageable>();
     }
 
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+
+        Netplay.singleton.RegisterPlayer(this);
+
+        if (NetGameState.singleton is NetGameStateCTF netGameStateCTF)
+        {
+            team = netGameStateCTF.FindBestTeamToJoin();
+        }
+
+        Respawn();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+
+        Netplay.singleton.RegisterPlayer(this, playerId);
+    }
+
     void Start()
     {
         PlayerControls control = new PlayerControls();
 
         damageable.onLocalDamaged.AddListener(OnDamaged);
-        Netplay.singleton.players[playerId] = this;
-
-        if (isLocal)
-            Netplay.singleton.localPlayerId = playerId;
-
-        if (NetworkServer.active && NetGameState.singleton is NetGameStateCTF netGameStateCTF)
-            team = netGameStateCTF.FindBestTeamToJoin();
-
-        if (NetworkServer.active)
-            Respawn();
     }
 
     void Update()
@@ -329,7 +340,7 @@ public class Player : NetworkBehaviour
         if (string.IsNullOrWhiteSpace(updatedName))
             updatedName = "Anonymous";
 
-        while (System.Array.Exists(Netplay.singleton.players, a => a != null && a != this && a.playerName == updatedName))
+        while (Netplay.singleton.players.Exists(a => a != null && a != this && a.playerName == updatedName))
         {
             if (currentSuffix < nameSuffices.Length)
                 updatedName = newName + nameSuffices[currentSuffix++];
@@ -360,7 +371,7 @@ public class Player : NetworkBehaviour
     {
         playerId = newVal;
 
-        Netplay.singleton.players[playerId] = this;
+        Netplay.singleton.RegisterPlayer(this, newVal);
     }
 }
 

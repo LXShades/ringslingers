@@ -139,10 +139,10 @@ public class GameHUD : MonoBehaviour
         if (scoreboard.activeSelf)
         {
             // Refresh scoreboard info
-            Player[] orderedPlayers = (Player[])Netplay.singleton.players.Clone();
+            Player[] orderedPlayers = Netplay.singleton.players.ToArray();
             bool useTeamColours = NetGameState.singleton is NetGameStateCTF;
 
-            System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : 0) - (b ? b.score : 0) > 0 ? -1 : 1);
+            System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : -1) - (b ? b.score : -1) > 0 ? -1 : 1);
 
             scoreboardNames.text = "";
             scoreboardScores.text = "";

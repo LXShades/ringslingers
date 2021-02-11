@@ -53,7 +53,10 @@ public class RingShooting : NetworkBehaviour
     void Awake()
     {
         player = GetComponent<Player>();
+    }
 
+    private void Start()
+    {
         if (NetworkServer.active)
         {
             weapons.Add(defaultWeapon);

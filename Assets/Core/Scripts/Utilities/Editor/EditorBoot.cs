@@ -5,10 +5,18 @@ using UnityEngine.SceneManagement;
 [InitializeOnLoad]
 public static class EditorBoot
 {
-    private static bool playModeAutoHost
+    private enum PlayModeCommands
     {
-        get => EditorPrefs.GetBool("_playModeAutoHost", true);
-        set => EditorPrefs.SetBool("_playModeAutoHost", value);
+        None,
+        Host,
+        Connect,
+        Custom
+    }
+
+    private static PlayModeCommands playModeCommandType
+    {
+        get => (PlayModeCommands)EditorPrefs.GetInt("_playModeCommands", (int)PlayModeCommands.Host);
+        set => EditorPrefs.SetInt("_playModeCommands", (int)value);
     }
 
     private static string playModeCommandLine
@@ -46,16 +54,22 @@ public static class EditorBoot
     {
         if (CommandLine.editorCommands.Length == 0 || (CommandLine.editorCommands.Length == 1 && CommandLine.editorCommands[0] == ""))
         {
-            Debug.Log($"Setting PlayMode command line: {playModeCommandLine}");
-            string[] editorCommands = playModeCommandLine.Split(' ');
-
-            if (playModeAutoHost && SceneManager.GetActiveScene().buildIndex != 0) // boot scene assumes we're not auto hosting
+            string[] editorCommands = new string[0];
+            switch (playModeCommandType)
             {
-                System.Array.Resize(ref editorCommands, CommandLine.editorCommands.Length + 1);
-                editorCommands[CommandLine.editorCommands.Length - 1] = "-host";
+                case PlayModeCommands.Host:
+                    if (SceneManager.GetActiveScene().buildIndex != 0) // don't host in boot scene
+                        CommandLine.editorCommands = new string[] { "-host" };
+                    break;
+                case PlayModeCommands.Connect:
+                    CommandLine.editorCommands = new string[] { "-connect", "127.0.0.1" };
+                    break;
+                case PlayModeCommands.Custom:
+                    CommandLine.editorCommands = playModeCommandLine.Split(' ');
+                    break;
             }
 
-            CommandLine.editorCommands = editorCommands;
+            Debug.Log($"Setting PlayMode command line: {string.Join(" ", editorCommands)}");
         }
     }
 
@@ -66,24 +80,47 @@ public static class EditorBoot
         [MenuItem("Playtest/Autohost in Playmode", false, 100)]
         static void AutoHostOutsideBoot()
         {
-            playModeAutoHost = !playModeAutoHost;
+            playModeCommandType = PlayModeCommands.Host;
         }
 
         [MenuItem("Playtest/Autohost in Playmode", validate = true)]
         static bool AutoHostOutsideBootValidate()
         {
-            Menu.SetChecked("Playtest/Autohost in Playmode", playModeAutoHost);
+            Menu.SetChecked("Playtest/Autohost in Playmode", playModeCommandType == PlayModeCommands.Host);
             return true;
         }
 
-        [MenuItem("Playtest/Extra PlayMode commands...", false, 101)]
+
+        [MenuItem("Playtest/Autoconnect in Playmode", false, 101)]
+        static void AutoConnectOutsideBoot()
+        {
+            playModeCommandType = PlayModeCommands.Connect;
+        }
+
+        [MenuItem("Playtest/Autoconnect in Playmode", validate = true)]
+        static bool AutoConnectOutsideBootValidate()
+        {
+            Menu.SetChecked("Playtest/Autoconnect in Playmode", playModeCommandType == PlayModeCommands.Connect);
+            return true;
+        }
+
+        [MenuItem("Playtest/Custom Playmode Commands...", false, 102)]
         static void SetDefaultCommands()
         {
             DefaultCommandLineBox window = CreateInstance<DefaultCommandLineBox>();
             window.position = new Rect(Screen.width / 2, Screen.height / 2, 250, 150);
             window.tempCommands = playModeCommandLine;
+            playModeCommandType = PlayModeCommands.Custom;
             window.ShowUtility();
         }
+
+        [MenuItem("Playtest/Custom Playmode Commands...", validate = true)]
+        static bool SetDefaultCommandsValidate()
+        {
+            Menu.SetChecked("Playtest/Custom Playmode Commands...", playModeCommandType == PlayModeCommands.Custom);
+            return true;
+        }
+
 
         void OnGUI()
         {

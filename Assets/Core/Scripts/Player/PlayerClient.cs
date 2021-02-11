@@ -14,17 +14,12 @@ public class PlayerClient : NetworkBehaviour
         NetworkConnection connection = netIdentity.connectionToClient;
 
         // spawn the player
-        Player newPlayer = Netplay.singleton.AddPlayer(-1);
+        Player newPlayer = Netplay.singleton.AddPlayer();
         newPlayer.netIdentity.AssignClientAuthority(connection);
 
-        playerId = newPlayer ? newPlayer.playerId : -1;
+        playerId = newPlayer.playerId;
 
         base.OnStartServer();
-    }
-
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
     }
 
     public override void OnStartLocalPlayer()

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-public class MessageFeed: NetworkBehaviour
+public class MessageFeed : NetworkBehaviour
 {
     public static MessageFeed singleton { get; private set; }
 
@@ -58,13 +58,28 @@ public class MessageFeed: NetworkBehaviour
         // Format the message
         StringBuilder sb = new StringBuilder(message);
 
-        if (Netplay.singleton.localPlayer)
+        if (NetGameState.singleton.TryGetComponent<NetGameStateCTF>(out NetGameStateCTF netGameStateCTF))
         {
-            sb.Replace($"<player>{Netplay.singleton.localPlayer.playerName}</player>", $"<color=yellow>{Netplay.singleton.localPlayer.playerName}</color>");
+            // player name is based on team color
+            foreach (var player in Netplay.singleton.players)
+            {
+                if (player != null && message.Contains(player.playerName))
+                {
+                    sb.Replace($"<player>{player.playerName}</player>", $"{player.team.ToFontColor()}{player.playerName}</color>");
+                }
+            }
         }
+        else
+        {
+            // local player yellow, others red
+            if (Netplay.singleton.localPlayer)
+            {
+                sb.Replace($"<player>{Netplay.singleton.localPlayer.playerName}</player>", $"<color=yellow>{Netplay.singleton.localPlayer.playerName}</color>");
+            }
 
-        sb.Replace("<player>", "<color=red><noparse>");
-        sb.Replace("</player>", "</noparse></color>");
+            sb.Replace("<player>", "<color=red><noparse>");
+            sb.Replace("</player>", "</noparse></color>");
+        }
         sb.Replace("<localevent>", "<color=blue>");
         sb.Replace("</localevent>", "</color>");
 

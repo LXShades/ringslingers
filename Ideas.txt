@@ -1,3 +1,78 @@
+=================== PLAYTEST! 7th FEB ===============
+? Spawning as the wrong player glitch!?
+? Multiple names glitch!? names getting swapped, IDs clearly wrong
++ Don't collide with other players anymore, it's awful LOW:MID
++ CTF team colors in chat LOW:MID
++ Lower the doppler effect LOW:MID
++ Players all seem to spawn in the same place LOW:HIGH
+- Custom port for LJ sonic LOW:MID
+- Names above players LOW:MID
+- Make a bot run around and stuff, so we can improve the hit detection for real HIGH:HIGH
+- Can't jump off walls and ceilings MID:MID
+- Rebalance sound effects MID:MID
+- Player colours MID:MID
+- googly eyes on the monitors, sure MID:MID
+- predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall
+- Lag spikes should be better illustrated HIGH:LOW
+- See what happens with low-FPS players and their extrapolation, letting them control how fast they go makes things look horrible
+
+====== SMOKE TEST ! 7th FEB ===========
+
++ Auto Rings in nimbus LOW:HIGH
++ REMOVE M KEY LOW:HIGH
++ Flag needs to play return sound
++ Flag no longer drops in random directions
++ Serious freeze bug when level changes
+ ---> try spamming map change
+ ---> test in editor see how scenes are loading
+ ---> HOPEFULLY fixed by only allowing scene change if not already on that scene
++ Fixing "flag always flashing" (hopefully)
++ Stairs suck
++ You can't get into the towers in Metal Star
+- Clients cant handle the slopes in Desolate Twilight
+
+======== PLAYTEST! LIKE JAN ISH ========
+EFFORT:IMPACT
+
+Fixes/Refinements
++ Fix mipmapping LOW:MID
++ Use Ignorance early update instead of late update LOW:MID
++ Fix flashing effect LOW:MID
++ Change buttons for FPS change LOW:MID
++ Kill Y needed in case player goes out of bounds MID:HIGH
++ Fullscreen support MID:HIGH (result: LOW:HIGH)
++ Fix dropped rings despawning on clients and causing errors LOW:LOW
++ Fix rings dropping at 2FPS MID:MID
+ -> probably an issue with disabling Mirror components during runtime? try clumsy.exe?
+ -> result: nope - it was Spawn being called with syncvars being assigned too late.
++ Fix physics HIGH:MIDHIGH
+ + Needs to step up onto steps properly without affecting velocity
+ + Needs to stop bouncing off of corners
+ + Needs to still be able to run up walls
++ Level switch button MED:HIGH
+- Simulate lag both ways
+
+- Smoothen out packet flow HIGH:HIGH
+ - An INetworkTick perhaps
+ - A FlowSmoother component
+ - Netplay or similar class should evaluate all INetworkTick components and handle flow control
+ - Add local time to players, show in the scoreboard, with ping
+ - Monitor packet size. Should ideally be <500 bytes minus header probably
+
+
+- Find out why rings are hitting in different positions
+ -> send collided point from server and tell the client where it was as a debug circle
+ -> Client sets its own debug circle where its own ring hits
+- Improve hit detection HIGH:MEDHIGH
+ - Send current "gameTime" as received from server, and ping indicating how far we project players
+ - Server has a tolerance for rewinding to client position and/or projecting rings. Maybe print out the time difference
+ - Package player updates with "gameTime" and combine all into one
+- Fix shaking on tight slopes HIGH:MED
+- Sound effects for other players (hit, ring throw at least) HIGH:MID
+- Death state HIGH:LOW
++ Getting hit into a corner freezes you
+
+======== OLDER ================
 + Add player spawn points
 + Make multiplayer testing work properly and EASILY
 + Spawn players on join
@@ -71,76 +146,7 @@
 + Identify high packet rate cause
 + Fix ring blinking not working
 + Hit blink shouldn't start predictively when railing
-======== PLAYTEST! ========
-EFFORT:IMPACT
 
-Fixes/Refinements
-+ Fix mipmapping LOW:MID
-+ Use Ignorance early update instead of late update LOW:MID
-+ Fix flashing effect LOW:MID
-+ Change buttons for FPS change LOW:MID
-+ Kill Y needed in case player goes out of bounds MID:HIGH
-+ Fullscreen support MID:HIGH (result: LOW:HIGH)
-+ Fix dropped rings despawning on clients and causing errors LOW:LOW
-+ Fix rings dropping at 2FPS MID:MID
- -> probably an issue with disabling Mirror components during runtime? try clumsy.exe?
- -> result: nope - it was Spawn being called with syncvars being assigned too late.
-+ Fix physics HIGH:MIDHIGH
- + Needs to step up onto steps properly without affecting velocity
- + Needs to stop bouncing off of corners
- + Needs to still be able to run up walls
-+ Level switch button MED:HIGH
-- Simulate lag both ways
-
-- Smoothen out packet flow HIGH:HIGH
- - An INetworkTick perhaps
- - A FlowSmoother component
- - Netplay or similar class should evaluate all INetworkTick components and handle flow control
- - Add local time to players, show in the scoreboard, with ping
- - Monitor packet size. Should ideally be <500 bytes minus header probably
-
-
-- Find out why rings are hitting in different positions
- -> send collided point from server and tell the client where it was as a debug circle
- -> Client sets its own debug circle where its own ring hits
-- Improve hit detection HIGH:MEDHIGH
- - Send current "gameTime" as received from server, and ping indicating how far we project players
- - Server has a tolerance for rewinding to client position and/or projecting rings. Maybe print out the time difference
- - Package player updates with "gameTime" and combine all into one
-- Fix shaking on tight slopes HIGH:MED
-- Sound effects for other players (hit, ring throw at least) HIGH:MID
-- Death state HIGH:LOW
-+ Getting hit into a corner freezes you
-====== SMOKE TEST ! ===========
-
-+ Auto Rings in nimbus LOW:HIGH
-+ REMOVE M KEY LOW:HIGH
-+ Flag needs to play return sound
-+ Flag no longer drops in random directions
-+ Serious freeze bug when level changes
- ---> try spamming map change
- ---> test in editor see how scenes are loading
- ---> HOPEFULLY fixed by only allowing scene change if not already on that scene
-+ Fixing "flag always flashing" (hopefully)
-+ Stairs suck
-+ You can't get into the towers in Metal Star
-- Clients cant handle the slopes in Desolate Twilight
-
-=================== PLAYTEST! 7th FEB ===============
-? Spawning as the wrong player glitch!?
-? Multiple names glitch!? names getting swapped, IDs clearly wrong
-- predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall
-- Lag spikes should be better illustrated
-- Can't jump off walls and ceilings MID:
-- Don't collide with other players anymore, it's awful LOW:MID
-- See what happens with low-FPS players and their extrapolation, letting them control how fast they go makes things look horrible
-- CTF team colors in chat
-- Rebalance sound effects MID:MID
-- Lower the doppler effect LOW:MID
-- Make a bot run around and stuff, so we can improve the hit detection for real
-- Names above players
-- Player colours
-- googly eyes on the monitors, sure
 
 Features:
 + 1 CTF Map MID:HIGH

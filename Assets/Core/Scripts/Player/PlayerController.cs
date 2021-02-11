@@ -156,6 +156,11 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    public void PushInput(PlayerInput input, float delta)
+    {
+        inputHistory.Set(Mathf.Max(clientPlaybackTime, clientTime - maxDeltaTime), new InputDelta(input, Mathf.Min(delta, maxDeltaTime)));
+    }
+
     private void UpdateLocalInputs()
     {
         if (hasAuthority)
@@ -170,7 +175,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         float inputHistoryMaxLength = pingTolerance + Mathf.Min(1f / (Mathf.Min(Netplay.singleton.playerTickrate, limitInputRate ? maxInputRate : 1000f)), 5f);
-        float trimTo = clientTime - inputHistoryMaxLength;
+        float trimTo = Mathf.Max(clientTime, clientPlaybackTime) - inputHistoryMaxLength;
 
         inputHistory.Prune(trimTo);
         eventHistory.Prune(trimTo);

@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,8 +13,6 @@ public class Netplay : MonoBehaviour
         public ushort time;
         public bool isReliable;
     }
-
-    public const int kMaxNumPlayers = 16;
 
     public static Netplay singleton
     {
@@ -57,9 +56,9 @@ public class Netplay : MonoBehaviour
     public Player localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
 
     /// <summary>
-    /// Player objects by ID. Will contains null gaps
+    /// Player objects by ID. May contain null gaps
     /// </summary>
-    public Player[] players = new Player[kMaxNumPlayers];
+    public readonly List<Player> players = new List<Player>();
 
     /// <summary>
     /// Whether this is the server player
@@ -267,8 +266,6 @@ public class Netplay : MonoBehaviour
     {
         if (net || InitNet())
         {
-            localPlayerId = 0;
-
             net.Host(true);
 
             connectionStatus = ConnectionStatus.Ready;
@@ -315,33 +312,18 @@ public class Netplay : MonoBehaviour
     #endregion
 
     #region Players
-    public Player AddPlayer(int id = -1)
+    public Player AddPlayer()
     {
-        if (id == -1)
+        if (!NetworkServer.active)
         {
-            // Find the appropriate ID for this player
-            for (id = 0; id < players.Length; id++)
-            {
-                if (players[id] == null)
-                    break;
-            }
-        }
-
-        if (id == players.Length)
-        {
-            Log.WriteWarning("Can't add new player - too many!");
+            Debug.Log("Only the server can create players!");
             return null;
         }
 
         // Spawn the player
         Player player = Spawner.Spawn(GameManager.singleton.playerPrefab).GetComponent<Player>();
 
-        player.gameObject.name = $"Player {id}";
-        player.playerId = id;
-        players[id] = player;
-
-        player.Rename($"Fred");
-
+        player.gameObject.name = $"Player {player.playerId}";
         Log.Write($"{player.playerName} ({player.playerId}) has entered the game");
 
         return player;
@@ -354,6 +336,48 @@ public class Netplay : MonoBehaviour
             Destroy(players[id].gameObject);
             players[id] = null;
         }
+    }
+
+    /// <summary>
+    /// Registers a player into the player list and returns its ID
+    /// </summary>
+    public void RegisterPlayer(Player player, int id = -1)
+    {
+        if (id == -1)
+        {
+            for (int i = 0; i < players.Count; i++)
+            {
+                if (players[i] == null || players[i] == player)
+                {
+                    players[i] = player;
+                    player.playerId = i;
+                    return;
+                }
+            }
+
+            // no space found
+            players.Add(player);
+            player.playerId = players.Count - 1;
+        }
+        else
+        {
+            // we might be a client registering awareness of this player
+            while (players.Count <= id)
+                players.Add(null);
+            
+            players[id] = player;
+            player.playerId = id;
+        }
+    }
+
+    public Player FindPlayer(string name)
+    {
+        foreach (Player player in players)
+        {
+            if (player.name == name)
+                return player;
+        }
+        return null;
     }
     #endregion
 
