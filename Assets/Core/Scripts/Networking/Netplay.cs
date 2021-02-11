@@ -262,11 +262,11 @@ public class Netplay : MonoBehaviour
         }
     }
 
-    public void HostServer()
+    public void HostServer(int port = -1)
     {
         if (net || InitNet())
         {
-            net.Host(true);
+            net.Host(true, port);
 
             connectionStatus = ConnectionStatus.Ready;
         }

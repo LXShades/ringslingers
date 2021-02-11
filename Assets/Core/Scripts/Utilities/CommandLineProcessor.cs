@@ -36,11 +36,18 @@ public class CommandLineProcessor : MonoBehaviour
             Netplay.singleton.HostServer();
         }*/
 
+        int hostPort = -1;
+        if (CommandLine.GetCommand("-port", 1, out string[] port))
+        {
+            if (!int.TryParse(port[0], out hostPort))
+                hostPort = -1;
+        }
+
         if (CommandLine.HasCommand("-host"))
         {
             Debug.Log("Hosting!");
 
-            Netplay.singleton.HostServer();
+            Netplay.singleton.HostServer(hostPort);
         }
 
         if (CommandLine.GetCommand("-connect", 1, out string[] connectParams))

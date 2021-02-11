@@ -5,6 +5,8 @@ public class NetMan : NetworkManager
 {
     public static new NetMan singleton { get; private set; }
 
+    private int defaultPort;
+
     public delegate void ConnectionEvent(NetworkConnection connection);
     public delegate void BasicEvent();
 
@@ -42,13 +44,20 @@ public class NetMan : NetworkManager
     {
         base.Awake();
 
+        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceThreaded>() != null);
         singleton = this;
+        defaultPort = transport.GetComponent<IgnoranceThreaded>().CommunicationPort;
 
         SyncActionChain.RegisterHandlers();
     }
 
-    public void Host(bool withLocalPlayer)
+    public void Host(bool withLocalPlayer, int port = -1)
     {
+        if (port != -1)
+            transport.GetComponent<IgnoranceThreaded>().CommunicationPort = port;
+        else
+            transport.GetComponent<IgnoranceThreaded>().CommunicationPort = defaultPort;
+
         if (withLocalPlayer)
             StartHost();
         else
@@ -59,7 +68,29 @@ public class NetMan : NetworkManager
 
     public void Connect(string ip)
     {
-        networkAddress = ip;
+        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceThreaded>() != null);
+
+        if (ip.Contains(":"))
+        {
+            networkAddress = ip.Substring(0, ip.IndexOf(":"));
+            int port;
+
+            if (int.TryParse(ip.Substring(ip.IndexOf(":") + 1), out port))
+            {
+                transport.GetComponent<IgnoranceThreaded>().CommunicationPort = port;
+            }
+            else
+            {
+                Log.WriteWarning($"Could not read port {ip.Substring(ip.IndexOf(":") + 1)}, using default of {defaultPort}.");
+                transport.GetComponent<IgnoranceThreaded>().CommunicationPort = defaultPort;
+            }
+        }
+        else
+        {
+            networkAddress = ip;
+            transport.GetComponent<IgnoranceThreaded>().CommunicationPort = defaultPort;
+        }
+        
         StartClient();
     }
 
