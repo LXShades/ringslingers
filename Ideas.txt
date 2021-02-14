@@ -11,10 +11,14 @@
 + Custom port for LJ sonic LOW:MID
 + Rebalance sound effects MID:MID
 + Player colours MID:MID
-- Fix ticker breaking on map change
++ Fix ticker breaking on map change
 - Can't jump off walls and ceilings MID:MID
-- googly eyes on the monitors, sure MID:MID
-- predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall
+- Refill spawnable prefabs to squash ticker issue LOW:MID
+- Add eyes to the monitors, sure MID:MID
+- Add new Homing Ring (crosshair shape perhaps) MID:HIGH
+
+-- To watch for in future tests:
+- Predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall
 - Lag spikes should be better illustrated HIGH:LOW
 - See what happens with low-FPS players and their extrapolation, letting them control how fast they go makes things look horrible
 

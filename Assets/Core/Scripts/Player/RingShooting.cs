@@ -50,14 +50,12 @@ public class RingShooting : NetworkBehaviour
 
     // Components
     private Player player;
-    private PlayerTicker ticker;
 
     private HistoryList<Action> bufferedThrowEvents = new HistoryList<Action>();
 
     void Awake()
     {
         player = GetComponent<Player>();
-        ticker = FindObjectOfType<PlayerTicker>();
     }
 
     private void Start()
@@ -150,7 +148,7 @@ public class RingShooting : NetworkBehaviour
                 FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
             }
 
-            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction(), equippedWeaponIndex, ticker.predictedServerTime);
+            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction(), equippedWeaponIndex, PlayerTicker.singleton ? PlayerTicker.singleton.predictedServerTime : 0f);
             hasFiredOnThisClick = true;
         }
     }

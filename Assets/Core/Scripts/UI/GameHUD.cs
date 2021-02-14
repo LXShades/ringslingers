@@ -123,11 +123,9 @@ public class GameHUD : MonoBehaviour
                 $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}\n";
 
             // debug stuff for other players in the same scene
-            PlayerTicker ticker = FindObjectOfType<PlayerTicker>();
-
-            if (ticker)
+            if (PlayerTicker.singleton)
             {
-                debugText.text += $"Ticker info: ===\n{ticker.DebugInfo()}";
+                debugText.text += $"Ticker info: ===\n{PlayerTicker.singleton.DebugInfo()}";
             }
         }
 

@@ -126,13 +126,11 @@ public class PlayerController : NetworkBehaviour
 
     private Player player;
     private CharacterMovement movement;
-    private PlayerTicker ticker;
 
     private void Awake()
     {
         player = GetComponent<Player>();
         movement = GetComponent<CharacterMovement>();
-        ticker = FindObjectOfType<PlayerTicker>();
     }
 
 
@@ -293,7 +291,7 @@ public class PlayerController : NetworkBehaviour
             inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
 
             // Run latest prediction
-            float predictionAmount = Mathf.Min(maxRemotePrediction, ticker.localPlayerPing);
+            float predictionAmount = Mathf.Min(maxRemotePrediction, PlayerTicker.singleton ? PlayerTicker.singleton.localPlayerPing : 0f);
 
             if (extrapolateRemoteInput)
                 predictionAmount -= Time.deltaTime; // we're gonna replay this again anyway

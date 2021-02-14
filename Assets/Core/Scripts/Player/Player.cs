@@ -43,6 +43,7 @@ public class Player : NetworkBehaviour
     [SyncVar(hook = nameof(OnColourChanged))]
     public Color colour;
 
+    [SyncVar(hook = nameof(OnTeamChanged))]
     private PlayerTeam _team = PlayerTeam.None;
 
     public PlayerTeam team
@@ -377,6 +378,11 @@ public class Player : NetworkBehaviour
     {
         playerName = newVal;
         gameObject.name = playerName;
+    }
+
+    private void OnTeamChanged(PlayerTeam oldTeam, PlayerTeam newTeam)
+    {
+        team = newTeam;
     }
 
     private void OnPlayerIdChanged(int oldVal, int newVal)

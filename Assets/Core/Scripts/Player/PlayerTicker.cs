@@ -16,6 +16,8 @@ public class PlayerTicker : NetworkBehaviour
         public PlayerController.MoveStateWithInput moveState;
     }
 
+    public static PlayerTicker singleton { get; private set; }
+
     private readonly List<ServerPlayerTick> ticksOut = new List<ServerPlayerTick>(32);
 
     private readonly Dictionary<int, NetFlowController<PlayerController.InputPack>> playerInputFlow = new Dictionary<int, NetFlowController<PlayerController.InputPack>>();
@@ -26,6 +28,11 @@ public class PlayerTicker : NetworkBehaviour
     public float predictedServerTime { get; private set; }
 
     public float localPlayerPing { get; private set; }
+
+    private void Awake()
+    {
+        singleton = this;
+    }
 
     private void Update()
     {
