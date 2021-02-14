@@ -11,6 +11,13 @@ public class LineMaker : ObjectSpawner
     [Tooltip("The direction and magnitude of the line")]
     public Vector3 line;
 
+    [Tooltip("If enabled, a force of gravity is applied")]
+    public bool useGravity = false;
+    [Tooltip("When being launched along the direction of the line, this is the velocity along the line that the victim travels. Gravity is added during this")]
+    public float gravityLaunchVelocity = 1f;
+    [Tooltip("How much gravity to apply over time")]
+    public float gravityForce = 9.8f;
+
     /// <summary>
     /// Places each object along the line. Called by ObjectSpawner
     /// </summary>
@@ -18,7 +25,18 @@ public class LineMaker : ObjectSpawner
     /// <param name="objIndex">The 0-based index of the object</param>
     public override void OnObjectUpdate(GameObject obj, int objIndex)
     {
-        obj.transform.localPosition = line.normalized * (objectSpacing * objIndex);
+        if (useGravity)
+        {
+            float distanceAlongLine = (objectSpacing * objIndex);
+            float time = distanceAlongLine / gravityLaunchVelocity;
+            Vector3 down = transform.InverseTransformDirection(Vector3.down);
+
+            obj.transform.localPosition = line.normalized * distanceAlongLine + (down * gravityForce * time * time);
+        }
+        else
+        {
+            obj.transform.localPosition = line.normalized * (objectSpacing * objIndex);
+        }
     }
 
     public override int GetNumObjects()

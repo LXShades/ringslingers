@@ -22,7 +22,7 @@ public class Spring : MonoBehaviour, IMovementCollisions
     {
         CharacterMovement movement = source as CharacterMovement;
 
-        if (movement && movement.velocity.AlongAxis(transform.up) < springForce * 0.7f)
+        if (movement && (movement.velocity.AlongAxis(transform.up) < springForce * 0.7f || springAbsolutely))
         {
             movement.SpringUp(springForce, transform.up, springAbsolutely);
 
