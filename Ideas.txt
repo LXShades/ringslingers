@@ -7,11 +7,12 @@
 + Players all seem to spawn in the same place LOW:HIGH
 + Names above players LOW:MID
 + Make a bot run around and stuff, so we can improve the hit detection for real HIGH:HIGH
-- REVERT the input buffer size being 1 whole second
-- Custom port for LJ sonic LOW:MID
++ REVERT the input buffer size being 1 whole second
++ Custom port for LJ sonic LOW:MID
++ Rebalance sound effects MID:MID
++ Player colours MID:MID
+- Fix ticker breaking on map change
 - Can't jump off walls and ceilings MID:MID
-- Rebalance sound effects MID:MID
-- Player colours MID:MID
 - googly eyes on the monitors, sure MID:MID
 - predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall
 - Lag spikes should be better illustrated HIGH:LOW

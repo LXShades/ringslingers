@@ -54,6 +54,7 @@ public class Netplay : MonoBehaviour
     public PlayerClient localClient => NetworkClient.connection.identity.GetComponent<PlayerClient>();
 
     public string localPlayerIntendedName { get; set; }
+    public Color localPlayerIntendedColour { get; set; }
 
     public Player localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
 

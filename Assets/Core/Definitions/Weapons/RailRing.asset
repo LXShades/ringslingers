@@ -18,14 +18,22 @@ MonoBehaviour:
   shotsPerSecond: 0.67
   fireSound:
     clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
-    volume: 1
-    pitch: 1
-    pitchVariance: 0.05
-  despawnSound:
-    clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
-    volume: 1
+    additionalClips: []
+    blend3D: 1
+    range: 15
+    volumeDecibels: -3
     pitch: 1
     pitchVariance: 0
+    looping: 0
+  despawnSound:
+    clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
+    additionalClips: []
+    blend3D: 1
+    range: 10
+    volumeDecibels: -3
+    pitch: 1
+    pitchVariance: 0
+    looping: 0
   ammoOnPickup: 30
   maxAmmo: 99
   ammoIsTime: 1

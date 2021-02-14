@@ -93,9 +93,13 @@ MonoBehaviour:
   pickupParticles: {fileID: 8883259143873366175}
   pickupSound:
     clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
-    volume: 0.3
+    additionalClips: []
+    blend3D: 1
+    range: 14.91
+    volumeDecibels: -14
     pitch: 1
     pitchVariance: 0
+    looping: 0
 --- !u!114 &8745252381286273571
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -247,9 +251,13 @@ MonoBehaviour:
     m_RotationOrder: 4
   despawnSound:
     clip: {fileID: 0}
-    volume: 1
+    additionalClips: []
+    blend3D: 1
+    range: 10
+    volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
+    looping: 0
 --- !u!135 &2551830685116736536
 SphereCollider:
   m_ObjectHideFlags: 0

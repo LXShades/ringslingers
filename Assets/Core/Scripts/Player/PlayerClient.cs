@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using UnityEngine;
 
 public class PlayerClient : NetworkBehaviour
 {
@@ -29,6 +30,7 @@ public class PlayerClient : NetworkBehaviour
 
         Netplay.singleton.localPlayerId = playerId;
         CmdTryRename(Netplay.singleton.localPlayerIntendedName);
+        CmdRequestColor(Netplay.singleton.localPlayerIntendedColour);
     }
 
     void OnPlayerIdChanged(int oldValue, int newValue)
@@ -52,5 +54,11 @@ public class PlayerClient : NetworkBehaviour
     private void CmdTryRename(string newName)
     {
         player?.Rename(newName);
+    }
+
+    [Command]
+    public void CmdRequestColor(Color32 colour)
+    {
+        player?.TryChangeColour(colour);
     }
 }

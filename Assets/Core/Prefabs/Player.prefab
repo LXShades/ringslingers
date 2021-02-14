@@ -560,18 +560,23 @@ MonoBehaviour:
     btnJumpReleased: 0
     btnFirePressed: 0
     btnFireReleased: 0
-  modelMaterialByTeam:
-  - {fileID: 2100000, guid: 4b658bc16d8baf04ab033e9076297f1f, type: 2}
-  - {fileID: 2100000, guid: 9da0a8e5695d2d048a4adbc1e9b660ef, type: 2}
-  - {fileID: 2100000, guid: 4b658bc16d8baf04ab033e9076297f1f, type: 2}
+  colour: {r: 0, g: 0, b: 0, a: 0}
+  colourByTeam:
+  - {r: 0, g: 0, b: 0, a: 0}
+  - {r: 0.9528302, g: 0.20225172, b: 0.20225172, a: 0}
+  - {r: 0.1321622, g: 0.09251513, b: 0.9339623, a: 0}
   score: 0
   characterModel: {fileID: 2407978492390594985}
   flagHoldBone: {fileID: 1736103052617720840}
   dropSound:
     clip: {fileID: 8300000, guid: eb3b92045251f434fab489da0cf93319, type: 3}
-    volume: 1
+    additionalClips: []
+    blend3D: 1
+    range: 30
+    volumeDecibels: -3
     pitch: 1
     pitchVariance: 0
+    looping: 0
   droppedRingPrefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
   droppedRingSpawnPoint: {fileID: 3310946930297574031}
   ringDropLayers:
@@ -674,14 +679,22 @@ MonoBehaviour:
   actionSpeed: 60
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
-    volume: 0.3
+    additionalClips: []
+    blend3D: 1
+    range: 15
+    volumeDecibels: -4.7
     pitch: 1
     pitchVariance: 0
+    looping: 0
   thokSound:
     clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
-    volume: 1
+    additionalClips: []
+    blend3D: 1
+    range: 15
+    volumeDecibels: 0
     pitch: 1
-    pitchVariance: 0.05
+    pitchVariance: 0
+    looping: 0
   debugDisableCollision: 0
 --- !u!114 &647324544927865860
 MonoBehaviour:
@@ -698,7 +711,7 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0.1
   pingTolerance: 0.5
-  sendBufferLength: 1
+  sendBufferLength: 0.17
   limitInputRate: 1
   limitUpdatesToInputRate: 1
   maxInputRate: 60
@@ -1039,7 +1052,7 @@ PrefabInstance:
     - target: {fileID: 3733700690988744884, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 4b658bc16d8baf04ab033e9076297f1f, type: 2}
+      objectReference: {fileID: 2100000, guid: 8b94f3179b7b6e84095cb14358dcb6d6, type: 2}
     - target: {fileID: 9033401157053858005, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 

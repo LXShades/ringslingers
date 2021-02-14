@@ -40,7 +40,9 @@ public class Player : NetworkBehaviour
     public PlayerInput lastInput;
 
     [Header("Team and identity")]
-    [SyncVar(hook=nameof(OnTeamChanged))]
+    [SyncVar(hook = nameof(OnColourChanged))]
+    public Color colour;
+
     private PlayerTeam _team = PlayerTeam.None;
 
     public PlayerTeam team
@@ -53,7 +55,7 @@ public class Player : NetworkBehaviour
         get => _team;
     }
 
-    public Material[] modelMaterialByTeam = new Material[0];
+    public Color[] colourByTeam = new Color[0];
 
     [Header("Shinies")]
     [SyncVar]
@@ -123,9 +125,7 @@ public class Player : NetworkBehaviour
         Netplay.singleton.RegisterPlayer(this);
 
         if (NetGameState.singleton is NetGameStateCTF netGameStateCTF)
-        {
-            team = netGameStateCTF.FindBestTeamToJoin();
-        }
+            ChangeTeam(netGameStateCTF.FindBestTeamToJoin());
 
         Respawn();
     }
@@ -351,20 +351,32 @@ public class Player : NetworkBehaviour
         playerName = updatedName;
     }
 
+    [Server]
+    public void TryChangeColour(Color newColour)
+    {
+        if (team == PlayerTeam.None)
+        {
+            OnColourChanged(colour, newColour);
+        }
+    }
+
+    [Server]
+    public void ChangeTeam(PlayerTeam team)
+    {
+        this.team = team;
+        OnColourChanged(colour, colourByTeam[(int)team]);
+    }
+
+    private void OnColourChanged(Color oldColour, Color newColour)
+    {
+        colour = newColour;
+        characterModel.material.color = colour;
+    }
+
     private void OnPlayerNameChanged(string oldVal, string newVal)
     {
         playerName = newVal;
         gameObject.name = playerName;
-    }
-
-    private void OnTeamChanged(PlayerTeam oldVal, PlayerTeam newVal)
-    {
-        team = newVal;
-
-        if ((int)team < modelMaterialByTeam.Length)
-        {
-            characterModel.sharedMaterial = modelMaterialByTeam[(int)team];
-        }
     }
 
     private void OnPlayerIdChanged(int oldVal, int newVal)
