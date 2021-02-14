@@ -17,16 +17,26 @@ public class NetFlowController<TMessage> where TMessage : struct
 
     public float jitterSampleSize = 2f;
     public float maxDelay = 0.2f;
-    public float minDelay = 0.01f;
+    public float minDelay = 0.0f;
+
+    // if a message with a sentTime is pushed below this age in seconds, the flow is reset assuming that the timer must have been reset.
+    private float flowResetPeriod = 5f;
 
     /// <summary>
     /// Call when first receiving a message. remoteTime, if available, should refer to the time that the remote party sent the message, in any format
     /// </summary>
-    public void OnMessageReceived(TMessage message, float sentTime)
+    public void PushMessage(TMessage message, float sentTime)
     {
+        if (Mathf.Abs(sentTime - lastPoppedMessageTime) >= flowResetPeriod)
+        {
+            // this indicates that time has perhaps reset
+            Reset();
+            Log.WriteWarning($"Resetting net flow due to pushing a message older than the reset period");
+        }
+
         receivedMessages.Insert(sentTime, new MessagePack() {
             message = message,
-            receivedTime = Time.unscaledTime,
+            receivedTime = Time.realtimeSinceStartup,
             sentTime = sentTime
         });
 
@@ -42,11 +52,11 @@ public class NetFlowController<TMessage> where TMessage : struct
         {
             if (skipOutdatedMessages)
             {
-                while (nextIndex - 1 >= 0 && receivedMessages.TimeAt(nextIndex - 1) <= Time.unscaledTime - localToRemoteTime)
+                while (nextIndex - 1 >= 0 && receivedMessages.TimeAt(nextIndex - 1) <= Time.realtimeSinceStartup - localToRemoteTime)
                     nextIndex--;
             }
 
-            if (receivedMessages.TimeAt(nextIndex) <= Time.unscaledTime - localToRemoteTime)
+            if (receivedMessages.TimeAt(nextIndex) <= Time.realtimeSinceStartup - localToRemoteTime)
             {
                 message = receivedMessages[nextIndex].message;
                 lastPoppedMessageTime = receivedMessages[nextIndex].sentTime;
@@ -55,6 +65,15 @@ public class NetFlowController<TMessage> where TMessage : struct
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Resets the flow controller meaning time can start again from 0
+    /// </summary>
+    public void Reset()
+    {
+        receivedMessages.Clear();
+        lastPoppedMessageTime = 0f;
     }
 
     private void Refresh()
@@ -85,11 +104,11 @@ public class NetFlowController<TMessage> where TMessage : struct
                 localToRemoteTime = 0f; // who knows!
         }
 
-        receivedMessages.Prune(Mathf.Max(Time.unscaledTime - localToRemoteTime - Mathf.Max(jitterSampleSize, maxDelay * 2f), lastPoppedMessageTime));
+        receivedMessages.Prune(Mathf.Max(Time.realtimeSinceStartup - localToRemoteTime - Mathf.Max(jitterSampleSize, maxDelay * 2f)));
     }
 
     public override string ToString()
     {
-        return $"NetFlowController ({typeof(TMessage).Name}):\n-> currentDelay={currentDelay}\nnumMsgs: {receivedMessages.Count}";
+        return $"NetFlowController ({typeof(TMessage).Name}):\n-> currentDelay={(int)(currentDelay*1000)}ms\nnumMsgs: {receivedMessages.Count}";
     }
 }

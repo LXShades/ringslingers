@@ -107,7 +107,7 @@ public class GameHUD : MonoBehaviour
                 weaponSlots[i].weapon = ringShooting.weapons[i + 1]; // skip default weapon
                 weaponSlots[i].hasWeapon = true;
             }
-            for (int j = ringShooting.weapons.Count - 1 /* skip default weapon */; j < weaponSlots.Length; j++)
+            for (int j = Mathf.Max(ringShooting.weapons.Count - 1 /* skip default weapon */, 0); j < weaponSlots.Length; j++)
                 weaponSlots[j].hasWeapon = false;
 
             // Debug stuff
@@ -123,12 +123,11 @@ public class GameHUD : MonoBehaviour
                 $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}\n";
 
             // debug stuff for other players in the same scene
-            foreach (var otherPlayer in FindObjectsOfType<Player>())
+            PlayerTicker ticker = FindObjectOfType<PlayerTicker>();
+
+            if (ticker)
             {
-                if (otherPlayer != Netplay.singleton.localPlayer)
-                {
-                    debugText.text += $"{otherPlayer.playerName}:\n{otherPlayer.GetComponent<PlayerController>().moveStateFlow}";
-                }
+                debugText.text += $"Ticker info: ===\n{ticker.DebugInfo()}";
             }
         }
 

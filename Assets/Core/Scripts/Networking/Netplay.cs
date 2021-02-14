@@ -43,6 +43,8 @@ public class Netplay : MonoBehaviour
     [Header("Tickrate")]
     public float playerTickrate = 10f;
 
+    public bool isPlayerTick => (int)(Time.unscaledTime * playerTickrate) != (int)((Time.unscaledTime - Time.unscaledDeltaTime) * playerTickrate);
+
     [Header("Players")]
     /// <summary>
     /// Local player ID

@@ -20,6 +20,12 @@ public class NetworkEditorTools : MonoBehaviour
         set => EditorPrefs.SetInt("netNumTestPlayers", value);
     }
 
+    public static bool onlyBuildCurrentScene
+    {
+        get => EditorPrefs.GetBool("netOnlyBuildCurrentScene", false);
+        set => EditorPrefs.SetBool("netOnlyBuildCurrentScene", value);
+    }
+
     public static string buildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/QuickTest";
 
     public static string webGlBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/WebGL";
@@ -39,22 +45,33 @@ public class NetworkEditorTools : MonoBehaviour
         string activeScenePath = EditorSceneManager.GetActiveScene().path;
         int currentSceneIndex = -1;
 
-        for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
+        if (onlyBuildCurrentScene)
         {
-            if (EditorBuildSettings.scenes[i].enabled)
-            {
-                levels.Add(EditorBuildSettings.scenes[i].path);
+            if (EditorBuildSettings.scenes.Length > 0)
+                levels.Add(EditorBuildSettings.scenes[0].path);
 
-                if (EditorBuildSettings.scenes[i].path == activeScenePath)
+            levels.Add(activeScenePath);
+            currentSceneIndex = 1;
+        }
+        else
+        {
+            for (int i = 0; i < EditorBuildSettings.scenes.Length; i++)
+            {
+                if (EditorBuildSettings.scenes[i].enabled)
                 {
-                    currentSceneIndex = i;
+                    levels.Add(EditorBuildSettings.scenes[i].path);
+
+                    if (EditorBuildSettings.scenes[i].path == activeScenePath)
+                    {
+                        currentSceneIndex = i;
+                    }
                 }
             }
-        }
 
-        if (currentSceneIndex == -1)
-        {
-            levels.Add(activeScenePath);
+            if (currentSceneIndex == -1)
+            {
+                levels.Add(activeScenePath);
+            }
         }
 
         // Build and run the player, preserving the open scene
@@ -206,6 +223,13 @@ public class NetworkEditorTools : MonoBehaviour
 
     [MenuItem("Playtest/4 players", true)]
     private static bool FourTestPlayersValidate() { Menu.SetChecked("Playtest/4 players", numTestPlayers == 4); return true; }
+
+
+    [MenuItem("Playtest/Only build current scene", priority = 120)]
+    private static void OnlyCurrentScene() { onlyBuildCurrentScene = !onlyBuildCurrentScene; }
+
+    [MenuItem("Playtest/Only build current scene", true)]
+    private static bool OnlyCurrentSceneValidate() { Menu.SetChecked("Playtest/Only build current scene", onlyBuildCurrentScene); return true; }
 
     private static void RunBuild(string arguments = "")
     {

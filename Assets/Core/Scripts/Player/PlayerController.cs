@@ -1,6 +1,5 @@
 ﻿using Mirror;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : NetworkBehaviour
@@ -9,6 +8,7 @@ public class PlayerController : NetworkBehaviour
     public struct MoveState : IEquatable<MoveState>
     {
         public float time;
+        public float extrapolation;
         public Vector3 position;
         public Quaternion rotation;
         public Vector3 velocity;
@@ -18,6 +18,7 @@ public class PlayerController : NetworkBehaviour
         public void Serialize(NetworkWriter writer)
         {
             writer.WriteSingle(time);
+            writer.WriteSingle(extrapolation);
             writer.WriteVector3(position);
             writer.WriteInt32(Compressor.CompressQuaternion(rotation));
             //writer.WriteQuaternion(rotation);
@@ -30,6 +31,7 @@ public class PlayerController : NetworkBehaviour
         public void Deserialize(NetworkReader reader)
         {
             time = reader.ReadSingle();
+            extrapolation = reader.ReadSingle();
             position = reader.ReadVector3();
             rotation = Compressor.DecompressQuaternion(reader.ReadInt32());
             //rotation = reader.ReadQuaternion();
@@ -55,6 +57,13 @@ public class PlayerController : NetworkBehaviour
             this.input = input;
             this.deltaTime = deltaTime;
         }
+    }
+
+    public struct InputPack
+    {
+        public float startTime;
+        public InputDelta[] inputs;
+        public MoveState moveState;
     }
 
     public struct MoveStateWithInput
@@ -102,6 +111,7 @@ public class PlayerController : NetworkBehaviour
 
     public float clientPlaybackTime { get; private set; }
     public float clientTime { get; private set; }
+    public float currentExtrapolation { get; private set; }
 
     private MovementEvent pendingEvents = null;
     private HistoryList<MovementEvent> eventHistory = new HistoryList<MovementEvent>();
@@ -112,31 +122,30 @@ public class PlayerController : NetworkBehaviour
     private MoveState lastReceivedMoveState;
     private PlayerInput lastReceivedMoveStateInput; // valid on client when receiving a player from the server
 
-    public readonly NetFlowController<MoveStateWithInput> moveStateFlow = new NetFlowController<MoveStateWithInput>();
-
     private float nextInputUpdateTime;
 
     private Player player;
     private CharacterMovement movement;
+    private PlayerTicker ticker;
 
-    private static List<float> localLatencies = new List<float>();
-    private static float localLatencyAvg;
-
-    private void Start()
+    private void Awake()
     {
         player = GetComponent<Player>();
         movement = GetComponent<CharacterMovement>();
+        ticker = FindObjectOfType<PlayerTicker>();
+    }
 
+
+    private void Start()
+    {
         lastConfirmedState = MakeMoveState();
     }
 
-    void Update()
+    /// <summary>
+    /// Ticks the character. Received messages are processed during this phase
+    /// </summary>
+    public void Tick()
     {
-        if (moveStateFlow.TryPopMessage(out MoveStateWithInput moveState, true))
-        {
-            OnReceivedMovement(moveState.moveState, moveState.input);
-        }
-
         // Receive latest networked inputs/states etc
         // performs reconciliations and stuff
         ProcessReceivedStates();
@@ -147,13 +156,6 @@ public class PlayerController : NetworkBehaviour
 
         // Tick movement
         RunTicks();
-
-        // Send the movement state occasionally AFTER movement has executed
-        if ((int)((Time.unscaledTime - Time.unscaledDeltaTime) * Netplay.singleton.playerTickrate) != (int)(Time.unscaledTime * Netplay.singleton.playerTickrate) 
-            && (hasAuthority || NetworkServer.active))
-        {
-            SendMovementState();
-        }
     }
 
     public void PushInput(PlayerInput input, float delta)
@@ -221,15 +223,18 @@ public class PlayerController : NetworkBehaviour
                 }
 
                 clientPlaybackTime = inputHistory.LatestTime + inputHistory.Latest.deltaTime; // precision correction
+                currentExtrapolation = 0f;
                 lastConfirmedState = MakeMoveState();
             }
             else if (doExtrapolate)
             {
                 movement.TickMovement(Time.deltaTime, PlayerInput.MakeWithDeltas(player.input, player.input), true);
+                currentExtrapolation += Time.deltaTime;
             }
             else if (doRemoteExtrapolate)
             {
                 movement.TickMovement(Time.deltaTime, inputHistory.Latest.input, true);
+                currentExtrapolation += Time.deltaTime;
             }
         }
         catch (Exception e)
@@ -240,86 +245,16 @@ public class PlayerController : NetworkBehaviour
 
     private void ProcessReceivedStates()
     {
-        if (hasReceivedMoveState)
+        if (hasReceivedMoveState && !NetworkServer.active)
         {
-            if (NetworkServer.active && !hasAuthority)
-            {
-                // validate this player's movement on the server
-                ServerValidateMovement(lastReceivedMoveState);
-            }
-            else if (!NetworkServer.active)
-            {
-                // validate this player (or our own) movement on the client
-                ClientValidateMovement(lastReceivedMoveState, lastReceivedMoveStateInput);
-            }
-
-            hasReceivedMoveState = false;
-        }
-    }
-
-    private void SendMovementState()
-    {
-        // send inputs (and maybe final result?) to server
-        if (hasAuthority && !NetworkServer.active)
-        {
-            int startIndex = inputHistory.ClosestIndexBeforeOrEarliest(clientTime - sendBufferLength);
-
-            if (startIndex != -1)
-            {
-                InputDelta[] inputs = new InputDelta[startIndex + 1];
-                for (int i = startIndex; i >= 0; i--)
-                    inputs[i] = inputHistory[i];
-
-                CmdMoveState(inputHistory.TimeAt(startIndex), inputs, MakeMoveState());
-            }
+            // validate this player (or our own) movement on the client
+            ClientValidateMovement(lastReceivedMoveState, lastReceivedMoveStateInput);
         }
 
-        // send final state to players
-        if (NetworkServer.active)
-        {
-            RpcMoveState(new MoveStateWithInput()
-            {
-                moveState = lastConfirmedState,
-                input = inputHistory.Latest.input
-            });
-        }
+        hasReceivedMoveState = false;
     }
 
-    [Command(channel = Channels.DefaultUnreliable)]
-    public void CmdMoveState(float startTime, InputDelta[] inputs, MoveState moveState)
-    {
-        float time = startTime;
-        for (int i = inputs.Length - 1; i >= 0; i--)
-        {
-            inputHistory.Set(time, inputs[i], 0.001f);
-            time += inputs[i].deltaTime;
-        }
-
-        OnReceivedMovement(moveState);
-
-        clientTime = time;
-        player.input = inputHistory.Latest.input;
-    }
-
-    [ClientRpc(channel = Channels.DefaultUnreliable, excludeOwner = true)]
-    public void RpcMoveState(MoveStateWithInput moveStateWithInput)
-    {
-        if (NetworkServer.active)
-            return;
-
-        moveStateFlow.OnMessageReceived(moveStateWithInput, moveStateWithInput.moveState.time);
-    }
-
-    /// <summary>
-    /// Sent when the server confirms a different position for the client (or AlwaysReconcile is on)
-    /// </summary>
-    [TargetRpc(channel = Channels.DefaultUnreliable)]
-    public void TargetReconcile(MoveState moveState)
-    {
-        OnReceivedMovement(moveState);
-    }
-
-    private void OnReceivedMovement(MoveState moveState, PlayerInput input = default)
+    public void ReceiveMovement(MoveState moveState, PlayerInput input = default)
     {
         if (moveState.time > lastReceivedMoveState.time) // don't receive out-of-order movements
         {
@@ -329,16 +264,19 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private void ServerValidateMovement(MoveState moveState)
+    public void ReceiveInputPack(InputPack inputPack)
     {
-        if (Vector3.Distance(moveState.position, transform.position) < reconcilationPositionTolerance && !alwaysReconcile)
+        float time = inputPack.startTime;
+        for (int i = inputPack.inputs.Length - 1; i >= 0; i--)
         {
-            ApplyMoveState(moveState);
+            inputHistory.Set(time, inputPack.inputs[i], 0.001f);
+            time += inputPack.inputs[i].deltaTime;
         }
-        else
-        {
-            TargetReconcile(lastConfirmedState);
-        }
+
+        ReceiveMovement(inputPack.moveState);
+
+        clientTime = time;
+        player.input = inputHistory.Latest.input;
     }
 
     private void ClientValidateMovement(MoveState moveState, PlayerInput input)
@@ -355,7 +293,7 @@ public class PlayerController : NetworkBehaviour
             inputHistory.Insert(moveState.time, new InputDelta(input, 0f)); // todo
 
             // Run latest prediction
-            float predictionAmount = Mathf.Min(maxRemotePrediction, localLatencyAvg + moveStateFlow.currentDelay - 1f/60f);
+            float predictionAmount = Mathf.Min(maxRemotePrediction, ticker.localPlayerPing);
 
             if (extrapolateRemoteInput)
                 predictionAmount -= Time.deltaTime; // we're gonna replay this again anyway
@@ -377,18 +315,11 @@ public class PlayerController : NetworkBehaviour
 
                 movement.TickMovement(delta, input, true);
             }
+
+            currentExtrapolation = predictionAmount;
         }
         else
         {
-            // HACKY: average player forward projection
-            localLatencies.Add(clientTime - moveState.time);
-            if (localLatencies.Count > 10)
-                localLatencies.RemoveAt(0);
-            localLatencyAvg = 0;
-            for (int i = 0; i < localLatencies.Count; i++)
-                localLatencyAvg += localLatencies[i];
-            localLatencyAvg /= localLatencies.Count;
-
             TryReconcile(moveState);
         }
     }
@@ -434,6 +365,12 @@ public class PlayerController : NetworkBehaviour
 
             float extrapolatedDelta = Mathf.Min(clientTime - (inputHistory.LatestTime + inputHistory.Latest.deltaTime), maxDeltaTime);
             movement.TickMovement(extrapolatedDelta, PlayerInput.MakeWithDeltas(inputHistory.Latest.input, inputHistory.Latest.input), true);
+
+            currentExtrapolation = extrapolatedDelta;
+        }
+        else
+        {
+            currentExtrapolation = 0f;
         }
 
         if (printReconcileInfo)
@@ -458,11 +395,39 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private MoveState MakeMoveState()
+    public InputPack MakeInputPack()
+    {
+        int startIndex = inputHistory.ClosestIndexBeforeOrEarliest(clientTime - sendBufferLength);
+
+        if (startIndex != -1)
+        {
+            InputDelta[] inputs = new InputDelta[startIndex + 1];
+            for (int i = startIndex; i >= 0; i--)
+                inputs[i] = inputHistory[i];
+
+            return new InputPack()
+            {
+                startTime = inputHistory.TimeAt(startIndex),
+                inputs = inputs
+            };
+        }
+
+        return new InputPack()
+        {
+            startTime = inputHistory.LatestTime,
+            inputs = new InputDelta[0]
+        };
+    }
+
+    /// <summary>
+    /// Makes a move state from our current state
+    /// </summary>
+    public MoveState MakeMoveState()
     {
         return new MoveState()
         {
             time = clientPlaybackTime,
+            extrapolation = currentExtrapolation,
             position = transform.position,
             rotation = transform.rotation,
             state = movement.state,
@@ -471,7 +436,26 @@ public class PlayerController : NetworkBehaviour
         };
     }
 
-    private void ApplyMoveState(MoveState state)
+    /// <summary>
+    /// Returns the last confirmed move state or erm thing
+    /// </summary>
+    public MoveState MakeOrGetConfirmedMoveState()
+    {
+        bool doExtrapolate = hasAuthority && extrapolateLocalInput;
+        bool doRemoteExtrapolate = !hasAuthority && extrapolateRemoteInput;
+
+        if (doExtrapolate || doRemoteExtrapolate)
+        {
+            lastConfirmedState.extrapolation = currentExtrapolation;
+            return lastConfirmedState;
+        }
+        else
+        {
+            return MakeMoveState();
+        }
+    }
+
+    public void ApplyMoveState(MoveState state)
     {
         transform.position = state.position;
         transform.rotation = state.rotation;
@@ -479,7 +463,7 @@ public class PlayerController : NetworkBehaviour
         movement.velocity = state.velocity;
         movement.up = state.up;
 
-        Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
+        //Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
     }
 
     public static string GetDebugInfo()

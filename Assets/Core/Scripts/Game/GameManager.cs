@@ -86,7 +86,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        Cursor.lockState = (isPaused || SceneManager.GetActiveScene().buildIndex == 1) ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.lockState = (isPaused || SceneManager.GetActiveScene().path.ToLower().Contains(defaultMenuScene.ToLower())) ? CursorLockMode.None : CursorLockMode.Locked;
 
         // Do debug stuff
         RunDebugCommands();

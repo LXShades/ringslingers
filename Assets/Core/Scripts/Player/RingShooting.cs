@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System;
 using UnityEngine;
 
 public class RingShooting : NetworkBehaviour
@@ -49,10 +50,14 @@ public class RingShooting : NetworkBehaviour
 
     // Components
     private Player player;
+    private PlayerTicker ticker;
+
+    private HistoryList<Action> bufferedThrowEvents = new HistoryList<Action>();
 
     void Awake()
     {
         player = GetComponent<Player>();
+        ticker = FindObjectOfType<PlayerTicker>();
     }
 
     private void Start()
@@ -65,6 +70,16 @@ public class RingShooting : NetworkBehaviour
 
     void Update()
     {
+        for (int i = bufferedThrowEvents.Count - 1; i >= 0; i--)
+        {
+            if (Time.realtimeSinceStartup >= bufferedThrowEvents.TimeAt(i))
+            {
+                Log.Write($"Throwing ring - my time: {Time.realtimeSinceStartup:F2} desired: {bufferedThrowEvents.TimeAt(i):F2}");
+                bufferedThrowEvents[i].Invoke();
+                bufferedThrowEvents.RemoveAt(i);
+            }
+        }
+
         // test: equip best weapon
         if (weapons.Count > 0)
             equippedWeaponIndex = weapons.Count - 1;
@@ -135,13 +150,28 @@ public class RingShooting : NetworkBehaviour
                 FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
             }
 
-            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction(), equippedWeaponIndex);
+            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction(), equippedWeaponIndex, ticker.predictedServerTime);
             hasFiredOnThisClick = true;
         }
     }
 
     [Command]
-    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon)
+    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon, float predictedServerTime)
+    {
+        float timeToThrowAt = predictedServerTime;
+        if (timeToThrowAt > Time.realtimeSinceStartup)
+        {
+            // the client threw this, in what they predicted ahead of current time... this means we need to delay the shot until roughly the correct time arrives
+             bufferedThrowEvents.Insert(timeToThrowAt, () => OnCmdThrowRing(position, direction, spawnPrediction, equippedWeapon, predictedServerTime));
+        }
+        else
+        {
+            // throw it now then
+            OnCmdThrowRing(position, direction, spawnPrediction, equippedWeapon, predictedServerTime);
+        }
+    }
+
+    private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon, float predictedServerTime)
     {
         if (!CanThrowRing() || Vector3.Distance(position, spawnPosition.position) > 2f)
         {
