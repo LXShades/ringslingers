@@ -129,7 +129,7 @@ public class PlayerCamera : MonoBehaviour
                     landBobTimer = Mathf.Max(landBobTimer - Time.deltaTime, 0);
                 }
 
-                transform.position += transform.up * (Mathf.Sin(eyeBobSpeed * Time.unscaledTime * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.velocity.Horizontal().magnitude / maxPlayerVelocityForEyeBob));
+                transform.position += transform.up * (Mathf.Sin(eyeBobSpeed * Time.unscaledTime * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.groundVelocity.magnitude / maxPlayerVelocityForEyeBob));
             }
 
             lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);

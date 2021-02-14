@@ -72,6 +72,7 @@ public class Player : NetworkBehaviour
     [Header("Visuals")]
     public Renderer characterModel;
     public Transform flagHoldBone;
+    public TrailRenderer speedTrails;
 
     [Header("Ring drop")]
     public GameSound dropSound = new GameSound();
@@ -143,6 +144,8 @@ public class Player : NetworkBehaviour
         PlayerControls control = new PlayerControls();
 
         damageable.onLocalDamaged.AddListener(OnDamaged);
+
+        OnColourChanged(colour, colour); // HACK: we need to update visuals
     }
 
     void Update()
@@ -371,7 +374,19 @@ public class Player : NetworkBehaviour
     private void OnColourChanged(Color oldColour, Color newColour)
     {
         colour = newColour;
-        characterModel.material.color = colour;
+        characterModel.material.color = newColour;
+
+        if (newColour.r == 0 && newColour.g == 0 && newColour.b == 0)
+        {
+            Color defaultColour = characterModel.material.GetColor("_SourceColor");
+            speedTrails.startColor = defaultColour;
+            speedTrails.endColor = new Color(defaultColour.r, defaultColour.g, defaultColour.b, 0f);
+        }
+        else
+        {
+            speedTrails.startColor = newColour;
+            speedTrails.endColor = new Color(newColour.r, newColour.g, newColour.b, 0f);
+        }
     }
 
     private void OnPlayerNameChanged(string oldVal, string newVal)

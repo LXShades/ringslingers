@@ -31,6 +31,7 @@ public class NetFlowController<TMessage> where TMessage : struct
         {
             // this indicates that time has perhaps reset
             Reset();
+            lastPoppedMessageTime = sentTime - 0.01f;
             Log.WriteWarning($"Resetting net flow due to pushing a message older than the reset period");
         }
 
