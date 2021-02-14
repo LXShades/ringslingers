@@ -6,6 +6,8 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
     [Tooltip("Speed that this ring spins at, in degrees per second")] public float spinSpeed = 180;
     public float hoverHeight = 0.375f;
 
+    public Transform modelToSpin;
+
     [Header("Dropped rings")]
     [SyncVar]
     public bool isDroppedRing = false;
@@ -75,7 +77,8 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
         if (isDroppedRing || respawnableItem.isSpawned)
         {
             // Spinny spin
-            transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles + new Vector3(0, spinSpeed * Time.deltaTime, 0));
+            // it's faster to spin the model, otherwise we're spinning the collision boxes which adds to the SyncTransform penalty
+            modelToSpin.rotation = Quaternion.AngleAxis(spinSpeed * Time.deltaTime, new Vector3(0, 1, 0)) * modelToSpin.rotation;
         }
     }
 

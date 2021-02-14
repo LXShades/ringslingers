@@ -141,10 +141,12 @@ public class GameSounds : MonoBehaviour
         sources[currentChannel].minDistance = sound.range * 0.1f;
         sources[currentChannel].maxDistance = sound.range * 1.5f;
         sources[currentChannel].spatialBlend = sound.blend3D;
-        sources[currentChannel].Play();
-        sourceAttachments[currentChannel] = source;
         if (source)
             sources[currentChannel].transform.position = source.transform.position;
+        else
+            sources[currentChannel].spatialBlend = 0f;
+        sourceAttachments[currentChannel] = source;
+        sources[currentChannel].Play();
     }
 
     public static bool IsSoundPlayingOn(GameObject target)
