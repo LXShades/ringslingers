@@ -77,20 +77,25 @@ public class NetworkEditorTools : MonoBehaviour
         // Build and run the player, preserving the open scene
         string originalScene = EditorSceneManager.GetActiveScene().path;
 
-        EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo();
-
-        UnityEditor.Build.Reporting.BuildReport buildReport = BuildPipeline.BuildPlayer(levels.ToArray(), $"{buildPath}/Build.exe", BuildTarget.StandaloneWindows64, BuildOptions.Development);
-
-        EditorSceneManager.OpenScene(originalScene);
-
-        if (buildReport.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+        if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
         {
-            EditorUtility.DisplayDialog("Someone goofed", $"Build failed ({buildReport.summary.totalErrors} errors)", "OK");
-            return false;
+            UnityEditor.Build.Reporting.BuildReport buildReport = BuildPipeline.BuildPlayer(levels.ToArray(), $"{buildPath}/Build.exe", BuildTarget.StandaloneWindows64, BuildOptions.Development);
+
+            EditorSceneManager.OpenScene(originalScene);
+
+            if (buildReport.summary.result != UnityEditor.Build.Reporting.BuildResult.Succeeded)
+            {
+                EditorUtility.DisplayDialog("Someone goofed", $"Build failed ({buildReport.summary.totalErrors} errors)", "OK");
+                return false;
+            }
+            else
+            {
+                return true;
+            }
         }
         else
         {
-            return true;
+            return false;
         }
     }
 

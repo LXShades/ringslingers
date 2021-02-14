@@ -136,11 +136,11 @@ public class RingShooting : NetworkBehaviour
         weapons.Add(new RingWeapon() { weaponType = weaponType, ammo = ammoToAdd });
     }
 
-    private bool CanThrowRing() => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond;
+    private bool CanThrowRing(float lenience) => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond - lenience;
 
     private void LocalThrowRing()
     {
-        if (CanThrowRing())
+        if (CanThrowRing(0f))
         {
             if (!NetworkServer.active)
             {
@@ -173,9 +173,9 @@ public class RingShooting : NetworkBehaviour
 
     private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon, float predictedServerTime)
     {
-        if (!CanThrowRing() || Vector3.Distance(position, spawnPosition.position) > 2f)
+        if (!CanThrowRing(0.01f) || Vector3.Distance(position, spawnPosition.position) > 2f)
         {
-            Log.WriteWarning($"Discarding ring throw: dist is {Vector3.Distance(position, spawnPosition.position)} CanThrow: {CanThrowRing()}");
+            Log.WriteWarning($"Discarding ring throw: dist is {Vector3.Distance(position, spawnPosition.position)} CanThrow: {CanThrowRing(0.01f)}");
             return; // invalid throw
         }
 
