@@ -478,7 +478,7 @@ public class CharacterMovement : Movement
             Vector3 stepReturn = -stepUpVector;
             bool doStepDownwards = false;
 
-            if (velocity.y <= groundingForce + 0.001f && isOnGround)
+            if (isOnGround && velocity.AlongAxis(groundNormal) <= groundingForce + 0.001f)
             {
                 stepReturn -= stepUpVector; // step _down_ as well
                 doStepDownwards = true;
