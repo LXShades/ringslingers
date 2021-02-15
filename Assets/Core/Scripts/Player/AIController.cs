@@ -7,6 +7,8 @@ public class AIController : MonoBehaviour
     public Path path;
     public float pathTargetAcceptanceRange = 2f;
 
+    public int followPlayerId;
+
     private int currentTargetPathPoint = 0;
 
     private Player player;
@@ -56,9 +58,9 @@ public class AIController : MonoBehaviour
 
                 moveIntentionDirection = MoveTowardsTarget(path.GetWorldPoint(currentTargetPathPoint));
             }
-            else if (Netplay.singleton.players.Count > 2 && Netplay.singleton.players[2])
+            else if (Netplay.singleton.players.Count > followPlayerId && Netplay.singleton.players[followPlayerId])
             {
-                moveIntentionDirection = MoveTowardsTarget(Netplay.singleton.players[2].transform.position);
+                moveIntentionDirection = MoveTowardsTarget(Netplay.singleton.players[followPlayerId].transform.position);
             }
 
             float sin = Mathf.Sin(-input.horizontalAim * Mathf.Deg2Rad);

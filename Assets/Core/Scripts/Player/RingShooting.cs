@@ -53,6 +53,10 @@ public class RingShooting : NetworkBehaviour
 
     private HistoryList<Action> bufferedThrowEvents = new HistoryList<Action>();
 
+    public GameObject testAutoAimObject;
+    public float testAutoAimSmoothDamp = 0.1f;
+    private Vector3 autoAimDampVelocity;
+
     void Awake()
     {
         player = GetComponent<Player>();
@@ -68,11 +72,12 @@ public class RingShooting : NetworkBehaviour
 
     void Update()
     {
+        UpdateAutoAim();
+
         for (int i = bufferedThrowEvents.Count - 1; i >= 0; i--)
         {
             if (Time.realtimeSinceStartup >= bufferedThrowEvents.TimeAt(i))
             {
-                Log.Write($"Throwing ring - my time: {Time.realtimeSinceStartup:F2} desired: {bufferedThrowEvents.TimeAt(i):F2}");
                 bufferedThrowEvents[i].Invoke();
                 bufferedThrowEvents.RemoveAt(i);
             }
@@ -114,6 +119,101 @@ public class RingShooting : NetworkBehaviour
         hasFiredOnThisClick &= player.input.btnFire;
     }
 
+    void UpdateAutoAim()
+    {
+        if (hasAuthority)
+        {
+            Player target = FindClosestTarget(10.0f);
+            if (target)
+            {
+                if (PredictTargetPosition(target, out Vector3 predictedPosition))
+                {
+                    if (!testAutoAimObject.activeInHierarchy)
+                    {
+                        testAutoAimObject.transform.position = predictedPosition;
+                        testAutoAimObject.transform.rotation = target.transform.rotation;
+                        autoAimDampVelocity = Vector3.zero;
+                        testAutoAimObject.SetActive(true);
+                    }
+                    else
+                    {
+                        testAutoAimObject.transform.position = Vector3.SmoothDamp(testAutoAimObject.transform.position, predictedPosition, ref autoAimDampVelocity, testAutoAimSmoothDamp);
+                    }
+                }
+                else
+                    testAutoAimObject.SetActive(false);
+            }
+            else
+                testAutoAimObject.SetActive(false);
+        }
+    }
+
+    private Player FindClosestTarget(float angleLimit)
+    {
+        Vector3 aimDirection = player.input.aimDirection;
+        float bestDot = Mathf.Cos(angleLimit * Mathf.Deg2Rad);
+        Player bestTarget = null;
+
+        foreach (Player player in Netplay.singleton.players)
+        {
+            if (player && player != this.player)
+            {
+                float dot = Vector3.Dot((player.transform.position - transform.position).normalized, aimDirection);
+
+                if (dot >= bestDot)
+                {
+                    bestDot = dot;
+                    bestTarget = player;
+                }
+            }
+        }
+
+        return bestTarget;
+    }
+
+    private bool PredictTargetPosition(Player target, out Vector3 predictedPosition)
+    {
+        float interval = 0.07f;
+        PlayerController controller = target.GetComponent<PlayerController>();
+        CharacterMovement movement = target.GetComponent<CharacterMovement>();
+        PlayerController.MoveState originalState = controller.MakeMoveState();
+        PlayerInput input = controller.GetLatestInput();
+        Vector3 startPosition = spawnPosition.position;
+        float ringDistance = 0f; // theoretical thrown ring distance
+        float ringSpeed = 32.81f * interval;
+        float lastTargetDistance = Vector3.Distance(target.transform.position, startPosition);
+        Vector3 lastTargetPosition = target.transform.position;
+        bool succeeded = false;
+
+        predictedPosition = target.transform.position;
+
+        for (int i = 0; i < 30; i++)
+        {
+            movement.TickMovement(interval, input, true);
+            ringDistance += ringSpeed;
+
+            float currentTargetDistance = Vector3.Distance(target.transform.position, startPosition);
+
+            if (currentTargetDistance >= lastTargetDistance + ringSpeed) // target is moving away faster than our ring would, so if they continue along this path we can't hit them
+                break;
+
+            if (ringDistance >= currentTargetDistance)
+            {
+                // the ring is normally a bit ahead, estimate a position between the last and current position using the typical gap per interval as a point of reference
+                float blend = 1f - (ringDistance - currentTargetDistance) / ringSpeed;
+                predictedPosition = Vector3.LerpUnclamped(lastTargetPosition, target.transform.position, blend);
+                succeeded = true;
+                break;
+            }
+
+            lastTargetDistance = currentTargetDistance;
+            lastTargetPosition = target.transform.position;
+        }
+
+        controller.ApplyMoveState(originalState);
+        return succeeded;
+    }
+
     public void AddWeaponAmmo(RingWeaponSettings weaponType, bool doOverrideAmmo, float ammoOverride)
     {
         float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.ammoOnPickup;
@@ -148,7 +248,16 @@ public class RingShooting : NetworkBehaviour
                 FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
             }
 
-            CmdThrowRing(spawnPosition.position, player.input.aimDirection, Spawner.EndSpawnPrediction(), equippedWeaponIndex, PlayerTicker.singleton ? PlayerTicker.singleton.predictedServerTime : 0f);
+            Vector3 direction = player.input.aimDirection;
+            Player autoAimTarget = FindClosestTarget(10.0f);
+
+            if (autoAimTarget)
+            {
+                if (PredictTargetPosition(autoAimTarget, out Vector3 predictedPosition))
+                    direction = predictedPosition + Vector3.up * 0.5f - spawnPosition.position;
+            }
+
+            CmdThrowRing(spawnPosition.position, direction, Spawner.EndSpawnPrediction(), equippedWeaponIndex, PlayerTicker.singleton ? PlayerTicker.singleton.predictedServerTime : 0f);
             hasFiredOnThisClick = true;
         }
     }

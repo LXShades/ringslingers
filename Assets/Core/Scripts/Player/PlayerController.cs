@@ -277,6 +277,11 @@ public class PlayerController : NetworkBehaviour
         player.input = inputHistory.Latest.input;
     }
 
+    public PlayerInput GetLatestInput()
+    {
+        return inputHistory.Latest.input;
+    }
+
     private void ClientValidateMovement(MoveState moveState, PlayerInput input)
     {
         if (!hasAuthority)
