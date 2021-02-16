@@ -1,5 +1,6 @@
 ﻿using Mirror;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class ThrownRing : NetworkBehaviour
 {
@@ -27,6 +28,8 @@ public class ThrownRing : NetworkBehaviour
     private float spawnTime;
 
     private bool isDead = false;
+
+    public UnityEvent onDespawn;
 
     void Awake()
     {
@@ -150,6 +153,7 @@ public class ThrownRing : NetworkBehaviour
         }
 
         isDead = true;
+        onDespawn?.Invoke();
         Spawner.Despawn(gameObject);
     }
 
