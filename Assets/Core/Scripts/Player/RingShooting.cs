@@ -249,13 +249,13 @@ public class RingShooting : NetworkBehaviour
             }
 
             Vector3 direction = player.input.aimDirection;
-            Player autoAimTarget = FindClosestTarget(10.0f);
+            /*Player autoAimTarget = FindClosestTarget(10.0f);
 
             if (autoAimTarget)
             {
                 if (PredictTargetPosition(autoAimTarget, out Vector3 predictedPosition))
                     direction = predictedPosition + Vector3.up * 0.5f - spawnPosition.position;
-            }
+            }*/
 
             CmdThrowRing(spawnPosition.position, direction, Spawner.EndSpawnPrediction(), equippedWeaponIndex, PlayerTicker.singleton ? PlayerTicker.singleton.predictedServerTime : 0f);
             hasFiredOnThisClick = true;

@@ -18,8 +18,8 @@ public class Damageable : NetworkBehaviour
     public Renderer[] affectedRenderers = new Renderer[0];
 
     [Header("Teams")]
-    [Tooltip("Except when -1 (neutral), objects with the same damage team won't hurt each other")]
-    public int damageTeam = -1;
+    [Tooltip("Except when 0 (neutral), objects with the same damage team won't hurt each other")]
+    public int damageTeam = 0;
 
     public bool isInvincible => invincibilityTimeRemaining > 0f;
 
@@ -42,11 +42,16 @@ public class Damageable : NetworkBehaviour
         }
     }
 
+    public bool CanBeDamagedBy(int otherDamageTeam)
+    {
+        return otherDamageTeam == 0 || this.damageTeam == 0 || otherDamageTeam != this.damageTeam;
+    }
+
     public void TryDamage(GameObject instigator, Vector3 force = default, bool instaKill = false)
     {
         if (instigator && instigator.TryGetComponent(out Damageable instigatorDamageable))
         {
-            if (instigatorDamageable.damageTeam == damageTeam && damageTeam != -1)
+            if (!CanBeDamagedBy(instigatorDamageable.damageTeam))
                 return; // hit by someone on the same team
         }
 

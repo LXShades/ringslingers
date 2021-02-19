@@ -5,11 +5,23 @@ public class SpawnObject : MonoBehaviour
 {
     public GameObject prefabToSpawn;
 
-    public void SpawnAtOrigin()
+    public bool canSpawnLocally = false;
+
+    public void Spawn(GameObject source)
     {
-        if (NetworkServer.active)
+        if (NetworkServer.active || canSpawnLocally)
         {
-            Instantiate(prefabToSpawn, transform.position, Quaternion.identity);
+            GameObject obj = Spawner.Spawn(prefabToSpawn, transform.position, Quaternion.identity);
+            int sourceTeam = 0;
+
+            if (source.TryGetComponent(out ThrownRing thrownRing))
+                sourceTeam = thrownRing.owner?.GetComponent<Damageable>()?.damageTeam ?? 0;
+
+            if (obj.TryGetComponent(out DamageOnTouch damager))
+            {
+                damager.owner = source;
+                damager.team = sourceTeam;
+            }
         }
     }
 }

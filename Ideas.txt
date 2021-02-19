@@ -16,9 +16,14 @@
 + Refill spawnable prefabs to squash ticker issue LOW:MID
 + Make player thok trail same colour as player LOW:MID
 + Add eyes to the monitors, sure MID:MID
++ Add bomb ring
++ Fix broken hits
++ Add bomb ring collision / damage effect
+- Do a first pass on ring-swapping or combining so maps can have multiple ring types
 - Add new Homing Ring (crosshair shape perhaps) MID:HIGH
-- Add bomb ring
 - Upgrade the Planet map or remove from rotation
+- REMOVE PINGULATION
+- 
 
 -- To watch for in future tests:
 - Predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall

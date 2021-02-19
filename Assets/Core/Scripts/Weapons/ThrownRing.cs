@@ -18,18 +18,20 @@ public class ThrownRing : NetworkBehaviour
 
     private Vector3 spinAxis;
 
+
     [SyncVar]
     private Vector3 velocity;
 
+    public GameObject owner => _owner;
     [SyncVar]
-    protected GameObject owner;
+    protected GameObject _owner;
     private Rigidbody rb;
 
     private float spawnTime;
 
     private bool isDead = false;
 
-    public UnityEvent onDespawn;
+    public UnityEvent<GameObject> onDespawn;
 
     void Awake()
     {
@@ -66,14 +68,14 @@ public class ThrownRing : NetworkBehaviour
             settings = ScriptableObject.CreateInstance<RingWeaponSettings>(); // better than nothing?
         }
 
-        if (NetworkClient.active && !NetworkServer.active && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.gameObject != owner)
+        if (NetworkClient.active && !NetworkServer.active && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.gameObject != _owner)
         {
             // shoot further ahead
             Simulate(Netplay.singleton.unreliablePing);
         }
 
         // colour the ring
-        if (owner.TryGetComponent(out Player owningPlayer))
+        if (_owner.TryGetComponent(out Player owningPlayer))
         {
             switch (owningPlayer.team)
             {
@@ -112,7 +114,7 @@ public class ThrownRing : NetworkBehaviour
                 Physics.IgnoreCollision(collider, ownerCollider);
         }
 
-        this.owner = owner.gameObject;
+        this._owner = owner.gameObject;
         velocity = direction.normalized * settings.projectileSpeed;
         transform.position = spawnPosition;
     }
@@ -123,28 +125,28 @@ public class ThrownRing : NetworkBehaviour
             return; // Unity physics bugs are pain
         //if (Time.time - spawnTime < 0.1f)
             //return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
-        if (collision.collider.gameObject == owner)
+        if (collision.collider.gameObject == _owner)
             return; // don't collide with the player who threw the ring
 
         // Hurt any players we collided with
-        if (collision.collider.TryGetComponent(out Damageable damageable) && owner)
+        if (collision.collider.TryGetComponent(out Damageable damageable) && _owner)
         {
-            if (damageable.gameObject == owner)
+            if (damageable.gameObject == _owner)
                 return; // actually we're fine here
 
-            damageable.TryDamage(owner, velocity.normalized * settings.projectileKnockback);
+            damageable.TryDamage(_owner, velocity.normalized * settings.projectileKnockback);
         }
 
         if (collision.collider.TryGetComponent(out ThrownRing thrownRing))
         {
-            if (thrownRing.owner == owner)
+            if (thrownRing._owner == _owner)
                 return; // don't collide with our other rings
         }
 
         // Play despawn sound
         GameSounds.PlaySound(gameObject, settings.despawnSound);
 
-        if (owner && owner.TryGetComponent(out Player ownerPlayer))
+        if (_owner && _owner.TryGetComponent(out Player ownerPlayer))
         {
             if (NetworkServer.active)
                 ownerPlayer.RpcNotifyRingDespawnedAt(transform.position);
@@ -153,7 +155,7 @@ public class ThrownRing : NetworkBehaviour
         }
 
         isDead = true;
-        onDespawn?.Invoke();
+        onDespawn?.Invoke(_owner);
         Spawner.Despawn(gameObject);
     }
 

@@ -15,7 +15,7 @@ MonoBehaviour:
   prefab: {fileID: 942187780836486323, guid: 80c166c21f78dc449bc9d3b783bed646, type: 3}
   droppedRingPrefab: {fileID: 1203937048721973902, guid: 71cd869cc1b82c1449b6f30c52353efb, type: 3}
   uiIcon: {fileID: 21300000, guid: bc42a556c69beb048847e4d49c9f5e2f, type: 3}
-  shotsPerSecond: 4
+  shotsPerSecond: 3.5
   fireSound:
     clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
     additionalClips: []
@@ -26,11 +26,11 @@ MonoBehaviour:
     pitchVariance: 0
     looping: 0
   despawnSound:
-    clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
+    clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
     additionalClips: []
     blend3D: 1
-    range: 10
-    volumeDecibels: -3
+    range: 15
+    volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
     looping: 0

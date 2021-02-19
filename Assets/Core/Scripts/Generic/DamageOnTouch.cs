@@ -3,6 +3,8 @@
 public class DamageOnTouch : MonoBehaviour, IMovementCollisions
 {
     public bool instaKill = false;
+    public int team;
+    public GameObject owner;
 
     public void OnMovementCollidedBy(Movement source, bool isReconciliation)
     {
@@ -16,7 +18,7 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisions
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent(out Damageable damageable))
+        if (other.TryGetComponent(out Damageable damageable) && damageable.CanBeDamagedBy(team) && damageable.gameObject != owner)
         {
             damageable.TryDamage(gameObject, default, instaKill);
         }

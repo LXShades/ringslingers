@@ -17,7 +17,7 @@ public class ThrownRingRail : ThrownRing
 
     public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
     {
-        this.owner = owner.gameObject;
+        this._owner = owner.gameObject;
         transform.forward = direction;
         transform.position = spawnPosition;
 
