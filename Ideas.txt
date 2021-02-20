@@ -20,10 +20,12 @@
 + Fix broken hits
 + Add bomb ring collision / damage effect
 - Do a first pass on ring-swapping or combining so maps can have multiple ring types
+ - Multiple weapons should show in the HUD when you have multiple weapons picked up
+ - Picking up auto increases other weapon speed by 2x
+ - Picking up bomb causes explode on impact
 - Add new Homing Ring (crosshair shape perhaps) MID:HIGH
 - Upgrade the Planet map or remove from rotation
-- REMOVE PINGULATION
-- 
+- REMOVE PING SIMULATION
 
 -- To watch for in future tests:
 - Predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall
