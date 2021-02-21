@@ -79,6 +79,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: ThrownBombRing
       objectReference: {fileID: 0}
+    - target: {fileID: 6170419100613418712, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
+      propertyPath: affectedRenderers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6170419100613418712, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
+      propertyPath: affectedRenderers.Array.data[0]
+      value: 
+      objectReference: {fileID: 7171921701276744988}
     - target: {fileID: 6836027050033395844, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -207,3 +215,8 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: edca447976b67ca49887911043aae348, type: 3}
+--- !u!23 &7171921701276744988 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: edca447976b67ca49887911043aae348, type: 3}
+  m_PrefabInstance: {fileID: 8378486858616758680}
+  m_PrefabAsset: {fileID: 0}

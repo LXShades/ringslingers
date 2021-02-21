@@ -78,6 +78,13 @@ public class RingWeaponSettings
     /// </summary>
     public bool isAutomatic = false;
 
+    /// <summary>
+    /// Degrees of autoaim something I... i dont know what im saying
+    /// </summary>
+    public float autoAimHitboxRadius = 0f;
+
+    public float autoAimDegreesRadius = 0f;
+
     [Header("Projectile")]
     /// <summary>
     /// Speed of the ring projectile

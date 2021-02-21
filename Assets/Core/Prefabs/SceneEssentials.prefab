@@ -438,6 +438,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+  maxReceivedServerTickSmoothingDelay: 0.07
+  maxReceivedClientInputSmoothingDelay: 0.07
 --- !u!1001 &5855508452200257497
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -663,7 +665,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4529179194286407339, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_RootOrder
-      value: 14
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4991734411108028422, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchorMin.y
@@ -684,6 +686,10 @@ PrefabInstance:
     - target: {fileID: 4991734411108028422, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5101568729429267019, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_RootOrder
+      value: 13
       objectReference: {fileID: 0}
     - target: {fileID: 5275607683864100625, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchorMin.y
@@ -787,7 +793,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8329682926898880529, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_RootOrder
-      value: 13
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 8383358575031171901, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchorMin.y

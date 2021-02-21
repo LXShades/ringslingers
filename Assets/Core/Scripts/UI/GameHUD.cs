@@ -7,10 +7,11 @@ using UnityEngine.UI;
 /// </summary>
 public class GameHUD : MonoBehaviour
 {
-    [Header("Main")]
+    [Header("Gameplay")]
     public Text ringsText;
     public Text scoreText;
     public Text timeText;
+    public RectTransform autoaimCrosshair;
     public WeaponSlotUI[] weaponSlots = new WeaponSlotUI[0];
 
     [Header("Teams")]
@@ -100,7 +101,7 @@ public class GameHUD : MonoBehaviour
             ringsText.text = player.numRings.ToString();
             scoreText.text = player.score.ToString();
 
-            // Weapon stuff
+            // Update weapon panels
             RingShooting ringShooting = player.GetComponent<RingShooting>();
             for (int i = 0; i < ringShooting.weapons.Count - 1 && i < weaponSlots.Length; i++)
             {
@@ -109,6 +110,17 @@ public class GameHUD : MonoBehaviour
             }
             for (int j = Mathf.Max(ringShooting.weapons.Count - 1 /* skip default weapon */, 0); j < weaponSlots.Length; j++)
                 weaponSlots[j].hasWeapon = false;
+
+            // Update autoaim crosshair
+            if (ringShooting.autoAimTarget)
+            {
+                if (!autoaimCrosshair.gameObject.activeSelf)
+                    autoaimCrosshair.gameObject.SetActive(true);
+
+                autoaimCrosshair.position = RectTransformUtility.WorldToScreenPoint(Camera.main, ringShooting.autoAimTarget.transform.position + Vector3.up * 0.5f);
+            }
+            else if (autoaimCrosshair.gameObject.activeSelf)
+                autoaimCrosshair.gameObject.SetActive(false);
 
             // Debug stuff
             if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))

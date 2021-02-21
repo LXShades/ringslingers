@@ -56,6 +56,9 @@ public class RingShooting : NetworkBehaviour
     }
     private int _equippedWeaponIndex;
 
+    public GameObject autoAimTarget { get;  private set; }
+    private Vector3 autoAimPredictedDirection = Vector3.zero;
+
     // Components
     private Player player;
 
@@ -125,8 +128,28 @@ public class RingShooting : NetworkBehaviour
 
     void UpdateAutoAim()
     {
-        if (hasAuthority && false)
+        autoAimTarget = null;
+
+        if (hasAuthority && effectiveWeaponSettings.autoAimHitboxRadius > 0f && effectiveWeaponSettings.autoAimDegreesRadius > 0f)
         {
+            Player potentialAutoAimTarget = FindClosestTarget(effectiveWeaponSettings.autoAimDegreesRadius);
+
+            if (potentialAutoAimTarget)
+            {
+                Vector3 targetPosAdjusted = potentialAutoAimTarget.transform.position + Vector3.up * 0.5f;
+                Vector3 nearTargetPoint = spawnPosition.position + player.input.aimDirection * Vector3.Dot(player.input.aimDirection, targetPosAdjusted - spawnPosition.position);
+
+                if (Vector3.Distance(nearTargetPoint, targetPosAdjusted) <= effectiveWeaponSettings.autoAimHitboxRadius)
+                {
+                    if (PredictTargetPosition(potentialAutoAimTarget.GetComponent<Player>(), out Vector3 predictedPosition, 2))
+                    {
+                        // we can autoaim, and we can predict! set the target
+                        autoAimPredictedDirection = predictedPosition + Vector3.up * 0.5f - spawnPosition.position;
+                        autoAimTarget = potentialAutoAimTarget.gameObject;
+                    }
+                }
+            }
+
             /*Player target = FindClosestTarget(10.0f);
             if (target)
             {
@@ -175,7 +198,7 @@ public class RingShooting : NetworkBehaviour
         return bestTarget;
     }
 
-    private bool PredictTargetPosition(Player target, out Vector3 predictedPosition)
+    private bool PredictTargetPosition(Player target, out Vector3 predictedPosition, float maxPredictionTime)
     {
         float interval = 0.07f;
         PlayerController controller = target.GetComponent<PlayerController>();
@@ -184,14 +207,14 @@ public class RingShooting : NetworkBehaviour
         PlayerInput input = controller.GetLatestInput();
         Vector3 startPosition = spawnPosition.position;
         float ringDistance = 0f; // theoretical thrown ring distance
-        float ringSpeed = 32.81f * interval;
+        float ringSpeed = effectiveWeaponSettings.projectileSpeed * interval;
         float lastTargetDistance = Vector3.Distance(target.transform.position, startPosition);
         Vector3 lastTargetPosition = target.transform.position;
         bool succeeded = false;
 
         predictedPosition = target.transform.position;
 
-        for (int i = 0; i < 30; i++)
+        for (int i = 0; i * interval < maxPredictionTime; i++)
         {
             movement.TickMovement(interval, input, true);
             ringDistance += ringSpeed;
@@ -253,13 +276,9 @@ public class RingShooting : NetworkBehaviour
             }
 
             Vector3 direction = player.input.aimDirection;
-            /*Player autoAimTarget = FindClosestTarget(10.0f);
 
             if (autoAimTarget)
-            {
-                if (PredictTargetPosition(autoAimTarget, out Vector3 predictedPosition))
-                    direction = predictedPosition + Vector3.up * 0.5f - spawnPosition.position;
-            }*/
+                direction = autoAimPredictedDirection;
 
             CmdThrowRing(spawnPosition.position, direction, Spawner.EndSpawnPrediction(), equippedWeaponIndex, PlayerTicker.singleton ? PlayerTicker.singleton.predictedServerTime : 0f);
             hasFiredOnThisClick = true;
@@ -389,7 +408,7 @@ public class RingShooting : NetworkBehaviour
                 }
             }
 
-            Log.Write($"Primary weapon is {equippedWeaponIndex}, effects are {effectsDebug}");
+            Log.Write($"Primary weapon is {equippedWeaponIndex} ({primaries[equippedWeaponIndex]}), effects are {effectsDebug}");
         }
         else
             Log.WriteWarning("Cannot generate primary weapon: there is none.");

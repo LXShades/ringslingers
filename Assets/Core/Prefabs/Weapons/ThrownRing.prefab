@@ -4907,7 +4907,7 @@ GameObject:
   - component: {fileID: 670776692163388723}
   - component: {fileID: 3836099066316199368}
   m_Layer: 9
-  m_Name: MissileRing
+  m_Name: ThrownRing
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5008,8 +5008,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  settings: {fileID: 0}
-  spinAxisType: 2
 --- !u!114 &6170419100613418712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5023,7 +5021,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   timeUntilDespawn: 10
-  affectedRenderers: []
+  affectedRenderers:
+  - {fileID: 5662536279647863787}
   blinkRateOverTime:
     serializedVersion: 2
     m_Curve:
@@ -5068,9 +5067,13 @@ MonoBehaviour:
     m_RotationOrder: 4
   despawnSound:
     clip: {fileID: 0}
-    volume: 1
+    additionalClips: []
+    blend3D: 1
+    range: 10
+    volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
+    looping: 0
 --- !u!54 &6436993102217104068
 Rigidbody:
   m_ObjectHideFlags: 0

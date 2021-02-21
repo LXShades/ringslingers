@@ -1,6 +1,7 @@
 ﻿using Mirror;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class PlayerTicker : NetworkBehaviour
 {
@@ -24,6 +25,9 @@ public class PlayerTicker : NetworkBehaviour
 
     private readonly NetFlowController<ServerPlayerTickMessage> serverTickFlow = new NetFlowController<ServerPlayerTickMessage>();
 
+    public float maxReceivedServerTickSmoothingDelay = 0.1f;
+    public float maxReceivedClientInputSmoothingDelay = 0.1f;
+
     // on clients, what server time are they aiming to predict
     // on server, local server time
     public float predictedServerTime { get; private set; }
@@ -33,6 +37,9 @@ public class PlayerTicker : NetworkBehaviour
     private void Awake()
     {
         singleton = this;
+
+        serverTickFlow.maxDelay = maxReceivedServerTickSmoothingDelay;
+        serverTickFlow.minDelay = Mathf.Min(serverTickFlow.minDelay, maxReceivedServerTickSmoothingDelay);
     }
 
     private void Update()
@@ -145,7 +152,11 @@ public class PlayerTicker : NetworkBehaviour
         if (source.identity && source.identity.TryGetComponent(out PlayerClient client))
         {
             if (!playerInputFlow.ContainsKey(client.playerId))
+            {
                 playerInputFlow.Add(client.playerId, new NetFlowController<PlayerController.InputPack>());
+                playerInputFlow[client.playerId].maxDelay = maxReceivedClientInputSmoothingDelay;
+                playerInputFlow[client.playerId].minDelay = Mathf.Min(maxReceivedClientInputSmoothingDelay, playerInputFlow[client.playerId].minDelay);
+            }
 
             float endTime = inputPack.startTime;
             foreach (var input in inputPack.inputs)

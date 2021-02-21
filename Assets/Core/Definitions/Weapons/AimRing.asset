@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: AimRing
   m_EditorClassIdentifier: 
   settings:
-    prefab: {fileID: 6167014272590406206, guid: 0f103a358d266f343bae03cac2c1b896, type: 3}
+    prefab: {fileID: 5180647389967111679, guid: cb76cd5e549efe041b127b4bf4af68b3, type: 3}
     droppedRingPrefab: {fileID: 1297403141984525710, guid: f0c306dbc1be08e4fb8eaf64b03d6283, type: 3}
     uiIcon: {fileID: 21300000, guid: 6e999e6bbcf25504ba0869ac79f38e57, type: 3}
     fireSound:
@@ -39,8 +39,42 @@ MonoBehaviour:
     ammoIsTime: 1
     shotsPerSecond: 4
     isAutomatic: 0
+    autoAimHitboxRadius: 3
+    autoAimDegreesRadius: 35
     projectileSpeed: 32.81
+    projectileSpinAxisType: 0
     projectileSpinSpeed: 800
     projectileLifetime: 10
+    contactEffect: {fileID: 0}
     projectileKnockback: 10
-    comboSettings: []
+    comboSettings:
+    - effector: {fileID: 11400000, guid: b3ac2b389097b2d46a9376592fe8d37f, type: 2}
+      shotsPerSecondMultiplier: 2
+      shouldOverrideAutomatic: 1
+      isAutomatic: 1
+      shouldOverrideDespawnSound: 0
+      despawnSound:
+        clip: {fileID: 0}
+        additionalClips: []
+        blend3D: 0
+        range: 0
+        volumeDecibels: 0
+        pitch: 0
+        pitchVariance: 0
+        looping: 0
+      contactEffectOverride: {fileID: 0}
+    - effector: {fileID: 11400000, guid: 23540450384143746b56315067dc3483, type: 2}
+      shotsPerSecondMultiplier: 1
+      shouldOverrideAutomatic: 0
+      isAutomatic: 0
+      shouldOverrideDespawnSound: 0
+      despawnSound:
+        clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
+        additionalClips: []
+        blend3D: 1
+        range: 15
+        volumeDecibels: 0
+        pitch: 1
+        pitchVariance: 0
+        looping: 0
+      contactEffectOverride: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}

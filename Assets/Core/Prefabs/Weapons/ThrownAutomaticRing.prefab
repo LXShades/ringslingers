@@ -73,6 +73,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 1da191a7d39cd8443aae4c579850ddaa, type: 3}
+--- !u!23 &8542724831107240236 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 1da191a7d39cd8443aae4c579850ddaa, type: 3}
+  m_PrefabInstance: {fileID: 7011065964362780072}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7402381757855416274
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -96,6 +101,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: ThrownAutomaticRing
       objectReference: {fileID: 0}
+    - target: {fileID: 6170419100613418712, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
+      propertyPath: affectedRenderers.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6170419100613418712, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
+      propertyPath: affectedRenderers.Array.data[0]
+      value: 
+      objectReference: {fileID: 8542724831107240236}
     - target: {fileID: 6836027050033395844, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
