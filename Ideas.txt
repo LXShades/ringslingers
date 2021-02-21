@@ -28,12 +28,16 @@
 + Play sound on Bomb-Rail contact
 + REMOVE PING SIMULATION
 + Remove planet map from rotation
++ Add combination rings to maps
++ Rail rings on clients end early
+- Maybe add more lenience for the delay so that we don't put players behind too much
 - Add new Homing Ring (crosshair shape perhaps) MID:HIGH
 
 -- To watch for in future tests:
 - Predicted rings shouldn't spawn twice when you shoot them to a wall, should they? they should at least project beyond the wall
 - Lag spikes should be better illustrated HIGH:LOW
 - See what happens with low-FPS players and their extrapolation, letting them control how fast they go makes things look horrible
+- Clients think they can dash when holding the flag
 
 ====== SMOKE TEST ! 7th FEB ===========
 

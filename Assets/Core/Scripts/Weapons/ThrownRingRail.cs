@@ -10,9 +10,24 @@ public class ThrownRingRail : ThrownRing
 
     public GameObject particles;
 
+    private bool endPointWasSet = false;
+
     public override void Simulate(float deltaTime)
     {
-        return; // do nothing
+        if (!endPointWasSet)
+        {
+            // clients need to do this because Throw doesn't get called
+            RaycastHit hit;
+
+            if (Physics.Raycast(transform.position, transform.forward, out hit, maxRange, collisionLayers, QueryTriggerInteraction.Ignore))
+                endPoint.transform.position = hit.point;
+            else
+                endPoint.transform.position = transform.position + transform.forward * maxRange;
+
+            endPointWasSet = true;
+        }
+
+        return; // do nothing else
     }
 
     public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
@@ -50,5 +65,7 @@ public class ThrownRingRail : ThrownRing
 
         GameSounds.PlaySound(endPoint.transform.position, effectiveSettings.despawnSound);
         SpawnContactEffect(endPoint.transform.position);
+
+        endPointWasSet = true;
     }
 }

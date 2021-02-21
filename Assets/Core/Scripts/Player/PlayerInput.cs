@@ -121,7 +121,7 @@ public struct PlayerInput : IEquatable<PlayerInput>
     }
 }
 
-public static class PlayerInputSerializer
+public static class PlayerInputReaderWriter
 {
     public static void WritePlayerInput(this NetworkWriter writer, PlayerInput input)
     {

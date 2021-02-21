@@ -25,7 +25,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Level Settings")]
     public string defaultMenuScene;
-    public string defaultHostScene;
 
     public LevelDatabase levelDatabase;
 

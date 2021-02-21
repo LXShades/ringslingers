@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: LevelDatabase
   m_EditorClassIdentifier: 
   levels:
-  - path: Assets/Core/Scenes/M_MeadowMatch.unity
+  - path: Assets/Core/Scenes/M_ThunderCitadel.unity
     configuration:
-      friendlyName: Meadow Match
+      friendlyName: Nameless
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultPlayerLimit: 32
@@ -34,6 +34,15 @@ MonoBehaviour:
   - path: Assets/Core/Scenes/M_AirborneTemple.unity
     configuration:
       friendlyName: Airborne Temple
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultPlayerLimit: 32
+      includeInRotation: 0
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/M_MeadowMatch.unity
+    configuration:
+      friendlyName: Meadow Match
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultPlayerLimit: 32
@@ -72,15 +81,6 @@ MonoBehaviour:
       friendlyName: Nimbus Ruins
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultPlayerLimit: 32
-      includeInRotation: 0
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/KTH_CaptureThePlanets.unity
-    configuration:
-      friendlyName: Nameless
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultPlayerLimit: 32
       includeInRotation: 0
       minRotationPlayers: 0
