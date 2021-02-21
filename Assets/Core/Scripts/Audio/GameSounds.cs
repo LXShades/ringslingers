@@ -90,7 +90,23 @@ public class GameSounds : MonoBehaviour
         }
     }
 
-    private void InternalPlaySound(GameObject source, GameSound sound, in SoundOverrides overrides)
+    public static void PlaySound(Vector3 position, GameSound sound)
+    {
+        if (singleton)
+        {
+            singleton.InternalPlaySound(null, sound, new SoundOverrides(0f), true, position);
+        }
+    }
+
+    public static void PlaySound(Vector3 position, GameSound sound, in SoundOverrides overrides)
+    {
+        if (singleton)
+        {
+            singleton.InternalPlaySound(null, sound, overrides, true, position);
+        }
+    }
+
+    private void InternalPlaySound(GameObject source, GameSound sound, in SoundOverrides overrides, bool rawPosition = false, Vector3 position = default)
     {
         if (sound == null || sound.clip == null || sound.volumeDecibels <= -60f || listener == null || !enableSounds)
             return;
@@ -143,8 +159,11 @@ public class GameSounds : MonoBehaviour
         sources[currentChannel].spatialBlend = sound.blend3D;
         if (source)
             sources[currentChannel].transform.position = source.transform.position;
-        else
+        else if (!rawPosition)
             sources[currentChannel].spatialBlend = 0f;
+        else if (rawPosition)
+            sources[currentChannel].transform.position = position;
+
         sourceAttachments[currentChannel] = source;
         sources[currentChannel].Play();
     }

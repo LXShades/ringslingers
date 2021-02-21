@@ -130,8 +130,10 @@ public class RingWeaponComboSettings
 
     [Tooltip("Whether to override automaticness on this weapon when holding the effector")]
     public bool shouldOverrideAutomatic = false;
-
     public bool isAutomatic = false;
+
+    public bool shouldOverrideDespawnSound = false;
+    public GameSound despawnSound = new GameSound();
 
     [Tooltip("A contact effect to use when holding the effector weapon")]
     public GameObject contactEffectOverride = null;
@@ -146,6 +148,9 @@ public class RingWeaponComboSettings
 
         if (contactEffectOverride)
             settings.contactEffect = contactEffectOverride;
+
+        if (shouldOverrideDespawnSound)
+            settings.despawnSound = despawnSound;
     }
 }
 

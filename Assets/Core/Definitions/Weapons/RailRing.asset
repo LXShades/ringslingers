@@ -50,9 +50,29 @@ MonoBehaviour:
       shotsPerSecondMultiplier: 11.94
       shouldOverrideAutomatic: 1
       isAutomatic: 1
+      shouldOverrideDespawnSound: 0
+      despawnSound:
+        clip: {fileID: 0}
+        additionalClips: []
+        blend3D: 1
+        range: 10
+        volumeDecibels: 0
+        pitch: 1
+        pitchVariance: 0
+        looping: 0
       contactEffectOverride: {fileID: 0}
     - effector: {fileID: 11400000, guid: 23540450384143746b56315067dc3483, type: 2}
       shotsPerSecondMultiplier: 1
       shouldOverrideAutomatic: 0
       isAutomatic: 0
+      shouldOverrideDespawnSound: 1
+      despawnSound:
+        clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
+        additionalClips: []
+        blend3D: 1
+        range: 15
+        volumeDecibels: 0
+        pitch: 1
+        pitchVariance: 0
+        looping: 0
       contactEffectOverride: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}

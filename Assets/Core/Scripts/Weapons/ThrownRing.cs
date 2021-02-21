@@ -5,7 +5,7 @@ public class ThrownRing : NetworkBehaviour
 {
     private Vector3 spinAxis;
 
-    private RingWeaponSettings effectiveSettings = new RingWeaponSettings();
+    protected RingWeaponSettings effectiveSettings = new RingWeaponSettings();
 
     [SyncVar]
     private Vector3 velocity;

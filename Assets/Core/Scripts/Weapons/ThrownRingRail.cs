@@ -48,6 +48,7 @@ public class ThrownRingRail : ThrownRing
         if (closestDamageable)
             closestDamageable.TryDamage(owner.gameObject, direction);
 
+        GameSounds.PlaySound(endPoint.transform.position, effectiveSettings.despawnSound);
         SpawnContactEffect(endPoint.transform.position);
     }
 }
