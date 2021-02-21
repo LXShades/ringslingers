@@ -61,7 +61,6 @@ public class RingShooting : NetworkBehaviour
 
     private HistoryList<Action> bufferedThrowEvents = new HistoryList<Action>();
 
-    public GameObject testAutoAimObject;
     public float testAutoAimSmoothDamp = 0.1f;
     private Vector3 autoAimDampVelocity;
 
@@ -126,9 +125,9 @@ public class RingShooting : NetworkBehaviour
 
     void UpdateAutoAim()
     {
-        if (hasAuthority)
+        if (hasAuthority && false)
         {
-            Player target = FindClosestTarget(10.0f);
+            /*Player target = FindClosestTarget(10.0f);
             if (target)
             {
                 if (PredictTargetPosition(target, out Vector3 predictedPosition))
@@ -138,7 +137,7 @@ public class RingShooting : NetworkBehaviour
                         testAutoAimObject.transform.position = predictedPosition;
                         testAutoAimObject.transform.rotation = target.transform.rotation;
                         autoAimDampVelocity = Vector3.zero;
-                        testAutoAimObject.SetActive(true);
+                        //testAutoAimObject.SetActive(true);
                     }
                     else
                     {
@@ -149,7 +148,7 @@ public class RingShooting : NetworkBehaviour
                     testAutoAimObject.SetActive(false);
             }
             else
-                testAutoAimObject.SetActive(false);
+                testAutoAimObject.SetActive(false);*/
         }
     }
 

@@ -22,7 +22,7 @@ public class MeshVertexColourFromTextureConverter : MonoBehaviour
             Mesh mesh = filter.sharedMesh;
             MeshRenderer renderer = filter.GetComponent<MeshRenderer>();
 
-            if (mesh && renderer && !affectedMeshes.Contains(mesh))
+            if (mesh && mesh.isReadable && renderer && !affectedMeshes.Contains(mesh))
             {
                 Vector2[] uvs = mesh.uv;
                 Color32[] colours = new Color32[mesh.vertexCount];
