@@ -214,9 +214,10 @@ public class Player : NetworkBehaviour
                 force = -transform.forward.Horizontal() * hurtDefaultHorizontalKnockback;
             else if (force.Horizontal().magnitude < hurtDefaultHorizontalKnockback)
                 force.SetHorizontal(force.Horizontal().normalized * hurtDefaultHorizontalKnockback);
+            force += (movement as CharacterMovement).up * hurtDefaultVerticalKnockback;
 
             // predict our hit
-            GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force + (movement as CharacterMovement).up * hurtDefaultVerticalKnockback));
+            GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force));
 
             // only the server can do the rest (ring drop, score, etc)
             if (NetworkServer.active)

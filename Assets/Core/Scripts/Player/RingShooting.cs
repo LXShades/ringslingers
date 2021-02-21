@@ -73,11 +73,6 @@ public class RingShooting : NetworkBehaviour
     private void Start()
     {
         weapons.Callback += OnWeaponsListChanged;
-
-        if (NetworkServer.active)
-        {
-            weapons.Add(defaultWeapon);
-        }
     }
 
     public override void OnStartClient()
@@ -89,6 +84,9 @@ public class RingShooting : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
+
+        weapons.Add(defaultWeapon);
+
         RegenerateEffectiveWeapon();
     }
 
@@ -382,11 +380,19 @@ public class RingShooting : NetworkBehaviour
             effectiveWeaponSettings = primaries[equippedWeaponIndex].settings.Clone();
 
             // apply combos
+            string effectsDebug = "";
             foreach (var combo in effectiveWeaponSettings.comboSettings)
             {
                 if (effectors.Contains(combo.effector))
+                {
                     combo.ApplyToSettings(effectiveWeaponSettings);
+                    effectsDebug += $"{combo.effector}";
+                }
             }
+
+            Log.Write($"Primary weapon is {equippedWeaponIndex}, effects are {effectsDebug}");
         }
+        else
+            Log.WriteWarning("Cannot generate primary weapon: there is none.");
     }
 }

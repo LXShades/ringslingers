@@ -10,9 +10,17 @@ public class ThrownRing : NetworkBehaviour
     [SyncVar]
     private Vector3 velocity;
 
-    public GameObject owner => _owner;
+    public GameObject owner
+    {
+        get => _owner;
+        protected set
+        {
+            OnOwnerChanged(_owner, value);
+            _owner = value;
+        }
+    }
     [SyncVar(hook = nameof(OnOwnerChanged))]
-    protected GameObject _owner;
+    private GameObject _owner;
     private Rigidbody rb;
 
     private float spawnTime;
@@ -57,7 +65,7 @@ public class ThrownRing : NetworkBehaviour
         }
 
         // colour the ring
-        if (_owner.TryGetComponent(out Player owningPlayer))
+        if (owner.TryGetComponent(out Player owningPlayer))
         {
             switch (owningPlayer.team)
             {
@@ -104,8 +112,7 @@ public class ThrownRing : NetworkBehaviour
                 Physics.IgnoreCollision(collider, ownerCollider);
         }
 
-        this._owner = owner.gameObject;
-        this.effectiveSettings = owner.GetComponent<RingShooting>().effectiveWeaponSettings;
+        this.owner = owner.gameObject;
         this.wasLocallyThrown = true;
 
         velocity = direction.normalized * effectiveSettings.projectileSpeed;
@@ -118,21 +125,21 @@ public class ThrownRing : NetworkBehaviour
             return; // Unity physics bugs are pain
         //if (Time.time - spawnTime < 0.1f)
             //return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
-        if (collision.collider.gameObject == _owner)
+        if (collision.collider.gameObject == owner)
             return; // don't collide with the player who threw the ring
 
         // Hurt any players we collided with
-        if (collision.collider.TryGetComponent(out Damageable damageable) && _owner)
+        if (collision.collider.TryGetComponent(out Damageable damageable) && owner)
         {
-            if (damageable.gameObject == _owner)
+            if (damageable.gameObject == owner)
                 return; // actually we're fine here
 
-            damageable.TryDamage(_owner, velocity.normalized * effectiveSettings.projectileKnockback);
+            damageable.TryDamage(owner, velocity.normalized * effectiveSettings.projectileKnockback);
         }
 
         if (collision.collider.TryGetComponent(out ThrownRing thrownRing))
         {
-            if (thrownRing._owner == _owner)
+            if (thrownRing.owner == owner)
                 return; // don't collide with our other rings
         }
 
@@ -148,14 +155,15 @@ public class ThrownRing : NetworkBehaviour
 
     protected void SpawnContactEffect(Vector3 position)
     {
-        if (effectiveSettings.contactEffect && _owner)
+        if (effectiveSettings.contactEffect && owner)
         {
             GameObject obj = Spawner.Spawn(effectiveSettings.contactEffect, position, Quaternion.identity);
 
             if (obj.TryGetComponent(out DamageOnTouch damager))
             {
-                damager.owner = _owner;
-                damager.team = _owner.GetComponent<Damageable>().damageTeam;
+                damager.owner = owner;
+                damager.team = owner.GetComponent<Damageable>().damageTeam;
+                damager.knockback = effectiveSettings.projectileKnockback;
             }
         }
     }
@@ -163,7 +171,7 @@ public class ThrownRing : NetworkBehaviour
     // when prediction is successful, we get teleported back a bit and resimulate forward again
     private void OnPredictionSuccessful()
     {
-        Simulate(Time.time - spawnTime);
+        Simulate(PlayerTicker.singleton.localPlayerPing);
     }
 
     private void OnOwnerChanged(GameObject oldOwner, GameObject newOwner)

@@ -4,6 +4,7 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisions
 {
     public bool instaKill = false;
     public int team;
+    public float knockback = 0f;
     public GameObject owner;
 
     public void OnMovementCollidedBy(Movement source, bool isReconciliation)
@@ -20,7 +21,8 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisions
     {
         if (other.TryGetComponent(out Damageable damageable) && damageable.CanBeDamagedBy(team) && damageable.gameObject != owner)
         {
-            damageable.TryDamage(gameObject, default, instaKill);
+            Vector3 force = knockback > 0 ? (other.transform.position - transform.position).Horizontal().normalized * knockback : default;
+            damageable.TryDamage(owner, force, instaKill);
         }
     }
 }
