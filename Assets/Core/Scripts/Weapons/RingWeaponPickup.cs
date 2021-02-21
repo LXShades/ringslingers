@@ -2,7 +2,7 @@
 
 public class RingWeaponPickup : MonoBehaviour
 {
-    public RingWeaponSettings weaponType;
+    public RingWeaponSettingsAsset weaponType;
 
     public bool overrideAmmo = false;
     public float ammo = 0f;

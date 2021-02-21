@@ -25,6 +25,7 @@ public class PlayerTicker : NetworkBehaviour
     private readonly NetFlowController<ServerPlayerTickMessage> serverTickFlow = new NetFlowController<ServerPlayerTickMessage>();
 
     // on clients, what server time are they aiming to predict
+    // on server, local server time
     public float predictedServerTime { get; private set; }
 
     public float localPlayerPing { get; private set; }
@@ -36,7 +37,10 @@ public class PlayerTicker : NetworkBehaviour
 
     private void Update()
     {
-        predictedServerTime += UnityEngine.Time.unscaledDeltaTime;
+        if (NetworkServer.active)
+            predictedServerTime = UnityEngine.Time.realtimeSinceStartup; // we technically don't run a prediction of the server time on the server
+        else
+            predictedServerTime += UnityEngine.Time.unscaledDeltaTime; // we just tick it up and update properly occasionally
 
         // Client receive server ticks
         if (serverTickFlow.TryPopMessage(out ServerPlayerTickMessage serverTick, true))

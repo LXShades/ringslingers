@@ -1,29 +1,17 @@
 ﻿using Mirror;
 using UnityEngine;
-using UnityEngine.Events;
 
 public class ThrownRing : NetworkBehaviour
 {
-    public enum SpinAxisType
-    {
-        Up,
-        Forward,
-        Wobble
-    }
-
-    [SyncVar]
-    [HideInInspector] public RingWeaponSettings settings;
-
-    public SpinAxisType spinAxisType = SpinAxisType.Wobble;
-
     private Vector3 spinAxis;
 
+    private RingWeaponSettings effectiveSettings = new RingWeaponSettings();
 
     [SyncVar]
     private Vector3 velocity;
 
     public GameObject owner => _owner;
-    [SyncVar]
+    [SyncVar(hook = nameof(OnOwnerChanged))]
     protected GameObject _owner;
     private Rigidbody rb;
 
@@ -31,7 +19,7 @@ public class ThrownRing : NetworkBehaviour
 
     private bool isDead = false;
 
-    public UnityEvent<GameObject> onDespawn;
+    private bool wasLocallyThrown = false;
 
     void Awake()
     {
@@ -48,30 +36,24 @@ public class ThrownRing : NetworkBehaviour
     {
         float axisWobble = 0.5f;
 
-        switch (spinAxisType)
+        switch (effectiveSettings.projectileSpinAxisType)
         {
-            case SpinAxisType.Wobble:
+            case RingWeaponSettings.SpinAxisType.Wobble:
                 spinAxis = Vector3.up + Vector3.right * Random.Range(-axisWobble, axisWobble) + Vector3.forward * Random.Range(-axisWobble, axisWobble);
                 spinAxis.Normalize();
                 break;
-            case SpinAxisType.Forward:
+            case RingWeaponSettings.SpinAxisType.Forward:
                 spinAxis = velocity.normalized;
                 break;
-            case SpinAxisType.Up:
+            case RingWeaponSettings.SpinAxisType.Up:
                 spinAxis = Vector3.up;
                 break;
         }
 
-        if (settings == null)
-        {
-            Log.WriteWarning($"{gameObject}: Ring weapon settings is missing!?");
-            settings = ScriptableObject.CreateInstance<RingWeaponSettings>(); // better than nothing?
-        }
-
-        if (NetworkClient.active && !NetworkServer.active && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.gameObject != _owner)
+        if (!NetworkServer.active && !wasLocallyThrown)
         {
             // shoot further ahead
-            Simulate(Netplay.singleton.unreliablePing);
+            Simulate(PlayerTicker.singleton.localPlayerPing);
         }
 
         // colour the ring
@@ -89,6 +71,14 @@ public class ThrownRing : NetworkBehaviour
         }
     }
 
+    public override void OnStartClient()
+    {
+        RingWeaponSettings ownerEffectiveSettings = owner?.GetComponent<RingShooting>()?.effectiveWeaponSettings;
+
+        if (ownerEffectiveSettings != null)
+            effectiveSettings = ownerEffectiveSettings;
+    }
+
     private void Update()
     {
         Simulate(Time.deltaTime);
@@ -97,7 +87,7 @@ public class ThrownRing : NetworkBehaviour
     public virtual void Simulate(float deltaTime)
     {
         // Spin
-        transform.rotation *= Quaternion.AngleAxis(settings.projectileSpinSpeed * deltaTime, spinAxis);
+        transform.rotation *= Quaternion.AngleAxis(effectiveSettings.projectileSpinSpeed * deltaTime, spinAxis);
 
         // Move manually cuz... uh well, hmm, dangit rigidbody interpolation is not a thing in manually-simulated physics
         transform.position += velocity * deltaTime;
@@ -115,7 +105,10 @@ public class ThrownRing : NetworkBehaviour
         }
 
         this._owner = owner.gameObject;
-        velocity = direction.normalized * settings.projectileSpeed;
+        this.effectiveSettings = owner.GetComponent<RingShooting>().effectiveWeaponSettings;
+        this.wasLocallyThrown = true;
+
+        velocity = direction.normalized * effectiveSettings.projectileSpeed;
         transform.position = spawnPosition;
     }
 
@@ -134,7 +127,7 @@ public class ThrownRing : NetworkBehaviour
             if (damageable.gameObject == _owner)
                 return; // actually we're fine here
 
-            damageable.TryDamage(_owner, velocity.normalized * settings.projectileKnockback);
+            damageable.TryDamage(_owner, velocity.normalized * effectiveSettings.projectileKnockback);
         }
 
         if (collision.collider.TryGetComponent(out ThrownRing thrownRing))
@@ -144,23 +137,40 @@ public class ThrownRing : NetworkBehaviour
         }
 
         // Play despawn sound
-        GameSounds.PlaySound(gameObject, settings.despawnSound);
-
-        if (_owner && _owner.TryGetComponent(out Player ownerPlayer))
-        {
-            if (NetworkServer.active)
-                ownerPlayer.RpcNotifyRingDespawnedAt(transform.position);
-            else
-                ownerPlayer.LocalNotifyRingDespawnedAt(transform.position);
-        }
+        GameSounds.PlaySound(gameObject, effectiveSettings.despawnSound);
 
         isDead = true;
-        onDespawn?.Invoke(_owner);
+
+        SpawnContactEffect(transform.position);
+
         Spawner.Despawn(gameObject);
     }
 
+    protected void SpawnContactEffect(Vector3 position)
+    {
+        if (effectiveSettings.contactEffect && _owner)
+        {
+            GameObject obj = Spawner.Spawn(effectiveSettings.contactEffect, position, Quaternion.identity);
+
+            if (obj.TryGetComponent(out DamageOnTouch damager))
+            {
+                damager.owner = _owner;
+                damager.team = _owner.GetComponent<Damageable>().damageTeam;
+            }
+        }
+    }
+    
+    // when prediction is successful, we get teleported back a bit and resimulate forward again
     private void OnPredictionSuccessful()
     {
         Simulate(Time.time - spawnTime);
+    }
+
+    private void OnOwnerChanged(GameObject oldOwner, GameObject newOwner)
+    {
+        if (newOwner.TryGetComponent(out RingShooting ringShooting))
+        {
+            effectiveSettings = ringShooting.effectiveWeaponSettings;
+        }
     }
 }

@@ -9,36 +9,38 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2e11cda843dc244bac0fce72cbb795b, type: 3}
+  m_Script: {fileID: 11500000, guid: 2754337ee27746a42a7574d39212c5a0, type: 3}
   m_Name: AimRing
   m_EditorClassIdentifier: 
-  prefab: {fileID: 6167014272590406206, guid: 0f103a358d266f343bae03cac2c1b896, type: 3}
-  droppedRingPrefab: {fileID: 1297403141984525710, guid: f0c306dbc1be08e4fb8eaf64b03d6283, type: 3}
-  uiIcon: {fileID: 21300000, guid: 6e999e6bbcf25504ba0869ac79f38e57, type: 3}
-  shotsPerSecond: 4
-  fireSound:
-    clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
-    additionalClips: []
-    blend3D: 1
-    range: 15
-    volumeDecibels: -3
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
-  despawnSound:
-    clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
-    additionalClips: []
-    blend3D: 1
-    range: 10
-    volumeDecibels: -3
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
-  ammoOnPickup: 30
-  maxAmmo: 99
-  ammoIsTime: 1
-  projectileSpeed: 32.81
-  projectileSpinSpeed: 800
-  projectileLifetime: 10
-  projectileKnockback: 10
-  isAutomatic: 0
+  settings:
+    prefab: {fileID: 6167014272590406206, guid: 0f103a358d266f343bae03cac2c1b896, type: 3}
+    droppedRingPrefab: {fileID: 1297403141984525710, guid: f0c306dbc1be08e4fb8eaf64b03d6283, type: 3}
+    uiIcon: {fileID: 21300000, guid: 6e999e6bbcf25504ba0869ac79f38e57, type: 3}
+    fireSound:
+      clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
+      additionalClips: []
+      blend3D: 1
+      range: 15
+      volumeDecibels: -3
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    despawnSound:
+      clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
+      additionalClips: []
+      blend3D: 1
+      range: 10
+      volumeDecibels: -3
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    ammoOnPickup: 30
+    maxAmmo: 99
+    ammoIsTime: 1
+    shotsPerSecond: 4
+    isAutomatic: 0
+    projectileSpeed: 32.81
+    projectileSpinSpeed: 800
+    projectileLifetime: 10
+    projectileKnockback: 10
+    comboSettings: []

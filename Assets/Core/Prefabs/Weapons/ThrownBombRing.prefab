@@ -1,19 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &2712569243182456140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 942187780836486323}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf72d1aa168766c4a91b989d2b274a03, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  prefabToSpawn: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}
-  canSpawnLocally: 1
 --- !u!1001 &6379049830626037389
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23,7 +9,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3930404116993706217, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: onDespawn.m_PersistentCalls.m_Calls.Array.size
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3930404116993706217, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: onContact.m_PersistentCalls.m_Calls.Array.size
@@ -40,7 +26,7 @@ PrefabInstance:
     - target: {fileID: 3930404116993706217, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: onDespawn.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 2712569243182456140}
+      objectReference: {fileID: 0}
     - target: {fileID: 3930404116993706217, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: onDespawn.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: SpawnObject, Assembly-CSharp
@@ -64,7 +50,7 @@ PrefabInstance:
     - target: {fileID: 3930404116993706217, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: onContact.m_PersistentCalls.m_Calls.Array.data[0].m_Target
       value: 
-      objectReference: {fileID: 2712569243182456140}
+      objectReference: {fileID: 0}
     - target: {fileID: 3930404116993706217, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: onContact.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
       value: UnityEngine.MonoBehaviour, UnityEngine
@@ -139,11 +125,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
---- !u!1 &942187780836486323 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 6167014272590406206, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
-  m_PrefabInstance: {fileID: 6379049830626037389}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &457258745077478921 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6836027050033395844, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}

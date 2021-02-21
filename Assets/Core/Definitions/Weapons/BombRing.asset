@@ -9,36 +9,45 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2e11cda843dc244bac0fce72cbb795b, type: 3}
+  m_Script: {fileID: 11500000, guid: 2754337ee27746a42a7574d39212c5a0, type: 3}
   m_Name: BombRing
   m_EditorClassIdentifier: 
-  prefab: {fileID: 942187780836486323, guid: 80c166c21f78dc449bc9d3b783bed646, type: 3}
-  droppedRingPrefab: {fileID: 1203937048721973902, guid: 71cd869cc1b82c1449b6f30c52353efb, type: 3}
-  uiIcon: {fileID: 21300000, guid: bc42a556c69beb048847e4d49c9f5e2f, type: 3}
-  shotsPerSecond: 3.5
-  fireSound:
-    clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
-    additionalClips: []
-    blend3D: 1
-    range: 15
-    volumeDecibels: -3
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
-  despawnSound:
-    clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
-    additionalClips: []
-    blend3D: 1
-    range: 15
-    volumeDecibels: 0
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
-  ammoOnPickup: 10
-  maxAmmo: 99
-  ammoIsTime: 1
-  projectileSpeed: 32.81
-  projectileSpinSpeed: 800
-  projectileLifetime: 10
-  projectileKnockback: 15
-  isAutomatic: 0
+  settings:
+    prefab: {fileID: 942187780836486323, guid: 80c166c21f78dc449bc9d3b783bed646, type: 3}
+    droppedRingPrefab: {fileID: 1203937048721973902, guid: 71cd869cc1b82c1449b6f30c52353efb, type: 3}
+    uiIcon: {fileID: 21300000, guid: bc42a556c69beb048847e4d49c9f5e2f, type: 3}
+    fireSound:
+      clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
+      additionalClips: []
+      blend3D: 1
+      range: 15
+      volumeDecibels: -3
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    despawnSound:
+      clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
+      additionalClips: []
+      blend3D: 1
+      range: 15
+      volumeDecibels: 0
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    ammoOnPickup: 30
+    maxAmmo: 99
+    ammoIsTime: 1
+    shotsPerSecond: 3.5
+    isAutomatic: 0
+    projectileSpeed: 32.81
+    projectileSpinAxisType: 0
+    projectileSpinSpeed: 800
+    projectileLifetime: 10
+    contactEffect: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}
+    projectileKnockback: 15
+    comboSettings:
+    - effector: {fileID: 11400000, guid: b3ac2b389097b2d46a9376592fe8d37f, type: 2}
+      shotsPerSecondMultiplier: 2.29
+      shouldOverrideAutomatic: 1
+      isAutomatic: 1
+      contactEffectOverride: {fileID: 0}

@@ -161,34 +161,6 @@ public class Player : NetworkBehaviour
             characterModel.enabled = false;
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = true;
-
-        foreach (Vector3 pos in ringDespawnedPositions)
-        {
-            DebugExtension.DebugPoint(pos, Color.green, 0.25f, 0.1f);
-        }
-        foreach (Vector3 pos in serverRingDespawnedPositions)
-        {
-            DebugExtension.DebugPoint(pos, Color.blue, 0.25f, 0.1f);
-        }
-    }
-
-    // debugging to test accuracy of ring throw timing
-    private List<Vector3> ringDespawnedPositions = new List<Vector3>();
-    private List<Vector3> serverRingDespawnedPositions = new List<Vector3>();
-    public int maxNumRingDespawnedPositions = 5;
-
-    [ClientRpc]
-    public void RpcNotifyRingDespawnedAt(Vector3 position)
-    {
-        ringDespawnedPositions.Add(position);
-        if (ringDespawnedPositions.Count > maxNumRingDespawnedPositions)
-            ringDespawnedPositions.RemoveAt(0);
-    }
-    public void LocalNotifyRingDespawnedAt(Vector3 position)
-    {
-        serverRingDespawnedPositions.Add(position);
-        if (serverRingDespawnedPositions.Count > maxNumRingDespawnedPositions)
-            serverRingDespawnedPositions.RemoveAt(0);
     }
 
     private static int nextSpawner = 0;
@@ -314,9 +286,9 @@ public class Player : NetworkBehaviour
         RingShooting ringShooting = GetComponent<RingShooting>();
         if (ringShooting)
         {
-            if (ringShooting.weapons.Count > 1 && ringShooting.weapons[1].weaponType.droppedRingPrefab)
+            if (ringShooting.weapons.Count > 1 && ringShooting.weapons[1].weaponType.settings.droppedRingPrefab)
             {
-                GameObject droppedWeapon = Spawner.Spawn(ringShooting.weapons[1].weaponType.droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity);
+                GameObject droppedWeapon = Spawner.Spawn(ringShooting.weapons[1].weaponType.settings.droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity);
 
                 if (droppedWeapon && droppedWeapon.TryGetComponent(out RingWeaponPickup weaponPickup) && droppedWeapon.TryGetComponent(out Ring weaponRing))
                 {

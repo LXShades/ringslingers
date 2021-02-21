@@ -1,5 +1,6 @@
 ﻿using Mirror;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class RingShooting : NetworkBehaviour
@@ -18,6 +19,13 @@ public class RingShooting : NetworkBehaviour
     /// List of weapons that have been picked up
     /// </summary>
     public SyncList<RingWeapon> weapons = new SyncList<RingWeapon>();
+
+    /// <summary>
+    /// [Server, Client] Generated from the combination of weapons. This is not networked directly but uses the weapons list which is.
+    /// This handles combined weapon ring settings
+    /// Currently updated whenever the weapons list refreshes
+    /// </summary>
+    public RingWeaponSettings effectiveWeaponSettings { get; private set; }
 
     [Header("Hierarchy")]
     /// <summary>
@@ -64,10 +72,24 @@ public class RingShooting : NetworkBehaviour
 
     private void Start()
     {
+        weapons.Callback += OnWeaponsListChanged;
+
         if (NetworkServer.active)
         {
             weapons.Add(defaultWeapon);
         }
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        RegenerateEffectiveWeapon();
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        RegenerateEffectiveWeapon();
     }
 
     void Update()
@@ -83,31 +105,16 @@ public class RingShooting : NetworkBehaviour
             }
         }
 
-        // test: equip best weapon
-        if (weapons.Count > 0)
-            equippedWeaponIndex = weapons.Count - 1;
-
         // Fire weapons if we can
-        if (hasAuthority && player.input.btnFire && (!hasFiredOnThisClick || currentWeapon.weaponType.isAutomatic))
+        if (hasAuthority && player.input.btnFire && (!hasFiredOnThisClick || effectiveWeaponSettings.isAutomatic))
         {
-            Debug.Assert(currentWeapon.weaponType.shotsPerSecond != 0); // division by zero otherwise
+            Debug.Assert(effectiveWeaponSettings.shotsPerSecond != 0); // division by zero otherwise
 
             LocalThrowRing();
         }
 
         if (NetworkServer.active)
         {
-            // Deplete timer-based weapon ammo
-            for (int i = 0; i < weapons.Count; i++)
-            {
-                if (!weapons[i].isInfinite && weapons[i].weaponType.ammoIsTime)
-                {
-                    RingWeapon weapon = weapons[i];
-                    weapon.ammo -= Time.deltaTime;
-                    weapons[i] = weapon;
-                }
-            }
-
             // Remove weapons with no ammo remaining
             for (int i = 0; i < weapons.Count; i++)
             {
@@ -214,9 +221,9 @@ public class RingShooting : NetworkBehaviour
         return succeeded;
     }
 
-    public void AddWeaponAmmo(RingWeaponSettings weaponType, bool doOverrideAmmo, float ammoOverride)
+    public void AddWeaponAmmo(RingWeaponSettingsAsset weaponType, bool doOverrideAmmo, float ammoOverride)
     {
-        float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.ammoOnPickup;
+        float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.settings.ammoOnPickup;
 
         for (int i = 0; i < weapons.Count; i++)
         {
@@ -224,7 +231,7 @@ public class RingShooting : NetworkBehaviour
             {
                 RingWeapon weapon = weapons[i];
 
-                weapon.ammo = Mathf.Min(weapon.ammo + ammoToAdd, weaponType.maxAmmo);
+                weapon.ammo = Mathf.Min(weapon.ammo + ammoToAdd, weaponType.settings.maxAmmo);
                 weapons[i] = weapon;
                 return;
             }
@@ -234,7 +241,7 @@ public class RingShooting : NetworkBehaviour
         weapons.Add(new RingWeapon() { weaponType = weaponType, ammo = ammoToAdd });
     }
 
-    private bool CanThrowRing(float lenience) => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / currentWeapon.weaponType.shotsPerSecond - lenience;
+    private bool CanThrowRing(float lenience) => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / effectiveWeaponSettings.shotsPerSecond - lenience;
 
     private void LocalThrowRing()
     {
@@ -244,7 +251,7 @@ public class RingShooting : NetworkBehaviour
             {
                 // spawn temporary ring
                 Spawner.StartSpawnPrediction();
-                GameObject predictedRing = Spawner.PredictSpawn(currentWeapon.weaponType.prefab, transform.position, Quaternion.identity);
+                GameObject predictedRing = Spawner.PredictSpawn(effectiveWeaponSettings.prefab, transform.position, Quaternion.identity);
                 FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
             }
 
@@ -290,7 +297,7 @@ public class RingShooting : NetworkBehaviour
 
         // on server, spawn the ring properly and match it to the client prediction
         Spawner.ApplySpawnPrediction(spawnPrediction);
-        GameObject ring = Spawner.StartSpawn(currentWeapon.weaponType.prefab, position, Quaternion.identity);
+        GameObject ring = Spawner.StartSpawn(effectiveWeaponSettings.prefab, position, Quaternion.identity);
 
         if (ring != null)
             FireSpawnedRing(ring, position, direction);
@@ -299,7 +306,7 @@ public class RingShooting : NetworkBehaviour
 
         // Update stats
         player.numRings--;
-        if (!currentWeapon.weaponType.ammoIsTime)
+        if (!effectiveWeaponSettings.ammoIsTime)
         {
             RingWeapon weapon = weapons[equippedWeaponIndex];
             weapon.ammo--;
@@ -312,11 +319,74 @@ public class RingShooting : NetworkBehaviour
         ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
         Debug.Assert(ringAsThrownRing);
 
-        ringAsThrownRing.settings = currentWeapon.weaponType;
         ringAsThrownRing.Throw(player, position, direction);
 
-        GameSounds.PlaySound(gameObject, currentWeapon.weaponType.fireSound);
+        GameSounds.PlaySound(gameObject, effectiveWeaponSettings.fireSound);
 
         lastFiredRingTime = Time.time;
+    }
+
+    private void OnWeaponsListChanged(SyncList<RingWeapon>.Operation op, int itemIndex, RingWeapon oldItem, RingWeapon newItem)
+    {
+        RegenerateEffectiveWeapon();
+    }
+
+    private void RegenerateEffectiveWeapon()
+    {
+        // figure out which weapon takes priority. some examples as of whenever this comment was written (who am i. what day is it)
+        // Bomb ring effects:
+        //   ^-- Automatic ring
+        // Rail ring effects
+        //   ^-- Automatic ring
+        //   ^-- Bomb ring
+        // Automatic ring effects
+        //   ^-- Aim maybe
+        // basically, anything that is included as an effector by another weapon is excluded from consideration as the main weapon
+        List<RingWeaponSettingsAsset> primaries = new List<RingWeaponSettingsAsset>();
+        List<RingWeaponSettingsAsset> effectors = new List<RingWeaponSettingsAsset>();
+
+        foreach (var weapon in weapons)
+            primaries.Add(weapon.weaponType);
+
+        // determine the primary weapon to use
+        for (int current = 0; current < primaries.Count; current++)
+        {
+            bool shouldExcludeCurrent = false;
+            for (int other = 0; other < primaries.Count; other++)
+            {
+                if (other != current)
+                {
+                    foreach (var comboSettings in primaries[other].settings.comboSettings)
+                    {
+                        if (comboSettings.effector == primaries[current])
+                            shouldExcludeCurrent = true;
+                    }
+                }
+            }
+
+            if (shouldExcludeCurrent)
+            {
+                // move from primary to effector
+                effectors.Add(primaries[current]);
+                primaries.RemoveAt(current--);
+            }
+
+            equippedWeaponIndex = 0;
+        }
+
+        if (primaries.Count > 0)
+        {
+            // select the second weapon (first is always the default red ring) as the primary
+            equippedWeaponIndex = Mathf.Min(1, primaries.Count - 1);
+
+            effectiveWeaponSettings = primaries[equippedWeaponIndex].settings.Clone();
+
+            // apply combos
+            foreach (var combo in effectiveWeaponSettings.comboSettings)
+            {
+                if (effectors.Contains(combo.effector))
+                    combo.ApplyToSettings(effectiveWeaponSettings);
+            }
+        }
     }
 }

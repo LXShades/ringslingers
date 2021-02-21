@@ -47,12 +47,6 @@ public class ThrownRingRail : ThrownRing
         if (closestDamageable)
             closestDamageable.TryDamage(owner.gameObject, direction);
 
-        if (owner && owner.TryGetComponent(out Player ownerPlayer))
-        {
-            if (Mirror.NetworkServer.active)
-                ownerPlayer.RpcNotifyRingDespawnedAt(endPoint.transform.position);
-            else
-                ownerPlayer.LocalNotifyRingDespawnedAt(endPoint.transform.position);
-        }
+        SpawnContactEffect(endPoint.transform.position);
     }
 }

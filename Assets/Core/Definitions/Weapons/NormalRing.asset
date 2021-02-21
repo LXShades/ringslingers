@@ -9,36 +9,38 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e2e11cda843dc244bac0fce72cbb795b, type: 3}
+  m_Script: {fileID: 11500000, guid: 2754337ee27746a42a7574d39212c5a0, type: 3}
   m_Name: NormalRing
   m_EditorClassIdentifier: 
-  prefab: {fileID: 6167014272590406206, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
-  droppedRingPrefab: {fileID: 0}
-  uiIcon: {fileID: 0}
-  shotsPerSecond: 5
-  fireSound:
-    clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
-    additionalClips: []
-    blend3D: 1
-    range: 15
-    volumeDecibels: -3
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
-  despawnSound:
-    clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
-    additionalClips: []
-    blend3D: 1
-    range: 10
-    volumeDecibels: -3
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
-  ammoOnPickup: 10
-  maxAmmo: 99
-  ammoIsTime: 1
-  projectileSpeed: 32.81
-  projectileSpinSpeed: 800
-  projectileLifetime: 10
-  projectileKnockback: 10
-  isAutomatic: 0
+  settings:
+    prefab: {fileID: 6167014272590406206, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
+    droppedRingPrefab: {fileID: 0}
+    uiIcon: {fileID: 0}
+    fireSound:
+      clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
+      additionalClips: []
+      blend3D: 1
+      range: 15
+      volumeDecibels: -3
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    despawnSound:
+      clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
+      additionalClips: []
+      blend3D: 1
+      range: 10
+      volumeDecibels: -3
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    ammoOnPickup: 10
+    maxAmmo: 99
+    ammoIsTime: 1
+    shotsPerSecond: 5
+    isAutomatic: 0
+    projectileSpeed: 32.81
+    projectileSpinSpeed: 800
+    projectileLifetime: 10
+    projectileKnockback: 10
+    comboSettings: []

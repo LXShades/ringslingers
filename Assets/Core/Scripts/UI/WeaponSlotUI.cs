@@ -13,8 +13,8 @@ public class WeaponSlotUI : MonoBehaviour
     {
         if (hasWeapon)
         {
-            if (icon.sprite != weapon.weaponType.uiIcon)
-                icon.sprite = weapon.weaponType.uiIcon;
+            if (icon.sprite != weapon.weaponType.settings.uiIcon)
+                icon.sprite = weapon.weaponType.settings.uiIcon;
             if (((int)weapon.ammo).ToString() != ammoRemaining.text)
                 ammoRemaining.text = ((int)weapon.ammo).ToString();
 
