@@ -1,11 +1,10 @@
 ﻿using Mirror;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class PlayerTicker : NetworkBehaviour
 {
-    private struct ServerPlayerTickMessage
+    private struct ServerPlayerTickMessage : NetworkMessage
     {
         public float serverTime;
         public ArraySegment<ServerPlayerTick> ticks;
@@ -17,6 +16,11 @@ public class PlayerTicker : NetworkBehaviour
         public PlayerController.MoveStateWithInput moveState;
     }
 
+    private struct ClientPlayerInput : NetworkMessage
+    {
+        public PlayerController.InputPack inputPack;
+    }
+
     public static PlayerTicker singleton { get; private set; }
 
     private readonly List<ServerPlayerTick> ticksOut = new List<ServerPlayerTick>(32);
@@ -25,8 +29,8 @@ public class PlayerTicker : NetworkBehaviour
 
     private readonly NetFlowController<ServerPlayerTickMessage> serverTickFlow = new NetFlowController<ServerPlayerTickMessage>();
 
-    public float maxReceivedServerTickSmoothingDelay = 0.1f;
-    public float maxReceivedClientInputSmoothingDelay = 0.1f;
+    public FlowControlSettings serverFlowControlSettings = FlowControlSettings.Default;
+    public FlowControlSettings clientFlowControlSettings = FlowControlSettings.Default;
 
     // on clients, what server time are they aiming to predict
     // on server, local server time
@@ -38,8 +42,10 @@ public class PlayerTicker : NetworkBehaviour
     {
         singleton = this;
 
-        serverTickFlow.maxDelay = maxReceivedServerTickSmoothingDelay;
-        serverTickFlow.minDelay = Mathf.Min(serverTickFlow.minDelay, maxReceivedServerTickSmoothingDelay);
+        NetworkClient.RegisterHandler<ServerPlayerTickMessage>(OnRecvServerPlayerTick);
+        NetworkServer.RegisterHandler<ClientPlayerInput>(OnRecvClientInput);
+
+        serverTickFlow.flowControlSettings = serverFlowControlSettings;
     }
 
     private void Update()
@@ -58,7 +64,7 @@ public class PlayerTicker : NetworkBehaviour
         {
             if (Netplay.singleton.players[i] && playerInputFlow.ContainsKey(i))
             {
-                if (playerInputFlow[i].TryPopMessage(out PlayerController.InputPack inputPack, true))
+                while (playerInputFlow[i].TryPopMessage(out PlayerController.InputPack inputPack, false)) // skipOutdatedMessages is false because we'd like to receive everything we got since the last one
                     Netplay.singleton.players[i].GetComponent<PlayerController>().ReceiveInputPack(inputPack);
             }
         }
@@ -77,7 +83,7 @@ public class PlayerTicker : NetworkBehaviour
             {
                 ServerPlayerTickMessage tick = MakeTickMessage();
 
-                RpcPlayerTick(tick);
+                NetworkServer.SendToAll(tick, Channels.DefaultUnreliable, true);
             }
             else if (NetworkClient.isConnected)
             {
@@ -85,7 +91,7 @@ public class PlayerTicker : NetworkBehaviour
                 {
                     PlayerController.InputPack inputPack = Netplay.singleton.localPlayer.GetComponent<PlayerController>().MakeInputPack();
 
-                    CmdPlayerInput(inputPack);
+                    NetworkClient.Send(new ClientPlayerInput() { inputPack = inputPack }, Channels.DefaultUnreliable);
                 }
             }
         }
@@ -139,30 +145,27 @@ public class PlayerTicker : NetworkBehaviour
         predictedServerTime = tickMessage.serverTime + localPlayerPing;
     }
 
-    [ClientRpc(channel = Channels.DefaultUnreliable)]
-    private void RpcPlayerTick(ServerPlayerTickMessage tickMessage)
+    private void OnRecvServerPlayerTick(ServerPlayerTickMessage tickMessage)
     {
-        if (!NetworkServer.active) // server should not receive server player ticks dur
+        if (!NetworkServer.active) // server and host should not receive server player ticks dur
             serverTickFlow.PushMessage(tickMessage, tickMessage.serverTime);
     }
 
-    [Command(channel = Channels.DefaultUnreliable, ignoreAuthority = true)]
-    private void CmdPlayerInput(PlayerController.InputPack inputPack, NetworkConnectionToClient source = null)
+    private void OnRecvClientInput(NetworkConnection source, ClientPlayerInput inputMessage)
     {
         if (source.identity && source.identity.TryGetComponent(out PlayerClient client))
         {
             if (!playerInputFlow.ContainsKey(client.playerId))
             {
                 playerInputFlow.Add(client.playerId, new NetFlowController<PlayerController.InputPack>());
-                playerInputFlow[client.playerId].maxDelay = maxReceivedClientInputSmoothingDelay;
-                playerInputFlow[client.playerId].minDelay = Mathf.Min(maxReceivedClientInputSmoothingDelay, playerInputFlow[client.playerId].minDelay);
+                playerInputFlow[client.playerId].flowControlSettings = clientFlowControlSettings;
             }
 
-            float endTime = inputPack.startTime;
-            foreach (var input in inputPack.inputs)
+            float endTime = inputMessage.inputPack.startTime;
+            foreach (var input in inputMessage.inputPack.inputs)
                 endTime += input.deltaTime;
 
-            playerInputFlow[client.playerId].PushMessage(inputPack, endTime);
+            playerInputFlow[client.playerId].PushMessage(inputMessage.inputPack, endTime);
         }
         else
         {

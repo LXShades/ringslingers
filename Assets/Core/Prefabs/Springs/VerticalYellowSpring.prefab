@@ -304,7 +304,7 @@ GameObject:
   - component: {fileID: 8790054436279706090}
   - component: {fileID: 9112526478686356999}
   - component: {fileID: 9112526478686356998}
-  - component: {fileID: 21588467317917135}
+  - component: {fileID: 2943754651342645979}
   m_Layer: 0
   m_Name: VerticalYellowSpring
   m_TagString: Untagged
@@ -365,11 +365,15 @@ MonoBehaviour:
   springAbsolutely: 0
   springSound:
     clip: {fileID: 8300000, guid: bea3bd06b69d6574687ef74c64f82e9e, type: 3}
-    volume: 0.5
+    additionalClips: []
+    blend3D: 1
+    range: 10
+    volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
---- !u!136 &21588467317917135
-CapsuleCollider:
+    looping: 0
+--- !u!65 &2943754651342645979
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -378,10 +382,9 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 1
   m_Enabled: 1
-  m_Radius: 1.21
-  m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.28, z: 0}
+  serializedVersion: 2
+  m_Size: {x: 2, y: 0.72, z: 2}
+  m_Center: {x: 0, y: 0.24, z: 0}
 --- !u!1 &8501196312928269413
 GameObject:
   m_ObjectHideFlags: 0

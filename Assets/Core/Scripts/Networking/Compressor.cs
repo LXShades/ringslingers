@@ -6,6 +6,16 @@ public static class Compressor
     const int kMaskPerComponent = ~(~0 << kBitsPerComponent);
     const int kMultiplierPerComponent = ~(~0 << (kBitsPerComponent - 1));
 
+    public static ushort CompressFloat16(float value, float min, float max)
+    {
+        return (ushort)((value - min) * 65535 / (max - min) + 0.49999f);
+    }
+
+    public static float DecompressFloat16(ushort value, float min, float max)
+    {
+        return min + value * (max - min) / 65535;
+    }
+
     public static int CompressQuaternion(Quaternion quaternion)
     {
         int result = 0;

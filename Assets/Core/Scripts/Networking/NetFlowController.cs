@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class NetFlowController<TMessage> where TMessage : struct
 {
@@ -15,12 +16,10 @@ public class NetFlowController<TMessage> where TMessage : struct
     public float currentDelay { get; private set; }
     private float lastPoppedMessageTime = -1f;
 
-    public float jitterSampleSize = 2f;
-    public float maxDelay = 0.2f;
-    public float minDelay = 0.0f;
-
-    // if a message with a sentTime is pushed below this age in seconds, the flow is reset assuming that the timer must have been reset.
+    // if a message with a sentTime is pushed below this age in seconds, the flow is reset on an assumption that the timer must have been reset.
     private float flowResetPeriod = 5f;
+
+    public FlowControlSettings flowControlSettings = FlowControlSettings.Default;
 
     /// <summary>
     /// Call when first receiving a message. remoteTime, if available, should refer to the time that the remote party sent the message, in any format
@@ -77,22 +76,25 @@ public class NetFlowController<TMessage> where TMessage : struct
         lastPoppedMessageTime = 0f;
     }
 
+    private List<float> sortedGaps = new List<float>(100);
+
     private void Refresh()
     {
         if (receivedMessages.Count > 1)
         {
-            float maxGap = float.MinValue;
-            float minGap = float.MaxValue;
+            sortedGaps.Clear();
 
             for (int i = 0; i < receivedMessages.Count; i++)
-            {
-                float gap = receivedMessages[i].receivedTime - receivedMessages[i].sentTime;
+                sortedGaps.Add(receivedMessages[i].receivedTime - receivedMessages[i].sentTime);
 
-                maxGap = Mathf.Max(maxGap, gap);
-                minGap = Mathf.Min(minGap, gap);
-            }
+            sortedGaps.Sort();
 
-            currentDelay = Mathf.Clamp(maxGap - minGap, minDelay, maxDelay);
+            float minGap = sortedGaps[0];
+            int topPercentileIndex = (int)Mathf.Min((1f - flowControlSettings.upperPercentile / 100f) * sortedGaps.Count);
+            currentDelay = Mathf.Clamp(
+                Mathf.Min(sortedGaps[topPercentileIndex], sortedGaps.Count - 1) + flowControlSettings.addToDelay - minGap,
+                flowControlSettings.minDelay,
+                flowControlSettings.maxDelay);
             localToRemoteTime = minGap + currentDelay;
         }
         else
@@ -105,11 +107,31 @@ public class NetFlowController<TMessage> where TMessage : struct
                 localToRemoteTime = 0f; // who knows!
         }
 
-        receivedMessages.Prune(Mathf.Max(Time.realtimeSinceStartup - localToRemoteTime - Mathf.Max(jitterSampleSize, maxDelay * 2f)));
+        receivedMessages.Prune(Mathf.Max(Time.realtimeSinceStartup - localToRemoteTime - Mathf.Max(flowControlSettings.jitterSampleSize, flowControlSettings.maxDelay * 2f)));
     }
 
     public override string ToString()
     {
         return $"NetFlowController ({typeof(TMessage).Name}):\n-> currentDelay={(int)(currentDelay*1000)}ms\nnumMsgs: {receivedMessages.Count}";
     }
+}
+
+[System.Serializable]
+public struct FlowControlSettings
+{
+    public static FlowControlSettings Default = new FlowControlSettings()
+    {
+        jitterSampleSize = 3f,
+        upperPercentile = 1f,
+        maxDelay = 0.1f,
+        minDelay = 0f
+    };
+
+    public float jitterSampleSize;
+
+    public float upperPercentile; // as a percentage. 1 means highest 1% of jitter controls the overall delay of the flow
+    public float addToDelay;
+
+    public float maxDelay;
+    public float minDelay;
 }

@@ -1,26 +1,30 @@
 ================== PLAYTEST! 21st FEB ============
-bomb blasts stick around
-add auto map switch
-and timer
-can thok through some walls
-pit messages
-toss flag
-spin
-thok through jailbars castle
-springs loud
-show player names on join
-options in main menu
-mwheel for configs
-maybe don't interrupt typing when changing map
-clients need SFX now
-fix jumping around glitches
-weapon hit messages
-beeps
-not all weapons drop properly
-flag carrier needs info above head
-castle waterfalls have collision
-can be hard to see when throwing a ring
-UI blends against sky, chat text should be more neutral
++ Prevent player stuttering on server (server should never be letting players do that)
+-> Minimum frame rate will now be 20 I guess....?
+Server should play out missing player ticks if it receives a hiccup/incomplete buffer
+bomb blasts stick around LOW:MEDHIGH
+add auto map switch LOWMED:MEDHIGH
+and countdown timer
+options in main menu MED:MEDHIGH
+flag carrier needs info above head MED:MEDHIGH
+return camera movement to wall climbing LOW:MED
+pit messages LOW:MED
+show player names on join LOW:MED
+weapon hit messages LOW:MED
+message beeps? LOW:MED
+can thok through some walls MED:MED
+-> +through jailbars castle
+can be hard to see when throwing a ring MED:MED
+springs loud LOW:LOWMED
+toss flag MED:LOWMED
+spin HIGH:LOW
+mwheel for configs MED:LOW
+maybe don't interrupt typing when changing map MED:LOW
+clients need SFX now HIGH:HIGH
+fix jumping around glitches HIGH:MED
+not all weapons drop properly MED:MED
+castle waterfalls have collision LOW:LOW
+UI blends against sky, chat text should be more neutral LOW:LOW
 
 
 =================== PLAYTEST! 7th FEB ===============
