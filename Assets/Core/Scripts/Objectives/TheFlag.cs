@@ -71,7 +71,7 @@ public class TheFlag : NetworkBehaviour
 
     private void Start()
     {
-        if (NetGameState.singleton is NetGameStateCTF stateCTF)
+        if (MatchState.Get(out MatchFlags stateCTF))
         {
             if (team == PlayerTeam.Red)
                 stateCTF.redFlag = this;
@@ -163,12 +163,12 @@ public class TheFlag : NetworkBehaviour
 
     public void Capture(Player player)
     {
-        if (NetworkServer.active && NetGameState.singleton is NetGameStateCTF stateCTF)
+        if (NetworkServer.active && MatchState.Get(out MatchTeams stateTeams) && MatchState.Get(out MatchFlags stateCtf))
         {
             MessageFeed.Post($"<player>{player.playerName}</player> captured the {team.ToColoredString()} flag!");
 
-            stateCTF.AwardPoint(player.team);
-            player.score += stateCTF.playerPointsPerCapture;
+            stateTeams.AwardPoint(player.team);
+            player.score += stateCtf.playerPointsPerCapture;
             player.holdingFlag.ReturnToBase(false);
 
             RpcPlaySound(FlagSoundIndex.Captured);

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: AutomaticRing
   m_EditorClassIdentifier: 
   settings:
+    name: Automatic
     prefab: {fileID: 3688210822608084460, guid: c16957c10a06a584c9215d6335b2f9d5, type: 3}
     droppedRingPrefab: {fileID: 7739814440051990028, guid: 204539ea41bf24344a4955a880472e69, type: 3}
     uiIcon: {fileID: 21300000, guid: a0730f34dee280d42a7e4807da664906, type: 3}
@@ -39,6 +40,8 @@ MonoBehaviour:
     ammoIsTime: 1
     shotsPerSecond: 17.5
     isAutomatic: 1
+    autoAimHitboxRadius: 0
+    autoAimDegreesRadius: 0
     projectileSpeed: 32.81
     projectileSpinAxisType: 1
     projectileSpinSpeed: 1400

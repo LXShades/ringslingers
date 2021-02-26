@@ -8,7 +8,7 @@ public class TeamBase : MonoBehaviour
     {
         if (Mirror.NetworkServer.active)
         {
-            if (other.TryGetComponent(out Player player) && NetGameState.singleton is NetGameStateCTF stateCTF)
+            if (other.TryGetComponent(out Player player) && MatchState.Get(out MatchFlags stateCTF))
             {
                 TheFlag ourFlag = stateCTF.GetTeamFlag(team);
 

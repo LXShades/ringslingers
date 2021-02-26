@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: BombRing
   m_EditorClassIdentifier: 
   settings:
+    name: Bomb
     prefab: {fileID: 942187780836486323, guid: 80c166c21f78dc449bc9d3b783bed646, type: 3}
     droppedRingPrefab: {fileID: 1203937048721973902, guid: 71cd869cc1b82c1449b6f30c52353efb, type: 3}
     uiIcon: {fileID: 21300000, guid: bc42a556c69beb048847e4d49c9f5e2f, type: 3}
@@ -39,6 +40,8 @@ MonoBehaviour:
     ammoIsTime: 1
     shotsPerSecond: 3.5
     isAutomatic: 0
+    autoAimHitboxRadius: 0
+    autoAimDegreesRadius: 0
     projectileSpeed: 32.81
     projectileSpinAxisType: 0
     projectileSpinSpeed: 800
@@ -50,4 +53,14 @@ MonoBehaviour:
       shotsPerSecondMultiplier: 2.29
       shouldOverrideAutomatic: 1
       isAutomatic: 1
+      shouldOverrideDespawnSound: 0
+      despawnSound:
+        clip: {fileID: 0}
+        additionalClips: []
+        blend3D: 1
+        range: 10
+        volumeDecibels: 0
+        pitch: 1
+        pitchVariance: 0
+        looping: 0
       contactEffectOverride: {fileID: 0}

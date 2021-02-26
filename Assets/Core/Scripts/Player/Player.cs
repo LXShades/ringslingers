@@ -101,12 +101,12 @@ public class Player : NetworkBehaviour
     {
         get
         {
-            if (NetGameState.singleton is NetGameStateCTF gameStateCTF && gameStateCTF.redFlag && gameStateCTF.blueFlag)
+            if (MatchState.Get(out MatchFlags matchCtf) && matchCtf.redFlag && matchCtf.blueFlag)
             {
-                if (gameStateCTF.blueFlag.currentCarrier == playerId)
-                    return gameStateCTF.blueFlag;
-                if (gameStateCTF.redFlag.currentCarrier == playerId)
-                    return gameStateCTF.redFlag;
+                if (matchCtf.blueFlag.currentCarrier == playerId)
+                    return matchCtf.blueFlag;
+                if (matchCtf.redFlag.currentCarrier == playerId)
+                    return matchCtf.redFlag;
             }
             return null;
         }
@@ -126,8 +126,8 @@ public class Player : NetworkBehaviour
 
         Netplay.singleton.RegisterPlayer(this);
 
-        if (NetGameState.singleton is NetGameStateCTF netGameStateCTF)
-            ChangeTeam(netGameStateCTF.FindBestTeamToJoin());
+        if (MatchState.Get(out MatchTeams matchTeams))
+            ChangeTeam(matchTeams.FindBestTeamToJoin());
 
         Respawn();
     }
@@ -229,7 +229,7 @@ public class Player : NetworkBehaviour
                         attackerAsPlayer.score += 50;
 
                     // Add the hit message
-                    MessageFeed.Post($"<player>{attackerAsPlayer.playerName}</player> hit <player>{playerName}</player>!");
+                    MessageFeed.Post($"<player>{attackerAsPlayer.playerName}</player> hit <player>{playerName}</player> with a {attackerAsPlayer.GetComponent<RingShooting>().effectiveWeaponSettings.name} ring!");
                 }
 
                 // Drop some rings
@@ -237,15 +237,9 @@ public class Player : NetworkBehaviour
             }
         }
 
-        if (NetworkServer.active)
+        if (NetworkServer.active && holdingFlag)
         {
-            if (NetGameState.singleton is NetGameStateCTF gameStateCTF)
-            {
-                if (holdingFlag)
-                {
-                    holdingFlag.Drop();
-                }
-            }
+            holdingFlag.Drop();
         }
     }
 

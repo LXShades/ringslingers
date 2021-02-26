@@ -121,8 +121,8 @@ public class CharacterMovement : Movement
         set
         {
             // change look rotation with rotation?
-            //if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
-                //player.input.aimDirection = Quaternion.FromToRotation(_up, value) * player.input.aimDirection;
+            if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
+                player.input.aimDirection = Quaternion.FromToRotation(_up, value) * player.input.aimDirection;
 
             _up = value;
 

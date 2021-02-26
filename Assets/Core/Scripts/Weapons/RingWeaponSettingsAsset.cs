@@ -24,7 +24,12 @@ public class RingWeaponSettings
         return (RingWeaponSettings)MemberwiseClone();
     }
 
+    /// <summary>
+    /// Name of the ring weapon
+    /// </summary>
     [Header("Setup")]
+    public string name;
+
     /// <summary>
     /// Prefab used to create the ring weapon. This can define its behaviour, etc
     /// </summary>
@@ -158,6 +163,8 @@ public class RingWeaponComboSettings
 
         if (shouldOverrideDespawnSound)
             settings.despawnSound = despawnSound;
+
+        settings.name += $"-{effector.settings.name}";
     }
 }
 

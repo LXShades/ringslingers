@@ -26,6 +26,7 @@ public class GameHUD : MonoBehaviour
     [Header("Win screen")]
     public GameObject winScreen;
     public Text winScreenMessage;
+    public Text winScreenCountdown;
 
     [Header("Debug")]
     public Text connectStatusText;
@@ -58,21 +59,24 @@ public class GameHUD : MonoBehaviour
             return;
 
         Player player = GameManager.singleton.camera.currentPlayer;
-        bool isMatchFinished = NetGameState.singleton != null ? NetGameState.singleton.HasRoundFinished : false;
+        bool isMatchFinished = MatchState.singleton != null ? MatchState.singleton.IsWinScreen : false;
 
         numFramesThisSecond++;
 
-        timeText.text = "INF";
         // Match stuff
-        if (NetGameState.singleton is NetGameStateDeathmatch netGameStateDeathmatch)
+        if (MatchState.Get(out MatchTimer matchTimer))
         {
-            float timeRemaining = Mathf.Max(netGameStateDeathmatch.timeRemaining, 0f);
+            float time = Mathf.Max(matchTimer.timeRemaining, 0f);
 
-            timeText.text = $"{(int)timeRemaining / 60}:{((int)timeRemaining % 60).ToString("D2")}";
+            timeText.text = $"{(int)time / 60}:{((int)time % 60).ToString("D2")}";
+        }
+        else
+        {
+            timeText.text = "--:--";
         }
 
         // CTF stuff
-        if (NetGameState.singleton is NetGameStateCTF netGameStateCTF)
+        if (MatchState.Get(out MatchTeams matchTeams))
         {
             if (!redTeamPoints.gameObject.activeSelf)
             {
@@ -80,8 +84,8 @@ public class GameHUD : MonoBehaviour
                 blueTeamPoints.gameObject.SetActive(true);
             }
 
-            redTeamPoints.text = $"RED TEAM\n{netGameStateCTF.redTeamPoints}";
-            blueTeamPoints.text = $"BLUE TEAM\n{netGameStateCTF.blueTeamPoints}";
+            redTeamPoints.text = $"RED TEAM\n{matchTeams.redTeamPoints}";
+            blueTeamPoints.text = $"BLUE TEAM\n{matchTeams.blueTeamPoints}";
         }
         else
         {
@@ -108,6 +112,7 @@ public class GameHUD : MonoBehaviour
                 weaponSlots[i].weapon = ringShooting.weapons[i + 1]; // skip default weapon
                 weaponSlots[i].hasWeapon = true;
             }
+
             for (int j = Mathf.Max(ringShooting.weapons.Count - 1 /* skip default weapon */, 0); j < weaponSlots.Length; j++)
                 weaponSlots[j].hasWeapon = false;
 
@@ -136,20 +141,17 @@ public class GameHUD : MonoBehaviour
 
             // debug stuff for other players in the same scene
             if (PlayerTicker.singleton)
-            {
                 debugText.text += $"Ticker info: ===\n{PlayerTicker.singleton.DebugInfo()}";
-            }
         }
 
         // Scoreboard stuff
         scoreboard.SetActive(Input.GetButton("Scoreboard") || isMatchFinished); // normally we don't use Input, but the HUD is completely client-side so it's fine here
-        winScreen.SetActive(isMatchFinished);
 
         if (scoreboard.activeSelf)
         {
             // Refresh scoreboard info
             Player[] orderedPlayers = Netplay.singleton.players.ToArray();
-            bool useTeamColours = NetGameState.singleton is NetGameStateCTF;
+            bool useTeamColours = matchTeams != null;
 
             System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : -1) - (b ? b.score : -1) > 0 ? -1 : 1);
 
@@ -176,20 +178,13 @@ public class GameHUD : MonoBehaviour
             }
         }
 
-        if (winScreen.activeSelf)
+        // Win screen stuff
+        winScreen.SetActive(isMatchFinished);
+
+        if (isMatchFinished)
         {
-            Player winningPlayer = null;
-
-            foreach (Player candidate in Netplay.singleton.players)
-            {
-                if (candidate != null)
-                {
-                    if (winningPlayer == null || candidate.score > winningPlayer.score)
-                        winningPlayer = candidate;
-                }
-            }
-
-            winScreenMessage.text = $"{winningPlayer.playerName} wins!";
+            winScreenMessage.text = $"{MatchState.singleton.GetWinners()} wins!";
+            winScreenCountdown.text = $"Next round in {((int)MatchState.singleton.timeTilRestart).ToString()}...";
         }
 
         // Connection stuff
@@ -209,6 +204,7 @@ public class GameHUD : MonoBehaviour
             connectStatusText.enabled = false;
         }
 
+        // Debug logging stuff
         if (doRefreshLog)
         {
             debugLogText.text = debugLog;

@@ -1,31 +1,35 @@
 ================== PLAYTEST! 21st FEB ============
 + Prevent player stuttering on server (server should never be letting players do that)
 -> Minimum frame rate will now be 20 I guess....?
-Server should play out missing player ticks if it receives a hiccup/incomplete buffer
-bomb blasts stick around LOW:MEDHIGH
-add auto map switch LOWMED:MEDHIGH
-and countdown timer
-options in main menu MED:MEDHIGH
-flag carrier needs info above head MED:MEDHIGH
-return camera movement to wall climbing LOW:MED
-pit messages LOW:MED
-show player names on join LOW:MED
-weapon hit messages LOW:MED
-message beeps? LOW:MED
-can thok through some walls MED:MED
--> +through jailbars castle
-can be hard to see when throwing a ring MED:MED
-springs loud LOW:LOWMED
-toss flag MED:LOWMED
-spin HIGH:LOW
-mwheel for configs MED:LOW
-maybe don't interrupt typing when changing map MED:LOW
-clients need SFX now HIGH:HIGH
-fix jumping around glitches HIGH:MED
-not all weapons drop properly MED:MED
-castle waterfalls have collision LOW:LOW
-UI blends against sky, chat text should be more neutral LOW:LOW
++ Bomb blasts stick around LOW:MEDHIGH
+-> Reduced to 0.2s
++ Weapon hit messages LOW:MED
++ Return camera movement to wall climbing LOW:MED
++ add auto map switch LOWMED:MEDHIGH
+-> and countdown timer
+-> to do this, convert game state to a set of MatchStateComponents
+- can thok through some walls MED:MEDHIGH
+-> and through jailbars castle
+- options in main menu MED:MEDHIGH
+- flag carrier needs info above head MED:MEDHIGH
+- pit messages LOW:MED
+- show player names on join LOW:MED
+- message beeps? LOW:MED
+- can be hard to see when throwing a ring MED:MED
+- springs loud LOW:LOWMED
+- toss flag MED:LOWMED
+- spin HIGH:LOW
+- mwheel for configs MED:LOW
+- maybe don't interrupt typing when changing map MED:LOW
+- clients need SFX now HIGH:HIGH
+- fix jumping around glitches HIGH:MED
+- not all weapons drop properly MED:MED
+- castle waterfalls have collision LOW:LOW
+- UI blends against sky, chat text should be more neutral LOW:LOW
 
+
+Server should play out missing player ticks if it receives a hiccup/incomplete buffer
+-> we should just see how the latest code plays out first
 
 =================== PLAYTEST! 7th FEB ===============
 ? Spawning as the wrong player glitch!?

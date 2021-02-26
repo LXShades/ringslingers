@@ -177,13 +177,9 @@ public class Netplay : MonoBehaviour
             LevelConfigurationComponent config = FindObjectOfType<LevelConfigurationComponent>();
 
             if (config != null)
-            {
-                NetGameState.SetNetGameState(config.configuration.defaultGameModePrefab);
-            }
+                MatchState.SetNetGameState(config.configuration.defaultGameModePrefab);
             else
-            {
                 Debug.LogError("We can't play this map. There's no game mode setup!");
-            }
         }
     }
     #endregion
