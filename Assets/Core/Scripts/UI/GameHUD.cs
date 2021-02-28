@@ -145,7 +145,7 @@ public class GameHUD : MonoBehaviour
         }
 
         // Scoreboard stuff
-        scoreboard.SetActive(Input.GetButton("Scoreboard") || isMatchFinished); // normally we don't use Input, but the HUD is completely client-side so it's fine here
+        scoreboard.SetActive(GameManager.singleton.input.Gameplay.ViewScores.ReadValue<float>() > 0.5f || isMatchFinished); // normally we don't use Input, but the HUD is completely client-side so it's fine here
 
         if (scoreboard.activeSelf)
         {

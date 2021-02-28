@@ -47,18 +47,20 @@ public class Damageable : NetworkBehaviour
         return otherDamageTeam == 0 || this.damageTeam == 0 || otherDamageTeam != this.damageTeam;
     }
 
-    public void TryDamage(GameObject instigator, Vector3 force = default, bool instaKill = false)
+    public bool TryDamage(GameObject instigator, Vector3 force = default, bool instaKill = false)
     {
         if (instigator && instigator.TryGetComponent(out Damageable instigatorDamageable))
         {
             if (!CanBeDamagedBy(instigatorDamageable.damageTeam))
-                return; // hit by someone on the same team
+                return false; // hit by someone on the same team
         }
 
         if (invincibilityTimeRemaining <= 0f || instaKill)
         {
             OnDamage(instigator, force, instaKill);
+            return true;
         }
+        return false;
     }
 
     [ClientRpc]

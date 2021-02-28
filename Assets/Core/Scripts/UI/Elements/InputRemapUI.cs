@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.UI;
 using static UnityEngine.InputSystem.InputActionRebindingExtensions;
 
@@ -67,7 +68,12 @@ public class InputRemapUI : MonoBehaviour
         isRebinding = true;
         currentRebindingIndex = bindingIndex;
         action.Disable();
-        action.PerformInteractiveRebinding().OnComplete(OnCompletedBinding).WithTargetBinding(bindingIndex).Start();
+        action.PerformInteractiveRebinding(bindingIndex)
+            .WithExpectedControlType<ButtonControl>()
+            //.WithExpectedControlType<AxisControl>()
+            .OnComplete(OnCompletedBinding)
+            .WithCancelingThrough("<Keyboard>/escape")
+            .Start();
 
         RefreshButtonText();
     }

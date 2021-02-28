@@ -95,12 +95,16 @@ public class PlayerCamera : MonoBehaviour
                 }
             }
 
+            float currentThirdPersonDistance = thirdPersonDistance;
+            if (GameManager.singleton.isPaused)
+                currentThirdPersonDistance = maxThirdPersonDistance; // when paused and possibly customising character, zoom out
+
             // Apply third-person view
             if (thirdPersonDistance > 0f)
             {
-                Vector3 targetPosition = transform.position - transform.forward * thirdPersonDistance;
-                
-                if (Physics.Raycast(transform.position, targetPosition - transform.position, out RaycastHit hit, thirdPersonDistance, collisionLayers, QueryTriggerInteraction.Ignore))
+                Vector3 targetPosition = transform.position - transform.forward * currentThirdPersonDistance;
+
+                if (Physics.Raycast(transform.position, targetPosition - transform.position, out RaycastHit hit, currentThirdPersonDistance, collisionLayers, QueryTriggerInteraction.Ignore))
                     targetPosition = hit.point + hit.normal * collisionRadius;
 
                 transform.position = targetPosition;

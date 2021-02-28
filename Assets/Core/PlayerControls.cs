@@ -38,15 +38,15 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""name"": ""Fire"",
                     ""type"": ""Value"",
                     ""id"": ""3753e377-a961-4534-baf8-20ec4f9c1670"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """"
                 },
                 {
                     ""name"": ""Zoom"",
-                    ""type"": ""Button"",
+                    ""type"": ""Value"",
                     ""id"": ""b7bf93e1-7dd4-492e-a989-822eddf7acd7"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": ""Axis"",
                     ""processors"": """",
                     ""interactions"": """"
                 },
@@ -143,37 +143,15 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": ""1D Axis"",
-                    ""id"": ""a8f5ede7-3b76-475c-870c-31055ec77f13"",
-                    ""path"": ""1DAxis"",
+                    ""name"": """",
+                    ""id"": ""7e4cf74f-81f2-4ff3-a37d-31770a58d27c"",
+                    ""path"": ""<Mouse>/scroll/y"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Zoom"",
-                    ""isComposite"": true,
+                    ""isComposite"": false,
                     ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": ""negative"",
-                    ""id"": ""7c1625d9-1a1f-4522-bb56-32e867717ccc"",
-                    ""path"": ""<Mouse>/scroll/y"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Zoom"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
-                },
-                {
-                    ""name"": ""positive"",
-                    ""id"": ""3401bb73-52f8-4a75-931d-9a2656e64d23"",
-                    ""path"": ""<Mouse>/scroll/y"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Zoom"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": true
                 },
                 {
                     ""name"": """",

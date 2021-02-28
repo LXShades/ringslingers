@@ -8,25 +8,29 @@
 + add auto map switch LOWMED:MEDHIGH
 -> and countdown timer
 -> to do this, convert game state to a set of MatchStateComponents
++ pit messages LOW:MED
++ reorganise pause menu
++ Pause menu stack
++ automatic character display while in pause menu LOWMED:MED
++ options in main menu MED:MEDHIGH
+- clients need SFX now HIGH:HIGH
+- Tutorial zone
 - can thok through some walls MED:MEDHIGH
 -> and through jailbars castle
-- options in main menu MED:MEDHIGH
 - flag carrier needs info above head MED:MEDHIGH
-- pit messages LOW:MED
 - show player names on join LOW:MED
 - message beeps? LOW:MED
 - can be hard to see when throwing a ring MED:MED
 - springs loud LOW:LOWMED
+- Pit messages should only post once LOW:LOWMED
 - toss flag MED:LOWMED
 - spin HIGH:LOW
-- mwheel for configs MED:LOW
 - maybe don't interrupt typing when changing map MED:LOW
-- clients need SFX now HIGH:HIGH
 - fix jumping around glitches HIGH:MED
 - not all weapons drop properly MED:MED
 - castle waterfalls have collision LOW:LOW
 - UI blends against sky, chat text should be more neutral LOW:LOW
-
+- mwheel for configs HIGH:LOW
 
 Server should play out missing player ticks if it receives a hiccup/incomplete buffer
 -> we should just see how the latest code plays out first

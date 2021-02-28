@@ -13,7 +13,7 @@ public class MatchTimer : MatchStateComponent
 
     public override void OnAwake()
     {
-        timeRemaining = timeLimit;
+        timeRemaining = timeLimit * 60f;
     }
 
     public override void OnUpdate()

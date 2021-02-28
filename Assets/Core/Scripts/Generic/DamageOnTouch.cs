@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using UnityEngine;
 
 public class DamageOnTouch : MonoBehaviour, IMovementCollisions
 {
@@ -6,6 +7,9 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisions
     public int team;
     public float knockback = 0f;
     public GameObject owner;
+
+    [Tooltip("Message to post when damaged. The message will be posted in the format '[playername] [hitMessage]'")]
+    public string hitMessage;
 
     public void OnMovementCollidedBy(Movement source, bool isReconciliation)
     {
@@ -22,7 +26,14 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisions
         if (other.TryGetComponent(out Damageable damageable) && damageable.CanBeDamagedBy(team) && damageable.gameObject != owner)
         {
             Vector3 force = knockback > 0 ? (other.transform.position - transform.position).Horizontal().normalized * knockback : default;
-            damageable.TryDamage(owner, force, instaKill);
+            
+            if (damageable.TryDamage(owner, force, instaKill))
+            {
+                if (!string.IsNullOrEmpty(hitMessage) && NetworkServer.active && damageable.TryGetComponent(out Player player))
+                {
+                    MessageFeed.Post($"<player>{player.playerName}</player> {hitMessage}");
+                }
+            }
         }
     }
 }
