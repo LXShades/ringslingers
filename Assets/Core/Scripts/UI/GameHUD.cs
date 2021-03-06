@@ -30,6 +30,8 @@ public class GameHUD : MonoBehaviour
     public Text winScreenCountdown;
 
     [Header("Debug")]
+    public Text fpsCounter;
+    public GameObject debugDisplay;
     public Text connectStatusText;
     public Text debugText;
     public TextMeshProUGUI debugLogText;
@@ -40,6 +42,9 @@ public class GameHUD : MonoBehaviour
     private int numFramesThisSecond = 0;
     private int lastFps = 0;
 
+    private float deltaMin = float.MaxValue;
+    private float deltaMax = float.MinValue;
+
     private string debugLog;
 
     bool doRefreshLog = false;
@@ -47,6 +52,9 @@ public class GameHUD : MonoBehaviour
     private void Start()
     {
         Application.logMessageReceived += OnLogMessageReceived;
+
+        debugDisplay.SetActive(GamePreferences.isDebugInfoEnabled);
+        GamePreferences.onPreferencesChanged += OnPreferencesChanged;
     }
 
     private void OnDestroy()
@@ -123,20 +131,8 @@ public class GameHUD : MonoBehaviour
                 autoaimCrosshair.gameObject.SetActive(false);
 
             // Debug stuff
-            if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
-            {
-                lastFps = numFramesThisSecond;
-                numFramesThisSecond = 0;
-            }
-
-            debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing * 1000f)}ms (reliable: {(int)(Netplay.singleton.reliablePing)})" +
-                $"\nFPS: {lastFps}" +
-                $"\n{Netplay.singleton.netStat}\nVelocity: {player.movement.velocity} ({player.movement.velocity.magnitude:F2})\nGround: {player.movement.isOnGround}\nGroundNml: {player.movement.groundNormal}\n" +
-                $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}\n";
-
-            // debug stuff for other players in the same scene
-            if (PlayerTicker.singleton)
-                debugText.text += $"Ticker info: ===\n{PlayerTicker.singleton.DebugInfo()}";
+            if (debugDisplay.activeInHierarchy)
+                UpdatePlayerDebugs(player);
         }
 
         // Scoreboard stuff
@@ -199,7 +195,27 @@ public class GameHUD : MonoBehaviour
             connectStatusText.enabled = false;
         }
 
-        // Debug logging stuff
+        // FPS
+        if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
+        {
+            lastFps = numFramesThisSecond;
+            fpsCounter.text = $"FPS {lastFps.ToString()} / Min {(1f / deltaMax).ToString("F1")} / Max {(1f / deltaMin).ToString("F1")}";
+
+            deltaMin = float.MaxValue;
+            deltaMax = float.MinValue;
+            numFramesThisSecond = 0;
+        }
+
+        deltaMin = Mathf.Min(Time.unscaledDeltaTime, deltaMin);
+        deltaMax = Mathf.Max(Time.unscaledDeltaTime, deltaMax);
+
+        // Debug info
+        if (debugDisplay.activeInHierarchy)
+            UpdateDebugs();
+    }
+
+    private void UpdateDebugs()
+    {
         if (doRefreshLog)
         {
             debugLogText.text = debugLog;
@@ -218,6 +234,17 @@ public class GameHUD : MonoBehaviour
 
             doRefreshLog = false;
         }
+    }
+
+    private void UpdatePlayerDebugs(Player player)
+    {
+        debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing * 1000f)}ms (reliable: {(int)(Netplay.singleton.reliablePing)})" +
+            $"\n{Netplay.singleton.netStat}\nVelocity: {player.movement.velocity} ({player.movement.velocity.magnitude:F2})\nGround: {player.movement.isOnGround}\nGroundNml: {player.movement.groundNormal}\n" +
+            $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}\n";
+
+        // debug stuff for other players in the same scene
+        if (PlayerTicker.singleton)
+            debugText.text += $"Ticker info: ===\n{PlayerTicker.singleton.DebugInfo()}";
     }
 
     private void OnLogMessageReceived(string condition, string stackTrace, LogType type)
@@ -253,6 +280,11 @@ public class GameHUD : MonoBehaviour
         }
 
         doRefreshLog = true;
+    }
+
+    private void OnPreferencesChanged()
+    {
+        debugDisplay.SetActive(GamePreferences.isDebugInfoEnabled);
     }
 
     public void ClearLog()

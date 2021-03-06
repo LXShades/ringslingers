@@ -14,8 +14,14 @@ public class Movement : MonoBehaviour
     [Tooltip("List of collision layers to interact with")]
     public LayerMask blockingCollisionLayers = ~0;
 
+    [Tooltip("Max number of collision steps to make. While the number of steps at maxCollisionStepSize varies depending on speed, this is an absolute maximum")]
+    public int maxNumCollisionSteps = 3;
+
+    [Tooltip("Size of a collision step before it is divided into another. Should be about half the size of the hitbox if using penetration testing.")]
+    public float maxCollisionStepSize = 0.2f;
+
     [Header("Physics")]
-    [Tooltip("If selected, this component will not move the object but will supply the Move function")]
+    [Tooltip("If selected, this component will not move the object automatically but will supply the Move function")]
     public bool useManualPhysics = false;
 
     [Range(0, 1)]
@@ -185,18 +191,25 @@ public class Movement : MonoBehaviour
             return; // done
         }
 
-        float colliderExtentFromCentre = CalculateColliderExtentFromOrigin() + offset.magnitude;
-        int numSteps = 3;
+        if (offset.sqrMagnitude == 0f)
+            return; // no moving to do
+
+        float offsetMagnitude = offset.magnitude;
+        float colliderExtentFromCentre = CalculateColliderExtentFromOrigin() + offsetMagnitude * 0.5f;
+        int numSteps = Mathf.Clamp(Mathf.CeilToInt(offsetMagnitude / maxCollisionStepSize), 1, maxNumCollisionSteps);
         Vector3 currentPosition = transform.position;
+        Vector3 stepOffset = offset / numSteps;
+        Vector3 midPoint = transform.position + offset * 0.5f;
 
         movementCollisions.Clear();
 
         // detect nearby colliders
-        int numCollidersToTest = Physics.OverlapSphereNonAlloc(transform.position, colliderExtentFromCentre, nearbyColliderBuffer, blockingCollisionLayers, QueryTriggerInteraction.Collide);
+        // we use a sphere overlap with the sphere being in the centre of our path and extending to encompass the path plus our collider
+        int numCollidersToTest = Physics.OverlapSphereNonAlloc(midPoint, colliderExtentFromCentre, nearbyColliderBuffer, blockingCollisionLayers, QueryTriggerInteraction.Collide);
 
         for (int step = 0; step < numSteps; step++)
         {
-            currentPosition += offset / numSteps;
+            currentPosition += stepOffset;
 
             for (int iteration = 0; iteration < 3; iteration++)
             {

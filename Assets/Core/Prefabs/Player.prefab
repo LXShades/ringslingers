@@ -603,6 +603,8 @@ MonoBehaviour:
   blockingCollisionLayers:
     serializedVersion: 2
     m_Bits: 1079
+  maxNumCollisionSteps: 7
+  maxCollisionStepSize: 0.3
   useManualPhysics: 1
   bounceFactor: 0
   bounceFriction: 0
@@ -875,6 +877,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e517b61e23b312f438387a601c84e394, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
     additionalClips: []

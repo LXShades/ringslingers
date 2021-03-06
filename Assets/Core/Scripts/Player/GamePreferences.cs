@@ -21,7 +21,17 @@ public static class GamePreferences
         {
             PlayerPrefs.SetFloat("globalVolume", value);
             AudioListener.volume = globalVolume;
-            onPreferencesChanged?.Invoke();
+            OnPreferencesChanged();
+        }
+    }
+
+    public static bool isDebugInfoEnabled
+    {
+        get => PlayerPrefs.GetInt("debugInfo", 0) != 0;
+        set 
+        {
+            PlayerPrefs.SetInt("debugInfo", value ? 1 : 0);
+            OnPreferencesChanged();
         }
     }
 
@@ -33,6 +43,7 @@ public static class GamePreferences
     public static void Load(InputAction[] actions = null)
     {
         _mouseSpeed = PlayerPrefs.GetFloat("MouseSpeed", 1f);
+        
         AudioListener.volume = globalVolume;
 
         if (actions != null)
@@ -61,7 +72,7 @@ public static class GamePreferences
             }
         }
 
-        onPreferencesChanged?.Invoke();
+        OnPreferencesChanged();
 
         Debug.Log("Loaded game preferences");
     }
