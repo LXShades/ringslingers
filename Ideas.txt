@@ -14,8 +14,12 @@
 + automatic character display while in pause menu LOWMED:MED
 + options in main menu MED:MEDHIGH
 + Needed for testing: volume control in pause menu MEDLOW:MEDLOW
-- Test main menu, make sure options and everything still work
-- clients need SFX now HIGH:HIGH
++ Test main menu, make sure options and everything still work
++ Clients need SFX now HIGH:HIGH
++ Ring shoot sounds are delayed on clients
++ Attenuation on ring drop sound needs fixing
++ Client sounds play twice
++ Settings menu sets fullscreen on awake
 - No shoot rings while paused
  -> Camera to look at character when paused
 - Hide team points in non team points game

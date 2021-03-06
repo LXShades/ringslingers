@@ -10,7 +10,7 @@ public class GameSoundPropertyDrawer : PropertyDrawer
     GameSound[] presetValues = new GameSound[]
     {
         new GameSound() {minRange = 5, midRange = 22.5f, maxRange = 50f },
-        new GameSound() {minRange = 5, midRange = 10.5f, maxRange = 50f }
+        new GameSound() {minRange = 5, midRange = 15f, maxRange = 50f }
     };
 
     public override void OnGUI(Rect pos, SerializedProperty prop, GUIContent label)
@@ -18,7 +18,10 @@ public class GameSoundPropertyDrawer : PropertyDrawer
         System.Type targetType = prop.serializedObject.targetObject.GetType();
         System.Reflection.FieldInfo field = targetType.GetField(prop.name);
 
-        SerializedProperty originalProp = prop.Copy();
+        int originalPreset = prop.FindPropertyRelative(nameof(GameSound.rangePreset)).intValue;
+        float originalMin = prop.FindPropertyRelative(nameof(GameSound.minRange)).floatValue;
+        float originalMid = prop.FindPropertyRelative(nameof(GameSound.midRange)).floatValue;
+        float originalMax = prop.FindPropertyRelative(nameof(GameSound.maxRange)).floatValue;
 
         EditorGUI.BeginChangeCheck();
         EditorGUI.PropertyField(pos, prop, label, true);
@@ -41,11 +44,11 @@ public class GameSoundPropertyDrawer : PropertyDrawer
 
         if (EditorGUI.EndChangeCheck())
         {
-            const string rangePreset = nameof(GameSound.rangePreset);
-            if (!SerializedProperty.DataEquals(prop.FindPropertyRelative(rangePreset), originalProp.FindPropertyRelative(rangePreset)))
-            {
-                int newPresetIndex = prop.FindPropertyRelative(rangePreset).intValue - 1;
+            int newPreset = prop.FindPropertyRelative(nameof(GameSound.rangePreset)).intValue;
+            int newPresetIndex = newPreset - 1;
 
+            if (newPreset != originalPreset)
+            {
                 if (newPresetIndex >= 0)
                 {
                     // set range values from new preset
@@ -57,9 +60,9 @@ public class GameSoundPropertyDrawer : PropertyDrawer
             else
             {
                 // set preset to custom if range values have changed
-                if (!SerializedProperty.DataEquals(prop.FindPropertyRelative(nameof(GameSound.minRange)), originalProp.FindPropertyRelative(nameof(GameSound.minRange))) 
-                    || !SerializedProperty.DataEquals(prop.FindPropertyRelative(nameof(GameSound.midRange)), originalProp.FindPropertyRelative(nameof(GameSound.midRange)))
-                    || !SerializedProperty.DataEquals(prop.FindPropertyRelative(nameof(GameSound.maxRange)), originalProp.FindPropertyRelative(nameof(GameSound.maxRange))))
+                if (prop.FindPropertyRelative(nameof(GameSound.minRange)).floatValue != originalMin
+                    || prop.FindPropertyRelative(nameof(GameSound.midRange)).floatValue != originalMid
+                    || prop.FindPropertyRelative(nameof(GameSound.maxRange)).floatValue != originalMax)
                 {
                     prop.FindPropertyRelative(nameof(GameSound.rangePreset)).intValue = (int)GameSound.RangePreset.Custom;
                 }

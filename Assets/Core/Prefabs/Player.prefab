@@ -571,18 +571,6 @@ MonoBehaviour:
   characterModel: {fileID: 2407978492390594985}
   flagHoldBone: {fileID: 1736103052617720840}
   speedTrails: {fileID: 3454492979416601205}
-  dropSound:
-    clip: {fileID: 8300000, guid: eb3b92045251f434fab489da0cf93319, type: 3}
-    additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
-    volumeDecibels: -3
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
   droppedRingPrefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
   droppedRingSpawnPoint: {fileID: 3310946930297574031}
   ringDropLayers:
@@ -892,9 +880,9 @@ MonoBehaviour:
     additionalClips: []
     blend3D: 1
     rangePreset: 2
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    minRange: 5
+    midRange: 10.5
+    maxRange: 50
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -904,9 +892,9 @@ MonoBehaviour:
     additionalClips: []
     blend3D: 1
     rangePreset: 2
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    minRange: 5
+    midRange: 10.5
+    maxRange: 50
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -916,9 +904,9 @@ MonoBehaviour:
     additionalClips: []
     blend3D: 1
     rangePreset: 1
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    minRange: 5
+    midRange: 22.5
+    maxRange: 50
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0

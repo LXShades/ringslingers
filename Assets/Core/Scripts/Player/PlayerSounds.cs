@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class PlayerSounds : MonoBehaviour
+public class PlayerSounds : NetworkBehaviour
 {
     public enum PlayerSoundType
     {
@@ -35,8 +35,13 @@ public class PlayerSounds : MonoBehaviour
         PlayLocally(sound);
     }
 
-    public void PlayLocally(PlayerSoundType sound)
+    public void PlayLocally(PlayerSoundType sound, bool wasReceivedFromServer = false)
     {
+        if (hasAuthority && wasReceivedFromServer && sound != PlayerSoundType.RingDrop)
+            return; // the rest of our sounds we predict locally. more server-triggered ones might arise in the future
+        if (wasReceivedFromServer && NetworkServer.active)
+            return; // nah, we don't need to do this
+
         switch (sound)
         {
             case PlayerSoundType.Jump:
@@ -59,8 +64,6 @@ public class PlayerSounds : MonoBehaviour
         soundHistory |= (byte)sound;
         soundHistory &= ~kCountMask;
         soundHistory |= (byte)(count << kNumSoundBitsTotal);
-
-        Debug.Log($"Pushed num {soundHistory >> kNumSoundBitsTotal} last {soundHistory & kSoundMask} lastlast {(soundHistory >> kNumSoundBitsSingle) & kSoundMask}");
     }
 
     public void ReceiveSoundHistory(byte soundHistory)
@@ -75,9 +78,9 @@ public class PlayerSounds : MonoBehaviour
             diff += (1 << kNumCountBits);
 
         if (diff >= 1)
-            PlayLocally((PlayerSoundType)firstPrevious);
+            PlayLocally((PlayerSoundType)firstPrevious, true);
         if (diff >= 2)
-            PlayLocally((PlayerSoundType)secondPrevious);
+            PlayLocally((PlayerSoundType)secondPrevious, true);
 
         lastReceivedSoundHistory = soundHistory;
     }

@@ -75,8 +75,6 @@ public class Player : NetworkBehaviour
     public TrailRenderer speedTrails;
 
     [Header("Ring drop")]
-    public GameSound dropSound = new GameSound();
-
     public GameObject droppedRingPrefab;
     public Transform droppedRingSpawnPoint;
 

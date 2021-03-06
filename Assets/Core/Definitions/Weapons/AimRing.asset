@@ -21,7 +21,10 @@ MonoBehaviour:
       clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
       additionalClips: []
       blend3D: 1
-      range: 15
+      rangePreset: 1
+      minRange: 5
+      midRange: 22.5
+      maxRange: 50
       volumeDecibels: -3
       pitch: 1
       pitchVariance: 0
@@ -30,7 +33,10 @@ MonoBehaviour:
       clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
       additionalClips: []
       blend3D: 1
-      range: 10
+      rangePreset: 1
+      minRange: 5
+      midRange: 22.5
+      maxRange: 50
       volumeDecibels: -3
       pitch: 1
       pitchVariance: 0
@@ -58,7 +64,10 @@ MonoBehaviour:
         clip: {fileID: 0}
         additionalClips: []
         blend3D: 0
-        range: 0
+        rangePreset: 0
+        minRange: 1
+        midRange: 10
+        maxRange: 20
         volumeDecibels: 0
         pitch: 0
         pitchVariance: 0
@@ -73,7 +82,10 @@ MonoBehaviour:
         clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
         additionalClips: []
         blend3D: 1
-        range: 15
+        rangePreset: 1
+        minRange: 5
+        midRange: 22.5
+        maxRange: 50
         volumeDecibels: 0
         pitch: 1
         pitchVariance: 0

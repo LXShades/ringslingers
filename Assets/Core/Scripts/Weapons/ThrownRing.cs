@@ -77,6 +77,8 @@ public class ThrownRing : NetworkBehaviour
                     break;
             }
         }
+
+        GameSounds.PlaySound(transform.position, effectiveSettings.fireSound);
     }
 
     public override void OnStartClient()
@@ -84,11 +86,7 @@ public class ThrownRing : NetworkBehaviour
         RingWeaponSettings ownerEffectiveSettings = owner?.GetComponent<RingShooting>()?.effectiveWeaponSettings;
 
         if (ownerEffectiveSettings != null)
-        {
             effectiveSettings = ownerEffectiveSettings;
-
-            GameSounds.PlaySound(transform.position, effectiveSettings.fireSound);
-        }
     }
 
     private void Update()
