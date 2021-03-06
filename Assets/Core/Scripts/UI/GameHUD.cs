@@ -18,6 +18,8 @@ public class GameHUD : MonoBehaviour
     public GameObject teamsHud;
     public Text redTeamPoints;
     public Text blueTeamPoints;
+    public GameObject redFlagStolen;
+    public GameObject blueFlagStolen;
 
     [Header("Scoreboard")]
     public GameObject scoreboard;
@@ -84,19 +86,39 @@ public class GameHUD : MonoBehaviour
             timeText.text = "--:--";
         }
 
-        // CTF stuff
+        // team stuff
         if (MatchState.Get(out MatchTeams matchTeams))
         {
             if (!teamsHud.gameObject.activeSelf)
                 teamsHud.SetActive(true);
 
-            redTeamPoints.text = $"RED TEAM\n{matchTeams.redTeamPoints}";
-            blueTeamPoints.text = $"BLUE TEAM\n{matchTeams.blueTeamPoints}";
+            redTeamPoints.text = matchTeams.redTeamPoints.ToString();
+            blueTeamPoints.text = matchTeams.blueTeamPoints.ToString();
         }
         else
         {
             if (redTeamPoints.gameObject.activeSelf)
                 teamsHud.SetActive(false);
+        }
+
+        // CTF stuff
+        if (MatchState.Get(out MatchFlags matchFlags))
+        {
+            bool isRedFlagStolen = (matchFlags.redFlag?.currentCarrier != -1);
+            bool isBlueFlagStolen = (matchFlags.blueFlag?.currentCarrier != -1);
+
+            if (redFlagStolen.activeSelf != isRedFlagStolen)
+                redFlagStolen.SetActive(isRedFlagStolen);
+            if (blueFlagStolen.activeSelf != isBlueFlagStolen)
+                blueFlagStolen.SetActive(isBlueFlagStolen);
+        }
+        else
+        {
+            if (redFlagStolen.activeSelf)
+            {
+                redFlagStolen.SetActive(false);
+                blueFlagStolen.SetActive(false);
+            }
         }
 
         // Player stuff

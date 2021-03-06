@@ -20,6 +20,9 @@ public class TheFlag : NetworkBehaviour
     [Header("Flag setup")]
     public PlayerTeam team;
 
+    public GameObject gotFlagIndicator;
+    public float gotFlagIndicatorHoverHeight = 2f;
+
     public GameSound pickupSound;
     public GameSound returnedSound;
     public GameSound capturedByEnemySound;
@@ -125,6 +128,30 @@ public class TheFlag : NetworkBehaviour
 
                 movement.SimulateDefault(Time.deltaTime);
                 break;
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (state == State.Carrying && currentCarrier != -1 && currentCarrier < Netplay.singleton.players.Count)
+        {
+            Player carryingPlayer = Netplay.singleton.players[currentCarrier];
+
+            if (carryingPlayer)
+            {
+                if (!gotFlagIndicator.activeSelf)
+                {
+                    gotFlagIndicator.SetActive(true);
+                    gotFlagIndicator.transform.SetParent(null, false);
+                }
+
+                gotFlagIndicator.transform.SetPositionAndRotation(carryingPlayer.transform.position + Vector3.up * gotFlagIndicatorHoverHeight, Quaternion.LookRotation(gotFlagIndicator.transform.position - GameManager.singleton.camera.transform.position));
+            }
+        }
+        else
+        {
+            if (gotFlagIndicator.activeSelf)
+                gotFlagIndicator.SetActive(false);
         }
     }
 
