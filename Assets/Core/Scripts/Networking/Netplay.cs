@@ -293,7 +293,6 @@ public class Netplay : MonoBehaviour
     private void OnServerConnected(NetworkConnection connection)
     {
         Log.Write("A client has connected!");
-        MessageFeed.Post($"<player>Player {connection.connectionId}</player> has joined the game!");
     }
 
     private void OnServerDisconnected(NetworkConnection connection)
@@ -322,8 +321,9 @@ public class Netplay : MonoBehaviour
         // Spawn the player
         Player player = Spawner.Spawn(GameManager.singleton.playerPrefab).GetComponent<Player>();
 
-        player.gameObject.name = $"Player {player.playerId}";
+        player.Rename($"Player {player.playerId}");
         Log.Write($"{player.playerName} ({player.playerId}) has entered the game");
+        MessageFeed.Post($"<player>{player.playerName}</player> has joined the game!");
 
         return player;
     }

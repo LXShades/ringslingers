@@ -15,6 +15,7 @@ public class GameHUD : MonoBehaviour
     public WeaponSlotUI[] weaponSlots = new WeaponSlotUI[0];
 
     [Header("Teams")]
+    public GameObject teamsHud;
     public Text redTeamPoints;
     public Text blueTeamPoints;
 
@@ -78,22 +79,16 @@ public class GameHUD : MonoBehaviour
         // CTF stuff
         if (MatchState.Get(out MatchTeams matchTeams))
         {
-            if (!redTeamPoints.gameObject.activeSelf)
-            {
-                redTeamPoints.gameObject.SetActive(true);
-                blueTeamPoints.gameObject.SetActive(true);
-            }
+            if (!teamsHud.gameObject.activeSelf)
+                teamsHud.SetActive(true);
 
             redTeamPoints.text = $"RED TEAM\n{matchTeams.redTeamPoints}";
             blueTeamPoints.text = $"BLUE TEAM\n{matchTeams.blueTeamPoints}";
         }
         else
         {
-            if (redTeamPoints.gameObject.activeInHierarchy)
-            {
-                redTeamPoints.gameObject.SetActive(false);
-                blueTeamPoints.gameObject.SetActive(false);
-            }
+            if (redTeamPoints.gameObject.activeSelf)
+                teamsHud.SetActive(false);
         }
 
         // Player stuff

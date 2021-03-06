@@ -47,13 +47,18 @@ public class PlayerClient : NetworkBehaviour
     public void CmdSendMessage(string message)
     {
         message = message.Replace("</noparse>", "lol"); // plz don't
-        MessageFeed.Post($"<<player>{player?.playerName}</player>>: <noparse>{message}</noparse>");
+        MessageFeed.Post($"<{player?.playerName}> <noparse>{message}</noparse>", true);
     }
 
     [Command]
     private void CmdTryRename(string newName)
     {
+        string oldName = player.playerName;
+
         player?.Rename(newName);
+
+        if (oldName != player.playerName)
+            MessageFeed.Post($"{oldName} was renamed to <player>{player.playerName}</player>");
     }
 
     [Command]

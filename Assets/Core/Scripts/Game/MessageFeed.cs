@@ -22,6 +22,8 @@ public class MessageFeed : NetworkBehaviour
 
     public Action<string> onNewMessage;
 
+    public GameSound beepSound;
+
     private void Awake()
     {
         singleton = this;
@@ -31,9 +33,10 @@ public class MessageFeed : NetworkBehaviour
     /// Posts a message to the message log and distributes it to clients. Server-side only
     /// </summary>
     /// <param name="message"></param>
-    public static void Post(string message)
+    [Server]
+    public static void Post(string message, bool doBeep = false)
     {
-        singleton?.PostImpl(message);
+        singleton?.PostImpl(message, doBeep);
     }
 
     /// <summary>
@@ -46,11 +49,11 @@ public class MessageFeed : NetworkBehaviour
     }
 
     [Server]
-    private void PostImpl(string message)
+    private void PostImpl(string message, bool doBeep = false)
     {
         Log.Write($"{message}");
 
-        RpcPost(message);
+        RpcPost(message, doBeep);
     }
 
     private void PostLocalImpl(string message)
@@ -100,8 +103,11 @@ public class MessageFeed : NetworkBehaviour
 
     // broadcast messages to clients
     [ClientRpc]
-    public void RpcPost(string message)
+    public void RpcPost(string message, bool doBeep)
     {
         PostLocal(message);
+
+        if (doBeep)
+            GameSounds.PlaySound(null, beepSound);
     }
 }

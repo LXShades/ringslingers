@@ -96,7 +96,10 @@ MonoBehaviour:
     clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
     additionalClips: []
     blend3D: 1
-    range: 14.91
+    rangePreset: 2
+    minRange: 5
+    midRange: 15
+    maxRange: 50
     volumeDecibels: -14
     pitch: 1
     pitchVariance: 0
@@ -254,7 +257,10 @@ MonoBehaviour:
     clip: {fileID: 0}
     additionalClips: []
     blend3D: 1
-    range: 10
+    rangePreset: 0
+    minRange: 1
+    midRange: 10
+    maxRange: 20
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
