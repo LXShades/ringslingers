@@ -309,7 +309,7 @@ public class Player : NetworkBehaviour
         int currentSuffix = 0;
 
         if (string.IsNullOrWhiteSpace(newName))
-            newName = "Anonymous";
+            newName = updatedName = "Anonymous";
 
         while (Netplay.singleton.players.Exists(a => a != null && a != this && a.playerName == updatedName))
         {

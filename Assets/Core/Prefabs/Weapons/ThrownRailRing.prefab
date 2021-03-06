@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8470797328384155023}
   - component: {fileID: 8286160886399776190}
   m_Layer: 9
-  m_Name: Particle System (1)
+  m_Name: TwistyStarEffect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4954,7 +4954,10 @@ MonoBehaviour:
     clip: {fileID: 0}
     additionalClips: []
     blend3D: 1
-    range: 10
+    rangePreset: 0
+    minRange: 1
+    midRange: 10
+    maxRange: 20
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -4984,7 +4987,7 @@ GameObject:
   - component: {fileID: 1908454168909248838}
   - component: {fileID: 5274891601732802104}
   m_Layer: 9
-  m_Name: Particle System
+  m_Name: LineEffect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5141,7 +5144,7 @@ ParticleSystem:
     startSpeed:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 400
+      scalar: 1000
       minScalar: 5
       maxCurve:
         serializedVersion: 2
