@@ -17,6 +17,7 @@ public class PlayerController : NetworkBehaviour
 
         public void Serialize(NetworkWriter writer)
         {
+            // 31 bytes
             writer.WriteSingle(time);
             writer.WriteUInt16(Compressor.CompressFloat16(extrapolation, 0f, 2f));
             writer.WriteVector3(position);

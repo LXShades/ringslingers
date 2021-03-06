@@ -337,8 +337,6 @@ public class RingShooting : NetworkBehaviour
 
         ringAsThrownRing.Throw(player, position, direction);
 
-        GameSounds.PlaySound(gameObject, effectiveWeaponSettings.fireSound);
-
         lastFiredRingTime = Time.time;
     }
 

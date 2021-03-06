@@ -92,6 +92,7 @@ public class Player : NetworkBehaviour
     /// </summary>
     [HideInInspector] public CharacterMovement movement;
     [HideInInspector] public Damageable damageable;
+    private PlayerSounds sounds;
 
     public bool isInvisible { get; set; }
 
@@ -118,6 +119,7 @@ public class Player : NetworkBehaviour
     {
         movement = GetComponent<CharacterMovement>();
         damageable = GetComponent<Damageable>();
+        sounds = GetComponent<PlayerSounds>();
     }
 
     public override void OnStartServer()
@@ -296,7 +298,7 @@ public class Player : NetworkBehaviour
         }
 
         if (numToDrop > 0)
-            GameSounds.PlaySound(gameObject, dropSound);
+            sounds.PlayNetworked(PlayerSounds.PlayerSoundType.RingDrop);
 
         numRings = 0;
     }

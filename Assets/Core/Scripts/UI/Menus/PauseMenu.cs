@@ -2,27 +2,19 @@
 
 public class PauseMenu : MonoBehaviour
 {
-    public GameObject container;
-    public MenuStack stackRoot;
-    public MenuStack mainPanel;
+    public MenuRoot menu;
 
     private void Update()
     {
         if (UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
             GameManager.singleton.isPaused = !GameManager.singleton.isPaused;
 
-        if (GameManager.singleton.isPaused != container.activeSelf)
+        if (GameManager.singleton.isPaused != menu.isOpen)
         {
             if (GameManager.singleton.isPaused)
-            {
-                container.SetActive(true);
-                stackRoot.Open(mainPanel);
-            }
+                menu.Open();
             else
-            {
-                stackRoot.CloseAll();
-                container.SetActive(false);
-            }
+                menu.Close();
         }
     }
 

@@ -11,6 +11,7 @@ public class CharacterMovement : Movement
     }
 
     private Player player;
+    private PlayerSounds sounds;
     private Movement move;
 
     [Header("Movement (all FRACUNITS)")]
@@ -146,6 +147,7 @@ public class CharacterMovement : Movement
     {
         player = GetComponent<Player>();
         move = GetComponent<Movement>();
+        sounds = GetComponent<PlayerSounds>();
     }
 
     public void TickMovement(float deltaTime, PlayerInput input, bool isReconciliation = false)
@@ -324,7 +326,8 @@ public class CharacterMovement : Movement
                 velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM);
 
                 if (!isReconciliation)
-                    GameSounds.PlaySound(gameObject, jumpSound);
+                    sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
+
                 state |= State.Jumped;
             }
             else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.isHoldingFlag)
@@ -333,7 +336,8 @@ public class CharacterMovement : Movement
                 velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
                 if (!isReconciliation)
-                    GameSounds.PlaySound(gameObject, thokSound);
+                    sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
+
                 state |= State.Thokked;
             }
         }

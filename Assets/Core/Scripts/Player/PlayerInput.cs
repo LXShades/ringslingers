@@ -87,6 +87,7 @@ public struct PlayerInput : IEquatable<PlayerInput>
 
     public void Serialize(NetworkWriter writer)
     {
+        // 7 bytes
         writer.WriteInt16((short)(Compressor.UnitFloatToBits(moveHorizontalAxis, 8) | (Compressor.UnitFloatToBits(moveVerticalAxis, 8) << 8)));
         writer.WriteInt32((Compressor.UnitFloatToBits(horizontalAim / 360f, 16) | (Compressor.UnitFloatToBits(verticalAim / 360f, 16) << 16)));
 

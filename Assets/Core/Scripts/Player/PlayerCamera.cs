@@ -11,6 +11,7 @@ public class PlayerCamera : MonoBehaviour
     public float zoomSpeed = 1f;
     public float thirdPersonDistance = 0f;
 
+    public float characterPreviewDistance = 2f;
     public float maxThirdPersonDistance = 5f;
     public float minThirdPersonDistance = 1f;
 
@@ -70,10 +71,14 @@ public class PlayerCamera : MonoBehaviour
         if (currentPlayer)
         {
             Vector3 characterUp = currentPlayer.GetComponent<CharacterMovement>().up;
+            Vector3 effectiveAimDirection = currentPlayer.input.aimDirection;
+
+            if (GameManager.singleton.isPaused)
+                effectiveAimDirection = -currentPlayer.input.aimDirection; // look towards the character when paused/potentially character config
 
             // Move and rotate to player position
             transform.position = currentPlayer.transform.position + characterUp * eyeHeight;
-            transform.rotation = Quaternion.LookRotation(currentPlayer.input.aimDirection, characterUp);
+            transform.rotation = Quaternion.LookRotation(effectiveAimDirection, characterUp);
 
             // Apply zoom in/out
             float zoom = Input.GetAxis("CameraZoom") * zoomSpeed;
@@ -97,10 +102,10 @@ public class PlayerCamera : MonoBehaviour
 
             float currentThirdPersonDistance = thirdPersonDistance;
             if (GameManager.singleton.isPaused)
-                currentThirdPersonDistance = maxThirdPersonDistance; // when paused and possibly customising character, zoom out
+                currentThirdPersonDistance = characterPreviewDistance; // when paused and possibly customising character, zoom out
 
             // Apply third-person view
-            if (thirdPersonDistance > 0f)
+            if (currentThirdPersonDistance > 0f)
             {
                 Vector3 targetPosition = transform.position - transform.forward * currentThirdPersonDistance;
 
@@ -117,7 +122,7 @@ public class PlayerCamera : MonoBehaviour
             }
 
             // Apply eye bob
-            if (currentPlayer.movement.isOnGround && thirdPersonDistance <= Mathf.Epsilon)
+            if (currentPlayer.movement.isOnGround && currentThirdPersonDistance <= Mathf.Epsilon)
             {
                 if (lastPlayerFallSpeed > 0)
                 {

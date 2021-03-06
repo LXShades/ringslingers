@@ -14,6 +14,7 @@ public class PlayerTicker : NetworkBehaviour
     {
         public byte id;
         public PlayerController.MoveStateWithInput moveState;
+        public byte sounds;
     }
 
     private struct ClientPlayerInput : NetworkMessage
@@ -106,10 +107,12 @@ public class PlayerTicker : NetworkBehaviour
             if (Netplay.singleton.players[i])
             {
                 PlayerController controller = Netplay.singleton.players[i].GetComponent<PlayerController>();
+                PlayerSounds sounds = controller.GetComponent<PlayerSounds>();
 
                 ticksOut.Add(new ServerPlayerTick()
                 {
                     id = (byte)i,
+                    sounds = sounds.soundHistory,
                     moveState = new PlayerController.MoveStateWithInput()
                     {
                         moveState = controller.MakeOrGetConfirmedMoveState(),
@@ -135,7 +138,9 @@ public class PlayerTicker : NetworkBehaviour
             if (Netplay.singleton.players[tick.id])
             {
                 PlayerController controller = Netplay.singleton.players[tick.id].GetComponent<PlayerController>();
+                PlayerSounds sounds = controller.GetComponent<PlayerSounds>();
                 controller.ReceiveMovement(tick.moveState.moveState, tick.moveState.input);
+                sounds.ReceiveSoundHistory(tick.sounds);
 
                 if (tick.id == Netplay.singleton.localPlayerId)
                     localPlayerPing = controller.clientPlaybackTime + controller.currentExtrapolation - (tick.moveState.moveState.time + tick.moveState.moveState.extrapolation);

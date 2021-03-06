@@ -6,6 +6,8 @@ public class Spring : MonoBehaviour, IMovementCollisions
     // red: 32, yellow: 20, blue: 11
     public float springForce = (32 * 35);
 
+    public float maxSpeedDotForSpring = 0.9f;
+
     public bool springAbsolutely = false;
 
     [Header("Sounds")]
@@ -22,7 +24,7 @@ public class Spring : MonoBehaviour, IMovementCollisions
     {
         CharacterMovement movement = source as CharacterMovement;
 
-        if (movement && (movement.velocity.AlongAxis(transform.up) < springForce * 0.7f || springAbsolutely))
+        if (movement && Vector3.Dot(movement.velocity, transform.up) < maxSpeedDotForSpring * springForce)
         {
             movement.SpringUp(springForce, transform.up, springAbsolutely);
 

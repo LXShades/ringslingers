@@ -14,6 +14,17 @@ public static class GamePreferences
         }
     }
 
+    public static float globalVolume
+    {
+        get => PlayerPrefs.GetFloat("globalVolume", 1f);
+        set
+        {
+            PlayerPrefs.SetFloat("globalVolume", value);
+            AudioListener.volume = globalVolume;
+            onPreferencesChanged?.Invoke();
+        }
+    }
+
     private static float _mouseSpeed;
 
     public static event Action onPreferencesChanged;
@@ -22,6 +33,7 @@ public static class GamePreferences
     public static void Load(InputAction[] actions = null)
     {
         _mouseSpeed = PlayerPrefs.GetFloat("MouseSpeed", 1f);
+        AudioListener.volume = globalVolume;
 
         if (actions != null)
         {
