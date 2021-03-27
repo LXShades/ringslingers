@@ -19,23 +19,32 @@ MonoBehaviour:
       time: 0
       value: 0.05
       inSlope: -0.0000005887944
-      outSlope: -0.010477245
+      outSlope: -0.0033018277
       tangentMode: 65
       weightedMode: 0
       inWeight: 0
       outWeight: 1
     - serializedVersion: 3
-      time: 4.7627025
-      value: 0.0001
-      inSlope: -0.010477245
+      time: 3.0593665
+      value: 0.0398985
+      inSlope: -0.0033018277
+      outSlope: -0.010285434
+      tangentMode: 69
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 6.9336314
+      value: 0.00005
+      inSlope: -0.010285434
       outSlope: 0
       tangentMode: 5
       weightedMode: 0
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 5.7164116
-      value: 0.0001
+      time: 7.6151185
+      value: 0.00005
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -96,5 +105,6 @@ MonoBehaviour:
   gravityMultiplier: 2.5
   maxSpeed: 35
   debugForceScale: 0.1
+  verticalTurnLimit: 0.4
   tunnelToForwardHorizontalForceMultiplier: 0.3
   tunnelToForwardVerticalForceMultiplier: 0.005

@@ -197,7 +197,7 @@ public class CharacterMovement : Movement
                 //player.damageable.StartInvincibilityTime();
             }
 
-            state &= ~State.Pained;
+            state &= ~(State.Pained | State.Gliding);
         }
 
         // Friction
@@ -395,34 +395,41 @@ public class CharacterMovement : Movement
         {
             velocity.y -= (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime) * (glide.gravityMultiplier - 1f);
 
-            Vector3 movementAim = aim;
-            Vector3 aimRight = Vector3.Cross(movementAim, Vector3.up).normalized;
+            Vector3 movementAim = aim.Horizontal().normalized;
+            Vector3 aimRight = Vector3.Cross(Vector3.up, movementAim).normalized;
+            Vector3 aimUp = Vector3.up;
 
             // adjust aim based on directional keys (side gliding)
             if (Mathf.Abs(input.moveHorizontalAxis) > 0.01f)
             {
-                movementAim -= aimRight * input.moveHorizontalAxis * Mathf.Sign(Vector3.Dot(aim, velocity));
-                aimRight = Vector3.Cross(movementAim, Vector3.up).normalized;
-                movementAim.Normalize();
+                movementAim = (movementAim + aimRight * (input.moveHorizontalAxis * Mathf.Sign(Vector3.Dot(aim, velocity)))).normalized;
+                aimRight = Vector3.Cross(Vector3.up, movementAim).normalized;
             }
 
-            Vector3 aimUp = Vector3.Cross(aimRight, movementAim).normalized;
+            // glide up/down
+            if (Mathf.Abs(input.moveVerticalAxis) > 0.01f)
+            {
+                movementAim += (aimUp * input.moveVerticalAxis) * glide.verticalTurnLimit;
+                movementAim.Normalize();
+                aimUp = Vector3.Cross(movementAim, aimRight);
+            }
+
             float forwardVelocitySign = Mathf.Sign(Vector3.Dot(movementAim, velocity));
 
             // Add tunnel friction
             float velocityAlongAim = Mathf.Abs(velocity.AlongAxis(movementAim));
             Vector3 tunnelHorizontalFrictionForce = aimRight * (-velocity.AlongAxis(aimRight) * (1f - Mathf.Pow(glide.tunnelHorizontalFrictionBySpeed.Evaluate(velocityAlongAim), deltaTime)));
-            Vector3 tunnelVerticalFrictionForce = aimUp * (-velocity.AlongAxis(aimUp) * (1f - Mathf.Pow(glide.tunnelVerticalFrictionBySpeed.Evaluate(velocityAlongAim), deltaTime)));
-
-            velocity += tunnelHorizontalFrictionForce + tunnelVerticalFrictionForce;
-
-            // Transfer lost speed to forward movement
-            velocity += movementAim * (tunnelVerticalFrictionForce.magnitude * forwardVelocitySign * glide.tunnelToForwardVerticalForceMultiplier);
-            velocity += movementAim * (tunnelHorizontalFrictionForce.magnitude * forwardVelocitySign * glide.tunnelToForwardHorizontalForceMultiplier);
+            Vector3 tunnelVerticalFrictionForce = aimUp * -velocity.AlongAxis(aimUp) * (1f - Mathf.Pow(glide.tunnelVerticalFrictionBySpeed.Evaluate(velocityAlongAim), deltaTime));
 
             // Air resistance
             float airResistance = glide.airResistanceBySpeed.Evaluate(velocityAlongAim);
-            velocity -= movementAim * (airResistance * Mathf.Sign(forwardVelocitySign) * deltaTime); // air resistance
+            velocity -= movementAim * (airResistance * forwardVelocitySign * deltaTime); // air resistance
+
+            // Apply friction and maintain all speed while turning horizontally
+            velocity += tunnelVerticalFrictionForce;
+            float velLen = velocity.Horizontal().magnitude;
+            velocity += tunnelHorizontalFrictionForce;
+            velocity.SetHorizontal(velocity.Horizontal().normalized * velLen);
 
             // max speed
             float maxSpeed = glide.maxSpeed;
@@ -517,6 +524,9 @@ public class CharacterMovement : Movement
 
         // Apply final rotation
         transform.rotation = Quaternion.LookRotation(input.aimDirection.AlongPlane(up), up);
+
+        if ((state & State.Gliding) != 0)
+            transform.rotation = Quaternion.LookRotation(velocity, up);
     }
 
     private void ApplyGravity(float deltaTime)

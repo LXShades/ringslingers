@@ -46,6 +46,7 @@ public class CharacterAnimation : MonoBehaviour
         Vector3 groundVelocity = movement.groundVelocity;
         Vector3 characterUp = movement.up;
         Vector3 groundForward = transform.forward.AlongPlane(characterUp).normalized;
+        Vector3 groundAimForward = player.input.aimDirection.AlongPlane(characterUp).normalized;
 
         // Turn body towards look direction
         if (movement.isOnGround && groundVelocity.magnitude > 0.2f)
@@ -76,7 +77,7 @@ public class CharacterAnimation : MonoBehaviour
             if (groundVelocity.sqrMagnitude > 1f)
             {
                 Vector3 groundSide = Vector3.Cross(groundForward, Vector3.up);
-                tiltAngle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(groundVelocity.normalized, groundForward.normalized), -0.9999f, 0.9999f)) * Mathf.Rad2Deg * -Mathf.Sign(Vector3.Dot(groundSide, groundVelocity - groundForward));
+                tiltAngle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(groundVelocity.normalized, groundAimForward.normalized), -0.9999f, 0.9999f)) * Mathf.Rad2Deg * -Mathf.Sign(Vector3.Dot(groundSide, groundVelocity - groundAimForward));
             }
 
             root.rotation = root.rotation * Quaternion.Euler(player.input.verticalAim, tiltAngle, 0f);
