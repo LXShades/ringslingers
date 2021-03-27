@@ -71,6 +71,10 @@ public class MessageFeed : NetworkBehaviour
                     sb.Replace($"<player>{player.playerName}</player>", $"{player.team.ToFontColor()}{player.playerName}</color>");
                 }
             }
+
+            // missing player perhaps
+            sb.Replace("<player>", "");
+            sb.Replace("</player>", "");
         }
         else
         {

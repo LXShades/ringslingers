@@ -26,10 +26,10 @@ public class NetworkEditorTools : MonoBehaviour
         set => EditorPrefs.SetBool("netOnlyBuildCurrentScene", value);
     }
 
-    public static string buildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/QuickTest";
+    public static string buildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/QuickTest/{Application.productName}";
 
-    public static string webGlBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/WebGL";
-    public static string linuxBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/Linux";
+    public static string webGlBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/WebGL/{Application.productName}";
+    public static string linuxBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/Linux/{Application.productName}";
 
     private static EditorRole editorRole
     {
@@ -79,7 +79,8 @@ public class NetworkEditorTools : MonoBehaviour
 
         if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
         {
-            UnityEditor.Build.Reporting.BuildReport buildReport = BuildPipeline.BuildPlayer(levels.ToArray(), $"{buildPath}/Build.exe", BuildTarget.StandaloneWindows64, BuildOptions.Development);
+            string buildName = $"{buildPath}/{Application.productName}.exe";
+            UnityEditor.Build.Reporting.BuildReport buildReport = BuildPipeline.BuildPlayer(levels.ToArray(), buildName, BuildTarget.StandaloneWindows64, BuildOptions.Development);
 
             EditorSceneManager.OpenScene(originalScene);
 
@@ -241,7 +242,7 @@ public class NetworkEditorTools : MonoBehaviour
         // Run another instance of the game
         System.Diagnostics.Process process = new System.Diagnostics.Process();
 
-        process.StartInfo.FileName = $"{buildPath}/Build.exe";
+        process.StartInfo.FileName = $"{buildPath}/{Application.productName}.exe";
         process.StartInfo.WorkingDirectory = buildPath;
         process.StartInfo.Arguments = arguments;
 

@@ -221,7 +221,9 @@ public class GameHUD : MonoBehaviour
         if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
         {
             lastFps = numFramesThisSecond;
-            fpsCounter.text = $"FPS {lastFps.ToString()} / Min {(1f / deltaMax).ToString("F1")} / Max {(1f / deltaMin).ToString("F1")}";
+            fpsCounter.text = $"FPS {lastFps.ToString()} / Min {(1f / deltaMax).ToString("F1")} / Max {(1f / deltaMin).ToString("F1")}\n" +
+                $"Ping/Unreliable/Reliable: " +
+                $"{((int)(PlayerTicker.singleton.localPlayerPing * 1000)).ToString()}/{((int)(Netplay.singleton.unreliablePing * 1000)).ToString()}/{((int)(Netplay.singleton.reliablePing * 1000)).ToString()}";
 
             deltaMin = float.MaxValue;
             deltaMax = float.MinValue;

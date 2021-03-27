@@ -16,9 +16,15 @@ public class PathEditor : Editor
             Undo.RecordObject(path, "Insert path point");
 
             if (path.points.Count > lastSelectedPoint)
+            {
                 path.points.Insert(lastSelectedPoint + 1, path.points[lastSelectedPoint] + Vector3.forward);
+                lastSelectedPoint++;
+            }
             else
+            {
                 path.points.Add(path.points.Count > 0 ? path.points[path.points.Count - 1] + Vector3.forward : Vector3.zero);
+                lastSelectedPoint++;
+            }
         }
 
         if (GUILayout.Button("Remove selected"))

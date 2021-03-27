@@ -412,7 +412,6 @@ GameObject:
   - component: {fileID: 6204530588118465647}
   - component: {fileID: 6990512480632819184}
   - component: {fileID: 6326427146094059178}
-  - component: {fileID: 1151665839638951864}
   m_Layer: 0
   m_Name: GotFlagIndicator
   m_TagString: Untagged
@@ -483,17 +482,3 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &1151665839638951864
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7128272433251758818}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 4
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}

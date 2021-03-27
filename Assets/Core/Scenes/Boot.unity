@@ -153,13 +153,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnablePrefabs:
-  - {fileID: 4610858462893129947, guid: 6775d0a7a1b3d9a47bf954e264520576, type: 3}
   - {fileID: 1790104548480656412, guid: bb9dfd51c90b05943b69d3e8498fbcf8, type: 3}
+  - {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+  - {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
   - {fileID: 3354472749510327343, guid: 2fac6622aa7b6c344b91f5db12097122, type: 3}
   - {fileID: 9067864423546626223, guid: 5f4b08bc9bff14d4cb749324a2531f55, type: 3}
   - {fileID: 5160895463264847464, guid: b8d63c0324f967f479e81af9d0c058ba, type: 3}
-  - {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-  - {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
   - {fileID: 4905443269852683854, guid: 497ed5ac10ef377488fd995676d02f0c, type: 3}
   - {fileID: 5582948268396191393, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
   - {fileID: 8055353508438605935, guid: 24fbdd17d59a3ae499a6b2d84a148aae, type: 3}
@@ -168,7 +167,10 @@ MonoBehaviour:
   - {fileID: 1203937048721973902, guid: 71cd869cc1b82c1449b6f30c52353efb, type: 3}
   - {fileID: 6277300037846207836, guid: 7b94f25f5c608c3488d27fd7ff4f2937, type: 3}
   - {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
+  - {fileID: 4610858462893129947, guid: 6775d0a7a1b3d9a47bf954e264520576, type: 3}
   - {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+  - {fileID: 5419749541942614628, guid: c2ec5802f9d0f86438eb562756d915db, type: 3}
+  - {fileID: 1595258891142828527, guid: 54991d5589c3bab47b6811e82e173945, type: 3}
   - {fileID: 6167014272590406206, guid: 5f2ee636d2368a64fa4d7e8acdb62ec6, type: 3}
   - {fileID: 5180647389967111679, guid: cb76cd5e549efe041b127b4bf4af68b3, type: 3}
   - {fileID: 3688210822608084460, guid: c16957c10a06a584c9215d6335b2f9d5, type: 3}
@@ -326,7 +328,7 @@ MonoBehaviour:
   defaultMenuScene: MainMenu
   levelDatabase: {fileID: 11400000, guid: 71cadc94b000ed648b8a4be98d1dd679, type: 2}
   itemRespawnTime: 20
-  playerPrefab: {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+  playerPrefab: {fileID: 5419749541942614628, guid: c2ec5802f9d0f86438eb562756d915db, type: 3}
   gravity: 9.5703125
   fracunitsPerM: 64
   localObjects: {fileID: 0}

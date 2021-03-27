@@ -10,6 +10,12 @@ public class CharacterMovement : Movement
         Cast
     }
 
+    public enum JumpAbility
+    {
+        Thok,
+        Glide
+    }
+
     private Player player;
     private PlayerSounds sounds;
     private Movement move;
@@ -54,7 +60,12 @@ public class CharacterMovement : Movement
     public float maxStepHeight = 0.4f;
 
     [Header("Abilities")]
+    public JumpAbility jumpAbility;
     public float actionSpeed = 60;
+
+    public GlideSettings glide;
+
+    //[Header("Abilities|Gliding")]
 
     [Header("Sounds")]
     public GameSound jumpSound = new GameSound();
@@ -71,7 +82,8 @@ public class CharacterMovement : Movement
         Rolling  = 2,
         Thokked  = 4,
         CanceledJump = 8,
-        Pained = 16
+        Pained = 16,
+        Gliding = 32
     };
     public State state { get; set; }
 
@@ -158,7 +170,7 @@ public class CharacterMovement : Movement
             DebugPauseStart();
 
         // Check whether on ground
-        bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal);
+        bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal, out GameObject _groundObject);
 
         isOnGround = wasGroundDetected && _groundDistance < groundTestDistance;
 
@@ -202,14 +214,17 @@ public class CharacterMovement : Movement
         ApplyTopSpeedLimit(lastHorizontalSpeed);
 
         // Stop speed
-        if (inputRunDirection.sqrMagnitude == 0 && groundVelocity.magnitude < stopSpeed / GameManager.singleton.fracunitsPerM * 35f)
+        if (isOnGround && inputRunDirection.sqrMagnitude == 0 && groundVelocity.magnitude < stopSpeed / GameManager.singleton.fracunitsPerM * 35f)
             groundVelocity = Vector3.zero;
 
         // Jump button
-        HandleJumpAbilities(input, isReconciliation);
+        HandleJumpAbilities(input, deltaTime, isReconciliation);
 
         // 3D rotation - do this after movement to encourage push down
         ApplyRotation(deltaTime, input);
+
+        // Apply rideables
+        ApplyRide(_groundObject);
 
         // Final movement
         ApplyFinalMovement(deltaTime, isReconciliation);
@@ -240,10 +255,11 @@ public class CharacterMovement : Movement
         }
     }
 
-    private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal)
+    private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal, out GameObject groundObject)
     {
         groundNormal = Vector3.up;
         foundDistance = -1f;
+        groundObject = null;
 
         if (!debugDisableCollision)
         {
@@ -260,6 +276,7 @@ public class CharacterMovement : Movement
                     groundNormal = hits[i].normal;
                     foundDistance = hits[i].distance;
                     closestGroundDistance = foundDistance;
+                    groundObject = hits[i].collider.gameObject;
                 }
             }
 
@@ -280,8 +297,8 @@ public class CharacterMovement : Movement
 
     private void ApplyRunAcceleration(float deltaTime, PlayerInput input)
     {
-        if (state.HasFlag(State.Pained))
-            return; // cannot accelerate while in pain
+        if ((state & (State.Pained | State.Gliding)) != 0)
+            return; // cannot accelerate in these states
 
         Vector3 aim = input.aimDirection;
         Vector3 groundForward = aim.AlongPlane(groundNormal).normalized, groundRight = Vector3.Cross(up, aim).normalized;
@@ -313,16 +330,17 @@ public class CharacterMovement : Movement
         velocity = force;
     }
 
-    private void HandleJumpAbilities(PlayerInput input, bool isReconciliation)
+    private void HandleJumpAbilities(PlayerInput input, float deltaTime, bool isReconciliation)
     {
         if (state.HasFlag(State.Pained))
             return;
 
+        Vector3 aim = input.aimDirection;
         if (input.btnJumpPressed)
         {
+            // Start jump
             if (isOnGround && !state.HasFlag(State.Jumped))
             {
-                // Jump
                 velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM);
 
                 if (!isReconciliation)
@@ -330,25 +348,86 @@ public class CharacterMovement : Movement
 
                 state |= State.Jumped;
             }
-            else if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped) && !player.isHoldingFlag)
+            // Start jump abilities
+            else if (state.HasFlag(State.Jumped) && !player.isHoldingFlag)
             {
-                // Thok
-                velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
+                switch (jumpAbility)
+                {
+                    case JumpAbility.Thok:
+                        if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped))
+                        {
+                            // Thok
+                            velocity.SetHorizontal(aim.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
-                if (!isReconciliation)
-                    sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
+                            if (!isReconciliation)
+                                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
 
-                state |= State.Thokked;
+                            state |= State.Thokked;
+                        }
+                        break;
+                    case JumpAbility.Glide:
+                        state |= State.Gliding;
+                        break;
+                }
             }
         }
         
+        // Cancel jumps
         if (input.btnJumpReleased && state.HasFlag(State.Jumped) && !state.HasFlag(State.CanceledJump))
         {
-            // Cancel jump
             state |= State.CanceledJump;
 
             if (velocity.y > 0)
                 velocity.y /= 2f;
+        }
+
+        // Cancel gliding
+        if (!input.btnJump)
+        {
+            if ((state & State.Gliding) != 0)
+            {
+                state &= ~(State.Gliding | State.Jumped); // remove jumping state as well to prevent next glide
+            }
+        }
+
+        // Handle glidng
+        if ((state & State.Gliding) == State.Gliding)
+        {
+            velocity.y -= (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime) * (glide.gravityMultiplier - 1f);
+
+            Vector3 movementAim = aim;
+            Vector3 aimRight = Vector3.Cross(movementAim, Vector3.up).normalized;
+
+            // adjust aim based on directional keys (side gliding)
+            if (Mathf.Abs(input.moveHorizontalAxis) > 0.01f)
+            {
+                movementAim -= aimRight * input.moveHorizontalAxis * Mathf.Sign(Vector3.Dot(aim, velocity));
+                aimRight = Vector3.Cross(movementAim, Vector3.up).normalized;
+                movementAim.Normalize();
+            }
+
+            Vector3 aimUp = Vector3.Cross(aimRight, movementAim).normalized;
+            float forwardVelocitySign = Mathf.Sign(Vector3.Dot(movementAim, velocity));
+
+            // Add tunnel friction
+            float velocityAlongAim = Mathf.Abs(velocity.AlongAxis(movementAim));
+            Vector3 tunnelHorizontalFrictionForce = aimRight * (-velocity.AlongAxis(aimRight) * (1f - Mathf.Pow(glide.tunnelHorizontalFrictionBySpeed.Evaluate(velocityAlongAim), deltaTime)));
+            Vector3 tunnelVerticalFrictionForce = aimUp * (-velocity.AlongAxis(aimUp) * (1f - Mathf.Pow(glide.tunnelVerticalFrictionBySpeed.Evaluate(velocityAlongAim), deltaTime)));
+
+            velocity += tunnelHorizontalFrictionForce + tunnelVerticalFrictionForce;
+
+            // Transfer lost speed to forward movement
+            velocity += movementAim * (tunnelVerticalFrictionForce.magnitude * forwardVelocitySign * glide.tunnelToForwardVerticalForceMultiplier);
+            velocity += movementAim * (tunnelHorizontalFrictionForce.magnitude * forwardVelocitySign * glide.tunnelToForwardHorizontalForceMultiplier);
+
+            // Air resistance
+            float airResistance = glide.airResistanceBySpeed.Evaluate(velocityAlongAim);
+            velocity -= movementAim * (airResistance * Mathf.Sign(forwardVelocitySign) * deltaTime); // air resistance
+
+            // max speed
+            float maxSpeed = glide.maxSpeed;
+            if (velocity.magnitude > maxSpeed)
+                velocity = velocity * (maxSpeed / velocity.magnitude);
         }
     }
 
@@ -433,7 +512,7 @@ public class CharacterMovement : Movement
         {
             float degreesToRotate = wallRunRotationResetSpeed * deltaTime;
 
-            up = Vector3.Slerp(up, targetUp, Mathf.Min(degreesToRotate / Vector3.Angle(up, targetUp), 1.0f));
+            up = Vector3.Slerp(up, targetUp, Mathf.Min(degreesToRotate / Vector3.Angle(up, targetUp), 1.0f)); // todo : might differ for frame rate, might be the reconciliation issue?
         }
 
         // Apply final rotation
@@ -523,6 +602,20 @@ public class CharacterMovement : Movement
         {
             DebugExtension.DebugCapsule(originalPosition, originalPosition + originalVelocity * deltaTime, Color.red, 0.1f);
             DebugExtension.DebugCapsule(originalPosition, originalPosition + velocity * deltaTime, Color.blue, 0.1f);
+        }
+    }
+
+    void ApplyRide(GameObject target)
+    {
+        if (target == null)
+        {
+            return;
+        }
+        Rideable rideable = target.GetComponent<Rideable>();
+
+        if (rideable)
+        {
+            //rideable.GetFrameMovementDelta();
         }
     }
 

@@ -28,20 +28,20 @@
 + Can thok through some walls MED:MEDHIGH
 + PlayerPrefs toggle for debug info
 + Flag icons
-/ Flag icons should show a cross-out when flag is picked up
-/ Flag carrier needs info above head MED:MEDHIGH
++ Flag carrier needs info above head MED:MEDHIGH
++ Flag icons should show a cross-out when flag is picked up
++ UI blends against sky, chat text should be more neutral LOW:LOW
++ Not all weapons drop properly MED:MED
+- Predict ring drops better
 - No shoot rings while paused
  -> Camera to look at character when paused
-- Tutorial zone
 - can be hard to see when throwing a ring MED:MED
 - Pit messages should only post once LOW:LOWMED
 - toss flag MED:LOWMED
 - spin HIGH:LOW
 - maybe don't interrupt typing when changing map MED:LOW
 - fix jumping around glitches HIGH:MED
-- not all weapons drop properly MED:MED
 - castle waterfalls have collision LOW:LOW
-- UI blends against sky, chat text should be more neutral LOW:LOW
 - mwheel for configs HIGH:LOW
 
 Server should play out missing player ticks if it receives a hiccup/incomplete buffer

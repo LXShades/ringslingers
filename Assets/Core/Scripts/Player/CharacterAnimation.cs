@@ -38,24 +38,26 @@ public class CharacterAnimation : MonoBehaviour
         animation.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
         animation.SetBool("IsFreeFalling", !movement.isOnGround && movement.velocity.y < 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
         animation.SetBool("IsHurt", (movement.state & CharacterMovement.State.Pained) != 0);
+        animation.SetBool("IsGliding", (movement.state & CharacterMovement.State.Gliding) != 0);
     }
 
     private void LateUpdate()
     {
         Vector3 groundVelocity = movement.groundVelocity;
         Vector3 characterUp = movement.up;
+        Vector3 groundForward = transform.forward.AlongPlane(characterUp).normalized;
 
         // Turn body towards look direction
         if (movement.isOnGround && groundVelocity.magnitude > 0.2f)
         {
             Vector3 runForward = groundVelocity;
 
-            if (Vector3.Dot(transform.forward.Horizontal(), runForward) <= 0f)
+            if (Vector3.Dot(groundForward, runForward) <= 0f)
             {
                 runForward = -runForward;
             }
 
-            Quaternion forwardToVelocity = Quaternion.LookRotation(runForward, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(transform.forward.AlongPlane(characterUp), characterUp));
+            Quaternion forwardToVelocity = Quaternion.LookRotation(runForward, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(groundForward, characterUp));
 
             root.rotation = Quaternion.RotateTowards(lastRootRotation, forwardToVelocity * root.rotation, Time.deltaTime * legTurnDegreesPerSecond);
             torso.rotation = Quaternion.Inverse(forwardToVelocity) * torso.rotation;
@@ -64,8 +66,20 @@ public class CharacterAnimation : MonoBehaviour
         }
 
         // think of this as rotation = originalRotation - forwardRotation + newHeadForwardRotation
-        head.transform.rotation = Quaternion.LookRotation(player.input.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(torso.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
+        // head - (head.forward, charUp) + (aim, up)
+        head.transform.rotation = Quaternion.LookRotation(player.input.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(head.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
 
-        lastCharacterUp = characterUp;
+        if ((movement.state & CharacterMovement.State.Gliding) != 0)
+        {
+            float tiltAngle = 0f;
+
+            if (groundVelocity.sqrMagnitude > 1f)
+            {
+                Vector3 groundSide = Vector3.Cross(groundForward, Vector3.up);
+                tiltAngle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(groundVelocity.normalized, groundForward.normalized), -0.9999f, 0.9999f)) * Mathf.Rad2Deg * -Mathf.Sign(Vector3.Dot(groundSide, groundVelocity - groundForward));
+            }
+
+            root.rotation = root.rotation * Quaternion.Euler(player.input.verticalAim, tiltAngle, 0f);
+        }
     }
 }
