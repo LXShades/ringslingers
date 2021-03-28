@@ -40,9 +40,21 @@ public class PlayerController : NetworkBehaviour
             state = (CharacterMovement.State)reader.ReadByte();
         }
 
+        public void DebugDraw(Color colour)
+        {
+            DebugExtension.DebugCapsule(position, position + up, colour, 0.25f);
+            DebugExtension.DebugArrow(position + up * 0.5f, velocity * 0.1f, colour);
+            DebugExtension.DebugCapsule(position, position + rotation * Vector3.up, colour, 0.25f * 0.975f);
+        }
+
         public bool Equals(MoveState other)
         {
             return other.position == position && other.rotation == rotation && other.velocity == velocity && other.state == state;
+        }
+
+        public override string ToString()
+        {
+            return $"T: {time.ToString("F2")}\nPos: {position.ToString()}\nRot: {rotation.ToString()}\nVel: {velocity.ToString()}\nUp: {up.ToString()}\nState: {state}";
         }
     }
 
@@ -104,7 +116,20 @@ public class PlayerController : NetworkBehaviour
     public float reconcilationPositionTolerance = 0.3f;
 
     [Header("Debug")]
-    public bool printReconcileInfo = false;
+#if UNITY_EDITOR
+    public float debugSelfReconcileDelay = 0.3f;
+    public bool debugSelfReconcile = false;
+
+    public bool debugDrawReconciles = false;
+#else
+    // just don't do these debug things in builds
+    [NonSerialized]
+    public float debugSelfReconcileDelay = 0.3f;
+    [NonSerialized]
+    public bool debugSelfReconcile = false;
+    [NonSerialized]
+    public bool debugDrawReconciles = false;
+#endif
 
     public HistoryList<InputDelta> inputHistory = new HistoryList<InputDelta>();
 
@@ -115,7 +140,7 @@ public class PlayerController : NetworkBehaviour
     private MovementEvent pendingEvents = null;
     private HistoryList<MovementEvent> eventHistory = new HistoryList<MovementEvent>();
 
-    private HistoryList<Vector3> positionHistory = new HistoryList<Vector3>();
+    private HistoryList<MoveState> stateHistory = new HistoryList<MoveState>();
 
     private bool hasReceivedMoveState = false;
     private MoveState lastReceivedMoveState;
@@ -170,7 +195,7 @@ public class PlayerController : NetworkBehaviour
             // Add current player input to input history
             inputHistory.Insert(Mathf.Max(clientPlaybackTime, clientTime - maxDeltaTime), new InputDelta(player.input, Mathf.Min(clientTime - clientPlaybackTime, maxDeltaTime)));
             nextInputUpdateTime = clientTime + 1f / maxInputRate;
-            positionHistory.Insert(Mathf.Max(clientPlaybackTime, clientTime - maxDeltaTime), transform.position);
+            stateHistory.Insert(Mathf.Max(clientPlaybackTime, clientTime - maxDeltaTime), MakeMoveState());
         }
 
         float inputHistoryMaxLength = pingTolerance + Mathf.Min(1f / (Mathf.Min(Netplay.singleton.playerTickrate, limitInputRate ? maxInputRate : 1000f)), 5f);
@@ -178,7 +203,7 @@ public class PlayerController : NetworkBehaviour
 
         inputHistory.Prune(trimTo);
         eventHistory.Prune(trimTo);
-        positionHistory.Prune(trimTo);
+        stateHistory.Prune(trimTo);
     }
 
     private float lastPlaybackInput = -1f;
@@ -222,6 +247,16 @@ public class PlayerController : NetworkBehaviour
                 clientPlaybackTime = inputHistory.LatestTime + inputHistory.Latest.deltaTime; // precision correction
                 currentExtrapolation = 0f;
                 lastConfirmedState = MakeMoveState();
+
+                if (debugSelfReconcile && stateHistory.ClosestIndexBefore(lastPlaybackInput - debugSelfReconcileDelay) != -1)
+                {
+                    // preserve state so we don't bake in incorrect movements
+                    MoveState backup = lastConfirmedState;
+                    int anotherIndex = stateHistory.ClosestIndexBefore(lastPlaybackInput - debugSelfReconcileDelay);
+                    TryReconcile(stateHistory[anotherIndex]);
+                    lastConfirmedState = backup;
+                    ApplyMoveState(lastConfirmedState);
+                }
             }
             else if (doExtrapolate)
             {
@@ -329,28 +364,26 @@ public class PlayerController : NetworkBehaviour
     private void TryReconcile(MoveState pastState)
     {
         Vector3 position = transform.position;
-        Debug.Assert(hasAuthority && !NetworkServer.active);
+        Debug.Assert((hasAuthority && !NetworkServer.active) || debugSelfReconcile);
 
         // hop back to server position
         ApplyMoveState(pastState);
 
         // fast forward if we can
         int startState = inputHistory.ClosestIndexBefore(pastState.time);
-        string history = "";
 
         if (startState != -1)
         {
+            if (debugDrawReconciles)
+            {
+                MakeMoveState().DebugDraw(Color.blue);
+                stateHistory[startState].DebugDraw(Color.red);
+            }
+
             // resimulate to our latest position
-            float t = inputHistory.TimeAt(startState);
             for (int i = startState; i >= 0; i--)
             {
                 PlayerInput inputWithDeltas = PlayerInput.MakeWithDeltas(inputHistory[i].input, inputHistory.Count > i + 1 ? inputHistory[i + 1].input : inputHistory[i].input);
-
-                if (printReconcileInfo)
-                {
-                    history += $"\n-> {i}@{t:F2}: {inputWithDeltas} offset: {transform.position - positionHistory[i]}";
-                    t += inputHistory[i].deltaTime;
-                }
 
                 var events = eventHistory.ItemAt(inputHistory.TimeAt(i));
 
@@ -358,6 +391,14 @@ public class PlayerController : NetworkBehaviour
                     events?.Invoke(movement, false);
 
                 movement.TickMovement(inputHistory[i].deltaTime, inputWithDeltas, true);
+
+                // Draw debug info
+                if (debugDrawReconciles && i > 0)
+                {
+                    // draw debug
+                    MakeMoveState().DebugDraw(Color.blue);
+                    stateHistory[i - 1].DebugDraw(Color.red);
+                }
             }
         }
 
@@ -373,12 +414,6 @@ public class PlayerController : NetworkBehaviour
         else
         {
             currentExtrapolation = 0f;
-        }
-
-        if (printReconcileInfo)
-        {
-            history += $"\nfinal offset: {transform.position - position}";
-            Log.Write($"Reconcile: {pastState.time:F2} ({startState}@{(startState != -1 ? inputHistory.TimeAt(startState) : -1):F2}) clientTime: {clientTime:F2} {history}");
         }
     }
 
@@ -465,7 +500,7 @@ public class PlayerController : NetworkBehaviour
         movement.velocity = state.velocity;
         movement.up = state.up;
 
-        //Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
+        Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
     }
 
     public static string GetDebugInfo()

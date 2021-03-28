@@ -33,7 +33,7 @@ public class Movement : MonoBehaviour
     public float gravityMultiplier = 1f;
 
     [Header("Debugging")]
-    public bool enableMoveDebugShapes = false;
+    public bool debugDrawMovementShapes = false;
 
     /// <summary>
     /// The current velocity of the object
@@ -114,7 +114,7 @@ public class Movement : MonoBehaviour
             float kPullback = iteration == 0 ? 1f : 0f;
             Vector3 normalMovement = currentMovement.normalized;
 
-            int numHits = ColliderCast(hits, transform.position, normalMovement, currentMovementMagnitude + kSkin, blockingCollisionLayers, QueryTriggerInteraction.Collide, kPullback, enableMoveDebugShapes, colorByStage[iteration]);
+            int numHits = ColliderCast(hits, transform.position, normalMovement, currentMovementMagnitude + kSkin, blockingCollisionLayers, QueryTriggerInteraction.Collide, kPullback, debugDrawMovementShapes, colorByStage[iteration]);
             float lowestDist = currentMovementMagnitude + kSkin;
             int lowestHitId = -1;
 
@@ -150,7 +150,7 @@ public class Movement : MonoBehaviour
                     currentMovement += hit.normal * (-Vector3.Dot(hit.normal, currentMovement.normalized * (currentMovement.magnitude - hit.distance)) + kSkin);
                 }
 
-                if (enableMoveDebugShapes)
+                if (debugDrawMovementShapes)
                 {
                     Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
                     DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
@@ -159,7 +159,7 @@ public class Movement : MonoBehaviour
             }
             else
             {
-                if (enableMoveDebugShapes)
+                if (debugDrawMovementShapes)
                 {
                     Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
                     DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);

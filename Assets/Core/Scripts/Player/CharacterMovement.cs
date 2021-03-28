@@ -72,7 +72,9 @@ public class CharacterMovement : Movement
     public GameSound thokSound = new GameSound();
 
     [Header("Debug")]
-    public bool debugDisableCollision = true;
+    public bool debugDisableCollision = false;
+    public bool debugDrawMovement = false;
+    public bool debugDrawWallrunSensors = false;
 
     // States
     [Flags]
@@ -145,8 +147,6 @@ public class CharacterMovement : Movement
 
     private Vector3 gravityDirection = new Vector3(0, -1, 0);
 
-    private bool showDebugLines => Application.platform == RuntimePlatform.WindowsEditor;
-
     // debugging movement frame step
     private bool doStep = false;
 
@@ -171,6 +171,9 @@ public class CharacterMovement : Movement
 
         // Check whether on ground
         bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal, out GameObject _groundObject);
+
+        groundDistance = _groundDistance;
+        groundNormal = _groundNormal;
 
         isOnGround = wasGroundDetected && _groundDistance < groundTestDistance;
 
@@ -266,21 +269,19 @@ public class CharacterMovement : Movement
             RaycastHit[] hits = new RaycastHit[10];
             int numHits = move.ColliderCast(hits, transform.position, -up, testDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
             float closestGroundDistance = testDistance;
-            bool isFound = false;
 
             for (int i = 0; i < numHits; i++)
             {
                 if (hits[i].collider.GetComponentInParent<CharacterMovement>() != this && hits[i].distance <= closestGroundDistance + Mathf.Epsilon)
                 {
-                    isFound = true;
                     groundNormal = hits[i].normal;
                     foundDistance = hits[i].distance;
-                    closestGroundDistance = foundDistance;
                     groundObject = hits[i].collider.gameObject;
+                    closestGroundDistance = foundDistance;
                 }
             }
 
-            return isFound;
+            return groundObject != null;
         }
         else // if (debugDisableCollision)
         {
@@ -409,7 +410,7 @@ public class CharacterMovement : Movement
             // glide up/down
             if (Mathf.Abs(input.moveVerticalAxis) > 0.01f)
             {
-                movementAim += (aimUp * input.moveVerticalAxis) * glide.verticalTurnLimit;
+                movementAim += (aimUp * -input.moveVerticalAxis) * glide.verticalTurnLimit;
                 movementAim.Normalize();
                 aimUp = Vector3.Cross(movementAim, aimRight);
             }
@@ -486,7 +487,7 @@ public class CharacterMovement : Movement
                 color = Color.green;
             }
 
-            if (showDebugLines)
+            if (debugDrawWallrunSensors)
                 Debug.DrawLine(start, start - up * wallRunTestDepth, color);
         }
 
@@ -608,7 +609,7 @@ public class CharacterMovement : Movement
             velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
         }
 
-        if (showDebugLines)
+        if (debugDrawMovement)
         {
             DebugExtension.DebugCapsule(originalPosition, originalPosition + originalVelocity * deltaTime, Color.red, 0.1f);
             DebugExtension.DebugCapsule(originalPosition, originalPosition + velocity * deltaTime, Color.blue, 0.1f);

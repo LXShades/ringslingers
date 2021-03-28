@@ -647,7 +647,7 @@ MonoBehaviour:
   bounceFactor: 0
   bounceFriction: 0
   gravityMultiplier: 1
-  enableMoveDebugShapes: 0
+  debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
   accelStart: 96
   acceleration: 40
@@ -709,7 +709,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 55
   maxStepHeight: 0.15
+  jumpAbility: 0
   actionSpeed: 60
+  glide: {fileID: 0}
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
     additionalClips: []
@@ -735,6 +737,8 @@ MonoBehaviour:
     pitchVariance: 0
     looping: 0
   debugDisableCollision: 0
+  debugDrawMovement: 0
+  debugDrawWallrunSensors: 0
 --- !u!114 &647324544927865860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -761,7 +765,10 @@ MonoBehaviour:
   remotePredictionTimeStep: 0.067
   alwaysReconcile: 0
   reconcilationPositionTolerance: 0
-  printReconcileInfo: 0
+  debugSelfReconcileDelay: 0.3
+  debugSelfReconcile: 0
+  debugPrintReconcileInfo: 0
+  debugDrawReconciles: 0
   inputHistory:
     items: []
 --- !u!114 &1227556274159782272
