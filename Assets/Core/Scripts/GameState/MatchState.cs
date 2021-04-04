@@ -44,7 +44,7 @@ public class MatchState : NetworkBehaviour
     public static bool Get<TComponent>(out TComponent netGameStateComponent) where TComponent : Component
     {
         netGameStateComponent = null;
-        return singleton?.TryGetComponent<TComponent>(out netGameStateComponent) ?? false;
+        return singleton != null ? singleton.TryGetComponent<TComponent>(out netGameStateComponent) : false;
     }
 
     private void Awake()
