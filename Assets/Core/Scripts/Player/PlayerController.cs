@@ -146,6 +146,10 @@ public class PlayerController : NetworkBehaviour
     private MoveState lastReceivedMoveState;
     private PlayerInput lastReceivedMoveStateInput; // valid on client when receiving a player from the server
 
+    private float lastPlaybackInput = -1f;
+
+    MoveState lastConfirmedState;
+
     private float nextInputUpdateTime;
 
     private Player player;
@@ -205,10 +209,6 @@ public class PlayerController : NetworkBehaviour
         eventHistory.Prune(trimTo);
         stateHistory.Prune(trimTo);
     }
-
-    private float lastPlaybackInput = -1f;
-
-    MoveState lastConfirmedState;
 
     private void RunTicks()
     {
@@ -288,8 +288,17 @@ public class PlayerController : NetworkBehaviour
 
     public void ReceiveMovement(MoveState moveState, PlayerInput input = default)
     {
-        if (moveState.time > lastReceivedMoveState.time) // don't receive out-of-order movements
+        bool shouldReset = moveState.time < lastReceivedMoveState.time - 5f;
+
+        if (moveState.time > lastReceivedMoveState.time || shouldReset) // don't receive out-of-order movements. HACK: allow apparent resets
         {
+            if (shouldReset)
+            {
+                inputHistory.Clear();
+                eventHistory.Clear();
+                clientPlaybackTime = moveState.time;
+                lastPlaybackInput = moveState.time;
+            }
             lastReceivedMoveState = moveState;
             lastReceivedMoveStateInput = input;
             hasReceivedMoveState = true;
@@ -299,6 +308,16 @@ public class PlayerController : NetworkBehaviour
     public void ReceiveInputPack(InputPack inputPack)
     {
         float time = inputPack.startTime;
+
+        if (time < lastPlaybackInput)
+        {
+            Debug.Log("Hack: timer reset - player character probably changed, allowing...");
+            lastPlaybackInput = time;
+            clientPlaybackTime = time;
+            inputHistory.Clear();
+            eventHistory.Clear();
+        }
+
         for (int i = inputPack.inputs.Length - 1; i >= 0; i--)
         {
             inputHistory.Set(time, inputPack.inputs[i], 0.001f);
