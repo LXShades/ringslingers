@@ -439,6 +439,9 @@ public class CharacterMovement : Movement
         }
     }
 
+    System.Collections.Generic.List<int> triangleBuffer = new System.Collections.Generic.List<int>(9999);
+    System.Collections.Generic.List<Vector3> normalBuffer = new System.Collections.Generic.List<Vector3>(9999);
+
     private void ApplyRotation(float deltaTime, PlayerInput input)
     {
         if (!enableWallRun)
@@ -455,14 +458,16 @@ public class CharacterMovement : Movement
         Vector3 frontRight = position + (transform.forward + transform.right) * wallRunTestRadius + up * wallRunTestHeight;
         Vector3 frontLeft = position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
         Vector3 back = position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
+        Vector3 central = position + up * wallRunTestHeight;
         Vector3 frontLeftHit = default, frontRightHit = default, backHit = default;
         Vector3 frontLeftNormal = default, frontRightNormal = default, backNormal = default;
+        RaycastHit centralHitInfo = default;
         int numSuccessfulCollisions = 0;
 
         // Detect our target rotation using three sensors
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
         {
-            Vector3 start = i == 0 ? frontLeft : (i == 1 ? frontRight : back);
+            Vector3 start = i == 0 ? frontLeft : (i == 1 ? frontRight : (i == 2 ? back : central));
             Color color = Color.red;
 
             if (Physics.Raycast(start, -up, out RaycastHit hit, wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore))
@@ -481,6 +486,9 @@ public class CharacterMovement : Movement
                         backHit = hit.point;
                         backNormal = hit.normal;
                         break;
+                    case 3:
+                        centralHitInfo = hit;
+                        break;
                 }
                 
                 numSuccessfulCollisions++;
@@ -492,21 +500,39 @@ public class CharacterMovement : Movement
         }
 
         // If all sensors were activated, we can rotate
-        if (numSuccessfulCollisions == 3)
+        if (numSuccessfulCollisions == 4)
         {
-            // Set target up vector
-            targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
+            // Smooth wall running, when the mesh allows it
+            MeshCollider backMeshCollider = centralHitInfo.collider as MeshCollider;
+            if (backMeshCollider != null && backMeshCollider.sharedMesh.isReadable)
+            {
+                int tri = centralHitInfo.triangleIndex;
+                Mesh mesh = backMeshCollider.sharedMesh;
+                Vector3[] normals = mesh.normals;
+                int[] triangles = mesh.triangles;
 
-            // If the polygons comprising the angle diverge strongly from the angle we've determined, recognise it as a step and not a slope
-            float varianceFromAverageNormal = Mathf.Acos(Vector3.Dot((frontLeftNormal + frontRightNormal + backNormal).normalized, targetUp)) * Mathf.Rad2Deg;
+                Vector3 smoothNormal = normals[triangles[tri * 3]] * centralHitInfo.barycentricCoordinate.x +
+                    normals[triangles[tri * 3 + 1]] * centralHitInfo.barycentricCoordinate.y +
+                    normals[triangles[tri * 3 + 2]] * centralHitInfo.barycentricCoordinate.z;
 
-            if (varianceFromAverageNormal > wallRunAngleFromAverageNormalMaxTolerance)
-                targetUp = (frontLeftNormal + frontRightNormal + backNormal).normalized;
+                targetUp = backMeshCollider.transform.TransformDirection(smoothNormal).normalized;
+            }
+            else
+            {
+                // Set target up vector from the three points
+                targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
+
+                // If the polygons comprising the angle diverge strongly from the angle we've determined, recognise it as a step and not a slope
+                float varianceFromAverageNormal = Mathf.Acos(Vector3.Dot((frontLeftNormal + frontRightNormal + backNormal).normalized, targetUp)) * Mathf.Rad2Deg;
+
+                if (varianceFromAverageNormal > wallRunAngleFromAverageNormalMaxTolerance)
+                    targetUp = (frontLeftNormal + frontRightNormal + backNormal).normalized;
+            }
 
             // Push down towards the ground
             if (deltaTime > 0f && verticalVelocity < wallRunEscapeVelocity)
             {
-                float averageDistance = Vector3.Distance((frontLeftHit + frontRightHit + backHit) / numSuccessfulCollisions, position);
+                float averageDistance = Vector3.Distance((frontLeftHit + frontRightHit + backHit) / 3, position);
                 float forceMultiplier = wallRunPushForceByUprightness.Evaluate(Mathf.Acos(Vector3.Dot(targetUp, Vector3.up)) * Mathf.Rad2Deg);
                 velocity += -targetUp * (averageDistance / deltaTime * forceMultiplier);
             }
