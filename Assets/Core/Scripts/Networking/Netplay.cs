@@ -56,6 +56,8 @@ public class Netplay : MonoBehaviour
     public string localPlayerIntendedName { get; set; }
     public Color localPlayerIntendedColour { get; set; }
 
+    public int localPlayerIndendedCharacter { get; set; } // by index in GameManager.playerCharacters
+
     public Player localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
 
     /// <summary>
@@ -319,11 +321,36 @@ public class Netplay : MonoBehaviour
         }
 
         // Spawn the player
-        Player player = Spawner.Spawn(GameManager.singleton.playerPrefab).GetComponent<Player>();
+        Player player = Spawner.Spawn(GameManager.singleton.playerCharacters[0].prefab).GetComponent<Player>();
 
         player.Rename($"Player {player.playerId}");
         Log.Write($"{player.playerName} ({player.playerId}) has entered the game");
         MessageFeed.Post($"<player>{player.playerName}</player> has joined the game!");
+
+        return player;
+    }
+
+    public Player ChangePlayerCharacter(int playerId, int characterIndex)
+    {
+        if (characterIndex < 0 || characterIndex >= GameManager.singleton.playerCharacters.Length)
+        {
+            Debug.Log("Cannot change to character {characterIndex}: character does not exist");
+            return null;
+        }
+
+        Debug.Assert(playerId >= 0 && playerId < players.Count);
+
+        string playerName = $"Player {playerId}";
+        if (players[playerId] != null)
+        {
+            playerName = players[playerId].playerName;
+            Spawner.Despawn(players[playerId].gameObject);
+            players[playerId] = null;
+        }
+
+        Player player = Spawner.Spawn(GameManager.singleton.playerCharacters[characterIndex].prefab).GetComponent<Player>();
+
+        player.Rename(playerName);
 
         return player;
     }

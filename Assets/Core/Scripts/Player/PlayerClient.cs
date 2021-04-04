@@ -31,6 +31,7 @@ public class PlayerClient : NetworkBehaviour
         Netplay.singleton.localPlayerId = playerId;
         CmdTryRename(Netplay.singleton.localPlayerIntendedName);
         CmdRequestColor(Netplay.singleton.localPlayerIntendedColour);
+        CmdRequestCharacter(Netplay.singleton.localPlayerIndendedCharacter);
     }
 
     void OnPlayerIdChanged(int oldValue, int newValue)
@@ -59,6 +60,18 @@ public class PlayerClient : NetworkBehaviour
 
         if (oldName != player.playerName)
             MessageFeed.Post($"{oldName} was renamed to <player>{player.playerName}</player>");
+    }
+
+    [Command]
+    public void CmdRequestCharacter(int characterIndex)
+    {
+        Player player = Netplay.singleton.ChangePlayerCharacter(playerId, characterIndex);
+
+        if (player != null)
+        {
+            playerId = player.playerId;
+            player.netIdentity.AssignClientAuthority(netIdentity.connectionToClient);
+        }
     }
 
     [Command]

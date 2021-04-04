@@ -23,6 +23,9 @@ public class GameManager : MonoBehaviour
     }
     private static GameManager _singleton;
 
+    [Header("Player settings")]
+    public CharacterNamePair[] playerCharacters;
+
     [Header("Level Settings")]
     public string defaultMenuScene;
 
@@ -30,7 +33,6 @@ public class GameManager : MonoBehaviour
 
     [Tooltip("How long until items respawn, in seconds")]
     public float itemRespawnTime = 20;
-    public GameObject playerPrefab;
 
     [Header("Physics")]
     public float gravity = 0.2734375f;
@@ -163,4 +165,11 @@ public class GameManager : MonoBehaviour
         }
     }
     #endregion
+}
+
+[System.Serializable]
+public struct CharacterNamePair
+{
+    public string name;
+    public GameObject prefab;
 }

@@ -172,8 +172,8 @@ public class CharacterMovement : Movement
         // Check whether on ground
         bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal, out GameObject _groundObject);
 
-        groundDistance = _groundDistance;
-        groundNormal = _groundNormal;
+        groundNormal = Vector3.up;
+        groundDistance = float.MaxValue;
 
         isOnGround = wasGroundDetected && _groundDistance < groundTestDistance;
 
@@ -181,12 +181,10 @@ public class CharacterMovement : Movement
         {
             if (!enableWallRun)
                 groundNormal = _groundNormal;
+            else
+                groundNormal = Vector3.up; // why are we doing this..? needed for steps to work. think it prevents player from wallrunning up steps or something... not working very well
+
             groundDistance = _groundDistance;
-        }
-        else
-        {
-            groundNormal = Vector3.up;
-            groundDistance = float.MaxValue;
         }
 
         // Apply grounding effects straight away so we can be more up-to-date with wallrunning stuff
