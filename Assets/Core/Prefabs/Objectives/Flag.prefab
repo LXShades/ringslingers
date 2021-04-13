@@ -324,7 +324,7 @@ MonoBehaviour:
   bounceFactor: 0.3
   bounceFriction: 0.5
   gravityMultiplier: 1
-  enableMoveDebugShapes: 0
+  debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
 --- !u!114 &4087312465446270957
 MonoBehaviour:
@@ -354,11 +354,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9555c6197691381429fc710cc101690a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  autoPopulateRenderers: 1
+  autoPopulateRenderers: 0
   affectedRenderers:
   - {fileID: 1288624272796761728}
   - {fileID: 3111956062486528451}
-  - {fileID: 6326427146094059178}
   blinkRateOverTimeRemaining:
     serializedVersion: 2
     m_Curve:
@@ -448,7 +447,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7128272433251758818}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1

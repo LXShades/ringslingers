@@ -105,8 +105,8 @@ public class GameHUD : MonoBehaviour
         // CTF stuff
         if (MatchState.Get(out MatchFlags matchFlags))
         {
-            bool isRedFlagStolen = (matchFlags.redFlag?.currentCarrier != -1);
-            bool isBlueFlagStolen = (matchFlags.blueFlag?.currentCarrier != -1);
+            bool isRedFlagStolen = matchFlags.redFlag != null && (matchFlags.redFlag.currentCarrier != -1);
+            bool isBlueFlagStolen = matchFlags.blueFlag != null && (matchFlags.blueFlag.currentCarrier != -1);
 
             if (redFlagStolen.activeSelf != isRedFlagStolen)
                 redFlagStolen.SetActive(isRedFlagStolen);
