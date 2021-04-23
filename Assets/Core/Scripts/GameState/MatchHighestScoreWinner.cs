@@ -5,9 +5,9 @@ public class MatchHighestScoreWinner : MatchStateComponent
 {
     public override string GetWinners()
     {
-        Player winningPlayer = null;
+        Character winningPlayer = null;
 
-        foreach (Player candidate in Netplay.singleton.players)
+        foreach (Character candidate in Netplay.singleton.players)
         {
             if (candidate != null)
             {

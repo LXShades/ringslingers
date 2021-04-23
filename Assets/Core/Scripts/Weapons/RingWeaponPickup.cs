@@ -15,7 +15,7 @@ public class RingWeaponPickup : MonoBehaviour
         }
     }
 
-    private void OnRingPickedUp(Player player)
+    private void OnRingPickedUp(Character player)
     {
         if (Mirror.NetworkServer.active)
             player.GetComponent<RingShooting>().AddWeaponAmmo(weaponType, overrideAmmo, ammo);

@@ -70,7 +70,7 @@ public class GameHUD : MonoBehaviour
         if (!GameManager.singleton || !GameManager.singleton.camera)
             return;
 
-        Player player = GameManager.singleton.camera.currentPlayer;
+        Character player = GameManager.singleton.camera.currentPlayer;
         bool isMatchFinished = MatchState.singleton != null ? MatchState.singleton.IsWinScreen : false;
 
         numFramesThisSecond++;
@@ -164,7 +164,7 @@ public class GameHUD : MonoBehaviour
         if (scoreboard.activeSelf)
         {
             // Refresh scoreboard info
-            Player[] orderedPlayers = Netplay.singleton.players.ToArray();
+            Character[] orderedPlayers = Netplay.singleton.players.ToArray();
             bool useTeamColours = matchTeams != null;
 
             System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : -1) - (b ? b.score : -1) > 0 ? -1 : 1);
@@ -172,7 +172,7 @@ public class GameHUD : MonoBehaviour
             scoreboardNames.text = "";
             scoreboardScores.text = "";
 
-            foreach (Player scoreboardPlayer in orderedPlayers)
+            foreach (Character scoreboardPlayer in orderedPlayers)
             {
                 if (scoreboardPlayer == null)
                     break;
@@ -224,7 +224,7 @@ public class GameHUD : MonoBehaviour
             lastFps = numFramesThisSecond;
             fpsCounter.text = $"FPS {lastFps.ToString()} / Min {(1f / deltaMax).ToString("F1")} / Max {(1f / deltaMin).ToString("F1")}\n" +
                 $"Ping/Unreliable/Reliable: " +
-                $"{((int)(PlayerTicker.singleton != null ? PlayerTicker.singleton.localPlayerPing * 1000 : 0)).ToString()}/{((int)(Netplay.singleton.unreliablePing * 1000)).ToString()}/{((int)(Netplay.singleton.reliablePing * 1000)).ToString()}";
+                $"{((int)(GameTicker.singleton != null ? GameTicker.singleton.localPlayerPing * 1000 : 0)).ToString()}/{((int)(Netplay.singleton.unreliablePing * 1000)).ToString()}/{((int)(Netplay.singleton.reliablePing * 1000)).ToString()}";
 
             deltaMin = float.MaxValue;
             deltaMax = float.MinValue;
@@ -261,15 +261,15 @@ public class GameHUD : MonoBehaviour
         }
     }
 
-    private void UpdatePlayerDebugs(Player player)
+    private void UpdatePlayerDebugs(Character player)
     {
         debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing * 1000f)}ms (reliable: {(int)(Netplay.singleton.reliablePing)})" +
             $"\n{Netplay.singleton.netStat}\nVelocity: {player.movement.velocity} ({player.movement.velocity.magnitude:F2})\nGround: {player.movement.isOnGround}\nGroundNml: {player.movement.groundNormal}\n" +
             $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}\n";
 
         // debug stuff for other players in the same scene
-        if (PlayerTicker.singleton)
-            debugText.text += $"Ticker info: ===\n{PlayerTicker.singleton.DebugInfo()}";
+        if (GameTicker.singleton)
+            debugText.text += $"Ticker info: ===\n{GameTicker.singleton.DebugInfo()}";
     }
 
     private void OnLogMessageReceived(string condition, string stackTrace, LogType type)

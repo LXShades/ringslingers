@@ -5,7 +5,7 @@ public class ItemRewards : MonoBehaviour
     [Header("Rewards")]
     public int numRingsToReward = 10;
 
-    public void ApplyReward(Player player)
+    public void ApplyReward(Character player)
     {
         if (Mirror.NetworkServer.active)
         {

@@ -30,7 +30,7 @@ public class ThrownRingRail : ThrownRing
         return; // do nothing else
     }
 
-    public override void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
+    public override void Throw(Character owner, Vector3 spawnPosition, Vector3 direction)
     {
         this.owner = owner.gameObject;
 

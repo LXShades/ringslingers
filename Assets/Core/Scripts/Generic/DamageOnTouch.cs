@@ -29,7 +29,7 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisions
             
             if (damageable.TryDamage(owner, force, instaKill))
             {
-                if (!string.IsNullOrEmpty(hitMessage) && NetworkServer.active && damageable.TryGetComponent(out Player player))
+                if (!string.IsNullOrEmpty(hitMessage) && NetworkServer.active && damageable.TryGetComponent(out Character player))
                 {
                     MessageFeed.Post($"<player>{player.playerName}</player> {hitMessage}");
                 }

@@ -61,11 +61,11 @@ public class ThrownRing : NetworkBehaviour
         if (!NetworkServer.active && !wasLocallyThrown)
         {
             // shoot further ahead
-            Simulate(PlayerTicker.singleton.localPlayerPing);
+            Simulate(GameTicker.singleton.localPlayerPing);
         }
 
         // colour the ring
-        if (owner.TryGetComponent(out Player owningPlayer))
+        if (owner.TryGetComponent(out Character owningPlayer))
         {
             switch (owningPlayer.team)
             {
@@ -106,7 +106,7 @@ public class ThrownRing : NetworkBehaviour
         rb.velocity = velocity;
     }
 
-    public virtual void Throw(Player owner, Vector3 spawnPosition, Vector3 direction)
+    public virtual void Throw(Character owner, Vector3 spawnPosition, Vector3 direction)
     {
         foreach (Collider collider in GetComponentsInChildren<Collider>())
         {
@@ -173,7 +173,7 @@ public class ThrownRing : NetworkBehaviour
     // when prediction is successful, we get teleported back a bit and resimulate forward again
     private void OnPredictionSuccessful()
     {
-        Simulate(PlayerTicker.singleton.localPlayerPing);
+        Simulate(GameTicker.singleton.localPlayerPing);
     }
 
     private void OnOwnerChanged(GameObject oldOwner, GameObject newOwner)

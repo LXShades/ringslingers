@@ -14,7 +14,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
 
     [Header("Pop")]
     public GameSound popSound;
-    public UnityEvent<Player> onLocalPopped;
+    public UnityEvent<Character> onLocalPopped;
 
     private Vector3 lookVelocity;
 
@@ -81,7 +81,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
             // pop
             if (!isReconciliation)
             {
-                onLocalPopped?.Invoke(source.GetComponent<Player>());
+                onLocalPopped?.Invoke(source.GetComponent<Character>());
 
                 if (respawnable)
                     respawnable.Despawn();

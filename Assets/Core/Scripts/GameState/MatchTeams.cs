@@ -25,7 +25,7 @@ public class MatchTeams : MatchStateComponent
     {
         int numReds = 0, numBlues = 0;
 
-        foreach (Player player in Netplay.singleton.players)
+        foreach (Character player in Netplay.singleton.players)
         {
             if (player != null)
             {

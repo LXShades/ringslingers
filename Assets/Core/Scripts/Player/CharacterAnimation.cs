@@ -3,7 +3,7 @@
 public class CharacterAnimation : MonoBehaviour
 {
     private CharacterMovement movement;
-    private Player player;
+    private Character player;
     private new Animator animation;
 
     [Header("Body parts")]
@@ -22,7 +22,7 @@ public class CharacterAnimation : MonoBehaviour
     private void Start()
     {
         movement = GetComponentInParent<CharacterMovement>();
-        player = GetComponentInParent<Player>();
+        player = GetComponentInParent<Character>();
         animation = GetComponentInParent<Animator>();
     }
 

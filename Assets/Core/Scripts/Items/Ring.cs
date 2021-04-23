@@ -25,10 +25,10 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
     private SyncMovement syncMovement;
     private Movement movement;
 
-    public delegate void OnPickup(Player player);
+    public delegate void OnPickup(Character player);
     public OnPickup onPickup;
 
-    private Player probablePickedUpPlayer;
+    private Character probablePickedUpPlayer;
 
     private float awakeTime;
 
@@ -84,7 +84,7 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
 
     private void OnTriggerEnter(Collider other)
     {
-        Player otherPlayer = other.GetComponent<Player>();
+        Character otherPlayer = other.GetComponent<Character>();
         if (otherPlayer && (!isDroppedRing || Time.unscaledTime - awakeTime >= pickupWarmupDuration) && canPickup)
         {
             probablePickedUpPlayer = otherPlayer;

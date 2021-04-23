@@ -121,6 +121,59 @@ public struct PlayerInput : IEquatable<PlayerInput>
         return $"H {moveHorizontalAxis:0.00} V {moveVerticalAxis:0.00} Jmp {btnJump}/P{btnJumpPressed}/R{btnJumpReleased} Fire {btnFire}/P{btnFirePressed}/R{btnFireReleased}";
     }
 }
+public struct InputDelta
+{
+    public PlayerInput input;
+    public float deltaTime;
+
+    public InputDelta(in PlayerInput input, float deltaTime)
+    {
+        this.input = input;
+        this.deltaTime = deltaTime;
+    }
+}
+
+public struct InputPack
+{
+    public float startTime;
+    public float extrapolation;
+    public InputDelta[] inputs;
+    public CharacterState state;
+
+    /// <summary>
+    /// Makes an InputPack
+    /// </summary>
+    /// <returns></returns>
+    public static InputPack MakeFromHistory(HistoryList<InputDelta> inputHistory, float sendBufferLength)
+    {
+        int startIndex = inputHistory.ClosestIndexBeforeOrEarliest(inputHistory.LatestTime - sendBufferLength);
+
+        if (startIndex != -1)
+        {
+            InputDelta[] inputs = new InputDelta[startIndex + 1];
+            for (int i = startIndex; i >= 0; i--)
+                inputs[i] = inputHistory[i];
+
+            return new InputPack()
+            {
+                startTime = inputHistory.TimeAt(startIndex),
+                inputs = inputs
+            };
+        }
+
+        return new InputPack()
+        {
+            startTime = inputHistory.LatestTime,
+            inputs = new InputDelta[0]
+        };
+    }
+}
+
+public struct MoveStateWithInput
+{
+    public CharacterState state;
+    public PlayerInput input;
+}
 
 public static class PlayerInputReaderWriter
 {

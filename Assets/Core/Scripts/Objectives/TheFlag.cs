@@ -93,7 +93,7 @@ public class TheFlag : NetworkBehaviour
         {
             if (currentCarrier != -1)
             {
-                Player player = Netplay.singleton.players[currentCarrier];
+                Character player = Netplay.singleton.players[currentCarrier];
 
                 if (player)
                 {
@@ -135,7 +135,7 @@ public class TheFlag : NetworkBehaviour
     {
         if (state == State.Carrying && currentCarrier != -1 && currentCarrier < Netplay.singleton.players.Count)
         {
-            Player carryingPlayer = Netplay.singleton.players[currentCarrier];
+            Character carryingPlayer = Netplay.singleton.players[currentCarrier];
 
             if (carryingPlayer)
             {
@@ -159,7 +159,7 @@ public class TheFlag : NetworkBehaviour
     {
         if (NetworkServer.active && currentCarrier == -1)
         {
-            Player player = other.GetComponent<Player>();
+            Character player = other.GetComponent<Character>();
 
             if (player && !player.damageable.isInvincible)
             {
@@ -188,7 +188,7 @@ public class TheFlag : NetworkBehaviour
         }
     }
 
-    public void Capture(Player player)
+    public void Capture(Character player)
     {
         if (NetworkServer.active && MatchState.Get(out MatchTeams stateTeams) && MatchState.Get(out MatchFlags stateCtf))
         {
@@ -243,7 +243,7 @@ public class TheFlag : NetworkBehaviour
         {
             if (currentCarrier != -1)
             {
-                Player carryingPlayer = Netplay.singleton.players[currentCarrier];
+                Character carryingPlayer = Netplay.singleton.players[currentCarrier];
 
                 if (carryingPlayer != null)
                 {

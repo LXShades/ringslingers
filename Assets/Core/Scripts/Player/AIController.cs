@@ -11,15 +11,13 @@ public class AIController : MonoBehaviour
 
     private int currentTargetPathPoint = 0;
 
-    private Player player;
-    private PlayerController controller;
+    private Character player;
 
     private PlayerInput input;
 
     private void Awake()
     {
-        player = GetComponent<Player>();
-        controller = GetComponent<PlayerController>();
+        player = GetComponent<Character>();
 
         foreach (Spring spring in FindObjectsOfType<Spring>())
         {
@@ -70,7 +68,8 @@ public class AIController : MonoBehaviour
             input.moveVerticalAxis = -moveIntentionDirection.x * sin + moveIntentionDirection.z * cos;
 
             player.input = input;
-            controller.PushInput(input, Time.deltaTime);
+            //controller.PushInput(input, Time.deltaTime);
+            // we need to fix this somehow
         }
     }
 

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PlayerName : MonoBehaviour
 {
-    public Player player;
+    public Character player;
     public TextMeshPro text;
 
     private string lastPlayerName = "";
@@ -22,7 +22,7 @@ public class PlayerName : MonoBehaviour
     private void OnValidate()
     {
         if (player == null)
-            player = GetComponentInParent<Player>();
+            player = GetComponentInParent<Character>();
         if (text == null)
             text = GetComponent<TextMeshPro>();
     }

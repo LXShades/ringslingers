@@ -11,7 +11,7 @@ public class MatchStateComponent : NetworkBehaviour
     /// <summary>
     /// Called on server and client in this game mode when a player is created
     /// </summary>
-    public virtual void OnPlayerStart(PlayerController player) { }
+    public virtual void OnPlayerStart(Player player) { }
 
     /// <summary>
     /// Returns the names of the winning party(s)

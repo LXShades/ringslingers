@@ -1,7 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Player))]
+public delegate void MovementEvent(Movement target, bool isReconciliation);
+
+[RequireComponent(typeof(Character))]
 public class CharacterMovement : Movement
 {
     public enum CollisionType
@@ -16,7 +18,7 @@ public class CharacterMovement : Movement
         Glide
     }
 
-    private Player player;
+    private Character player;
     private PlayerSounds sounds;
     private Movement move;
 
@@ -157,7 +159,7 @@ public class CharacterMovement : Movement
 
     void Awake()
     {
-        player = GetComponent<Player>();
+        player = GetComponent<Character>();
         move = GetComponent<Movement>();
         sounds = GetComponent<PlayerSounds>();
     }

@@ -5,7 +5,7 @@ public class PlayerCamera : MonoBehaviour
     /// <summary>
     /// Player we're currently following
     /// </summary>
-    public Player currentPlayer;
+    public Character currentPlayer;
 
     [Header("Zoom")]
     public float zoomSpeed = 1f;

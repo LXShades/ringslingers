@@ -60,7 +60,7 @@ public class RingShooting : NetworkBehaviour
     private Vector3 autoAimPredictedDirection = Vector3.zero;
 
     // Components
-    private Player player;
+    private Character player;
 
     private HistoryList<Action> bufferedThrowEvents = new HistoryList<Action>();
 
@@ -69,7 +69,7 @@ public class RingShooting : NetworkBehaviour
 
     void Awake()
     {
-        player = GetComponent<Player>();
+        player = GetComponent<Character>();
     }
 
     private void Start()
@@ -132,7 +132,7 @@ public class RingShooting : NetworkBehaviour
 
         if (hasAuthority && effectiveWeaponSettings.autoAimHitboxRadius > 0f && effectiveWeaponSettings.autoAimDegreesRadius > 0f)
         {
-            Player potentialAutoAimTarget = FindClosestTarget(effectiveWeaponSettings.autoAimDegreesRadius);
+            Character potentialAutoAimTarget = FindClosestTarget(effectiveWeaponSettings.autoAimDegreesRadius);
 
             if (potentialAutoAimTarget)
             {
@@ -141,7 +141,7 @@ public class RingShooting : NetworkBehaviour
 
                 if (Vector3.Distance(nearTargetPoint, targetPosAdjusted) <= effectiveWeaponSettings.autoAimHitboxRadius)
                 {
-                    if (PredictTargetPosition(potentialAutoAimTarget.GetComponent<Player>(), out Vector3 predictedPosition, 2))
+                    if (PredictTargetPosition(potentialAutoAimTarget.GetComponent<Character>(), out Vector3 predictedPosition, 2))
                     {
                         // we can autoaim, and we can predict! set the target
                         autoAimPredictedDirection = predictedPosition + Vector3.up * 0.5f - spawnPosition.position;
@@ -175,13 +175,13 @@ public class RingShooting : NetworkBehaviour
         }
     }
 
-    private Player FindClosestTarget(float angleLimit)
+    private Character FindClosestTarget(float angleLimit)
     {
         Vector3 aimDirection = player.input.aimDirection;
         float bestDot = Mathf.Cos(angleLimit * Mathf.Deg2Rad);
-        Player bestTarget = null;
+        Character bestTarget = null;
 
-        foreach (Player player in Netplay.singleton.players)
+        foreach (Character player in Netplay.singleton.players)
         {
             if (player && player != this.player)
             {
@@ -198,12 +198,12 @@ public class RingShooting : NetworkBehaviour
         return bestTarget;
     }
 
-    private bool PredictTargetPosition(Player target, out Vector3 predictedPosition, float maxPredictionTime)
+    private bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
     {
         float interval = 0.07f;
         PlayerController controller = target.GetComponent<PlayerController>();
         CharacterMovement movement = target.GetComponent<CharacterMovement>();
-        PlayerController.MoveState originalState = controller.MakeMoveState();
+        PlayerController.CharacterState originalState = controller.MakeMoveState();
         PlayerInput input = controller.GetLatestInput();
         Vector3 startPosition = spawnPosition.position;
         float ringDistance = 0f; // theoretical thrown ring distance
@@ -280,7 +280,7 @@ public class RingShooting : NetworkBehaviour
             if (autoAimTarget)
                 direction = autoAimPredictedDirection;
 
-            CmdThrowRing(spawnPosition.position, direction, Spawner.EndSpawnPrediction(), equippedWeaponIndex, PlayerTicker.singleton ? PlayerTicker.singleton.predictedServerTime : 0f);
+            CmdThrowRing(spawnPosition.position, direction, Spawner.EndSpawnPrediction(), equippedWeaponIndex, GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f);
             hasFiredOnThisClick = true;
         }
     }
