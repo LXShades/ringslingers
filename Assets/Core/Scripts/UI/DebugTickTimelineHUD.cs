@@ -29,17 +29,17 @@ public class DebugTickTimelineHUD : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
-        PlayerController localPlayerController = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<PlayerController>() : null;
+        Ticker localPlayerTicker = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<Ticker>() : null;
 
         if (Mirror.NetworkServer.active)
         {
-            localPlayerController = Netplay.singleton.players[1]?.GetComponent<PlayerController>();
+            localPlayerTicker = Netplay.singleton.players[1]?.GetComponent<Ticker>();
         }
 
-        if (localPlayerController)
+        if (localPlayerTicker)
         {
             minTime = 0;
-            maxTime = localPlayerController.clientTime;
+            maxTime = localPlayerTicker.confirmedPlaybackTime;
 
             minTime = Mathf.Floor(maxTime / timePeriod) * timePeriod;
             maxTime = Mathf.Ceil(maxTime / timePeriod) * timePeriod;
@@ -47,12 +47,12 @@ public class DebugTickTimelineHUD : MonoBehaviour
             earlyTime.text = minTime.ToString();
             lateTime.text = maxTime.ToString();
 
-            SetTickPosition(serverTick.rectTransform, localPlayerController.clientTime);
-            SetTickPosition(liveTick.rectTransform, localPlayerController.clientPlaybackTime);
+            SetTickPosition(serverTick.rectTransform, localPlayerTicker.confirmedPlaybackTime);
+            SetTickPosition(liveTick.rectTransform, localPlayerTicker.playbackTime);
 
-            for (int i = 0; i < allLocalTicks.Count && i < localPlayerController.inputHistory.Count; i++)
+            for (int i = 0; i < allLocalTicks.Count && i < localPlayerTicker.inputHistory.Count; i++)
             {
-                SetTickPosition(allLocalTicks[i].rectTransform, localPlayerController.inputHistory.TimeAt(i));
+                SetTickPosition(allLocalTicks[i].rectTransform, localPlayerTicker.inputHistory.TimeAt(i));
             }
         }
     }

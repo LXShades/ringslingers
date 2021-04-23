@@ -67,7 +67,7 @@ public class AIController : MonoBehaviour
             input.moveHorizontalAxis = moveIntentionDirection.x * cos + moveIntentionDirection.z * sin;
             input.moveVerticalAxis = -moveIntentionDirection.x * sin + moveIntentionDirection.z * cos;
 
-            player.input = input;
+            player.latestInput = input;
             //controller.PushInput(input, Time.deltaTime);
             // we need to fix this somehow
         }

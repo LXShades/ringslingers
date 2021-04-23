@@ -106,7 +106,7 @@ public class RingShooting : NetworkBehaviour
         }
 
         // Fire weapons if we can
-        if (hasAuthority && player.input.btnFire && (!hasFiredOnThisClick || effectiveWeaponSettings.isAutomatic))
+        if (hasAuthority && player.latestInput.btnFire && (!hasFiredOnThisClick || effectiveWeaponSettings.isAutomatic))
         {
             Debug.Assert(effectiveWeaponSettings.shotsPerSecond != 0); // division by zero otherwise
 
@@ -123,7 +123,7 @@ public class RingShooting : NetworkBehaviour
             }
         }
 
-        hasFiredOnThisClick &= player.input.btnFire;
+        hasFiredOnThisClick &= player.latestInput.btnFire;
     }
 
     void UpdateAutoAim()
@@ -137,7 +137,7 @@ public class RingShooting : NetworkBehaviour
             if (potentialAutoAimTarget)
             {
                 Vector3 targetPosAdjusted = potentialAutoAimTarget.transform.position + Vector3.up * 0.5f;
-                Vector3 nearTargetPoint = spawnPosition.position + player.input.aimDirection * Vector3.Dot(player.input.aimDirection, targetPosAdjusted - spawnPosition.position);
+                Vector3 nearTargetPoint = spawnPosition.position + player.latestInput.aimDirection * Vector3.Dot(player.latestInput.aimDirection, targetPosAdjusted - spawnPosition.position);
 
                 if (Vector3.Distance(nearTargetPoint, targetPosAdjusted) <= effectiveWeaponSettings.autoAimHitboxRadius)
                 {
@@ -177,7 +177,7 @@ public class RingShooting : NetworkBehaviour
 
     private Character FindClosestTarget(float angleLimit)
     {
-        Vector3 aimDirection = player.input.aimDirection;
+        Vector3 aimDirection = player.latestInput.aimDirection;
         float bestDot = Mathf.Cos(angleLimit * Mathf.Deg2Rad);
         Character bestTarget = null;
 
@@ -200,10 +200,12 @@ public class RingShooting : NetworkBehaviour
 
     private bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
     {
-        float interval = 0.07f;
+        // todo: fix with ticker stuff
+
+        /*float interval = 0.07f;
         PlayerController controller = target.GetComponent<PlayerController>();
         CharacterMovement movement = target.GetComponent<CharacterMovement>();
-        PlayerController.CharacterState originalState = controller.MakeMoveState();
+        CharacterState originalState = controller.MakeMoveState();
         PlayerInput input = controller.GetLatestInput();
         Vector3 startPosition = spawnPosition.position;
         float ringDistance = 0f; // theoretical thrown ring distance
@@ -238,7 +240,9 @@ public class RingShooting : NetworkBehaviour
         }
 
         controller.ApplyMoveState(originalState);
-        return succeeded;
+        return succeeded;*/
+        predictedPosition = Vector3.zero;
+        return false;
     }
 
     public void AddWeaponAmmo(RingWeaponSettingsAsset weaponType, bool doOverrideAmmo, float ammoOverride)
@@ -272,10 +276,10 @@ public class RingShooting : NetworkBehaviour
                 // spawn temporary ring
                 Spawner.StartSpawnPrediction();
                 GameObject predictedRing = Spawner.PredictSpawn(effectiveWeaponSettings.prefab, transform.position, Quaternion.identity);
-                FireSpawnedRing(predictedRing, spawnPosition.position, player.input.aimDirection);
+                FireSpawnedRing(predictedRing, spawnPosition.position, player.latestInput.aimDirection);
             }
 
-            Vector3 direction = player.input.aimDirection;
+            Vector3 direction = player.latestInput.aimDirection;
 
             if (autoAimTarget)
                 direction = autoAimPredictedDirection;

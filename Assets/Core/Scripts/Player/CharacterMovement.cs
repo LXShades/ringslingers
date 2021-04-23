@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-public delegate void MovementEvent(Movement target, bool isReconciliation);
+public delegate void MovementEvent(bool isReconciliation);
 
 [RequireComponent(typeof(Character))]
 public class CharacterMovement : Movement
@@ -139,7 +139,7 @@ public class CharacterMovement : Movement
         {
             // change look rotation with rotation?
             if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
-                player.input.aimDirection = Quaternion.FromToRotation(_up, value) * player.input.aimDirection;
+                player.latestInput.aimDirection = Quaternion.FromToRotation(_up, value) * player.latestInput.aimDirection;
 
             _up = value;
 

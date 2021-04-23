@@ -32,7 +32,7 @@ public class Character : NetworkBehaviour
     /// <summary>
     /// Current inputs of this player
     /// </summary>
-    public PlayerInput input;
+    public PlayerInput latestInput;
 
     /// <summary>
     /// Previous inputs of this player
@@ -195,17 +195,17 @@ public class Character : NetworkBehaviour
     [ClientRpc(channel = Channels.DefaultUnreliable)]
     private void TargetRespawn(Vector3 direction)
     {
-        input.aimDirection = direction.Horizontal().normalized;
+        latestInput.aimDirection = direction.Horizontal().normalized;
     }
 
     private void OnDamaged(GameObject instigator, Vector3 force, bool instaKill)
     {
         if (instaKill)
         {
-            GetComponent<PlayerController>().CallEvent((Movement movement, bool isReconciliation) => 
+            GameTicker.singleton.CallEvent((bool isReconciliation) => 
             {
                 if (!isReconciliation)
-                    Respawn(); 
+                    Respawn();
             });
         }
         else
@@ -214,10 +214,10 @@ public class Character : NetworkBehaviour
                 force = -transform.forward.Horizontal() * hurtDefaultHorizontalKnockback;
             else if (force.Horizontal().magnitude < hurtDefaultHorizontalKnockback)
                 force.SetHorizontal(force.Horizontal().normalized * hurtDefaultHorizontalKnockback);
-            force += (movement as CharacterMovement).up * hurtDefaultVerticalKnockback;
+            force += movement.up * hurtDefaultVerticalKnockback;
 
             // predict our hit
-            GetComponent<PlayerController>().CallEvent((Movement movement, bool _) => (movement as CharacterMovement).ApplyHitKnockback(force));
+            GameTicker.singleton.CallEvent((bool _) => movement.ApplyHitKnockback(force));
 
             // only the server can do the rest (ring drop, score, etc)
             if (NetworkServer.active)
