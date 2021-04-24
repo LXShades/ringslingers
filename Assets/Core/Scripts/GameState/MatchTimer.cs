@@ -40,7 +40,7 @@ public class MatchTimer : MatchStateComponent
         }
     }
 
-    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    [ClientRpc(channel = Channels.Unreliable)]
     private void RpcTimeUpdate(float time)
     {
         if (!NetworkServer.active)

@@ -192,7 +192,7 @@ public class Character : NetworkBehaviour
         }
     }
 
-    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    [ClientRpc(channel = Channels.Unreliable)]
     private void TargetRespawn(Vector3 direction)
     {
         latestInput.aimDirection = direction.Horizontal().normalized;

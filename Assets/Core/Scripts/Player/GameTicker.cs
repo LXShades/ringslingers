@@ -196,9 +196,9 @@ public class GameTicker : NetworkBehaviour
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
                     tick.extrapolatedClientTime = player.GetComponent<Ticker>().playbackTime;
                     tick.confirmedClientTime = player.GetComponent<Ticker>().confirmedPlaybackTime;
-                    NetworkServer.SendToClientOfPlayer(player.netIdentity, tick, Channels.DefaultUnreliable);
+                    player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                 }
-                NetworkServer.SendToAll(tick, Channels.DefaultUnreliable, true);
+                NetworkServer.SendToAll(tick, Channels.Unreliable, true);
             }
             else if (NetworkClient.isConnected)
             {
@@ -206,7 +206,7 @@ public class GameTicker : NetworkBehaviour
                 Ticker localTicker = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<Ticker>() : null;
 
                 if (localTicker)
-                    NetworkClient.Send(new ClientPlayerInput() { inputPack = localTicker.MakeInputPack(sendBufferLength) }, Channels.DefaultUnreliable);
+                    NetworkClient.Send(new ClientPlayerInput() { inputPack = localTicker.MakeInputPack(sendBufferLength) }, Channels.Unreliable);
             }
         }
     }

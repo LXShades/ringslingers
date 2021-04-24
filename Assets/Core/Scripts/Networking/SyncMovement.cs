@@ -52,7 +52,7 @@ public class SyncMovement : NetworkBehaviour
         lastUpdateTime = Time.unscaledTime;
     }
 
-    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    [ClientRpc(channel = Channels.Unreliable)]
     private void RpcMovementUpdate(SyncMovementUpdate update)
     {
         transform.localPosition = update.localPosition;

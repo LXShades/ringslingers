@@ -195,12 +195,12 @@ public class Netplay : MonoBehaviour
             {
                 time = (ushort)msTime,
                 isReliable = false
-            }, Channels.DefaultUnreliable);
+            }, Channels.Unreliable);
             NetworkClient.Send(new PingMessage()
             {
                 time = (ushort)msTime,
                 isReliable = true
-            }, Channels.DefaultReliable);
+            }, Channels.Reliable);
         }
         lastPingMsTime = msTime;
     }
@@ -228,7 +228,7 @@ public class Netplay : MonoBehaviour
 
     private void OnServerPingMessageReceived(NetworkConnection source, PingMessage message)
     {
-        source.Send(message, message.isReliable ? Channels.DefaultReliable : Channels.DefaultUnreliable); // pong!
+        source.Send(message, message.isReliable ? Channels.Reliable : Channels.Unreliable); // pong!
     }
     #endregion
 

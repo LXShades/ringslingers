@@ -226,7 +226,7 @@ public class TheFlag : NetworkBehaviour
         }
     }
 
-    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    [ClientRpc(channel = Channels.Unreliable)]
     private void RpcReturnToBase()
     {
         if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.team == team)
@@ -275,7 +275,7 @@ public class TheFlag : NetworkBehaviour
         }
     }
 
-    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    [ClientRpc(channel = Channels.Unreliable)]
     private void RpcDrop(float blinkTime)
     {
         blinker.timeRemaining = blinkTime;

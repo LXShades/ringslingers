@@ -193,14 +193,21 @@ public class Ticker : MonoBehaviour
 
                 for (numIterations = 0; numIterations < maxSeekIterations; numIterations++)
                 {
-                    float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
+                    if (playbackTime < targetTime)
+                    {
+                        float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
 
-                    movement.TickMovement(deltaTime, inputHistory.Latest.input, true);
-                    playbackTime += deltaTime;
+                        movement.TickMovement(deltaTime, inputHistory.Latest.input, true);
+                        playbackTime += deltaTime;
+                    }
+                    else break;
                 }
 
                 if (numIterations == maxSeekIterations)
-                    Debug.LogWarning($"Max extrapolation iteration limit was hit whilst seeking ticker {gameObject.name}!");
+                {
+                    Debug.LogWarning($"Max extrapolation iteration limit was hit whilst seeking ticker {gameObject.name}! It {numIterations} Target {targetTime} playback {playbackTime}");
+                    playbackTime = targetTime; // skip anyway
+                }
             }
         }
         catch (Exception e)

@@ -53,7 +53,7 @@ public class Spawner : MonoBehaviour
 
     void RegisterSpawnHandlers()
     {
-        ClientScene.ClearSpawners();
+        NetworkClient.ClearSpawners();
 
         // Register custom spawn handlers
         foreach (var prefab in spawnablePrefabs)
@@ -61,7 +61,7 @@ public class Spawner : MonoBehaviour
             if (prefab == null)
                 continue;
 
-            ClientScene.RegisterSpawnHandler(prefab.GetComponent<NetworkIdentity>().assetId, SpawnHandler, UnspawnHandler, PostSpawnHandler);
+            NetworkClient.RegisterSpawnHandler(prefab.GetComponent<NetworkIdentity>().assetId, SpawnHandler, UnspawnHandler, PostSpawnHandler);
         }
     }
 
@@ -207,7 +207,7 @@ public class Spawner : MonoBehaviour
         }
         else
         {
-            return Spawn(ClientScene.spawnableObjects[spawnMessage.sceneId].gameObject, spawnMessage.position, spawnMessage.rotation);
+            return Spawn(NetworkClient.spawnableObjects[spawnMessage.sceneId].gameObject, spawnMessage.position, spawnMessage.rotation);
         }
     }
 

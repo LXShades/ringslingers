@@ -289,7 +289,7 @@ public class RingShooting : NetworkBehaviour
         }
     }
 
-    [Command(channel = Channels.DefaultUnreliable)]
+    [Command(channel = Channels.Unreliable)]
     private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon, float predictedServerTime)
     {
         float timeToThrowAt = predictedServerTime;

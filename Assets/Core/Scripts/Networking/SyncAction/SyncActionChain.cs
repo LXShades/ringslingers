@@ -266,7 +266,7 @@ public class SyncActionChain
         NetworkClient.RegisterHandler<SerializedSyncActionChain>(OnClientReceivedSyncActionChain);
     }
 
-    private static void OnClientReceivedSyncActionChain(NetworkConnection conn, SerializedSyncActionChain message)
+    private static void OnClientReceivedSyncActionChain(SerializedSyncActionChain message)
     {
         if (NetworkClient.isLocalClient) // ignore messages sent to the host by the host
             return;

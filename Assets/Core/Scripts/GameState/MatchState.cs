@@ -25,7 +25,7 @@ public class MatchState : NetworkBehaviour
     /// <summary>
     /// Sets the gamestate by spawning one on the server
     /// </summary>
-    [Server]
+    //[Server]
     public static void SetNetGameState(GameObject newGameStatePrefab)
     {
         if (singleton != null)
@@ -117,7 +117,7 @@ public class MatchState : NetworkBehaviour
         _isWinScreen = true;
     }
 
-    [ClientRpc(channel = Channels.DefaultUnreliable)]
+    [ClientRpc(channel = Channels.Unreliable)]
     private void RpcTimeTilRestart(float timeRemaining)
     {
         if (!NetworkServer.active)
