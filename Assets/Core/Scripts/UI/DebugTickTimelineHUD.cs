@@ -11,9 +11,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
     public Image serverTick;
     public Image playerTick;
     public Image pastServerTick;
-    public Image pastLocalTick;
 
-    private List<Image> allServerTicks = new List<Image>();
     private List<Image> allLocalTicks = new List<Image>();
 
     public float timePeriod = 5;
@@ -29,17 +27,12 @@ public class DebugTickTimelineHUD : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
-        Ticker localPlayerTicker = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<Ticker>() : null;
+        Ticker targetTicker = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<Ticker>() : null;
 
-        if (Mirror.NetworkServer.active)
-        {
-            localPlayerTicker = Netplay.singleton.players[1]?.GetComponent<Ticker>();
-        }
-
-        if (localPlayerTicker)
+        if (targetTicker)
         {
             minTime = 0;
-            maxTime = localPlayerTicker.confirmedPlaybackTime;
+            maxTime = Mathf.Max(targetTicker.confirmedPlaybackTime, targetTicker.playbackTime);
 
             minTime = Mathf.Floor(maxTime / timePeriod) * timePeriod;
             maxTime = Mathf.Ceil(maxTime / timePeriod) * timePeriod;
@@ -47,12 +40,12 @@ public class DebugTickTimelineHUD : MonoBehaviour
             earlyTime.text = minTime.ToString();
             lateTime.text = maxTime.ToString();
 
-            SetTickPosition(serverTick.rectTransform, localPlayerTicker.confirmedPlaybackTime);
-            SetTickPosition(liveTick.rectTransform, localPlayerTicker.playbackTime);
+            SetTickPosition(serverTick.rectTransform, targetTicker.confirmedPlaybackTime);
+            SetTickPosition(liveTick.rectTransform, targetTicker.playbackTime);
 
-            for (int i = 0; i < allLocalTicks.Count && i < localPlayerTicker.inputHistory.Count; i++)
+            for (int i = 0; i < allLocalTicks.Count && i < targetTicker.inputHistory.Count; i++)
             {
-                SetTickPosition(allLocalTicks[i].rectTransform, localPlayerTicker.inputHistory.TimeAt(i));
+                SetTickPosition(allLocalTicks[i].rectTransform, targetTicker.inputHistory.TimeAt(i));
             }
         }
     }
