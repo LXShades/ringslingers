@@ -58,7 +58,12 @@ public class Ticker : MonoBehaviour
 
     private readonly HistoryList<CharacterState> stateHistory = new HistoryList<CharacterState>();
 
-    CharacterState lastConfirmedState;
+    public CharacterState lastConfirmedState { get; private set; }
+
+    private void Awake()
+    {
+        lastConfirmedState = GetComponent<Character>().MakeState();
+    }
 
     /// <summary>
     /// Refreshes the input, event and state history 
@@ -136,6 +141,8 @@ public class Ticker : MonoBehaviour
     /// </summary>
     public void Seek(float targetTime, bool isReconciliation)
     {
+        Debug.Log($"Seek {playbackTime}->{targetTime} input {inputHistory.LatestTime}");
+
         // Playback our latest movements
         int index = inputHistory.ClosestIndexAfter(playbackTime, 0.001f);
 
@@ -164,7 +171,7 @@ public class Ticker : MonoBehaviour
                 {
                     float time = inputHistory.TimeAt(i);
                     var events = eventHistory.ItemAt(time);
-                    PlayerInput inputWithDeltas = PlayerInput.MakeWithDeltas(inputHistory[i].input, inputHistory.Count > i + 1 ? inputHistory[i + 1].input : inputHistory[i].input);
+                    PlayerInput inputWithDeltas = inputHistory[i].input.WithDeltas(inputHistory.Count > i + 1 ? inputHistory[i + 1].input : inputHistory[i].input);
 
                     if (events != null)
                         events?.Invoke(false);
@@ -179,8 +186,6 @@ public class Ticker : MonoBehaviour
                         stateHistory[i - 1].DebugDraw(Color.red);
                     }
                 }
-
-                playbackTime = inputHistory.LatestTime + inputHistory.Latest.deltaTime; // precision correction
 
                 lastConfirmedState = character.MakeState();
                 confirmedPlaybackTime = playbackTime;
@@ -197,7 +202,7 @@ public class Ticker : MonoBehaviour
                     {
                         float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
 
-                        movement.TickMovement(deltaTime, inputHistory.Latest.input, true);
+                        movement.TickMovement(deltaTime, inputHistory.Latest.input.WithoutDeltas(), true);
                         playbackTime += deltaTime;
                     }
                     else break;
@@ -242,7 +247,6 @@ public class Ticker : MonoBehaviour
         eventHistory.Prune(trimTo);
         stateHistory.Prune(trimTo);
     }
-
 
     /// <summary>
     /// Saves a state into the StateHistory at the current playbackTime, replacing old ones if they exist

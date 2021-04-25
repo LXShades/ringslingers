@@ -13,8 +13,8 @@ public class GameTicker : NetworkBehaviour
     private struct ServerTickMessage : NetworkMessage
     {
         public float serverTime; // time of the server
-        public float extrapolatedClientTime; // time of the receiving client, as last seen on the server, with server extrapolation included for smoothness
         public float confirmedClientTime; // time of the receiving client, as last seen on the server
+        public float extrapolatedClientTime; // time of the receiving client, as last seen on the server, with server extrapolation included for smoothness
         public ArraySegment<ServerPlayerTick> ticks;
     }
 
@@ -127,7 +127,7 @@ public class GameTicker : NetworkBehaviour
             localPlayerInput = PlayerInput.MakeLocalInput(lastLocalPlayerInput, localPlayerUp);
 
             // Send inputs to the local player's ticker
-            Netplay.singleton.localPlayer.GetComponent<Ticker>().PushInput(localPlayerInput, Time.timeSinceLevelLoad);
+            Netplay.singleton.localPlayer.ticker.PushInput(localPlayerInput, Time.time);
         }
 
         // We have all server inputs and our own inputs, tick the game
@@ -154,10 +154,7 @@ public class GameTicker : NetworkBehaviour
             if (character && playerInputFlow.ContainsKey(i))
             {
                 while (playerInputFlow[i].TryPopMessage(out InputPack inputPack, false)) // skipOutdatedMessages is false because we'd like to receive everything we got since the last one
-                {
-                    character.latestInput = inputPack.inputs[inputPack.inputs.Length - 1].input;
                     character.GetComponent<Ticker>().PushInputPack(inputPack);
-                }
             }
         }
     }
@@ -171,7 +168,7 @@ public class GameTicker : NetworkBehaviour
         foreach (Character player in Netplay.singleton.players)
         {
             if (player)
-                player.GetComponent<Ticker>().SeekBy(Time.deltaTime, false);
+                player.GetComponent<Ticker>().Seek(Time.time, false);
         }
 
 
@@ -233,7 +230,7 @@ public class GameTicker : NetworkBehaviour
                     sounds = sounds.soundHistory,
                     moveState = new MoveStateWithInput()
                     {
-                        state = character.GetConfirmedState(),
+                        state = ticker.lastConfirmedState,
                         input = ticker.inputHistory.Latest.input
                     }
                 });

@@ -72,15 +72,31 @@ public struct PlayerInput : IEquatable<PlayerInput>
         return localInput;
     }
 
-    public static PlayerInput MakeWithDeltas(PlayerInput input, PlayerInput lastInput)
+    /// <summary>
+    /// Returns a copy with delta inputs (firePressed, fireReleased, etc) relative to lastInput
+    /// </summary>
+    public PlayerInput WithDeltas(PlayerInput lastInput)
     {
-        PlayerInput output = input;
+        PlayerInput output = this;
 
-        output.btnJumpPressed = !lastInput.btnJump && input.btnJump;
-        output.btnFirePressed = !lastInput.btnFire && input.btnFire;
+        output.btnJumpPressed = !lastInput.btnJump && btnJump;
+        output.btnFirePressed = !lastInput.btnFire && btnFire;
 
-        output.btnJumpReleased = lastInput.btnJump && !input.btnJump;
-        output.btnFireReleased = lastInput.btnFire && !input.btnFire;
+        output.btnJumpReleased = lastInput.btnJump && !btnJump;
+        output.btnFireReleased = lastInput.btnFire && !btnFire;
+
+        return output;
+    }
+
+    /// <summary>
+    /// Returns a copy with delta inputs (firePressed, fireReleased, etc) removed
+    /// </summary>
+    public PlayerInput WithoutDeltas()
+    {
+        PlayerInput output = this;
+
+        output.btnFirePressed = output.btnFireReleased = false;
+        output.btnJumpPressed = output.btnJumpReleased = false;
 
         return output;
     }

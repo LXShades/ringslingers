@@ -564,6 +564,7 @@ MonoBehaviour:
   sceneId: 0
   predictedId: 0
   serverOnly: 0
+  visible: 0
   m_AssetId: 
   hasSpawned: 0
 --- !u!114 &7352825796714013433
@@ -582,28 +583,6 @@ MonoBehaviour:
   syncInterval: 0.1
   playerName: Fred
   playerId: 0
-  latestInput:
-    moveHorizontalAxis: 0
-    moveVerticalAxis: 0
-    horizontalAim: 0
-    verticalAim: 0
-    btnJump: 0
-    btnFire: 0
-    btnJumpPressed: 0
-    btnJumpReleased: 0
-    btnFirePressed: 0
-    btnFireReleased: 0
-  lastInput:
-    moveHorizontalAxis: 0
-    moveVerticalAxis: 0
-    horizontalAim: 0
-    verticalAim: 0
-    btnJump: 0
-    btnFire: 0
-    btnJumpPressed: 0
-    btnJumpReleased: 0
-    btnFirePressed: 0
-    btnFireReleased: 0
   time: 0
   colour: {r: 0, g: 0, b: 0, a: 0}
   colourByTeam:
@@ -627,6 +606,7 @@ MonoBehaviour:
   hurtDefaultVerticalKnockback: 3.8
   movement: {fileID: 0}
   damageable: {fileID: 0}
+  ticker: {fileID: 0}
   localTime: -1
 --- !u!114 &1135752959894809543
 MonoBehaviour:
@@ -640,7 +620,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b79507cd831dde542bedac2028ce364e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxDeltaTime: 0.03
+  maxDeltaTime: 0.034
   maxSeekIterations: 15
   maxInputRate: 60
   historyLength: 1

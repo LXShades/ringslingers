@@ -28,16 +28,15 @@ public class Character : NetworkBehaviour
     /// </summary>
     private bool isLocal => playerId == Netplay.singleton.localPlayerId;
 
-    [Header("Player control")]
     /// <summary>
     /// Current inputs of this player
     /// </summary>
-    public PlayerInput latestInput;
+    public PlayerInput latestInput => ticker.inputHistory.Latest.input;
 
     /// <summary>
     /// Previous inputs of this player
     /// </summary>
-    public PlayerInput lastInput;
+    public PlayerInput lastInput => ticker.inputHistory.Count > 1 ? ticker.inputHistory[1].input : ticker.inputHistory.Latest.input;
 
     /// <summary>
     /// Time of this player
@@ -95,6 +94,7 @@ public class Character : NetworkBehaviour
     /// </summary>
     [HideInInspector] public CharacterMovement movement;
     [HideInInspector] public Damageable damageable;
+    [HideInInspector] public Ticker ticker;
     private PlayerSounds sounds;
 
     public bool isInvisible { get; set; }
@@ -123,13 +123,12 @@ public class Character : NetworkBehaviour
         movement = GetComponent<CharacterMovement>();
         damageable = GetComponent<Damageable>();
         sounds = GetComponent<PlayerSounds>();
+        ticker = GetComponent<Ticker>();
     }
 
     public override void OnStartServer()
     {
         base.OnStartServer();
-
-        ConfirmState();
 
         Netplay.singleton.RegisterPlayer(this);
 
@@ -195,7 +194,8 @@ public class Character : NetworkBehaviour
     [ClientRpc(channel = Channels.Unreliable)]
     private void TargetRespawn(Vector3 direction)
     {
-        latestInput.aimDirection = direction.Horizontal().normalized;
+        //latestInput.aimDirection = direction.Horizontal().normalized;
+        // todo sort this
     }
 
     private void OnDamaged(GameObject instigator, Vector3 force, bool instaKill)
@@ -403,25 +403,6 @@ public class Character : NetworkBehaviour
         movement.up = state.up;
 
         Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
-    }
-
-    /// <summary>
-    /// Returns the last confirmed move state we stored
-    /// This can be used when we're extrapolating but want to restore the pre-extrapolated state
-    /// </summary>
-    public CharacterState GetConfirmedState()
-    {
-        return confirmedState;
-    }
-
-    private CharacterState confirmedState;
-
-    /// <summary>
-    /// Confirms the current state
-    /// </summary>
-    public void ConfirmState()
-    {
-        confirmedState = MakeState();
     }
 }
 
