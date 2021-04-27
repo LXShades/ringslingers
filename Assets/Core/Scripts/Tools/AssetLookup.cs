@@ -29,6 +29,7 @@ public class AssetLookup : MonoBehaviour
         Debug.Assert(singleton == null);
 
         singleton = this;
+        transform.SetParent(null, false);
         DontDestroyOnLoad(gameObject);
 
         GenerateDictionaries();

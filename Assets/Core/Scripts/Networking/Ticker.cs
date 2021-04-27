@@ -40,7 +40,7 @@ public class Ticker : MonoBehaviour
     /// <summary>
     /// The latest known input in this ticker
     /// </summary>
-    public PlayerInput input => inputHistory.Latest.input;
+    public PlayerInput input => inputHistory.Latest;
 
     /// <summary>
     /// The current playback time, based on no specific point of reference, but is expected to use the same time format as input and event history
@@ -52,7 +52,7 @@ public class Ticker : MonoBehaviour
     /// </summary>
     public float confirmedPlaybackTime { get; private set; }
 
-    public readonly HistoryList<InputDelta> inputHistory = new HistoryList<InputDelta>();
+    public readonly HistoryList<PlayerInput> inputHistory = new HistoryList<PlayerInput>();
 
     private readonly HistoryList<MovementEvent> eventHistory = new HistoryList<MovementEvent>();
 
@@ -84,7 +84,7 @@ public class Ticker : MonoBehaviour
         if (maxInputRate <= 0 || timeSinceLastInput >= 1f / maxInputRate - 0.0001f)
         {
             // Add current player input to input history
-            inputHistory.Set(time, new InputDelta(input, Mathf.Min(timeSinceLastInput, maxDeltaTime)));
+            inputHistory.Set(time, input);
         }
 
         CleanupHistory();
@@ -100,7 +100,7 @@ public class Ticker : MonoBehaviour
         for (int i = inputPack.inputs.Length - 1; i >= 0; i--)
         {
             // TODO: max input rate enforcement
-            inputHistory.Set(time, inputPack.inputs[i], 0.001f);
+            inputHistory.Set(time, inputPack.inputs[i].input, 0.001f);
             time += inputPack.inputs[i].deltaTime;
         }
 
@@ -159,83 +159,74 @@ public class Ticker : MonoBehaviour
     {
         Debug.Assert(maxDeltaTime > 0f);
 
+        // Restore our actual non-extrapolated position
+        ApplyState(lastConfirmedState);
+        playbackTime = confirmedPlaybackTime;
+
         // Playback our latest movements
-        float initialPlaybackTime = playbackTime, inputPlaybackDuration = 0f, extraPlaybackDuration = 0f;
-        int index = inputHistory.ClosestIndexAfter(playbackTime, 0.001f);
+        float initialPlaybackTime = playbackTime;
 
         try
         {
             CharacterMovement movement = GetComponent<CharacterMovement>();
+            int numIterations = 0;
 
-            // If possible, replay inputs until the target time is reached or almost reached
-            if (index != -1)
+            // Execute ticks, grabbing and consuming inputs if they are available, or using the latest inputs
+            while (playbackTime < targetTime)
             {
-                // Restore our actual non-extrapolated position
-                ApplyState(lastConfirmedState);
-                playbackTime = confirmedPlaybackTime;
+                int index = inputHistory.ClosestIndexBefore(playbackTime, 0.001f);
+                PlayerInput input = default;
+                MovementEvent events = null;
+                float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
+                bool canConfirmState = false;
 
-                if (debugDrawReconciles && isReconciliation)
+                if (index != -1)
                 {
-                    DebugDrawCurrentState(Color.blue);
-                    stateHistory[index].DebugDraw(Color.red);
-                }
+                    float inputTime = inputHistory.TimeAt(index);
 
-                // Execute the ticks up to this point
-                for (int i = index; i >= 0; i--)
-                {
-                    float time = inputHistory.TimeAt(i);
-                    var events = eventHistory.ItemAt(time);
-                    PlayerInput inputWithDeltas = inputHistory[i].input.WithDeltas(inputHistory.Count > i + 1 ? inputHistory[i + 1].input : inputHistory[i].input);
-                    float deltaTime = Mathf.Min(inputHistory[i].deltaTime, targetTime - playbackTime);
+                    events = eventHistory.ItemAt(inputTime);
 
-                    if (deltaTime > 0f)
+                    if (inputHistory.Count > index + 1)
+                        input = inputHistory[index].WithDeltas(inputHistory[index + 1]);
+                    else
+                        input = inputHistory[index].WithoutDeltas();
+
+                    if (index > 0)
                     {
-                        if (events != null)
-                            events?.Invoke(false);
+                        float inputDeltaTime = inputHistory.TimeAt(index - 1) - inputHistory.TimeAt(index);
 
-                        movement.TickMovement(deltaTime, inputWithDeltas, isReconciliation);
-                        playbackTime += deltaTime;
-                        inputPlaybackDuration += deltaTime;
-
-                        if (deltaTime == inputHistory[i].deltaTime)
-                        {
-                            // since it is complete, we can call this a confirmed tick
-                            lastConfirmedState = MakeState();
-                            confirmedPlaybackTime = playbackTime;
-                        }
-
-                        // Draw debug info
-                        if (debugDrawReconciles && i > 0)
-                        {
-                            DebugDrawCurrentState(Color.blue);
-                            stateHistory[i - 1].DebugDraw(Color.red);
-                        }
+                        deltaTime = Mathf.Min(inputDeltaTime, targetTime - playbackTime);
+                        canConfirmState = (deltaTime == inputDeltaTime); // it's confirmed if we can do a full previous->current input tick
                     }
                 }
-            }
-
-            // Extrapolate beyond original time, constrained to maxTimeStep and maxExtrapolationIterations
-            if (targetTime > playbackTime)
-            {
-                int numIterations;
-
-                for (numIterations = 0; numIterations < maxSeekIterations; numIterations++)
+                else
                 {
-                    if (playbackTime < targetTime)
-                    {
-                        float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
-
-                        movement.TickMovement(deltaTime, inputHistory.Latest.input.WithoutDeltas(), true);
-                        playbackTime += deltaTime;
-                        extraPlaybackDuration += deltaTime;
-                    }
-                    else break;
+                    input = inputHistory.Latest.WithoutDeltas();
                 }
+
+                if (deltaTime > 0f)
+                {
+                    events?.Invoke(isReconciliation);
+
+                    movement.TickMovement(deltaTime, input, isReconciliation);
+
+                    playbackTime += deltaTime;
+
+                    if (canConfirmState)
+                    {
+                        // since this tick is complete, we can call it a confirmed tick
+                        lastConfirmedState = MakeState();
+                        confirmedPlaybackTime = playbackTime;
+                    }
+                }
+
+                numIterations++;
 
                 if (numIterations == maxSeekIterations)
                 {
                     Debug.LogWarning($"Max extrapolation iteration limit was hit whilst seeking ticker {gameObject.name}! It {numIterations} Target {targetTime} playback {playbackTime}");
                     playbackTime = targetTime; // skip anyway
+                    break;
                 }
             }
         }
@@ -244,8 +235,7 @@ public class Ticker : MonoBehaviour
             Log.WriteException(e);
         }
 
-        Debug.Log($"SeekStat: {initialPlaybackTime.ToString("F2")}->{targetTime.ToString("F2")} final {playbackTime.ToString("F2")} " +
-            $"dt: {(playbackTime - initialPlaybackTime).ToString("F2")} tInput: {inputPlaybackDuration.ToString("F2")} tExtrap: {extraPlaybackDuration.ToString("F2")}");
+        //Debug.Log($"SeekStat: {initialPlaybackTime.ToString("F2")}->{targetTime.ToString("F2")} final {playbackTime.ToString("F2")} dt: {(playbackTime - initialPlaybackTime).ToString("F2")}");
 
         // Perform history cleanup and stuff
         SaveStateSnapshot();

@@ -72,6 +72,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
+        transform.SetParent(null, false);
         DontDestroyOnLoad(gameObject);
 
         input = new PlayerControls();

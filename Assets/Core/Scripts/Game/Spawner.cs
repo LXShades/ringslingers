@@ -26,6 +26,7 @@ public class Spawner : MonoBehaviour
 
     void Awake()
     {
+        transform.SetParent(null, false);
         DontDestroyOnLoad(gameObject);
 
         foreach (GameObject spawnable in spawnablePrefabs)

@@ -48,6 +48,7 @@ public class GameSounds : MonoBehaviour
             return;
         }
 
+        transform.SetParent(null, false);
         DontDestroyOnLoad(gameObject);
         singleton = this;
         sources = new AudioSource[numSoundChannels];

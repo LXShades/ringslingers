@@ -31,12 +31,12 @@ public class Character : NetworkBehaviour
     /// <summary>
     /// Current inputs of this player
     /// </summary>
-    public PlayerInput latestInput => ticker.inputHistory.Latest.input;
+    public PlayerInput latestInput => ticker.inputHistory.Latest;
 
     /// <summary>
     /// Previous inputs of this player
     /// </summary>
-    public PlayerInput lastInput => ticker.inputHistory.Count > 1 ? ticker.inputHistory[1].input : ticker.inputHistory.Latest.input;
+    public PlayerInput lastInput => ticker.inputHistory.Count > 1 ? ticker.inputHistory[1] : ticker.inputHistory.Latest;
 
     /// <summary>
     /// Time of this player

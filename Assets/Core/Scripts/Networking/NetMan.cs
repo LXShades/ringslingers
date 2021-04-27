@@ -47,6 +47,8 @@ public class NetMan : NetworkManager
         UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceThreaded>() != null);
         singleton = this;
         defaultPort = transport.GetComponent<IgnoranceThreaded>().CommunicationPort;
+        transform.SetParent(null, false);
+        DontDestroyOnLoad(gameObject);
 
         SyncActionChain.RegisterHandlers();
     }

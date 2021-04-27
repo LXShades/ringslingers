@@ -160,7 +160,7 @@ public struct InputPack
     /// Makes an InputPack
     /// </summary>
     /// <returns></returns>
-    public static InputPack MakeFromHistory(HistoryList<InputDelta> inputHistory, float sendBufferLength)
+    public static InputPack MakeFromHistory(HistoryList<PlayerInput> inputHistory, float sendBufferLength)
     {
         int startIndex = inputHistory.ClosestIndexBeforeOrEarliest(inputHistory.LatestTime - sendBufferLength);
 
@@ -168,7 +168,10 @@ public struct InputPack
         {
             InputDelta[] inputs = new InputDelta[startIndex + 1];
             for (int i = startIndex; i >= 0; i--)
-                inputs[i] = inputHistory[i];
+            {
+                inputs[i].input = inputHistory[i];
+                inputs[i].deltaTime = i > 0 ? inputHistory.TimeAt(i - 1) - inputHistory.TimeAt(i) : 0f;
+            }
 
             return new InputPack()
             {

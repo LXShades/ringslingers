@@ -168,7 +168,12 @@ public class GameTicker : NetworkBehaviour
         foreach (Character player in Netplay.singleton.players)
         {
             if (player)
-                player.GetComponent<Ticker>().Seek(Time.time, false);
+            {
+                if (player == Netplay.singleton.localPlayer)
+                    player.ticker.Seek(Time.time, false);
+                else if (isServer)
+                    player.ticker.Seek(player.ticker.inputHistory.LatestTime, false);
+            }
         }
 
 
@@ -231,7 +236,7 @@ public class GameTicker : NetworkBehaviour
                     moveState = new MoveStateWithInput()
                     {
                         state = ticker.lastConfirmedState,
-                        input = ticker.inputHistory.Latest.input
+                        input = ticker.inputHistory.Latest
                     }
                 });
             }
@@ -261,12 +266,18 @@ public class GameTicker : NetworkBehaviour
                 PlayerSounds sounds = character.GetComponent<PlayerSounds>();
                 Ticker ticker = character.GetComponent<Ticker>();
 
-                ticker.PushInput(tick.moveState.input, tickMessage.serverTime);
-                ticker.Reconcile(tick.moveState.state, tickMessage.serverTime);
                 sounds.ReceiveSoundHistory(tick.sounds);
 
                 if (tick.id == Netplay.singleton.localPlayerId)
+                {
                     localPlayerPing = ticker.playbackTime - tickMessage.extrapolatedClientTime;
+                    ticker.Reconcile(tick.moveState.state, tickMessage.confirmedClientTime);
+                }
+                else
+                {
+                    ticker.PushInput(tick.moveState.input, tickMessage.serverTime);
+                    ticker.Reconcile(tick.moveState.state, tickMessage.serverTime);
+                }
             }
         }
 
