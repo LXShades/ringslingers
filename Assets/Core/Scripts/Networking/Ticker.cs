@@ -15,6 +15,10 @@ public class Ticker : MonoBehaviour
     [Tooltip("The maximum input rate in hz. If <=0, the input rate is unlimited. This should be restricted sensibly so that clients do not send too many inputs and save CPU.")]
     public int maxInputRate = 60;
 
+    [Header("Reconciling")]
+    [Tooltip("Whether to reconcile even if the server's confirmed state matched the local state at the time")]
+    public bool alwaysReconcile = false;
+
     [Header("History")]
     [Tooltip("How long to keep input, state, etc history in seconds. Should be able to fit in a bit more ")]
     public float historyLength = 1.0f;
@@ -127,10 +131,14 @@ public class Ticker : MonoBehaviour
     /// <param name="time"></param>
     public void Rewind(CharacterState state, float time)
     {
-        GetComponent<Character>().ApplyState(state);
-        lastConfirmedState = state;
-        confirmedPlaybackTime = time;
-        playbackTime = time;
+        int index = stateHistory.IndexAt(time, 0.0001f);
+        if (alwaysReconcile || index == -1 || !stateHistory[index].Equals(state))
+        {
+            GetComponent<Character>().ApplyState(state);
+            lastConfirmedState = state;
+            confirmedPlaybackTime = time;
+            playbackTime = time;
+        }
     }
 
     /// <summary>
@@ -173,6 +181,8 @@ public class Ticker : MonoBehaviour
     public void Seek(float targetTime, float realtimePlaybackTime)
     {
         Debug.Assert(maxDeltaTime > 0f);
+
+        float initialPlaybackTime = playbackTime;
 
         // Restore our actual non-extrapolated position
         ApplyState(lastConfirmedState);
@@ -252,8 +262,11 @@ public class Ticker : MonoBehaviour
 
                     if (canConfirmState)
                     {
+                        CharacterState state = MakeState();
+                        stateHistory.Set(playbackTime, state);
+
                         // since this tick is a complete one, save the result as our next confirmed state
-                        lastConfirmedState = MakeState();
+                        lastConfirmedState = state;
                         confirmedPlaybackTime = playbackTime;
                     }
                 }
@@ -262,7 +275,7 @@ public class Ticker : MonoBehaviour
 
                 if (numIterations == maxSeekIterations)
                 {
-                    Debug.LogWarning($"Max extrapolation iteration limit was hit whilst seeking ticker {gameObject.name}! It {numIterations} Target {targetTime} playback {playbackTime}");
+                    Debug.LogWarning($"Max extrapolation iteration limit was hit whilst seeking ticker {gameObject.name}! It {numIterations} Target: {targetTime.ToString("F2")} playback: {playbackTime.ToString("F2")} initial {initialPlaybackTime.ToString("F2")} confirmed {confirmedPlaybackTime}");
                     break;
                 }
             }

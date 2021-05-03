@@ -62,12 +62,6 @@ public class GameTicker : NetworkBehaviour
         "Recommended around 0.0666 for 15hz")]
     public float remotePredictionTimeStep = 0.08f;
 
-    [Header("Reconcilation")]
-    [Tooltip("[client] Whether to reconcile even if the server agreed position matches our own")]
-    public bool alwaysReconcile = false;
-    [Tooltip("[client] How far can our position differ from the server's until we must be corrected, in metres.")]
-    public float reconcilationPositionTolerance = 0.3f;
-
     // preallocated outgoing player ticks
     private readonly List<ServerPlayerTick> ticksOut = new List<ServerPlayerTick>(32);
 
@@ -161,7 +155,7 @@ public class GameTicker : NetworkBehaviour
             if (player)
             {
                 if (player == Netplay.singleton.localPlayer)
-                    player.ticker.Seek(Time.time, isServer ? player.ticker.confirmedPlaybackTime : player.ticker.playbackTime);
+                    player.ticker.Seek(Time.time, isServer ? player.ticker.confirmedPlaybackTime : Time.time - Time.deltaTime);
                 else if (isServer)
                     player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedPlaybackTime);
                 else if (isClient)
