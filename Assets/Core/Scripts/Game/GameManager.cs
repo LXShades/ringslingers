@@ -1,5 +1,4 @@
-﻿using System.IO;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -60,13 +59,14 @@ public class GameManager : MonoBehaviour
         set
         {
             _isPaused = value;
-
         }
     }
     private bool _isPaused = false;
 
     private bool areInputsEnabled = false;
     private bool doSuppressGameplayInputs = false;
+
+    private string defaultMenuScenePath;
 
     private PlayerCamera cachedCamera = null;
 
@@ -79,6 +79,8 @@ public class GameManager : MonoBehaviour
         EnableInputs();
 
         GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
+
+        defaultMenuScenePath = SceneManager.GetSceneByName(defaultMenuScene).path;
     }
 
     private void Start()
@@ -88,7 +90,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        Cursor.lockState = (isPaused || SceneManager.GetActiveScene().path.ToLower().Contains(defaultMenuScene.ToLower())) ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.lockState = (isPaused || string.Compare(SceneManager.GetActiveScene().path, defaultMenuScenePath, true) == 0) ? CursorLockMode.None : CursorLockMode.Locked;
 
         // Do debug stuff
         RunDebugCommands();
@@ -133,8 +135,6 @@ public class GameManager : MonoBehaviour
     }
 
     #region Debug
-    MemoryStream tempSave;
-
     void RunDebugCommands()
     {
         // Debug controls

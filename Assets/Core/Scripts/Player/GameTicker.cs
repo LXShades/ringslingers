@@ -81,20 +81,12 @@ public class GameTicker : NetworkBehaviour
     // client predicted server time will be extrapolated based on ping and prediction settings
     public float predictedServerTime { get; private set; }
 
-    // [client] the client time, thing, uh we're extrapolating
-    public float currentExtrapolation { get; private set; }
-
     // ==================== LOCAL PLAYER SECTION ===================
     // [client] returns the local player's ping
     public float localPlayerPing { get; private set; }
 
     // [client/server] returns the latest local player input this tick
-    public PlayerInput localPlayerInput { get; private set; }
-
-    // [client/server] returns the previous local player input
-    public PlayerInput lastLocalPlayerInput { get; private set; }
-
-    private MovementEvent pendingEvents = null;
+    public PlayerInput localPlayerInput;
 
     private void Awake()
     {
@@ -123,8 +115,7 @@ public class GameTicker : NetworkBehaviour
             // Receive local player inputs
             Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<CharacterMovement>().up;
 
-            lastLocalPlayerInput = localPlayerInput;
-            localPlayerInput = PlayerInput.MakeLocalInput(lastLocalPlayerInput, localPlayerUp);
+            localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
 
             // Send inputs to the local player's ticker
             Netplay.singleton.localPlayer.ticker.PushInput(localPlayerInput, Time.time);
@@ -154,7 +145,7 @@ public class GameTicker : NetworkBehaviour
             if (character && playerInputFlow.ContainsKey(i))
             {
                 while (playerInputFlow[i].TryPopMessage(out InputPack inputPack, false)) // skipOutdatedMessages is false because we'd like to receive everything we got since the last one
-                    character.GetComponent<Ticker>().PushInputPack(inputPack);
+                    character.ticker.PushInputPack(inputPack);
             }
         }
     }
@@ -170,9 +161,11 @@ public class GameTicker : NetworkBehaviour
             if (player)
             {
                 if (player == Netplay.singleton.localPlayer)
-                    player.ticker.Seek(Time.time, false);
+                    player.ticker.Seek(Time.time, isServer ? player.ticker.confirmedPlaybackTime : player.ticker.playbackTime);
                 else if (isServer)
-                    player.ticker.Seek(player.ticker.inputHistory.LatestTime, false);
+                    player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedPlaybackTime);
+                else if (isClient)
+                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime);
             }
         }
 
@@ -270,13 +263,13 @@ public class GameTicker : NetworkBehaviour
 
                 if (tick.id == Netplay.singleton.localPlayerId)
                 {
-                    localPlayerPing = ticker.playbackTime - tickMessage.extrapolatedClientTime;
-                    ticker.Reconcile(tick.moveState.state, tickMessage.confirmedClientTime);
+                    localPlayerPing = ticker.playbackTime - tickMessage.confirmedClientTime; // which client time...?
+                    ticker.Rewind(tick.moveState.state, tickMessage.confirmedClientTime);
                 }
                 else
                 {
                     ticker.PushInput(tick.moveState.input, tickMessage.serverTime);
-                    ticker.Reconcile(tick.moveState.state, tickMessage.serverTime);
+                    ticker.Rewind(tick.moveState.state, tickMessage.serverTime);
                 }
             }
         }
@@ -334,10 +327,5 @@ public class GameTicker : NetworkBehaviour
         }
 
         return $"ServerTickFlow: {serverTickFlow}\nPing: {(int)(localPlayerPing * 1000)}ms\n{playerInputFlowDebug}";
-    }
-
-    public void CallEvent(MovementEvent eventToCall)
-    {
-        pendingEvents += eventToCall;
     }
 }

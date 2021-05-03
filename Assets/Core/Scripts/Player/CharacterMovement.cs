@@ -1,8 +1,6 @@
 ﻿using System;
 using UnityEngine;
 
-public delegate void MovementEvent(bool isReconciliation);
-
 [RequireComponent(typeof(Character))]
 public class CharacterMovement : Movement
 {
@@ -157,6 +155,8 @@ public class CharacterMovement : Movement
     private Vector3 debugPauseVelocity;
     private Vector3 debugPauseUp;
 
+    private RaycastHit[] bufferedHits = new RaycastHit[16];
+
     void Awake()
     {
         player = GetComponent<Character>();
@@ -266,17 +266,16 @@ public class CharacterMovement : Movement
 
         if (!debugDisableCollision)
         {
-            RaycastHit[] hits = new RaycastHit[10];
-            int numHits = move.ColliderCast(hits, transform.position, -up, testDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
+            int numHits = move.ColliderCast(bufferedHits, transform.position, -up, testDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
             float closestGroundDistance = testDistance;
 
             for (int i = 0; i < numHits; i++)
             {
-                if (hits[i].collider.GetComponentInParent<CharacterMovement>() != this && hits[i].distance <= closestGroundDistance + Mathf.Epsilon)
+                if (bufferedHits[i].collider.GetComponentInParent<CharacterMovement>() != this && bufferedHits[i].distance <= closestGroundDistance + Mathf.Epsilon)
                 {
-                    groundNormal = hits[i].normal;
-                    foundDistance = hits[i].distance;
-                    groundObject = hits[i].collider.gameObject;
+                    groundNormal = bufferedHits[i].normal;
+                    foundDistance = bufferedHits[i].distance;
+                    groundObject = bufferedHits[i].collider.gameObject;
                     closestGroundDistance = foundDistance;
                 }
             }
@@ -504,20 +503,36 @@ public class CharacterMovement : Movement
         {
             // Smooth wall running, when the mesh allows it
             MeshCollider backMeshCollider = centralHitInfo.collider as MeshCollider;
+            bool hasFoundSmoothNormal = false;
             if (backMeshCollider != null && backMeshCollider.sharedMesh.isReadable)
             {
-                int tri = centralHitInfo.triangleIndex;
+                int index = centralHitInfo.triangleIndex * 3;
                 Mesh mesh = backMeshCollider.sharedMesh;
-                Vector3[] normals = mesh.normals;
-                int[] triangles = mesh.triangles;
+                
+                mesh.GetNormals(normalBuffer);
 
-                Vector3 smoothNormal = normals[triangles[tri * 3]] * centralHitInfo.barycentricCoordinate.x +
-                    normals[triangles[tri * 3 + 1]] * centralHitInfo.barycentricCoordinate.y +
-                    normals[triangles[tri * 3 + 2]] * centralHitInfo.barycentricCoordinate.z;
+                for (int i = 0; i < mesh.subMeshCount; i++)
+                {
+                    int start = mesh.GetSubMesh(i).indexStart;
+                    int count = mesh.GetSubMesh(i).indexCount;
 
-                targetUp = backMeshCollider.transform.TransformDirection(smoothNormal).normalized;
+                    if (index >= start && index < start + count)
+                    {
+                        mesh.GetIndices(triangleBuffer, i);
+
+                        Vector3 smoothNormal = normalBuffer[triangleBuffer[index - start]] * centralHitInfo.barycentricCoordinate.x +
+                            normalBuffer[triangleBuffer[index - start + 1]] * centralHitInfo.barycentricCoordinate.y +
+                            normalBuffer[triangleBuffer[index - start + 2]] * centralHitInfo.barycentricCoordinate.z;
+
+                        targetUp = backMeshCollider.transform.TransformDirection(smoothNormal).normalized;
+                        hasFoundSmoothNormal = true;
+                        break;
+                    }
+                }
             }
-            else
+
+
+            if (!hasFoundSmoothNormal)
             {
                 // Set target up vector from the three points
                 targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
@@ -644,13 +659,7 @@ public class CharacterMovement : Movement
 
     void ApplyRide(GameObject target)
     {
-        if (target == null)
-        {
-            return;
-        }
-        Rideable rideable = target.GetComponent<Rideable>();
-
-        if (rideable)
+        if (target != null && target.TryGetComponent(out Rideable rideable))
         {
             //rideable.GetFrameMovementDelta();
         }

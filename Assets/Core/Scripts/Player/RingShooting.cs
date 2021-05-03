@@ -106,7 +106,7 @@ public class RingShooting : NetworkBehaviour
         }
 
         // Fire weapons if we can
-        if (hasAuthority && player.latestInput.btnFire && (!hasFiredOnThisClick || effectiveWeaponSettings.isAutomatic))
+        if (hasAuthority && player.liveInput.btnFire && (!hasFiredOnThisClick || effectiveWeaponSettings.isAutomatic))
         {
             Debug.Assert(effectiveWeaponSettings.shotsPerSecond != 0); // division by zero otherwise
 
@@ -123,7 +123,7 @@ public class RingShooting : NetworkBehaviour
             }
         }
 
-        hasFiredOnThisClick &= player.latestInput.btnFire;
+        hasFiredOnThisClick &= player.liveInput.btnFire;
     }
 
     void UpdateAutoAim()
@@ -137,7 +137,7 @@ public class RingShooting : NetworkBehaviour
             if (potentialAutoAimTarget)
             {
                 Vector3 targetPosAdjusted = potentialAutoAimTarget.transform.position + Vector3.up * 0.5f;
-                Vector3 nearTargetPoint = spawnPosition.position + player.latestInput.aimDirection * Vector3.Dot(player.latestInput.aimDirection, targetPosAdjusted - spawnPosition.position);
+                Vector3 nearTargetPoint = spawnPosition.position + player.liveInput.aimDirection * Vector3.Dot(player.liveInput.aimDirection, targetPosAdjusted - spawnPosition.position);
 
                 if (Vector3.Distance(nearTargetPoint, targetPosAdjusted) <= effectiveWeaponSettings.autoAimHitboxRadius)
                 {
@@ -177,7 +177,7 @@ public class RingShooting : NetworkBehaviour
 
     private Character FindClosestTarget(float angleLimit)
     {
-        Vector3 aimDirection = player.latestInput.aimDirection;
+        Vector3 aimDirection = player.liveInput.aimDirection;
         float bestDot = Mathf.Cos(angleLimit * Mathf.Deg2Rad);
         Character bestTarget = null;
 
@@ -276,10 +276,10 @@ public class RingShooting : NetworkBehaviour
                 // spawn temporary ring
                 Spawner.StartSpawnPrediction();
                 GameObject predictedRing = Spawner.PredictSpawn(effectiveWeaponSettings.prefab, transform.position, Quaternion.identity);
-                FireSpawnedRing(predictedRing, spawnPosition.position, player.latestInput.aimDirection);
+                FireSpawnedRing(predictedRing, spawnPosition.position, player.liveInput.aimDirection);
             }
 
-            Vector3 direction = player.latestInput.aimDirection;
+            Vector3 direction = player.liveInput.aimDirection;
 
             if (autoAimTarget)
                 direction = autoAimPredictedDirection;

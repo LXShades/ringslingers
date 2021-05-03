@@ -98,6 +98,7 @@ MonoBehaviour:
   sceneId: 0
   predictedId: 0
   serverOnly: 0
+  visible: 0
   m_AssetId: 
   hasSpawned: 0
 --- !u!114 &3413194138189725757
@@ -141,7 +142,7 @@ GameObject:
   - component: {fileID: 3413194138946377953}
   - component: {fileID: 3413194138946377958}
   m_Layer: 0
-  m_Name: Main Camera
+  m_Name: PlayerCamera
   m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -230,7 +231,7 @@ MonoBehaviour:
   characterPreviewDistance: 2
   maxThirdPersonDistance: 4
   minThirdPersonDistance: 1
-  eyeHeight: 0.54
+  eyeHeight: 0.625
   collisionLayers:
     serializedVersion: 2
     m_Bits: 2147484727
@@ -369,6 +370,7 @@ MonoBehaviour:
   sceneId: 0
   predictedId: 0
   serverOnly: 0
+  visible: 0
   m_AssetId: 
   hasSpawned: 0
 --- !u!114 &8695489544314112460

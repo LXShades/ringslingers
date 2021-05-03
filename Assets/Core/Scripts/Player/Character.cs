@@ -29,14 +29,9 @@ public class Character : NetworkBehaviour
     private bool isLocal => playerId == Netplay.singleton.localPlayerId;
 
     /// <summary>
-    /// Current inputs of this player
+    /// Current inputs of this player. If this is the local player, inputs may be slightly later inputs than the player last processed.
     /// </summary>
-    public PlayerInput latestInput => ticker.inputHistory.Latest;
-
-    /// <summary>
-    /// Previous inputs of this player
-    /// </summary>
-    public PlayerInput lastInput => ticker.inputHistory.Count > 1 ? ticker.inputHistory[1] : ticker.inputHistory.Latest;
+    public PlayerInput liveInput => isLocal ? GameTicker.singleton.localPlayerInput : ticker.inputHistory.Latest;
 
     /// <summary>
     /// Time of this player
@@ -182,6 +177,8 @@ public class Character : NetworkBehaviour
                 movement.velocity = Vector3.zero;
                 movement.state = 0;
 
+                ticker.ConfirmCurrentState();
+
                 TargetRespawn(spawnPoint.transform.forward);
             }
             else
@@ -194,15 +191,17 @@ public class Character : NetworkBehaviour
     [ClientRpc(channel = Channels.Unreliable)]
     private void TargetRespawn(Vector3 direction)
     {
-        //latestInput.aimDirection = direction.Horizontal().normalized;
-        // todo sort this
+        if (isLocal)
+        {
+            GameTicker.singleton.localPlayerInput.aimDirection = direction.Horizontal().normalized;
+        }
     }
 
     private void OnDamaged(GameObject instigator, Vector3 force, bool instaKill)
     {
         if (instaKill)
         {
-            GameTicker.singleton.CallEvent((bool isReconciliation) => 
+            ticker.CallEvent((bool isReconciliation) => 
             {
                 if (!isReconciliation)
                     Respawn();
@@ -217,7 +216,7 @@ public class Character : NetworkBehaviour
             force += movement.up * hurtDefaultVerticalKnockback;
 
             // predict our hit
-            GameTicker.singleton.CallEvent((bool _) => movement.ApplyHitKnockback(force));
+            ticker.CallEvent((bool _) => movement.ApplyHitKnockback(force));
 
             // only the server can do the rest (ring drop, score, etc)
             if (NetworkServer.active)

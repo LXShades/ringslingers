@@ -44,9 +44,9 @@ public class NetMan : NetworkManager
     {
         base.Awake();
 
-        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceThreaded>() != null);
+        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceTransport.Ignorance>() != null);
         singleton = this;
-        defaultPort = transport.GetComponent<IgnoranceThreaded>().CommunicationPort;
+        defaultPort = transport.GetComponent<IgnoranceTransport.Ignorance>().port;
         transform.SetParent(null, false);
         DontDestroyOnLoad(gameObject);
 
@@ -56,9 +56,9 @@ public class NetMan : NetworkManager
     public void Host(bool withLocalPlayer, int port = -1)
     {
         if (port != -1)
-            transport.GetComponent<IgnoranceThreaded>().CommunicationPort = port;
+            transport.GetComponent<IgnoranceTransport.Ignorance>().port = port;
         else
-            transport.GetComponent<IgnoranceThreaded>().CommunicationPort = defaultPort;
+            transport.GetComponent<IgnoranceTransport.Ignorance>().port = defaultPort;
 
         if (withLocalPlayer)
             StartHost();
@@ -70,7 +70,7 @@ public class NetMan : NetworkManager
 
     public void Connect(string ip)
     {
-        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceThreaded>() != null);
+        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceTransport.Ignorance>() != null);
 
         if (ip.Contains(":"))
         {
@@ -79,18 +79,18 @@ public class NetMan : NetworkManager
 
             if (int.TryParse(ip.Substring(ip.IndexOf(":") + 1), out port))
             {
-                transport.GetComponent<IgnoranceThreaded>().CommunicationPort = port;
+                transport.GetComponent<IgnoranceTransport.Ignorance>().port = port;
             }
             else
             {
                 Log.WriteWarning($"Could not read port {ip.Substring(ip.IndexOf(":") + 1)}, using default of {defaultPort}.");
-                transport.GetComponent<IgnoranceThreaded>().CommunicationPort = defaultPort;
+                transport.GetComponent<IgnoranceTransport.Ignorance>().port = defaultPort;
             }
         }
         else
         {
             networkAddress = ip;
-            transport.GetComponent<IgnoranceThreaded>().CommunicationPort = defaultPort;
+            transport.GetComponent<IgnoranceTransport.Ignorance>().port = defaultPort;
         }
         
         StartClient();

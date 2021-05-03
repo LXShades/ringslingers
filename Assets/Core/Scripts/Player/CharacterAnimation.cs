@@ -46,7 +46,7 @@ public class CharacterAnimation : MonoBehaviour
         Vector3 groundVelocity = movement.groundVelocity;
         Vector3 characterUp = movement.up;
         Vector3 groundForward = transform.forward.AlongPlane(characterUp).normalized;
-        Vector3 groundAimForward = player.latestInput.aimDirection.AlongPlane(characterUp).normalized;
+        Vector3 groundAimForward = player.liveInput.aimDirection.AlongPlane(characterUp).normalized;
 
         // Turn body towards look direction
         if (movement.isOnGround && groundVelocity.magnitude > 0.2f)
@@ -68,7 +68,7 @@ public class CharacterAnimation : MonoBehaviour
 
         // think of this as rotation = originalRotation - forwardRotation + newHeadForwardRotation
         // head - (head.forward, charUp) + (aim, up)
-        head.transform.rotation = Quaternion.LookRotation(player.latestInput.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(head.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
+        head.transform.rotation = Quaternion.LookRotation(player.liveInput.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(head.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
 
         if ((movement.state & CharacterMovement.State.Gliding) != 0)
         {
@@ -80,7 +80,7 @@ public class CharacterAnimation : MonoBehaviour
                 tiltAngle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(groundVelocity.normalized, groundAimForward.normalized), -0.9999f, 0.9999f)) * Mathf.Rad2Deg * -Mathf.Sign(Vector3.Dot(groundSide, groundVelocity - groundAimForward));
             }
 
-            root.rotation = root.rotation * Quaternion.Euler(player.latestInput.verticalAim, tiltAngle, 0f);
+            root.rotation = root.rotation * Quaternion.Euler(player.liveInput.verticalAim, tiltAngle, 0f);
         }
     }
 }

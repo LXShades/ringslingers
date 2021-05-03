@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 
+public delegate void TickerEvent(bool isReconciliation);
+
 public class Ticker : MonoBehaviour
 {
     [Header("Tick")]
@@ -52,9 +54,11 @@ public class Ticker : MonoBehaviour
     /// </summary>
     public float confirmedPlaybackTime { get; private set; }
 
+    public float timeOfLastInputPush { get; private set; }
+
     public readonly HistoryList<PlayerInput> inputHistory = new HistoryList<PlayerInput>();
 
-    private readonly HistoryList<MovementEvent> eventHistory = new HistoryList<MovementEvent>();
+    private readonly HistoryList<TickerEvent> eventHistory = new HistoryList<TickerEvent>();
 
     private readonly HistoryList<CharacterState> stateHistory = new HistoryList<CharacterState>();
 
@@ -87,6 +91,7 @@ public class Ticker : MonoBehaviour
             inputHistory.Set(time, input);
         }
 
+        timeOfLastInputPush = Time.time;
         CleanupHistory();
     }
 
@@ -104,6 +109,7 @@ public class Ticker : MonoBehaviour
             time += inputPack.inputs[i].deltaTime;
         }
 
+        timeOfLastInputPush = Time.time;
         CleanupHistory();
     }
 
@@ -128,7 +134,16 @@ public class Ticker : MonoBehaviour
     }
 
     /// <summary>
-    /// Applies a saved state package to the real state
+    /// Confirms the current character state. Needed to teleport or otherwise influence movement (except where events are used)
+    /// </summary>
+    public void ConfirmCurrentState()
+    {
+        lastConfirmedState = MakeState();
+        confirmedPlaybackTime = playbackTime;
+    }
+
+    /// <summary>
+    /// Applies a saved state package to the real state. Does not change lastConfirmedState which you may want to modify manually
     /// </summary>
     private void ApplyState(CharacterState state)
     {
@@ -146,16 +161,16 @@ public class Ticker : MonoBehaviour
     /// <summary>
     /// Ticks the player forward by the given deltaTime, if possible
     /// </summary>
-    public void SeekBy(float deltaTime, bool isReconciliation)
+    public void SeekBy(float deltaTime, float realtimePlaybackTime)
     {
-        Seek(playbackTime + deltaTime, isReconciliation);
+        Seek(playbackTime + deltaTime, realtimePlaybackTime);
     }
 
     /// <summary>
     /// Ticks the player FORWARD only until the targetTime is reached, if possible
     /// This uses replayed inputs if those are available
     /// </summary>
-    public void Seek(float targetTime, bool isReconciliation)
+    public void Seek(float targetTime, float realtimePlaybackTime)
     {
         Debug.Assert(maxDeltaTime > 0f);
 
@@ -164,8 +179,6 @@ public class Ticker : MonoBehaviour
         playbackTime = confirmedPlaybackTime;
 
         // Playback our latest movements
-        float initialPlaybackTime = playbackTime;
-
         try
         {
             CharacterMovement movement = GetComponent<CharacterMovement>();
@@ -176,28 +189,47 @@ public class Ticker : MonoBehaviour
             {
                 int index = inputHistory.ClosestIndexBefore(playbackTime, 0.001f);
                 PlayerInput input = default;
-                MovementEvent events = null;
                 float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
                 bool canConfirmState = false;
+                bool isReconciliation = true;
+
+                if (index == -1)
+                {
+                    // Sometimes we fall behind of the inputs and only a crazy amount of extrapolation would get us there
+                    // That is bad, but we have a half-baked solution which is to just skip to the oldest input we have and start from there. We need to get there somehow.
+                    int nextAfter = inputHistory.ClosestIndexAfter(playbackTime, 0.001f);
+
+                    if (nextAfter != -1 && inputHistory.TimeAt(nextAfter) < targetTime)
+                    {
+                        index = nextAfter;
+                        playbackTime = inputHistory.TimeAt(nextAfter);
+                    }
+                }
 
                 if (index != -1)
                 {
                     float inputTime = inputHistory.TimeAt(index);
-
-                    events = eventHistory.ItemAt(inputTime);
-
-                    if (inputHistory.Count > index + 1)
-                        input = inputHistory[index].WithDeltas(inputHistory[index + 1]);
-                    else
-                        input = inputHistory[index].WithoutDeltas();
 
                     if (index > 0)
                     {
                         float inputDeltaTime = inputHistory.TimeAt(index - 1) - inputHistory.TimeAt(index);
 
                         deltaTime = Mathf.Min(inputDeltaTime, targetTime - playbackTime);
-                        canConfirmState = (deltaTime == inputDeltaTime); // it's confirmed if we can do a full previous->current input tick
+
+                        // a tick is confirmed if we can do a full previous->current input tick
+                        canConfirmState = (deltaTime == inputDeltaTime);
                     }
+
+                    // use a delta if it's the crossing the beginning part of the input, otherwise extrapolate without delta
+                    if (index + 1 < inputHistory.Count && playbackTime <= inputTime && playbackTime + deltaTime > inputTime)
+                        input = inputHistory[index].WithDeltas(inputHistory[index + 1]);
+                    else
+                        input = inputHistory[index].WithoutDeltas();
+
+                    // on the server, the true non-reconciled state is the one that uses full inputs
+                    // on the client, the same is true except when replaying things we've already played - i.e. Reconciles - and we pass forceReconciliation for that.
+                    if (canConfirmState && playbackTime >= realtimePlaybackTime)
+                        isReconciliation = false;
                 }
                 else
                 {
@@ -206,15 +238,21 @@ public class Ticker : MonoBehaviour
 
                 if (deltaTime > 0f)
                 {
-                    events?.Invoke(isReconciliation);
+                    // invoke events
+                    for (int i = 0; i < eventHistory.Count; i++)
+                    {
+                        if (eventHistory.TimeAt(i) >= playbackTime && eventHistory.TimeAt(i) < playbackTime + deltaTime)
+                            eventHistory[i]?.Invoke(isReconciliation);
+                    }
 
+                    // run a tick
                     movement.TickMovement(deltaTime, input, isReconciliation);
 
                     playbackTime += deltaTime;
 
                     if (canConfirmState)
                     {
-                        // since this tick is complete, we can call it a confirmed tick
+                        // since this tick is a complete one, save the result as our next confirmed state
                         lastConfirmedState = MakeState();
                         confirmedPlaybackTime = playbackTime;
                     }
@@ -225,7 +263,6 @@ public class Ticker : MonoBehaviour
                 if (numIterations == maxSeekIterations)
                 {
                     Debug.LogWarning($"Max extrapolation iteration limit was hit whilst seeking ticker {gameObject.name}! It {numIterations} Target {targetTime} playback {playbackTime}");
-                    playbackTime = targetTime; // skip anyway
                     break;
                 }
             }
@@ -234,6 +271,9 @@ public class Ticker : MonoBehaviour
         {
             Log.WriteException(e);
         }
+
+        // even if something went wrong, we prefer to say we're at the target time
+        playbackTime = targetTime;
 
         //Debug.Log($"SeekStat: {initialPlaybackTime.ToString("F2")}->{targetTime.ToString("F2")} final {playbackTime.ToString("F2")} dt: {(playbackTime - initialPlaybackTime).ToString("F2")}");
 
@@ -250,7 +290,7 @@ public class Ticker : MonoBehaviour
         float originalPlaybackTime = playbackTime;
 
         Rewind(pastState, pastStateTime);
-        Seek(originalPlaybackTime, true);
+        Seek(originalPlaybackTime, originalPlaybackTime);
     }
 
     /// <summary>
@@ -259,6 +299,23 @@ public class Ticker : MonoBehaviour
     public void DebugDrawCurrentState(Color colour)
     {
         GetComponent<Character>().MakeState().DebugDraw(colour);
+    }
+
+    /// <summary>
+    /// Calls an event for the current playback time
+    /// </summary>
+    public void CallEvent(TickerEvent eventToCall)
+    {
+        int currentIndex = eventHistory.IndexAt(playbackTime, 0f);
+
+        if (currentIndex != -1)
+        {
+            eventHistory[currentIndex] += eventToCall;
+        }
+        else
+        {
+            eventHistory.Set(playbackTime, eventToCall, 0f);
+        }
     }
 
     /// <summary>

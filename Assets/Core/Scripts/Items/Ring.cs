@@ -72,16 +72,6 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
             respawnableItem.SetSpawnPosition(transform.position);
     }
 
-    void Update()
-    {
-        if (isDroppedRing || respawnableItem.isSpawned)
-        {
-            // Spinny spin
-            // it's faster to spin the model, otherwise we're spinning the collision boxes which adds to the SyncTransform penalty
-            modelToSpin.rotation = Quaternion.AngleAxis(spinSpeed * Time.deltaTime, new Vector3(0, 1, 0)) * modelToSpin.rotation;
-        }
-    }
-
     private void OnTriggerEnter(Collider other)
     {
         Character otherPlayer = other.GetComponent<Character>();

@@ -37,9 +37,9 @@ public class HistoryList<T> : HistoryListBase
         return items.Find(a => a.time >= time - tolerance && a.time <= time + tolerance).item;
     }
 
-    public int IndexAt(float time)
+    public int IndexAt(float time, float tolerance = 0.01f)
     {
-        return items.FindIndex(a => a.time == time);
+        return items.FindIndex(a => a.time >= time - tolerance && a.time <= time + tolerance);
     }
 
     public float TimeAt(int index)

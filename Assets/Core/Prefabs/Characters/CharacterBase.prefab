@@ -522,7 +522,7 @@ GameObject:
   - component: {fileID: 8686370219680115010}
   - component: {fileID: 2266500768883055632}
   m_Layer: 8
-  m_Name: PlayerBase
+  m_Name: CharacterBase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -620,9 +620,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b79507cd831dde542bedac2028ce364e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxDeltaTime: 0.34
+  maxDeltaTime: 0.034
   maxSeekIterations: 15
-  maxInputRate: 30
+  maxInputRate: 60
   historyLength: 1
   debugSelfReconcileDelay: 0.3
   debugSelfReconcile: 0

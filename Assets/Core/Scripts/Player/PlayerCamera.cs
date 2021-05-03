@@ -71,10 +71,10 @@ public class PlayerCamera : MonoBehaviour
         if (currentPlayer)
         {
             Vector3 characterUp = currentPlayer.GetComponent<CharacterMovement>().up;
-            Vector3 effectiveAimDirection = currentPlayer.latestInput.aimDirection;
+            Vector3 effectiveAimDirection = currentPlayer.liveInput.aimDirection;
 
             if (GameManager.singleton.isPaused)
-                effectiveAimDirection = -currentPlayer.latestInput.aimDirection; // look towards the character when paused/potentially character config
+                effectiveAimDirection = -currentPlayer.liveInput.aimDirection; // look towards the character when paused/potentially character config
 
             // Move and rotate to player position
             transform.position = currentPlayer.transform.position + characterUp * eyeHeight;

@@ -79,6 +79,7 @@ GameObject:
   - component: {fileID: 6795168564576558624}
   - component: {fileID: 6795168564576558631}
   - component: {fileID: 6795168564576558630}
+  - component: {fileID: 8959573192896178332}
   - component: {fileID: 6795168564576558628}
   m_Layer: 0
   m_Name: NetManager
@@ -138,7 +139,7 @@ MonoBehaviour:
   serverBatchInterval: 0
   offlineScene: 
   onlineScene: 
-  transport: {fileID: 6795168564576558628}
+  transport: {fileID: 8959573192896178332}
   networkAddress: localhost
   maxConnections: 32
   disconnectInactiveConnections: 0
@@ -149,6 +150,25 @@ MonoBehaviour:
   playerSpawnMethod: 0
   spawnPrefabs:
   - {fileID: 0}
+--- !u!114 &8959573192896178332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6795168564576558651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96b149f511061407fb54895c057b7736, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wrap: {fileID: 6795168564576558628}
+  latencySpikeMultiplier: 0
+  latencySpikeSpeedMultiplier: 1
+  reliableLatency: 0
+  unreliableLoss: 0
+  unreliableLatency: 0.11
+  unreliableScramble: 0
 --- !u!114 &6795168564576558628
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -156,24 +176,23 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6795168564576558651}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ec862738267237f4d91e6454ff15f4ea, type: 3}
+  m_Script: {fileID: 11500000, guid: 872fa23ef6e77334ca452ce16f6cd091, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DebugEnabled: 0
-  ServerBindAll: 1
-  ServerBindAddress: 127.0.0.1
-  CommunicationPort: 5029
-  MaximumPeerCCU: 100
-  EnetServerPollTimeout: 1
-  EnetClientPollTimeout: 1
-  MaximumPacketSize: 1200
+  port: 7777
+  LogType: 1
+  DebugDisplay: 0
+  serverBindsAll: 1
+  serverBindAddress: 7777
+  serverMaxPeerCapacity: 50
+  serverMaxNativeWaitTime: 1
+  clientMaxNativeWaitTime: 3
+  clientStatusUpdateInterval: -1
   Channels: 0100000002000000
-  StatisticsCalculationInterval: 3
-  EnableLatencySimulation: -1
-  LatencySimulationDelayMs: 36
-  LatencySimulationJitterMs: 50
+  PacketBufferCapacity: 4096
+  MaxAllowedPacketSize: 33554432
 --- !u!1 &6795168564935991084
 GameObject:
   m_ObjectHideFlags: 0

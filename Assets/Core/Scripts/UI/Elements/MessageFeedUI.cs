@@ -9,6 +9,8 @@ public class MessageFeedUI : MonoBehaviour
 
     private float lastExpiredMessageTime = -1;
 
+    private bool hasRegisteredCallback = false;
+
     private void Start()
     {
     }
@@ -20,8 +22,11 @@ public class MessageFeedUI : MonoBehaviour
         if (logger)
         {
             // this would be in Start but it's networked and we might not know about it until whenever
-            logger.onNewMessage -= OnNewMessage;
-            logger.onNewMessage += OnNewMessage;
+            if (!hasRegisteredCallback)
+            {
+                logger.onNewMessage += OnNewMessage;
+                hasRegisteredCallback = true;
+            }
 
             float latestExpiredMessageTime = -1;
 

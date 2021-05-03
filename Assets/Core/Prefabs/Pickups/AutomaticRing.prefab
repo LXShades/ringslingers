@@ -51,6 +51,7 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -59,7 +60,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: f87024d1366aa9e4fbe45c88251ec8e8, type: 2}
+  - {fileID: 2100000, guid: 3965785f3a7c2864e832089e043f6399, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -112,6 +113,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 7958058828720834931}
     - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -124,6 +129,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0
       objectReference: {fileID: 0}
@@ -134,14 +143,6 @@ PrefabInstance:
     - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0
-      objectReference: {fileID: 0}
-    - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-      propertyPath: m_RootOrder
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 339010217050480060, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

@@ -123,9 +123,6 @@ public class GameHUD : MonoBehaviour
         }
 
         // Player stuff
-        ringsText.text = "0";
-        scoreText.text = "0";
-
         if (player)
         {
             ringsText.text = player.numRings.ToString();
@@ -156,6 +153,11 @@ public class GameHUD : MonoBehaviour
             // Debug stuff
             if (debugDisplay.activeInHierarchy)
                 UpdatePlayerDebugs(player);
+        }
+        else
+        {
+            ringsText.text = "0";
+            scoreText.text = "0";
         }
 
         // Scoreboard stuff
