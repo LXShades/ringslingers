@@ -531,7 +531,6 @@ public class CharacterMovement : Movement
                 }
             }
 
-
             if (!hasFoundSmoothNormal)
             {
                 // Set target up vector from the three points

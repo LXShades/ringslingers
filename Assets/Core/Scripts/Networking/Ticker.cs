@@ -5,6 +5,21 @@ public delegate void TickerEvent(bool isReconciliation);
 
 public class Ticker : MonoBehaviour
 {
+    [Flags]
+    public enum SeekFlags
+    {
+        None = 0,
+
+        /// <summary>
+        /// Specifies that inputs should not use deltas. Useful when the full input history is not known, meaning a delta may not necessarily be correct
+        /// 
+        /// For example, a client receives an input for T=0 and T=1. At T=1 they extrapoalte the state noting that Jump has been pressed since T=0.
+        /// However, they are unaware that jump was actually first pressed at T=0.5, and the state they received for T=1 has already jumped
+        /// On the server, T=1 had no jump delta as T=0.5 already did that. On the client, T=1 is thought to have the jump delta despite being untrue, leading to inconsistency.
+        /// </summary>
+        IgnoreDeltas = 1
+    };
+
     [Header("Tick")]
     [Tooltip("The maximum delta time to pass to tickable components")]
     public float maxDeltaTime = 0.03f;
@@ -178,7 +193,7 @@ public class Ticker : MonoBehaviour
     /// Ticks the player FORWARD only until the targetTime is reached, if possible
     /// This uses replayed inputs if those are available
     /// </summary>
-    public void Seek(float targetTime, float realtimePlaybackTime)
+    public void Seek(float targetTime, float realtimePlaybackTime, SeekFlags flags = SeekFlags.None)
     {
         Debug.Assert(maxDeltaTime > 0f);
 
@@ -231,7 +246,7 @@ public class Ticker : MonoBehaviour
                     }
 
                     // use a delta if it's the crossing the beginning part of the input, otherwise extrapolate without delta
-                    if (index + 1 < inputHistory.Count && playbackTime <= inputTime && playbackTime + deltaTime > inputTime)
+                    if (index + 1 < inputHistory.Count && playbackTime <= inputTime && playbackTime + deltaTime > inputTime && (flags & SeekFlags.IgnoreDeltas) == 0)
                         input = inputHistory[index].WithDeltas(inputHistory[index + 1]);
                     else
                         input = inputHistory[index].WithoutDeltas();

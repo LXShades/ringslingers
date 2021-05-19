@@ -159,7 +159,7 @@ public class GameTicker : NetworkBehaviour
                 else if (isServer)
                     player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedPlaybackTime);
                 else if (isClient)
-                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime);
+                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, Ticker.SeekFlags.IgnoreDeltas);
             }
         }
 
