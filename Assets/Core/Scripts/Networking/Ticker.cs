@@ -34,9 +34,6 @@ public class Ticker : MonoBehaviour
     [Tooltip("Whether to reconcile even if the server's confirmed state matched the local state at the time")]
     public bool alwaysReconcile = false;
 
-    [Tooltip("Positional tolerance when comparing local states to server confirmed states. A reconcile is triggered if they differ too much")]
-    public float positionalTolerance = 0.001f;
-
     [Header("History")]
     [Tooltip("How long to keep input, state, etc history in seconds. Should be able to fit in a bit more ")]
     public float historyLength = 1.0f;
@@ -160,16 +157,6 @@ public class Ticker : MonoBehaviour
             lastConfirmedState = state;
             confirmedPlaybackTime = time;
             playbackTime = time;
-
-            if (index != -1)
-            {
-                string differences = "";
-                if (stateHistory[index].position != state.position) differences += "P";
-                if (stateHistory[index]._rotation != state._rotation) differences += "R";
-                if (stateHistory[index].velocity != state.velocity) differences += "V";
-                if (stateHistory[index].up != state.up) differences += "U";
-                Debug.Log($"Reconcile diffs: {differences}");
-            }
         }
     }
 

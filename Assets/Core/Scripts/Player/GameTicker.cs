@@ -155,11 +155,26 @@ public class GameTicker : NetworkBehaviour
             if (player)
             {
                 if (player == Netplay.singleton.localPlayer) // local player
-                    player.ticker.Seek(Time.time, player.ticker.confirmedPlaybackTime);
+                {
+                    if (isServer)
+                    {
+                        // on server it's pretty easy, just set realtimePlaybackTime to confirmedPlaybackTime, much like the other players
+                        player.ticker.Seek(Time.time, player.ticker.confirmedPlaybackTime); 
+                    }
+                    else
+                    {
+                        // on the client, it's a bit more awkward, their confirmedPlaybackTime will be rewound periodically causing jump sounds to be replayed
+                        // this approach anticipates when a new, full tick is about to execute by using Time.deltaTime
+                        if (Time.time - Time.deltaTime < player.ticker.inputHistory.LatestTime && player.ticker.inputHistory.Count > 1)
+                            player.ticker.Seek(Time.time, player.ticker.inputHistory.TimeAt(1));
+                        else
+                            player.ticker.Seek(Time.time, player.ticker.inputHistory.LatestTime);
+                    }
+                }
                 else if (isServer) // other player on server
-                    player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedPlaybackTime);
+                    player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedPlaybackTime); // extrapolate the player further than the last input we got from them
                 else if (isClient) // replica on client
-                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, Ticker.SeekFlags.IgnoreDeltas);
+                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, Ticker.SeekFlags.IgnoreDeltas); // deltas are ignored for clients' replicas because clients don't have full input info, so they can't discern deltas (or the future)
             }
         }
 
