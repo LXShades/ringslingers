@@ -164,11 +164,11 @@ public class CharacterMovement : Movement
         sounds = GetComponent<PlayerSounds>();
     }
 
-    public void TickMovement(float deltaTime, PlayerInput input, bool isReconciliation = false)
+    public void TickMovement(float deltaTime, PlayerInput input, bool isRealtime = true)
     {
         Physics.SyncTransforms();
 
-        if (!isReconciliation)
+        if (isRealtime)
             DebugPauseStart();
 
         // Check whether on ground
@@ -221,7 +221,7 @@ public class CharacterMovement : Movement
             groundVelocity = Vector3.zero;
 
         // Jump button
-        HandleJumpAbilities(input, deltaTime, isReconciliation);
+        HandleJumpAbilities(input, deltaTime, isRealtime);
 
         // 3D rotation - do this after movement to encourage push down
         ApplyRotation(deltaTime, input);
@@ -230,9 +230,9 @@ public class CharacterMovement : Movement
         ApplyRide(_groundObject);
 
         // Final movement
-        ApplyFinalMovement(deltaTime, isReconciliation);
+        ApplyFinalMovement(deltaTime, isRealtime);
 
-        if (!isReconciliation)
+        if (isRealtime)
             DebugPauseEnd();
     }
 
@@ -330,7 +330,7 @@ public class CharacterMovement : Movement
         velocity = force;
     }
 
-    private void HandleJumpAbilities(PlayerInput input, float deltaTime, bool isReconciliation)
+    private void HandleJumpAbilities(PlayerInput input, float deltaTime, bool isRealtime)
     {
         if (state.HasFlag(State.Pained))
             return;
@@ -343,7 +343,7 @@ public class CharacterMovement : Movement
             {
                 velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM);
 
-                if (!isReconciliation)
+                if (isRealtime)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
 
                 state |= State.Jumped;
@@ -359,7 +359,7 @@ public class CharacterMovement : Movement
                             // Thok
                             velocity.SetHorizontal(aim.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
-                            if (!isReconciliation)
+                            if (isRealtime)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
 
                             state |= State.Thokked;
@@ -589,7 +589,7 @@ public class CharacterMovement : Movement
         }
     }
 
-    private void ApplyFinalMovement(float deltaTime, bool isReconciliation)
+    private void ApplyFinalMovement(float deltaTime, bool isRealtime)
     {
         // Perform final movement and collision
         Vector3 originalPosition = transform.position;
@@ -603,9 +603,9 @@ public class CharacterMovement : Movement
             transform.position += stepUpVector;
 
         if (collisionType == CollisionType.Penetration)
-            move.MovePenetration(velocity * deltaTime, isReconciliation);
+            move.MovePenetration(velocity * deltaTime, isRealtime);
         else
-            move.Move(velocity * deltaTime, out RaycastHit _, isReconciliation);
+            move.Move(velocity * deltaTime, out RaycastHit _, isRealtime);
 
         if (stepUp)
         {
@@ -618,7 +618,7 @@ public class CharacterMovement : Movement
                 doStepDownwards = true;
             }
 
-            if (!move.Move(stepReturn, out RaycastHit _, isReconciliation, MoveFlags.NoSlide) && doStepDownwards)
+            if (!move.Move(stepReturn, out RaycastHit _, isRealtime, MoveFlags.NoSlide) && doStepDownwards)
             {
                 // we didn't hit a step on the way down? then don't step downwards
                 transform.position += stepUpVector;

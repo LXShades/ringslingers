@@ -20,7 +20,7 @@ public class Spring : MonoBehaviour, IMovementCollisions
         animator = GetComponent<Animator>();
     }
 
-    public void OnMovementCollidedBy(Movement source, bool isReconciliation)
+    public void OnMovementCollidedBy(Movement source, bool isRealtime)
     {
         CharacterMovement movement = source as CharacterMovement;
 
@@ -28,7 +28,7 @@ public class Spring : MonoBehaviour, IMovementCollisions
         {
             movement.SpringUp(springForce, transform.up, springAbsolutely);
 
-            if (!isReconciliation)
+            if (isRealtime)
             {
                 animator.SetTrigger("DoSpring");
 

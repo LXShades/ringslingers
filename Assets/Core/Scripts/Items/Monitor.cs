@@ -68,7 +68,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
         GameSounds.PlaySound(gameObject, popSound);
     }
 
-    public void OnMovementCollidedBy(Movement source, bool isReconciliation)
+    public void OnMovementCollidedBy(Movement source, bool isRealtime)
     {
         if (source is CharacterMovement character && (character.state & CharacterMovement.State.Jumped) != 0)
         {
@@ -79,7 +79,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
             }
 
             // pop
-            if (!isReconciliation)
+            if (isRealtime)
             {
                 onLocalPopped?.Invoke(source.GetComponent<Character>());
 

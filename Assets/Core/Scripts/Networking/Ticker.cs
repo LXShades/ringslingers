@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public delegate void TickerEvent(bool isReconciliation);
+public delegate void TickerEvent(bool isRealtime);
 
 public class Ticker : MonoBehaviour
 {
@@ -196,7 +196,7 @@ public class Ticker : MonoBehaviour
 
     /// <summary>
     /// Ticks the player FORWARD only until the targetTime is reached, if possible
-    /// This uses replayed inputs if those are available
+    /// This uses replayed inputs if those are available, otherwise extrapolates in steps up to maxDeltaTime length
     /// </summary>
     public void Seek(float targetTime, float realtimePlaybackTime, SeekFlags flags = SeekFlags.None)
     {
@@ -221,7 +221,7 @@ public class Ticker : MonoBehaviour
                 PlayerInput input = default;
                 float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
                 bool canConfirmState = false;
-                bool isReconciliation = true;
+                bool isRealtime = false;
 
                 if (index == -1)
                 {
@@ -259,7 +259,7 @@ public class Ticker : MonoBehaviour
                     // on the server, the true non-reconciled state is the one that uses full inputs
                     // on the client, the same is true except when replaying things we've already played - i.e. Reconciles - and we pass forceReconciliation for that.
                     if (canConfirmState && playbackTime >= realtimePlaybackTime)
-                        isReconciliation = false;
+                        isRealtime = true;
                 }
                 else
                 {
@@ -272,11 +272,11 @@ public class Ticker : MonoBehaviour
                     for (int i = 0; i < eventHistory.Count; i++)
                     {
                         if (eventHistory.TimeAt(i) >= playbackTime && eventHistory.TimeAt(i) < playbackTime + deltaTime)
-                            eventHistory[i]?.Invoke(isReconciliation);
+                            eventHistory[i]?.Invoke(isRealtime);
                     }
 
                     // run a tick
-                    movement.TickMovement(deltaTime, input, isReconciliation);
+                    movement.TickMovement(deltaTime, input, isRealtime);
 
                     playbackTime += deltaTime;
 

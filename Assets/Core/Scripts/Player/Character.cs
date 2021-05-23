@@ -201,9 +201,9 @@ public class Character : NetworkBehaviour
     {
         if (instaKill)
         {
-            ticker.CallEvent((bool isReconciliation) => 
+            ticker.CallEvent((bool isRealtime) => 
             {
-                if (!isReconciliation)
+                if (isRealtime)
                     Respawn();
             });
         }

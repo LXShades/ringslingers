@@ -87,7 +87,7 @@ public class Movement : MonoBehaviour
     /// Moves with collision checking. Can be a computationally expensive operation
     /// </summary>
     /// <param name="offset"></param>
-    public bool Move(Vector3 offset, out RaycastHit hitOut, bool isReconciliation = false, MoveFlags flags = MoveFlags.None)
+    public bool Move(Vector3 offset, out RaycastHit hitOut, bool isRealtime = true, MoveFlags flags = MoveFlags.None)
     {
         hitOut = new RaycastHit();
 
@@ -175,7 +175,7 @@ public class Movement : MonoBehaviour
 
         foreach (IMovementCollisions collisions in movementCollisions)
         {
-            collisions.OnMovementCollidedBy(this, isReconciliation);
+            collisions.OnMovementCollidedBy(this, isRealtime);
         }
 
         return hasHitOccurred;
@@ -183,7 +183,7 @@ public class Movement : MonoBehaviour
 
     Collider[] nearbyColliderBuffer = new Collider[24];
 
-    public void MovePenetration(Vector3 offset, bool isReconciliation)
+    public void MovePenetration(Vector3 offset, bool isRealtime)
     {
         if (!enableCollision)
         {
@@ -243,7 +243,7 @@ public class Movement : MonoBehaviour
 
         foreach (IMovementCollisions collisions in movementCollisions)
         {
-            collisions.OnMovementCollidedBy(this, isReconciliation);
+            collisions.OnMovementCollidedBy(this, isRealtime);
         }
     }
 
@@ -349,5 +349,5 @@ public class Movement : MonoBehaviour
 
 public interface IMovementCollisions
 {
-    void OnMovementCollidedBy(Movement source, bool isReconciliation);
+    void OnMovementCollidedBy(Movement source, bool isRealtime);
 }
