@@ -6,6 +6,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
 
     public Color32 playbackTimeColor = Color.green;
     public Color32 confirmedTimeColor = Color.blue;
+    public Color32 realtimeColor = new Color32(255, 0, 255, 255);
     public Color32 inputColor = Color.yellow;
 
     private TimelineGraphic timeline;
@@ -27,8 +28,9 @@ public class DebugTickTimelineHUD : MonoBehaviour
 
             timeline.ClearDraw();
 
-            timeline.DrawTick(targetTicker.playbackTime, 2f, 0f, playbackTimeColor, "P");
-            timeline.DrawTick(targetTicker.confirmedPlaybackTime, 2f, 0f, confirmedTimeColor, "P+");
+            timeline.DrawTick(targetTicker.playbackTime, 2f, 0f, playbackTimeColor, "PT", 0);
+            timeline.DrawTick(targetTicker.confirmedPlaybackTime, 2f, 0f, confirmedTimeColor, "CT", 1);
+            timeline.DrawTick(targetTicker.realtimePlaybackTime, 2f, 0f, realtimeColor, "RT", 2); ;
 
             for (int i = 0; i < targetTicker.inputHistory.Count; i++)
             {

@@ -69,6 +69,11 @@ public class Ticker : MonoBehaviour
     public float playbackTime { get; private set; }
 
     /// <summary>
+    /// The realtime playback during the last Seek. This is mainly for debugging and doesn't affect current state
+    /// </summary>
+    public float realtimePlaybackTime { get; private set; }
+
+    /// <summary>
     /// The current confirmed playback time - the non-extrapolated playback time of the last input-confirmed state
     /// </summary>
     public float confirmedPlaybackTime { get; private set; }
@@ -302,6 +307,7 @@ public class Ticker : MonoBehaviour
 
         // even if something went wrong, we prefer to say we're at the target time
         playbackTime = targetTime;
+        this.realtimePlaybackTime = realtimePlaybackTime;
 
         //Debug.Log($"SeekStat: {initialPlaybackTime.ToString("F2")}->{targetTime.ToString("F2")} final {playbackTime.ToString("F2")} dt: {(playbackTime - initialPlaybackTime).ToString("F2")}");
 

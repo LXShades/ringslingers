@@ -406,8 +406,17 @@ MonoBehaviour:
   extrapolateRemoteInput: 1
   maxRemotePrediction: 0.3
   remotePredictionTimeStep: 0.08
-  alwaysReconcile: 0
-  reconcilationPositionTolerance: 0.3
+  localPlayerInput:
+    moveHorizontalAxis: 0
+    moveVerticalAxis: 0
+    horizontalAim: 0
+    verticalAim: 0
+    btnJump: 0
+    btnFire: 0
+    btnJumpPressed: 0
+    btnJumpReleased: 0
+    btnFirePressed: 0
+    btnFireReleased: 0
 --- !u!1001 &5855508452200257497
 PrefabInstance:
   m_ObjectHideFlags: 0

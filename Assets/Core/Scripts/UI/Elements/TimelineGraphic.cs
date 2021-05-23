@@ -11,6 +11,7 @@ public class TimelineGraphic : MaskableGraphic
         public float offset;
         public Color32 color;
         public string label;
+        public int labelLine;
     }
 
     private VertexHelper vh;
@@ -25,7 +26,14 @@ public class TimelineGraphic : MaskableGraphic
     [Header("Ticks")]
     public float tickHeight = 20;
 
+    [Header("Labels")]
+    public int labelSize = 14;
+
     private List<Tick> ticks = new List<Tick>(52);
+
+    private GUIStyle labelStyleLeft;
+    private GUIStyle labelStyleRight;
+    private GUIStyle labelStyleCentre;
 
     /// <summary>
     /// Prepares the timeline for drawing
@@ -39,7 +47,7 @@ public class TimelineGraphic : MaskableGraphic
     /// <summary>
     /// Inserts a tick into the timeline
     /// </summary>
-    public void DrawTick(float time, float heightScale, float offset, Color32 color, string label = "")
+    public void DrawTick(float time, float heightScale, float offset, Color32 color, string label = "", int labelLine = 0)
     {
         if (time < timeStart || time > timeEnd)
         {
@@ -52,7 +60,8 @@ public class TimelineGraphic : MaskableGraphic
             heightScale = heightScale,
             offset = offset,
             color = color,
-            label = label
+            label = label,
+            labelLine = labelLine
         });
     }
 
@@ -60,9 +69,12 @@ public class TimelineGraphic : MaskableGraphic
     private void DrawTickInternal(float time, float heightScale, float offset, Color32 color)
     {
         Vector2 centre = new Vector2(rectTransform.rect.xMin + (time - timeStart) / (timeEnd - timeStart) * rectTransform.rect.width, rectTransform.rect.center.y);
-        
+
+        centre.x = Mathf.Round(centre.x);
+        centre.y = Mathf.Round(centre.y);
+
         DrawQuadInternal(
-            centre - new Vector2(1f, tickHeight * heightScale / 2),
+            centre - new Vector2(0f, tickHeight * heightScale / 2),
             centre + new Vector2(1f, tickHeight * heightScale / 2),
             color);
     }
@@ -118,7 +130,10 @@ public class TimelineGraphic : MaskableGraphic
     // Handles labels
     private void OnGUI()
     {
-        GUI.color = Color.blue;
+        //if (labelStyleCentre == null)
+        {
+            InitStyles();
+        }
 
         // get screen coords
         Vector3 topLeft = rectTransform.TransformPoint(rectTransform.rect.xMin, rectTransform.rect.yMin, 0f);
@@ -130,18 +145,37 @@ public class TimelineGraphic : MaskableGraphic
         Rect pixelRect = new Rect(topLeft, bottomRight - topLeft);
 
         // draw beginning/end time
-        GUI.color = timelineColour;
-        GUI.Label(new Rect(topLeft.x, pixelRect.center.y, 0, 0), timeStart.ToString("F2"), new GUIStyle() { alignment = TextAnchor.MiddleRight });
-        GUI.Label(new Rect(bottomRight.x, pixelRect.center.y, 50, 0), timeEnd.ToString("F2"), new GUIStyle() { alignment = TextAnchor.MiddleLeft });
+        GUI.contentColor = timelineColour;
+        GUI.Label(new Rect(topLeft.x, pixelRect.center.y, 0, 0), timeStart.ToString("F2"), labelStyleRight);
+        GUI.Label(new Rect(bottomRight.x, pixelRect.center.y, 0, 0), timeEnd.ToString("F2"), labelStyleLeft);
 
         // draw tick labels
         foreach (Tick tick in ticks)
         {
             if (!string.IsNullOrEmpty(tick.label))
             {
-                GUI.color = tick.color;
-                GUI.Label(new Rect(pixelRect.xMin + pixelRect.width * (tick.time - timeStart) / (timeEnd - timeStart), pixelRect.yMax, 0, 0), tick.label);
+                GUI.contentColor = tick.color;
+                GUI.Label(new Rect(pixelRect.xMin + pixelRect.width * (tick.time - timeStart) / (timeEnd - timeStart), pixelRect.center.y + tickHeight / 2f * tick.heightScale + labelSize * 3 / 4 + tick.labelLine * (labelSize + 2), 0, 0), tick.label, labelStyleCentre);
             }
         }
+    }
+
+    // Initialises GUI styles
+    private void InitStyles()
+    {
+        labelStyleLeft = new GUIStyle();
+        labelStyleLeft.normal.textColor = Color.white;
+        labelStyleLeft.alignment = TextAnchor.MiddleLeft;
+        labelStyleLeft.fontSize = labelSize;
+
+        labelStyleCentre = new GUIStyle();
+        labelStyleCentre.normal.textColor = Color.white;
+        labelStyleCentre.alignment = TextAnchor.MiddleCenter;
+        labelStyleCentre.fontSize = labelSize;
+
+        labelStyleRight = new GUIStyle();
+        labelStyleRight.normal.textColor = Color.white;
+        labelStyleRight.alignment = TextAnchor.MiddleRight;
+        labelStyleRight.fontSize = labelSize;
     }
 }
