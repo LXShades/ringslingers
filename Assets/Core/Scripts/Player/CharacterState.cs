@@ -1,36 +1,53 @@
-﻿using Mirror;
-using System;
+﻿using System;
 using UnityEngine;
 
 [Serializable]
 public struct CharacterState : IEquatable<CharacterState>
 {
-    public Vector3 position;
-    public Quaternion rotation;
-    public Vector3 velocity;
-    public Vector3 up;
-    public CharacterMovement.State state;
+    private const float kVelocityRange = 100f;
 
-    public void Serialize(NetworkWriter writer)
+    // external data - these are compressed
+    public Vector3 position
     {
-        // 25 bytes
-        writer.WriteVector3(position);
-        writer.WriteInt32(Compressor.CompressQuaternion(rotation));
-        writer.WriteUInt16(Compressor.CompressFloat16(velocity.x, -100f, 100f));
-        writer.WriteUInt16(Compressor.CompressFloat16(velocity.y, -100f, 100f));
-        writer.WriteUInt16(Compressor.CompressFloat16(velocity.z, -100f, 100f));
-        writer.WriteInt16(Compressor.CompressNormal16(up));
-        writer.Write((byte)state);
+        get => _position;
+        set => _position = value;
+    }
+    public Quaternion rotation
+    {
+        get => Compressor.DecompressQuaternion(_rotation);
+        set => _rotation = Compressor.CompressQuaternion(value);
+    }
+    public Vector3 velocity
+    {
+        get => new Vector3(Compressor.DecompressFloat16(_velocityX, -kVelocityRange, kVelocityRange), Compressor.DecompressFloat16(_velocityY, -kVelocityRange, kVelocityRange), Compressor.DecompressFloat16(_velocityZ, -kVelocityRange, kVelocityRange));
+        set
+        {
+            _velocityX = Compressor.CompressFloat16(value.x, -kVelocityRange, kVelocityRange);
+            _velocityY = Compressor.CompressFloat16(value.y, -kVelocityRange, kVelocityRange);
+            _velocityZ = Compressor.CompressFloat16(value.z, -kVelocityRange, kVelocityRange);
+        }
+    }
+    public Vector3 up
+    {
+        get => Compressor.DecompressNormal16(_up);
+        set => _up = Compressor.CompressNormal16(value);
+    }
+    public CharacterMovement.State state
+    {
+        get => (CharacterMovement.State)_state;
+        set => _state = (byte)value;
     }
 
-    public void Deserialize(NetworkReader reader)
-    {
-        position = reader.ReadVector3();
-        rotation = Compressor.DecompressQuaternion(reader.ReadInt32());
-        velocity = new Vector3(Compressor.DecompressFloat16(reader.ReadUInt16(), -100f, 100f), Compressor.DecompressFloat16(reader.ReadUInt16(), -100f, 100f), Compressor.DecompressFloat16(reader.ReadUInt16(), -100f, 100f));
-        up = Compressor.DecompressNormal16(reader.ReadInt16());
-        state = (CharacterMovement.State)reader.ReadByte();
-    }
+    // internal - actual data sent/received and confirmed/deconfirmed
+    // public because Mirror only serializes public stuff
+    // 25 bytes
+    public Vector3 _position;
+    public int _rotation;
+    public ushort _velocityX;
+    public ushort _velocityY;
+    public ushort _velocityZ;
+    public short _up;
+    public byte _state;
 
     public void DebugDraw(Color colour)
     {
@@ -41,26 +58,15 @@ public struct CharacterState : IEquatable<CharacterState>
 
     public bool Equals(CharacterState other)
     {
-        return other.position == position && other.rotation == rotation && other.velocity == velocity && other.state == state && up == other.up;
+        return other._position == _position
+            && other._rotation == _rotation
+            && other._velocityX == _velocityX && other._velocityY == _velocityY && other._velocityZ == _velocityZ
+            && other._up == _up
+            && other._state == _state;
     }
 
     public override string ToString()
     {
         return $"Pos: {position.ToString()}\nRot: {rotation.ToString()}\nVel: {velocity.ToString()}\nUp: {up.ToString()}\nState: {state}";
-    }
-}
-
-public static class MoveStateReaderWriter
-{
-    public static void WriteMoveState(this NetworkWriter writer, CharacterState state)
-    {
-        state.Serialize(writer);
-    }
-
-    public static CharacterState ReadMoveState(this NetworkReader reader)
-    {
-        CharacterState state = default;
-        state.Deserialize(reader);
-        return state;
     }
 }

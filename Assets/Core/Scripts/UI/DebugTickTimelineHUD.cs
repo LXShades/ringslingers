@@ -7,6 +7,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
     public Color32 playbackTimeColor = Color.green;
     public Color32 confirmedTimeColor = Color.blue;
     public Color32 realtimeColor = new Color32(255, 0, 255, 255);
+    public Color32 stateColor = Color.cyan;
     public Color32 inputColor = Color.yellow;
 
     private TimelineGraphic timeline;
@@ -35,6 +36,10 @@ public class DebugTickTimelineHUD : MonoBehaviour
             for (int i = 0; i < targetTicker.inputHistory.Count; i++)
             {
                 timeline.DrawTick(targetTicker.inputHistory.TimeAt(i), 1f, 0f, inputColor);
+            }
+            for (int i = 0; i < targetTicker.stateHistory.Count; i++)
+            {
+                timeline.DrawTick(targetTicker.stateHistory.TimeAt(i), 0.5f, 1f, stateColor);
             }
         }
     }

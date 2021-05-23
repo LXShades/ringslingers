@@ -34,6 +34,9 @@ public class Ticker : MonoBehaviour
     [Tooltip("Whether to reconcile even if the server's confirmed state matched the local state at the time")]
     public bool alwaysReconcile = false;
 
+    [Tooltip("Positional tolerance when comparing local states to server confirmed states. A reconcile is triggered if they differ too much")]
+    public float positionalTolerance = 0.001f;
+
     [Header("History")]
     [Tooltip("How long to keep input, state, etc history in seconds. Should be able to fit in a bit more ")]
     public float historyLength = 1.0f;
@@ -82,9 +85,9 @@ public class Ticker : MonoBehaviour
 
     public readonly HistoryList<PlayerInput> inputHistory = new HistoryList<PlayerInput>();
 
-    private readonly HistoryList<TickerEvent> eventHistory = new HistoryList<TickerEvent>();
+    public readonly HistoryList<CharacterState> stateHistory = new HistoryList<CharacterState>();
 
-    private readonly HistoryList<CharacterState> stateHistory = new HistoryList<CharacterState>();
+    private readonly HistoryList<TickerEvent> eventHistory = new HistoryList<TickerEvent>();
 
     public CharacterState lastConfirmedState { get; private set; }
 
@@ -124,13 +127,10 @@ public class Ticker : MonoBehaviour
     /// </summary>
     public void PushInputPack(InputPack inputPack)
     {
-        float time = inputPack.startTime;
-
         for (int i = inputPack.inputs.Length - 1; i >= 0; i--)
         {
             // TODO: max input rate enforcement
-            inputHistory.Set(time, inputPack.inputs[i].input, 0.001f);
-            time += inputPack.inputs[i].deltaTime;
+            inputHistory.Set(inputPack.inputs[i].time, inputPack.inputs[i].input, 0.001f);
         }
 
         timeOfLastInputPush = Time.time;
@@ -152,12 +152,24 @@ public class Ticker : MonoBehaviour
     public void Rewind(CharacterState state, float time)
     {
         int index = stateHistory.IndexAt(time, 0.0001f);
+
+        // do we need to reconcile (recalculate from this point next time we seek?)
         if (alwaysReconcile || index == -1 || !stateHistory[index].Equals(state))
         {
             GetComponent<Character>().ApplyState(state);
             lastConfirmedState = state;
             confirmedPlaybackTime = time;
             playbackTime = time;
+
+            if (index != -1)
+            {
+                string differences = "";
+                if (stateHistory[index].position != state.position) differences += "P";
+                if (stateHistory[index]._rotation != state._rotation) differences += "R";
+                if (stateHistory[index].velocity != state.velocity) differences += "V";
+                if (stateHistory[index].up != state.up) differences += "U";
+                Debug.Log($"Reconcile diffs: {differences}");
+            }
         }
     }
 
@@ -218,10 +230,11 @@ public class Ticker : MonoBehaviour
             while (playbackTime < targetTime)
             {
                 int index = inputHistory.ClosestIndexBefore(playbackTime, 0.001f);
-                PlayerInput input = default;
+                PlayerInput input;
                 float deltaTime = Mathf.Min(targetTime - playbackTime, maxDeltaTime);
                 bool canConfirmState = false;
                 bool isRealtime = false;
+                float confirmableTime = 0f;
 
                 if (index == -1)
                 {
@@ -242,12 +255,17 @@ public class Ticker : MonoBehaviour
 
                     if (index > 0)
                     {
+                        // tick using the deltas between inputs, or the delta up to targetTime, whichever's smaller
+                        // if we can do a full previous->next input tick, we can "confirm" this state
                         float inputDeltaTime = inputHistory.TimeAt(index - 1) - inputHistory.TimeAt(index);
 
                         deltaTime = Mathf.Min(inputDeltaTime, targetTime - playbackTime);
 
-                        // a tick is confirmed if we can do a full previous->current input tick
-                        canConfirmState = (deltaTime == inputDeltaTime);
+                        if (deltaTime == inputDeltaTime)
+                        {
+                            canConfirmState = true;
+                            confirmableTime = inputHistory.TimeAt(index - 1);
+                        }
                     }
 
                     // use a delta if it's the crossing the beginning part of the input, otherwise extrapolate without delta
@@ -282,12 +300,15 @@ public class Ticker : MonoBehaviour
 
                     if (canConfirmState)
                     {
+                        // direct assignment of target time can reduce tiny floating point differences (these differences can accumulate _fast_) and reduce reconciles
+                        playbackTime = confirmableTime;
+                        confirmedPlaybackTime = confirmableTime;
+
+                        // since this tick is a complete one, save the result as our next confirmed state
                         CharacterState state = MakeState();
                         stateHistory.Set(playbackTime, state);
 
-                        // since this tick is a complete one, save the result as our next confirmed state
                         lastConfirmedState = state;
-                        confirmedPlaybackTime = playbackTime;
                     }
                 }
 
@@ -311,8 +332,7 @@ public class Ticker : MonoBehaviour
 
         //Debug.Log($"SeekStat: {initialPlaybackTime.ToString("F2")}->{targetTime.ToString("F2")} final {playbackTime.ToString("F2")} dt: {(playbackTime - initialPlaybackTime).ToString("F2")}");
 
-        // Perform history cleanup and stuff
-        SaveStateSnapshot();
+        // Perform history cleanup
         CleanupHistory();
     }
 
@@ -362,14 +382,5 @@ public class Ticker : MonoBehaviour
         inputHistory.Prune(trimTo);
         eventHistory.Prune(trimTo);
         stateHistory.Prune(trimTo);
-    }
-
-    /// <summary>
-    /// Saves a state into the StateHistory at the current playbackTime, replacing old ones if they exist
-    /// </summary>
-    private void SaveStateSnapshot()
-    {
-        Character character = GetComponent<Character>();
-        stateHistory.Insert(playbackTime, character.MakeState());
     }
 }

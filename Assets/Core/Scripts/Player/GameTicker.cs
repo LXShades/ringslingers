@@ -154,11 +154,11 @@ public class GameTicker : NetworkBehaviour
         {
             if (player)
             {
-                if (player == Netplay.singleton.localPlayer)
-                    player.ticker.Seek(Time.time, isServer ? player.ticker.confirmedPlaybackTime : Time.time - Time.deltaTime);
-                else if (isServer)
+                if (player == Netplay.singleton.localPlayer) // local player
+                    player.ticker.Seek(Time.time, player.ticker.confirmedPlaybackTime);
+                else if (isServer) // other player on server
                     player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedPlaybackTime);
-                else if (isClient)
+                else if (isClient) // replica on client
                     player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, Ticker.SeekFlags.IgnoreDeltas);
             }
         }
@@ -288,15 +288,18 @@ public class GameTicker : NetworkBehaviour
                 playerInputFlow[client.playerId].flowControlSettings = clientFlowControlSettings;
             }
 
-            float endTime = inputMessage.inputPack.startTime;
-            foreach (var input in inputMessage.inputPack.inputs)
-                endTime += input.deltaTime;
-
-            playerInputFlow[client.playerId].PushMessage(inputMessage.inputPack, endTime);
+            if (inputMessage.inputPack.inputs.Length > 0)
+            {
+                playerInputFlow[client.playerId].PushMessage(inputMessage.inputPack, inputMessage.inputPack.inputs[inputMessage.inputPack.inputs.Length - 1].time);
+            }
+            else
+            {
+                Log.WriteError($"Input message from {source} has no inputs! This should never really happen!");
+            }
         }
         else
         {
-            Log.WriteWarning($"Cannot receive message from {source}: no player found");
+            Log.WriteWarning($"Cannot receive input message from {source}: no player found");
         }
     }
 

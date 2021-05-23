@@ -1,23 +1,58 @@
-﻿using Mirror;
-using System;
+﻿using System;
 using UnityEngine;
 
 [System.Serializable]
 public struct PlayerInput : IEquatable<PlayerInput>
 {
-    public float moveHorizontalAxis;
-    public float moveVerticalAxis;
+    // Movement
+    public float moveHorizontalAxis
+    {
+        get => Compressor.BitsToUnitFloat(_moveHorizontalAxis, 8);
+        set => _moveHorizontalAxis = (char)Compressor.UnitFloatToBits(value, 8);
+    }
+    public float moveVerticalAxis
+    {
+        get => Compressor.BitsToUnitFloat(_moveVerticalAxis, 8);
+        set => _moveVerticalAxis = (char)Compressor.UnitFloatToBits(value, 8);
+    }
 
-    public float horizontalAim;
-    public float verticalAim;
+    // Looking/camera
+    public float horizontalAim
+    {
+        get => Compressor.BitsToUnitFloat(_horizontalAim, 16) * 360f;
+        set => _horizontalAim = (short)Compressor.UnitFloatToBits(value / 360f, 16);
+    }
+    public float verticalAim
+    {
+        get => Compressor.BitsToUnitFloat(_verticalAim, 16) * 360f;
+        set => _verticalAim = (short)Compressor.UnitFloatToBits(value / 360f, 16);
+    }
 
-    public bool btnJump;
-    public bool btnFire;
+    // Buttons
+    public bool btnJump
+    {
+        get => (_buttons & 1) != 0;
+        set => _buttons = (byte)(value ? (_buttons | 1) : (_buttons & ~1));
+    }
+    public bool btnFire
+    {
+        get => (_buttons & 2) != 0;
+        set => _buttons = (byte)(value ? (_buttons | 2) : (_buttons & ~2));
+    }
 
-    public bool btnJumpPressed;
-    public bool btnJumpReleased;
-    public bool btnFirePressed;
-    public bool btnFireReleased;
+    // these aren't serialized
+    public bool btnJumpPressed { get; set; }
+    public bool btnJumpReleased { get; set; }
+    public bool btnFirePressed { get; set; }
+    public bool btnFireReleased { get; set; }
+
+    // actual compressed data
+    // 7 bytes
+    public char _moveHorizontalAxis;
+    public char _moveVerticalAxis;
+    public short _horizontalAim;
+    public short _verticalAim;
+    public byte _buttons;
 
     public Vector3 aimDirection
     {
@@ -101,30 +136,6 @@ public struct PlayerInput : IEquatable<PlayerInput>
         return output;
     }
 
-    public void Serialize(NetworkWriter writer)
-    {
-        // 7 bytes
-        writer.WriteInt16((short)(Compressor.UnitFloatToBits(moveHorizontalAxis, 8) | (Compressor.UnitFloatToBits(moveVerticalAxis, 8) << 8)));
-        writer.WriteInt32((Compressor.UnitFloatToBits(horizontalAim / 360f, 16) | (Compressor.UnitFloatToBits(verticalAim / 360f, 16) << 16)));
-
-        writer.WriteByte((byte)((btnJump ? 1 : 0) | (btnFire ? 2 : 0)));
-    }
-
-    public void Deserialize(NetworkReader reader)
-    {
-        short movement = reader.ReadInt16();
-        int aim = reader.ReadInt32();
-
-        moveHorizontalAxis = Compressor.BitsToUnitFloat(movement << 8 >> 8, 8);
-        moveVerticalAxis = Compressor.BitsToUnitFloat(movement >> 8, 8);
-        horizontalAim = Compressor.BitsToUnitFloat(aim << 16 >> 16, 16) * 360f;
-        verticalAim = Compressor.BitsToUnitFloat(aim >> 16, 16) * 360f;
-
-        byte buttons = reader.ReadByte();
-        btnJump = (buttons & 1) != 0;
-        btnFire = (buttons & 2) != 0;
-    }
-
     public bool Equals(PlayerInput other)
     {
         return moveHorizontalAxis == other.moveHorizontalAxis && moveVerticalAxis == other.moveVerticalAxis
@@ -139,19 +150,18 @@ public struct PlayerInput : IEquatable<PlayerInput>
 }
 public struct InputDelta
 {
+    public float time;
     public PlayerInput input;
-    public float deltaTime;
 
-    public InputDelta(in PlayerInput input, float deltaTime)
+    public InputDelta(float time, in PlayerInput input)
     {
+        this.time = time;
         this.input = input;
-        this.deltaTime = deltaTime;
     }
 }
 
 public struct InputPack
 {
-    public float startTime;
     public float extrapolation;
     public InputDelta[] inputs;
     public CharacterState state;
@@ -169,20 +179,18 @@ public struct InputPack
             InputDelta[] inputs = new InputDelta[startIndex + 1];
             for (int i = startIndex; i >= 0; i--)
             {
+                inputs[i].time = inputHistory.TimeAt(i);
                 inputs[i].input = inputHistory[i];
-                inputs[i].deltaTime = i > 0 ? inputHistory.TimeAt(i - 1) - inputHistory.TimeAt(i) : 0f;
             }
 
             return new InputPack()
             {
-                startTime = inputHistory.TimeAt(startIndex),
                 inputs = inputs
             };
         }
 
         return new InputPack()
         {
-            startTime = inputHistory.LatestTime,
             inputs = new InputDelta[0]
         };
     }
@@ -192,21 +200,4 @@ public struct MoveStateWithInput
 {
     public CharacterState state;
     public PlayerInput input;
-}
-
-public static class PlayerInputReaderWriter
-{
-    public static void WritePlayerInput(this NetworkWriter writer, PlayerInput input)
-    {
-        input.Serialize(writer);
-    }
-
-    public static PlayerInput ReadPlayerInput(this NetworkReader reader)
-    {
-        PlayerInput output = new PlayerInput();
-
-        output.Deserialize(reader);
-
-        return output;
-    }
 }
