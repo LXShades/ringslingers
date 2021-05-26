@@ -29,9 +29,15 @@ public struct CharacterState : IEquatable<CharacterState>
     }
     public Vector3 up
     {
-        get => Compressor.DecompressNormal16(_up);
-        set => _up = Compressor.CompressNormal16(value);
+        get => Compressor.DecompressNormal24(_upLow | (_upHigh << 16));
+        set
+        {
+            int compressed = Compressor.CompressNormal24(value);
+            _upLow = (ushort)(compressed & 0xFFFF);
+            _upHigh = (byte)(compressed >> 16);
+        }
     }
+    public Vector3 _newUp;
     public CharacterMovement.State state
     {
         get => (CharacterMovement.State)_state;
@@ -40,13 +46,14 @@ public struct CharacterState : IEquatable<CharacterState>
 
     // internal - actual data sent/received and confirmed/deconfirmed
     // public because Mirror only serializes public stuff
-    // 25 bytes
+    // 26 bytes
     public Vector3 _position;
     public int _rotation;
     public ushort _velocityX;
     public ushort _velocityY;
     public ushort _velocityZ;
-    public short _up;
+    public ushort _upLow;
+    public byte _upHigh;
     public byte _state;
 
     public void DebugDraw(Color colour)
@@ -61,7 +68,8 @@ public struct CharacterState : IEquatable<CharacterState>
         return other._position == _position
             && other._rotation == _rotation
             && other._velocityX == _velocityX && other._velocityY == _velocityY && other._velocityZ == _velocityZ
-            && other._up == _up
+            && other._upLow == _upLow
+            && other._upHigh == _upHigh
             && other._state == _state;
     }
 

@@ -135,12 +135,13 @@ public class CharacterMovement : Movement
         get => _up;
         set
         {
-            // change look rotation with rotation?
-            //if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
-            //    player.latestInput.aimDirection = Quaternion.FromToRotation(_up, value) * player.latestInput.aimDirection;
+            // change look rotation with wall run rotation motion if wallRunCameraAssist is enabled
+            if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
+            {
+                GameTicker.singleton.localPlayerInput.aimDirection = Quaternion.FromToRotation(_up, value) * GameTicker.singleton.localPlayerInput.aimDirection;
+            }
 
             _up = value;
-
         }
     }
     private Vector3 _up = Vector3.up;
@@ -181,7 +182,7 @@ public class CharacterMovement : Movement
 
         if (wasGroundDetected)
         {
-            if (!enableWallRun)
+            if (enableWallRun)
                 groundNormal = _groundNormal;
             else
                 groundNormal = Vector3.up; // why are we doing this..? needed for steps to work. think it prevents player from wallrunning up steps or something... not working very well
