@@ -37,7 +37,6 @@ public struct CharacterState : IEquatable<CharacterState>
             _upHigh = (byte)(compressed >> 16);
         }
     }
-    public Vector3 _newUp;
     public CharacterMovement.State state
     {
         get => (CharacterMovement.State)_state;
@@ -71,6 +70,12 @@ public struct CharacterState : IEquatable<CharacterState>
             && other._upLow == _upLow
             && other._upHigh == _upHigh
             && other._state == _state;
+    }
+
+    // Compresses upIn in the same way as regular up and returns the result. Used to quantize in the same way we expect it to be quantized when saved/loaded
+    public static Vector3 RecompressUp(Vector3 upIn)
+    {
+        return Compressor.DecompressNormal24(Compressor.CompressNormal24(upIn));
     }
 
     public override string ToString()

@@ -44,9 +44,9 @@ public static class Compressor
     {
         int result = 0;
 
-        result |= ((int)(normalVector.x * kMultiplierPerComponent) & kMaskPerComponent);
-        result |= ((int)(normalVector.y * kMultiplierPerComponent) & kMaskPerComponent) << kBitsPerComponent;
-        result |= ((int)(normalVector.z * kMultiplierPerComponent) & kMaskPerComponent) << (kBitsPerComponent * 2);
+        result |= ((int)(normalVector.x * kMultiplierPerComponent + 0.5f) & kMaskPerComponent);
+        result |= ((int)(normalVector.y * kMultiplierPerComponent + 0.5f) & kMaskPerComponent) << kBitsPerComponent;
+        result |= ((int)(normalVector.z * kMultiplierPerComponent + 0.5f) & kMaskPerComponent) << (kBitsPerComponent * 2);
 
         return result;
     }

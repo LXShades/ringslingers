@@ -135,10 +135,10 @@ public class CharacterMovement : Movement
         get => _up;
         set
         {
-            // change look rotation with wall run rotation motion if wallRunCameraAssist is enabled
+            // change look rotation with wall run rotation motion if wallRunCameraAssist is enabled. Recompressed up to prevent drift when saving/loading quantized state
             if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
             {
-                GameTicker.singleton.localPlayerInput.aimDirection = Quaternion.FromToRotation(_up, value) * GameTicker.singleton.localPlayerInput.aimDirection;
+                GameTicker.singleton.localPlayerInput.aimDirection = Quaternion.FromToRotation(CharacterState.RecompressUp(_up), CharacterState.RecompressUp(value)) * GameTicker.singleton.localPlayerInput.aimDirection;
             }
 
             _up = value;
