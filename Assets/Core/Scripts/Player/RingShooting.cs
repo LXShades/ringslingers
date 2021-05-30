@@ -296,7 +296,7 @@ public class RingShooting : NetworkBehaviour
         if (timeToThrowAt > Time.realtimeSinceStartup)
         {
             // the client threw this, in what they predicted ahead of current time... this means we need to delay the shot until roughly the correct time arrives
-             bufferedThrowEvents.Insert(timeToThrowAt, () => OnCmdThrowRing(position, direction, spawnPrediction, equippedWeapon, predictedServerTime));
+            bufferedThrowEvents.Insert(timeToThrowAt, () => OnCmdThrowRing(position, direction, spawnPrediction, equippedWeapon, predictedServerTime));
         }
         else
         {
