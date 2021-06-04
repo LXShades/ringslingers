@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -116,6 +117,9 @@ public class Netplay : MonoBehaviour
 
         SceneManager.activeSceneChanged += OnSceneChanged;
         net.onServerStarted += StartMatch;
+
+        GamePreferences.onPreferencesChanged += ApplyNetPreferences;
+        ApplyNetPreferences(); // update net settings now
 
         msTime = 0;
 
@@ -270,6 +274,7 @@ public class Netplay : MonoBehaviour
             net.Host(true, port);
 
             connectionStatus = ConnectionStatus.Ready;
+            ApplyNetPreferences();
         }
         else
         {
@@ -281,6 +286,7 @@ public class Netplay : MonoBehaviour
     {
         Log.Write("Connection successful");
 
+        ApplyNetPreferences();
         connectionStatus = ConnectionStatus.Ready;
     }
 
@@ -404,6 +410,20 @@ public class Netplay : MonoBehaviour
                 return player;
         }
         return null;
+    }
+    #endregion
+
+    #region Net Configuration
+    private void ApplyNetPreferences()
+    {
+        if (NetworkClient.active)
+        {
+            NetworkClient.connection.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
+
+            // TEST - REMOVE LATER!
+            NetworkClient.connection.flowController.flowControlSettings.maxDelay = 0.5f;
+            NetworkClient.connection.flowController.flowControlSettings.minDelay = 0.3f;
+        }
     }
     #endregion
 

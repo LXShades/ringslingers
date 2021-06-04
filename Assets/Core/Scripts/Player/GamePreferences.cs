@@ -35,6 +35,16 @@ public static class GamePreferences
         }
     }
 
+    public static bool isNetFlowControlEnabled
+    {
+        get => PlayerPrefs.GetInt("netFlowControl", 1) != 0;
+        set
+        {
+            PlayerPrefs.SetInt("netFlowControl", value ? 1 : 0);
+            OnPreferencesChanged();
+        }
+    }
+
     private static float _mouseSpeed;
 
     public static event Action onPreferencesChanged;

@@ -76,7 +76,8 @@ public class NetDebugUI : MonoBehaviour
     private Stats totalStats = new Stats();
 
     private Dictionary<string, Stats> statsByCategory = new Dictionary<string, Stats>();
-    private Dictionary<GameObject, Stats> statsByObject = new Dictionary<GameObject, Stats>();
+    private Dictionary<System.Guid, Stats> statsByObjectType = new Dictionary<System.Guid, Stats>();
+    private Dictionary<System.Guid, string> objectNameByAssetId = new Dictionary<System.Guid, string>();
 
     public void OnEnable()
     {
@@ -99,14 +100,14 @@ public class NetDebugUI : MonoBehaviour
             textbox.text += $"{statKeyVal.Key}: {statKeyVal.Value}\n";
         }
 
-        foreach (KeyValuePair<GameObject, Stats> statKeyVal in statsByObject)
+        foreach (KeyValuePair<System.Guid, Stats> statKeyVal in statsByObjectType)
         {
             if (statKeyVal.Key == null)
             {
                 continue;
             }
 
-            textbox.text += $"{statKeyVal.Key.name}: {statKeyVal.Value}\n";
+            textbox.text += $"{objectNameByAssetId[statKeyVal.Key]}: {statKeyVal.Value}\n";
         }
     }
 
@@ -139,12 +140,13 @@ public class NetDebugUI : MonoBehaviour
 
         if (identity)
         {
-            if (!statsByObject.ContainsKey(identity.gameObject))
+            if (!statsByObjectType.ContainsKey(identity.assetId))
             {
-                statsByObject.Add(identity.gameObject, new Stats());
+                statsByObjectType.Add(identity.assetId, new Stats());
+                objectNameByAssetId.Add(identity.assetId, identity.gameObject.name);
             }
 
-            statsByObject[identity.gameObject].Apply(msg, isInbound);
+            statsByObjectType[identity.assetId].Apply(msg, isInbound);
         }
 
         totalStats.Apply(msg, isInbound);

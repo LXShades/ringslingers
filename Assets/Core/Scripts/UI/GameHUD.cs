@@ -149,10 +149,6 @@ public class GameHUD : MonoBehaviour
             }
             else if (autoaimCrosshair.gameObject.activeSelf)
                 autoaimCrosshair.gameObject.SetActive(false);
-
-            // Debug stuff
-            if (debugDisplay.activeInHierarchy)
-                UpdatePlayerDebugs(player);
         }
         else
         {
@@ -261,17 +257,6 @@ public class GameHUD : MonoBehaviour
 
             doRefreshLog = false;
         }
-    }
-
-    private void UpdatePlayerDebugs(Character player)
-    {
-        debugText.text = $"\nPing: {(int)(Netplay.singleton.unreliablePing * 1000f)}ms (reliable: {(int)(Netplay.singleton.reliablePing)})" +
-            $"\n{Netplay.singleton.netStat}\nVelocity: {player.movement.velocity} ({player.movement.velocity.magnitude:F2})\nGround: {player.movement.isOnGround}\nGroundNml: {player.movement.groundNormal}\n" +
-            $"GroundVel: {player.movement.groundVelocity}\nUp: {player.movement.up}\nRunVel: {player.movement.runVelocity}\n";
-
-        // debug stuff for other players in the same scene
-        if (GameTicker.singleton)
-            debugText.text += $"Ticker info: ===\n{GameTicker.singleton.DebugInfo()}";
     }
 
     private void OnLogMessageReceived(string condition, string stackTrace, LogType type)

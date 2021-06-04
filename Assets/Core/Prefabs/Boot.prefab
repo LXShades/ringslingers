@@ -79,7 +79,6 @@ GameObject:
   - component: {fileID: 6795168564576558624}
   - component: {fileID: 6795168564576558631}
   - component: {fileID: 6795168564576558630}
-  - component: {fileID: 8959573192896178332}
   - component: {fileID: 6795168564576558628}
   m_Layer: 0
   m_Name: NetManager
@@ -139,7 +138,7 @@ MonoBehaviour:
   serverBatchInterval: 0
   offlineScene: 
   onlineScene: 
-  transport: {fileID: 8959573192896178332}
+  transport: {fileID: 6795168564576558628}
   networkAddress: localhost
   maxConnections: 32
   disconnectInactiveConnections: 0
@@ -150,25 +149,6 @@ MonoBehaviour:
   playerSpawnMethod: 0
   spawnPrefabs:
   - {fileID: 0}
---- !u!114 &8959573192896178332
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6795168564576558651}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 96b149f511061407fb54895c057b7736, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  wrap: {fileID: 6795168564576558628}
-  latencySpikeMultiplier: 0
-  latencySpikeSpeedMultiplier: 1
-  reliableLatency: 0
-  unreliableLoss: 0
-  unreliableLatency: 0.11
-  unreliableScramble: 0
 --- !u!114 &6795168564576558628
 MonoBehaviour:
   m_ObjectHideFlags: 0
