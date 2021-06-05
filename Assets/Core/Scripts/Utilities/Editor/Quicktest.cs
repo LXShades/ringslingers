@@ -26,6 +26,12 @@ public class NetworkEditorTools : MonoBehaviour
         set => EditorPrefs.SetBool("netOnlyBuildCurrentScene", value);
     }
 
+    public static bool onlyBuildScripts
+    {
+        get => EditorPrefs.GetBool("netOnlyBuildScripts", false);
+        set => EditorPrefs.SetBool("netOnlyBuildScripts", value);
+    }
+
     public static string buildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/QuickTest/{Application.productName}";
 
     public static string webGlBuildPath => $"{Application.dataPath.Substring(0, Application.dataPath.LastIndexOf('/'))}/Builds/WebGL/{Application.productName}";
@@ -80,7 +86,10 @@ public class NetworkEditorTools : MonoBehaviour
         if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
         {
             string buildName = $"{buildPath}/{Application.productName}.exe";
-            UnityEditor.Build.Reporting.BuildReport buildReport = BuildPipeline.BuildPlayer(levels.ToArray(), buildName, BuildTarget.StandaloneWindows64, BuildOptions.Development);
+            BuildOptions buildOptions = BuildOptions.Development 
+                | (onlyBuildScripts ? BuildOptions.BuildScriptsOnly : 0);
+
+            UnityEditor.Build.Reporting.BuildReport buildReport = BuildPipeline.BuildPlayer(levels.ToArray(), buildName, BuildTarget.StandaloneWindows64, buildOptions);
 
             EditorSceneManager.OpenScene(originalScene);
 
@@ -111,37 +120,37 @@ public class NetworkEditorTools : MonoBehaviour
     [MenuItem("Playtest/Run", priority = 21)]
     public static void Run()
     {
-        string dimensions = $"-screen-fullscreen 0 -screen-width {Screen.currentResolution.width / 2} -screen-height {Screen.currentResolution.height / 2}";
+        int playerIndex = 0;
+        int numWindowsTotal = numTestPlayers;
 
         switch (editorRole)
         {
             case EditorRole.Client:
                 CommandLine.editorCommands = new string[] { "-connect", "127.0.0.1" };
-                RunBuild($"-host {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
+                RunBuild($"-host -scene {EditorSceneManager.GetActiveScene().path} {MakeDimensionParam(CalculateWindowDimensionsForPlayer(playerIndex++, numWindowsTotal))}");
                 break;
             case EditorRole.Server:
                 CommandLine.editorCommands = new string[] { "-host", "127.0.0.1", "-scene", EditorSceneManager.GetActiveScene().path };
-                RunBuild($"-connect 127.0.0.1 {dimensions}");
+                RunBuild($"-connect 127.0.0.1 {MakeDimensionParam(CalculateWindowDimensionsForPlayer(playerIndex++, numWindowsTotal))}");
                 break;
             case EditorRole.Host:
                 CommandLine.editorCommands = new string[] { "-host", "127.0.0.1", "-scene", EditorSceneManager.GetActiveScene().path };
+                numWindowsTotal = numTestPlayers - 1;
                 break;
             case EditorRole.None:
-                RunBuild($"-host {dimensions} -scene {EditorSceneManager.GetActiveScene().path}");
-                RunBuild($"-connect 127.0.0.1 {dimensions}");
+                numWindowsTotal = numTestPlayers + 1;
+                RunBuild($"-host -scene {EditorSceneManager.GetActiveScene().path} {MakeDimensionParam(CalculateWindowDimensionsForPlayer(playerIndex++, numWindowsTotal))}");
+                RunBuild($"-connect 127.0.0.1 {MakeDimensionParam(CalculateWindowDimensionsForPlayer(playerIndex++, numWindowsTotal))}");
                 break;
         }
 
         // Connect the remaining players
         for (int i = 0; i < numTestPlayers - 1; i++)
-        {
-            RunBuild($"-connect 127.0.0.1 {dimensions}");
-        }
+            RunBuild($"-connect 127.0.0.1 {MakeDimensionParam(CalculateWindowDimensionsForPlayer(playerIndex++, numWindowsTotal))}");
 
+        // Start the editor if applicable
         if (editorRole != EditorRole.None)
-        {
             EditorApplication.isPlaying = true;
-        }
     }
 
 
@@ -231,11 +240,17 @@ public class NetworkEditorTools : MonoBehaviour
     private static bool FourTestPlayersValidate() { Menu.SetChecked("Playtest/4 players", numTestPlayers == 4); return true; }
 
 
-    [MenuItem("Playtest/Only build current scene", priority = 120)]
+    [MenuItem("Playtest/Only current scene", priority = 120)]
     private static void OnlyCurrentScene() { onlyBuildCurrentScene = !onlyBuildCurrentScene; }
 
-    [MenuItem("Playtest/Only build current scene", true)]
-    private static bool OnlyCurrentSceneValidate() { Menu.SetChecked("Playtest/Only build current scene", onlyBuildCurrentScene); return true; }
+    [MenuItem("Playtest/Only current scene", true)]
+    private static bool OnlyCurrentSceneValidate() { Menu.SetChecked("Playtest/Only current scene", onlyBuildCurrentScene); return true; }
+
+    [MenuItem("Playtest/Only scripts", priority = 121)]
+    private static void OnlyScripts() { onlyBuildScripts = !onlyBuildScripts; }
+
+    [MenuItem("Playtest/Only scripts", true)]
+    private static bool OnlyScriptsValidate() { Menu.SetChecked("Playtest/Only scripts", onlyBuildScripts); return true; }
 
     private static void RunBuild(string arguments = "")
     {
@@ -247,5 +262,22 @@ public class NetworkEditorTools : MonoBehaviour
         process.StartInfo.Arguments = arguments;
 
         process.Start();
+    }
+
+    private static string MakeDimensionParam(RectInt dimensions) => $"" +
+        $"-pos {dimensions.x} {dimensions.y} " +
+        $"-screen-fullscreen 0 -screen-width {dimensions.width} -screen-height {dimensions.height}";
+
+    private static RectInt CalculateWindowDimensionsForPlayer(int playerIndex, int numPlayers)
+    {
+        RectInt screen = new RectInt(0, 0, Screen.currentResolution.width, Screen.currentResolution.height);
+
+        if (numPlayers == 1 || numPlayers > 4)
+            return new RectInt(screen.width / 4, screen.height / 4, screen.width / 2, screen.height / 2);
+        else if (numPlayers == 2)
+            return new RectInt(screen.width / 2 * playerIndex, screen.height / 4, screen.width / 2, screen.height / 2);
+        else if (numPlayers <= 4)
+            return new RectInt(screen.width / 2 * (playerIndex % 2), screen.height / 2 * (playerIndex / 2), screen.width / 2, screen.height / 2);
+        return default;
     }
 }

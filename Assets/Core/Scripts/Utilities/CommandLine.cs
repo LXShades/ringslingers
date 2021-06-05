@@ -2,7 +2,7 @@
 using UnityEditor;
 #endif
 
-public class CommandLine
+public static class CommandLine
 {
     private static string[] commands;
 
@@ -18,11 +18,9 @@ public class CommandLine
     }
 #endif
 
-    [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void OnInit()
+    static CommandLine()
     {
         UpdateCommands();
-        UnityEngine.Debug.Log("CommandLine() was called");
     }
 
     private static void UpdateCommands()
