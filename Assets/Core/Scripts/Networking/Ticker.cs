@@ -17,7 +17,14 @@ public class Ticker : MonoBehaviour
         /// However, they are unaware that jump was actually first pressed at T=0.5, and the state they received for T=1 has already jumped
         /// On the server, T=1 had no jump delta as T=0.5 already did that. On the client, T=1 is thought to have the jump delta despite being untrue, leading to inconsistency.
         /// </summary>
-        IgnoreDeltas = 1
+        IgnoreDeltas = 1,
+
+        /// <summary>
+        /// Specifies that states should not be confirmed during the seek--the state is allowed to diverge from the input feed's deltas
+        /// 
+        /// This is slightly more efficient as the character doesn't need to be rewound or fast-forwarded or to have its states confirmed and stored
+        /// </summary>
+        DontConfirm = 2
     };
 
     [Header("Tick")]
@@ -214,9 +221,12 @@ public class Ticker : MonoBehaviour
 
         float initialPlaybackTime = playbackTime;
 
-        // Restore our actual non-extrapolated position
-        ApplyState(lastConfirmedState);
-        playbackTime = confirmedPlaybackTime;
+        if ((flags & SeekFlags.DontConfirm) == 0)
+        {
+            // Restore our actual non-extrapolated position
+            ApplyState(lastConfirmedState);
+            playbackTime = confirmedPlaybackTime;
+        }
 
         // Playback our latest movements
         try
@@ -259,7 +269,7 @@ public class Ticker : MonoBehaviour
 
                         deltaTime = Mathf.Min(inputDeltaTime, targetTime - playbackTime);
 
-                        if (deltaTime == inputDeltaTime)
+                        if (deltaTime == inputDeltaTime && (flags & SeekFlags.DontConfirm) == 0)
                         {
                             canConfirmState = true;
                             confirmableTime = inputHistory.TimeAt(index - 1);

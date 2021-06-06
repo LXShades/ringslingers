@@ -200,30 +200,26 @@ public class RingShooting : NetworkBehaviour
 
     private bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
     {
-        // todo: fix with ticker stuff
-
-        /*float interval = 0.07f;
-        PlayerController controller = target.GetComponent<PlayerController>();
-        CharacterMovement movement = target.GetComponent<CharacterMovement>();
-        CharacterState originalState = controller.MakeMoveState();
-        PlayerInput input = controller.GetLatestInput();
+        float interval = 0.07f;
+        Ticker ticker = target.ticker;
         Vector3 startPosition = spawnPosition.position;
         float ringDistance = 0f; // theoretical thrown ring distance
         float ringSpeed = effectiveWeaponSettings.projectileSpeed * interval;
         float lastTargetDistance = Vector3.Distance(target.transform.position, startPosition);
         Vector3 lastTargetPosition = target.transform.position;
+        float originalTime = ticker.playbackTime;
         bool succeeded = false;
 
         predictedPosition = target.transform.position;
 
-        for (int i = 0; i * interval < maxPredictionTime; i++)
+        for (int i = 1; i * interval < maxPredictionTime; i++)
         {
-            movement.TickMovement(interval, input, true);
+            ticker.Seek(originalTime + i * interval, ticker.realtimePlaybackTime, Ticker.SeekFlags.IgnoreDeltas | Ticker.SeekFlags.DontConfirm);
             ringDistance += ringSpeed;
 
             float currentTargetDistance = Vector3.Distance(target.transform.position, startPosition);
 
-            if (currentTargetDistance >= lastTargetDistance + ringSpeed) // target is moving away faster than our ring would, so if they continue along this path we can't hit them
+            if (currentTargetDistance >= lastTargetDistance + ringSpeed) // target is moving away faster than our ring would, so if they continue along this path we probably can't hit them
                 break;
 
             if (ringDistance >= currentTargetDistance)
@@ -239,10 +235,9 @@ public class RingShooting : NetworkBehaviour
             lastTargetPosition = target.transform.position;
         }
 
-        controller.ApplyMoveState(originalState);
-        return succeeded;*/
-        predictedPosition = Vector3.zero;
-        return false;
+        ticker.Seek(originalTime, ticker.realtimePlaybackTime, Ticker.SeekFlags.IgnoreDeltas);
+
+        return succeeded;
     }
 
     public void AddWeaponAmmo(RingWeaponSettingsAsset weaponType, bool doOverrideAmmo, float ammoOverride)
