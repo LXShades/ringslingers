@@ -1,5 +1,4 @@
 ﻿using Mirror;
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -421,8 +420,8 @@ public class Netplay : MonoBehaviour
             NetworkClient.connection.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
 
             // TEST - REMOVE LATER!
-            NetworkClient.connection.flowController.flowControlSettings.maxDelay = 0.5f;
-            NetworkClient.connection.flowController.flowControlSettings.minDelay = 0.3f;
+            NetworkClient.connection.flowController.flowControlSettings.maxDelay = 0.2f;
+            NetworkClient.connection.flowController.flowControlSettings.minDelay = 0f;
         }
     }
     #endregion

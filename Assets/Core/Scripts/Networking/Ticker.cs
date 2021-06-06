@@ -39,6 +39,8 @@ public class Ticker : MonoBehaviour
     public float historyLength = 1.0f;
 
     [Header("Debug")]
+    public bool debugLogReconciles = false;
+
 #if UNITY_EDITOR
     public float debugSelfReconcileDelay = 0.3f;
     public bool debugSelfReconcile = false;
@@ -153,6 +155,14 @@ public class Ticker : MonoBehaviour
         // do we need to reconcile (recalculate from this point next time we seek?)
         if (alwaysReconcile || index == -1 || !stateHistory[index].Equals(state))
         {
+            if (debugLogReconciles)
+            {
+                Debug.Log(
+                    $"Reconcile {gameObject}:\n" +
+                    $"Time: {time.ToString("F2")}\n" +
+                    $"Index: {index}\n");
+            }
+
             GetComponent<Character>().ApplyState(state);
             lastConfirmedState = state;
             confirmedPlaybackTime = time;

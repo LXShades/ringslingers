@@ -4,6 +4,8 @@ public class DebugTickTimelineHUD : MonoBehaviour
 {
     public float timelineLength = 5f;
 
+    public bool targetLocalPlayer = true;
+    public UnityEngine.UI.Text playerNameText = null;
     public Color32 playbackTimeColor = Color.green;
     public Color32 confirmedTimeColor = Color.blue;
     public Color32 realtimeColor = new Color32(255, 0, 255, 255);
@@ -20,7 +22,19 @@ public class DebugTickTimelineHUD : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
-        Ticker targetTicker = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<Ticker>() : null;
+        Ticker targetTicker = null;
+
+        if (targetLocalPlayer && Netplay.singleton.localPlayer != null)
+            targetTicker = Netplay.singleton.localPlayer.ticker;
+        else
+        {
+            // first player that isn't local?
+            for (int i = 0; i < Netplay.singleton.players.Count; i++)
+            {
+                if (Netplay.singleton.players[i] && Netplay.singleton.players[i] != Netplay.singleton.localPlayer)
+                    targetTicker = Netplay.singleton.players[i].ticker;
+            }
+        }
 
         if (targetTicker)
         {
@@ -40,6 +54,11 @@ public class DebugTickTimelineHUD : MonoBehaviour
             for (int i = 0; i < targetTicker.stateHistory.Count; i++)
             {
                 timeline.DrawTick(targetTicker.stateHistory.TimeAt(i), 0.5f, 1f, stateColor);
+            }
+
+            if (playerNameText)
+            {
+                playerNameText.text = targetTicker.gameObject.name;
             }
         }
     }
