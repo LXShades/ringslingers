@@ -74,8 +74,8 @@ public class TimelineGraphic : MaskableGraphic
         centre.y = Mathf.Round(centre.y);
 
         DrawQuadInternal(
-            centre - new Vector2(0f, tickHeight * heightScale / 2),
-            centre + new Vector2(1f, tickHeight * heightScale / 2),
+            centre + new Vector2(0f, tickHeight / 2 * (-heightScale - offset)),
+            centre + new Vector2(1f, tickHeight / 2 * (heightScale - offset)),
             color);
     }
 

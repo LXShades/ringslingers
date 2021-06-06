@@ -5,7 +5,9 @@ public class DebugTickTimelineHUD : MonoBehaviour
     public float timelineLength = 5f;
 
     public bool targetLocalPlayer = true;
+    public bool showServerTime = false;
     public UnityEngine.UI.Text playerNameText = null;
+    public Color32 serverTimeColor = Color.yellow;
     public Color32 playbackTimeColor = Color.green;
     public Color32 confirmedTimeColor = Color.blue;
     public Color32 realtimeColor = new Color32(255, 0, 255, 255);
@@ -43,23 +45,20 @@ public class DebugTickTimelineHUD : MonoBehaviour
 
             timeline.ClearDraw();
 
-            timeline.DrawTick(targetTicker.playbackTime, 2f, 0f, playbackTimeColor, "PT", 0);
-            timeline.DrawTick(targetTicker.confirmedPlaybackTime, 2f, 0f, confirmedTimeColor, "CT", 1);
-            timeline.DrawTick(targetTicker.realtimePlaybackTime, 2f, 0f, realtimeColor, "RT", 2); ;
+            timeline.DrawTick(targetTicker.playbackTime, 1.5f, 0.5f, playbackTimeColor, "PT", 0);
+            timeline.DrawTick(targetTicker.confirmedPlaybackTime, 1.5f, 0.5f, confirmedTimeColor, "CT", 1);
+            timeline.DrawTick(targetTicker.realtimePlaybackTime, 1.5f, 0.5f, realtimeColor, "RT", 2); ;
 
             for (int i = 0; i < targetTicker.inputHistory.Count; i++)
-            {
-                timeline.DrawTick(targetTicker.inputHistory.TimeAt(i), 1f, 0f, inputColor);
-            }
+                timeline.DrawTick(targetTicker.inputHistory.TimeAt(i), 1f, -1f, inputColor);
             for (int i = 0; i < targetTicker.stateHistory.Count; i++)
-            {
-                timeline.DrawTick(targetTicker.stateHistory.TimeAt(i), 0.5f, 1f, stateColor);
-            }
+                timeline.DrawTick(targetTicker.stateHistory.TimeAt(i), 0.5f, 0f, stateColor);
 
             if (playerNameText)
-            {
                 playerNameText.text = targetTicker.gameObject.name;
-            }
+
+            if (showServerTime)
+                timeline.DrawTick(GameTicker.singleton.predictedServerTime, 2f, 2f, serverTimeColor, "ST", 3);
         }
     }
 }

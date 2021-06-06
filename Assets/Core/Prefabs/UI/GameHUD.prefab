@@ -2017,7 +2017,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   timelineLength: 3
   targetLocalPlayer: 1
+  showServerTime: 0
   playerNameText: {fileID: 1720982505576284274}
+  serverTimeColor:
+    serializedVersion: 2
+    rgba: 4278512639
   playbackTimeColor:
     serializedVersion: 2
     rgba: 4278255360
@@ -6878,7 +6882,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   timelineLength: 3
   targetLocalPlayer: 0
+  showServerTime: 1
   playerNameText: {fileID: 1198697278935329557}
+  serverTimeColor:
+    serializedVersion: 2
+    rgba: 4278512639
   playbackTimeColor:
     serializedVersion: 2
     rgba: 4278255360
