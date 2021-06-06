@@ -301,9 +301,7 @@ public class Netplay : MonoBehaviour
     {
         Log.Write("A client has connected!");
 
-        connection.isFlowControlled = true;
-        connection.flowController.flowControlSettings.minDelay = 0f;
-        connection.flowController.flowControlSettings.maxDelay = 0.2f;
+        ApplyNetPreferences();
     }
 
     private void OnServerDisconnected(NetworkConnection connection)
@@ -419,13 +417,31 @@ public class Netplay : MonoBehaviour
     #region Net Configuration
     private void ApplyNetPreferences()
     {
-        if (NetworkClient.active)
+        Mirror.FlowControlSettings flowControlSettings = Mirror.FlowControlSettings.Default;
+
+        flowControlSettings.minDelay = 0.0f;
+        flowControlSettings.maxDelay = 0.1f;
+        flowControlSettings.upperPercentile = 0.1f;
+
+
+        if (NetworkClient.active && !NetworkServer.active /* don't throttle host self-connection */)
         {
             NetworkClient.connection.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
 
-            // TEST - REMOVE LATER!
-            NetworkClient.connection.flowController.flowControlSettings.maxDelay = 0.2f;
-            NetworkClient.connection.flowController.flowControlSettings.minDelay = 0f;
+            // current default netflow settings
+            NetworkClient.connection.flowController.flowControlSettings = flowControlSettings;
+        }
+
+        if (NetworkServer.active)
+        {
+            foreach (KeyValuePair<int, NetworkConnectionToClient> conn in NetworkServer.connections)
+            {
+                if (conn.Value != NetworkServer.localConnection)
+                {
+                    conn.Value.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
+                    NetworkClient.connection.flowController.flowControlSettings = flowControlSettings;
+                }
+            }
         }
     }
     #endregion

@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 using UnityEngine.UI;
-using Mirror;
 
 public class DebugGeneralHUD : MonoBehaviour
 {
@@ -44,8 +42,16 @@ public class DebugGeneralHUD : MonoBehaviour
         {
             debugText.text +=
                 $"Net flow control: ===\n" +
-                $"Enabled: {NetworkClient.connection.isFlowControlled}\n" +
-                $"{(NetworkClient.connection.isFlowControlled ? NetworkClient.connection.flowController.ToString() : "")}\n";
+                $"Local: {(NetworkClient.connection.isFlowControlled ? NetworkClient.connection.flowController.ToString() : "[flow control disabled]")}\n";
+
+            if (NetworkServer.active)
+            {
+                foreach (Character character in Netplay.singleton.players)
+                {
+                    if (character)
+                        debugText.text += $"{character.playerName}: {(character.connectionToClient.isFlowControlled ? character.connectionToClient.flowController.ToString() : "[flow control disabled]")}\n";
+                }
+            }
         }
     }
 }

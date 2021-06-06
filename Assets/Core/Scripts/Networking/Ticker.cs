@@ -307,6 +307,9 @@ public class Ticker : MonoBehaviour
                         stateHistory.Set(playbackTime, state);
 
                         lastConfirmedState = state;
+
+                        // since states can be compressed, reapply the confirmed state to self to ensure we get the same result as a decompressed confirmedState
+                        ApplyState(state);
                     }
                 }
 
