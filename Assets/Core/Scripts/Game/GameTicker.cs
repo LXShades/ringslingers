@@ -158,7 +158,7 @@ public class GameTicker : NetworkBehaviour
                     if (isServer)
                     {
                         // on server it's pretty easy, just set realtimePlaybackTime to confirmedPlaybackTime, much like the other players
-                        player.ticker.Seek(Time.time, player.ticker.confirmedPlaybackTime); 
+                        player.ticker.Seek(Time.time, player.ticker.confirmedPlaybackTime);
                     }
                     else
                     {
@@ -194,14 +194,15 @@ public class GameTicker : NetworkBehaviour
                 
                 tick = MakeTickMessage();
 
+                // we need to send it to each of them individually due to differing client times (
+
                 for (int i = 0; i < tick.ticks.Count; i++)
                 {
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
-                    tick.extrapolatedClientTime = player.GetComponent<Ticker>().playbackTime;
-                    tick.confirmedClientTime = player.GetComponent<Ticker>().confirmedPlaybackTime;
+                    tick.extrapolatedClientTime = player.ticker.playbackTime;
+                    tick.confirmedClientTime = player.ticker.confirmedPlaybackTime;
                     player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                 }
-                NetworkServer.SendToAll(tick, Channels.Unreliable, true);
             }
             else if (NetworkClient.isConnected)
             {
