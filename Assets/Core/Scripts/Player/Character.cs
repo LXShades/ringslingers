@@ -83,6 +83,9 @@ public class Character : NetworkBehaviour
     public float hurtDefaultHorizontalKnockback = 5;
     public float hurtDefaultVerticalKnockback = 5;
 
+    [Header("Debug")]
+    public bool logLocalPlayerReconciles = true;
+
     // Components
     /// <summary>
     /// Player movement component
@@ -138,6 +141,14 @@ public class Character : NetworkBehaviour
         base.OnStartClient();
 
         Netplay.singleton.RegisterPlayer(this, playerId);
+    }
+
+    public override void OnStartAuthority()
+    {
+        base.OnStartAuthority();
+
+        if (logLocalPlayerReconciles)
+            ticker.debugLogReconciles = true;
     }
 
     void Start()

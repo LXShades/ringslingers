@@ -12,9 +12,17 @@ public class GameTicker : NetworkBehaviour
     /// </summary>
     private struct ServerTickMessage : NetworkMessage
     {
+        const float kMaxExtrapolatedTimeOffset = 0.5f;
+
         public float serverTime; // time of the server
         public float confirmedClientTime; // time of the receiving client, as last seen on the server
-        public float extrapolatedClientTime; // time of the receiving client, as last seen on the server, with server extrapolation included for smoothness
+        public float extrapolatedClientTime => confirmedClientTime + clientTimeExtrapolation; // time of the receiving client, as last seen on the server, according to the server's smooth extrapolated playback of the client for more smoothness
+        public float clientTimeExtrapolation
+        {
+            set => _compressedExtrapolatedClientTime = (byte)Mathf.Min((int)(value * 256f / kMaxExtrapolatedTimeOffset), 255);
+            get => _compressedExtrapolatedClientTime * kMaxExtrapolatedTimeOffset / 256f;
+        }
+        public byte _compressedExtrapolatedClientTime;
         public ArraySegment<ServerPlayerTick> ticks;
     }
 
@@ -91,7 +99,7 @@ public class GameTicker : NetworkBehaviour
     {
         // Advance the clock
         if (NetworkServer.active)
-            predictedServerTime = Time.realtimeSinceStartup; // we technically don't run a prediction of the server time on the server
+            predictedServerTime = Time.unscaledTime; // we technically don't run a prediction of the server time on the server
         else
             predictedServerTime += Time.unscaledDeltaTime; // we just tick it up and update properly occasionally
 
@@ -199,7 +207,7 @@ public class GameTicker : NetworkBehaviour
                 for (int i = 0; i < tick.ticks.Count; i++)
                 {
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
-                    tick.extrapolatedClientTime = player.ticker.playbackTime;
+                    tick.clientTimeExtrapolation = player.ticker.playbackTime - player.ticker.confirmedPlaybackTime;
                     tick.confirmedClientTime = player.ticker.confirmedPlaybackTime;
                     player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                 }
@@ -272,8 +280,11 @@ public class GameTicker : NetworkBehaviour
 
                 if (tick.id == Netplay.singleton.localPlayerId)
                 {
-                    localPlayerPing = ticker.playbackTime - tickMessage.confirmedClientTime; // which client time...?
-                    ticker.Rewind(tick.moveState.state, tickMessage.confirmedClientTime);
+                    // extrapolatedClientTime is smoother as it considers how long it's been sinc ethe client did the thing...
+                    // but confirmedClientTime is more accurate to where the client actually is on the server, and more accurate to the client's local time...right?
+                    // after testing, extrapolatedClientTime turned out to be smoother
+                    localPlayerPing = ticker.playbackTime - tickMessage.extrapolatedClientTime;
+                    ticker.Rewind(tick.moveState.state, tickMessage.confirmedClientTime); // this line definitely uses confirmedClientTime! not sure about the other!
                 }
                 else
                 {

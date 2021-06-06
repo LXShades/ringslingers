@@ -82,4 +82,19 @@ public struct CharacterState : IEquatable<CharacterState>
     {
         return $"Pos: {position.ToString()}\nRot: {rotation.ToString()}\nVel: {velocity.ToString()}\nUp: {up.ToString()}\nState: {state}";
     }
+
+    public static string LogDifferences(CharacterState stateA, CharacterState stateB)
+    {
+        string differences = "";
+
+        if (stateA.position != stateB.position)
+            differences += $"A-pos: {stateA.position} B-pos: {stateB.position}\n";
+        if (stateA.rotation != stateB.rotation)
+            differences += $"A-rot: {stateA.rotation} B-rot: {stateB.rotation}\n";
+        if (stateA.velocity != stateB.velocity)
+            differences += $"A-vel: {stateA.velocity} B-vel: {stateB.velocity}\n";
+        if (stateA.up != stateB.up)
+            differences += $"A-up: {stateA.up} B-up: {stateB.up}\n";
+        return differences;
+    }
 }

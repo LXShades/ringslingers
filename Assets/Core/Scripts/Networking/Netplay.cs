@@ -300,6 +300,10 @@ public class Netplay : MonoBehaviour
     private void OnServerConnected(NetworkConnection connection)
     {
         Log.Write("A client has connected!");
+
+        connection.isFlowControlled = true;
+        connection.flowController.flowControlSettings.minDelay = 0f;
+        connection.flowController.flowControlSettings.maxDelay = 0.2f;
     }
 
     private void OnServerDisconnected(NetworkConnection connection)

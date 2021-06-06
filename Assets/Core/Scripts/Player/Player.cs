@@ -8,9 +8,9 @@ public class Player : NetworkBehaviour
     /// </summary>
     [SyncVar(hook = nameof(OnPlayerIdChanged))] public int playerId;
 
+    private Mirror.HistoryList<int> testList = new Mirror.HistoryList<int>();
 
-
-    private Character player => playerId != -1 ? Netplay.singleton.players[playerId] : null;
+    private Character character => playerId != -1 ? Netplay.singleton.players[playerId] : null;
 
     public override void OnStartServer()
     {
@@ -50,18 +50,18 @@ public class Player : NetworkBehaviour
     public void CmdSendMessage(string message)
     {
         message = message.Replace("</noparse>", "lol"); // plz don't
-        MessageFeed.Post($"<{player?.playerName}> <noparse>{message}</noparse>", true);
+        MessageFeed.Post($"<{character?.playerName}> <noparse>{message}</noparse>", true);
     }
 
     [Command]
     private void CmdTryRename(string newName)
     {
-        string oldName = player.playerName;
+        string oldName = character.playerName;
 
-        player?.Rename(newName);
+        character?.Rename(newName);
 
-        if (oldName != player.playerName)
-            MessageFeed.Post($"{oldName} was renamed to <player>{player.playerName}</player>");
+        if (oldName != character.playerName)
+            MessageFeed.Post($"{oldName} was renamed to <player>{character.playerName}</player>");
     }
 
     [Command]
@@ -79,6 +79,6 @@ public class Player : NetworkBehaviour
     [Command]
     public void CmdRequestColor(Color32 colour)
     {
-        player?.TryChangeColour(colour);
+        character?.TryChangeColour(colour);
     }
 }

@@ -160,7 +160,8 @@ public class Ticker : MonoBehaviour
                 Debug.Log(
                     $"Reconcile {gameObject}:\n" +
                     $"Time: {time.ToString("F2")}\n" +
-                    $"Index: {index}\n");
+                    $"Index: {index}\n" +
+                    $"Diffs: {(index != -1 ? CharacterState.LogDifferences(state, stateHistory[index]) : "N/A")}");
             }
 
             GetComponent<Character>().ApplyState(state);
