@@ -1,7 +1,7 @@
 fileFormatVersion: 2
 guid: acde4176bc9cdf64f9111eeb12a18777
 ModelImporter:
-  serializedVersion: 20101
+  serializedVersion: 21100
   internalIDToNameTable:
   - first:
       74: -3100369314251171874
@@ -24,6 +24,9 @@ ModelImporter:
   - first:
       74: -6897297136531716542
     second: Armature|SpringUp
+  - first:
+      74: -236022367644965580
+    second: Armature|Idle (1)
   externalObjects: {}
   materials:
     materialImportMode: 1
@@ -53,11 +56,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Idle
-      takeName: Idle
+      name: Armature|Idle (1)
+      takeName: Armature|Idle
       internalID: 0
       firstFrame: 0
-      lastFrame: 1
+      lastFrame: 20
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -290,7 +293,7 @@ ModelImporter:
     useFileScale: 1
   tangentSpace:
     normalSmoothAngle: 85
-    normalImportMode: 1
+    normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
     legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
@@ -319,6 +322,7 @@ ModelImporter:
   animationType: 2
   humanoidOversampling: 1
   avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 0
   additionalBone: 0
   userData: 
   assetBundleName: 
