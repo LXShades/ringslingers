@@ -111,6 +111,11 @@ public class RingWeaponSettings
     /// </summary>
     public float projectileLifetime = 10;
 
+    /// <summary>
+    /// How many times can the ring hit a wall and slide along it
+    /// </summary>
+    public int numWallSlides = 0;
+
     [Header("Contact")]
     /// <summary>
     /// Spawns an optional effect on collide and despawn

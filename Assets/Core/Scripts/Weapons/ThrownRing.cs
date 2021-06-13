@@ -25,6 +25,8 @@ public class ThrownRing : NetworkBehaviour
 
     private float spawnTime;
 
+    private int currentNumWallSlides = 0;
+
     private bool isDead = false;
 
     private bool wasLocallyThrown = false;
@@ -139,10 +141,20 @@ public class ThrownRing : NetworkBehaviour
             damageable.TryDamage(owner, velocity.normalized * effectiveSettings.projectileKnockback);
         }
 
+        // Ignore collisions with other rings
         if (collision.collider.TryGetComponent(out ThrownRing thrownRing))
         {
             if (thrownRing.owner == owner)
                 return; // don't collide with our other rings
+        }
+
+        // Do wall slides, if allowed
+        if (currentNumWallSlides < effectiveSettings.numWallSlides)
+        {
+            velocity = velocity.AlongPlane(collision.contacts[0].normal).normalized * velocity.magnitude + collision.contacts[0].normal * 0.001f;
+            transform.position += velocity.normalized * collision.contacts[0].separation;
+            currentNumWallSlides++;
+            return;
         }
 
         // Play despawn sound
