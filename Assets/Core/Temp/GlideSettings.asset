@@ -12,69 +12,62 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 024551778f562494b8388cd77d0b40a3, type: 3}
   m_Name: GlideSettings
   m_EditorClassIdentifier: 
-  tunnelVerticalFrictionBySpeed:
+  minSpeed: 12
+  maxSpeed: 25
+  accelerationBySpeed:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.05
-      inSlope: -0.0000005887944
-      outSlope: -0.0033018277
+      value: 7.5
+      inSlope: -0.17505851
+      outSlope: -0.17505851
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.032258064
+    - serializedVersion: 3
+      time: 25
+      value: 4.934387
+      inSlope: -0.0062136655
+      outSlope: -0.0062136655
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.075736314
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  turnSpeedBySpeed:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 12
+      value: 180
+      inSlope: 0
+      outSlope: -6.923077
       tangentMode: 65
       weightedMode: 0
       inWeight: 0
-      outWeight: 1
+      outWeight: 0
     - serializedVersion: 3
-      time: 3.0593665
-      value: 0.0398985
-      inSlope: -0.0033018277
-      outSlope: -0.010285434
-      tangentMode: 69
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 6.9336314
-      value: 0.00005
-      inSlope: -0.010285434
+      time: 25
+      value: 90
+      inSlope: -6.923077
       outSlope: 0
       tangentMode: 5
       weightedMode: 0
       inWeight: 0
       outWeight: 0
-    - serializedVersion: 3
-      time: 7.6151185
-      value: 0.00005
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  tunnelHorizontalFrictionBySpeed:
+  fallSpeedBySpeed:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
       time: 0
-      value: 0.02
-      inSlope: 0
-      outSlope: 0.12685175
-      tangentMode: 65
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  airResistanceBySpeed:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: -0.026737213
-      value: 0
+      value: 2.25
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -82,29 +75,14 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 14.126581
-      value: 0.018066615
-      inSlope: 0.0044316207
-      outSlope: 0.0044316207
+      time: 25
+      value: 2.25
+      inSlope: 0
+      outSlope: 0
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 1
-    - serializedVersion: 3
-      time: 38.20578
-      value: 0.49208283
-      inSlope: 0.045484785
-      outSlope: 0.045484785
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.08806097
+      inWeight: 0
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  gravityMultiplier: 2.5
-  maxSpeed: 35
-  debugForceScale: 0.1
-  verticalTurnLimit: 0.4
-  tunnelToForwardHorizontalForceMultiplier: 0.3
-  tunnelToForwardVerticalForceMultiplier: 0.005

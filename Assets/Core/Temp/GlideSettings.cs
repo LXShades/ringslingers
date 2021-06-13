@@ -3,14 +3,10 @@
 [CreateAssetMenu(fileName = "GlideSettings.asset", menuName = "Create/Glide Settings")]
 public class GlideSettings : ScriptableObject
 {
-    public AnimationCurve tunnelVerticalFrictionBySpeed = AnimationCurve.Linear(0, 10, 20, 10);
-    public AnimationCurve tunnelHorizontalFrictionBySpeed = AnimationCurve.Linear(0, 10, 20, 10);
-    public AnimationCurve airResistanceBySpeed = AnimationCurve.Linear(0, 10, 20, 10);
-    public float gravityMultiplier = 1.5f;
+    public float minSpeed = 5f;
     public float maxSpeed = 25f;
-    public float debugForceScale = 1f;
-    public float verticalTurnLimit = 0.3f;
 
-    public float tunnelToForwardHorizontalForceMultiplier = 1f;
-    public float tunnelToForwardVerticalForceMultiplier = 0.1f;
+    public AnimationCurve accelerationBySpeed = AnimationCurve.Linear(0f, 1f, 25f, 1f);
+    public AnimationCurve turnSpeedBySpeed = AnimationCurve.Linear(0f, 180f, 25f, 180f);
+    public AnimationCurve fallSpeedBySpeed = AnimationCurve.Linear(0f, 5f, 25f, 5f);
 }

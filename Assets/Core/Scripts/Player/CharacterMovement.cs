@@ -336,7 +336,6 @@ public class CharacterMovement : Movement
         if (state.HasFlag(State.Pained))
             return;
 
-        Vector3 aim = input.aimDirection;
         if (input.btnJumpPressed)
         {
             // Start jump
@@ -358,7 +357,7 @@ public class CharacterMovement : Movement
                         if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped))
                         {
                             // Thok
-                            velocity.SetHorizontal(aim.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
+                            velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
                             if (isRealtime)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
@@ -367,8 +366,15 @@ public class CharacterMovement : Movement
                         }
                         break;
                     case JumpAbility.Glide:
+                    {
                         state |= State.Gliding;
+
+                        // give an initial boost towards facing direction
+                        float clampedHorizontalMag = velocity.Horizontal().magnitude;
+                        if (clampedHorizontalMag < glide.minSpeed)
+                            velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * glide.minSpeed);
                         break;
+                    }
                 }
             }
         }
@@ -382,60 +388,48 @@ public class CharacterMovement : Movement
                 velocity.y /= 2f;
         }
 
-        // Cancel gliding
+        // Run other abilities
+        HandleJumpAbilities_Gliding(input, deltaTime);
+    }
+
+    private void HandleJumpAbilities_Gliding(PlayerInput input, float deltaTime)
+    {
+        Vector3 aim = input.aimDirection;
+
+        // Cancel gliding upon release
         if (!input.btnJump)
         {
             if ((state & State.Gliding) != 0)
-            {
                 state &= ~(State.Gliding | State.Jumped); // remove jumping state as well to prevent next glide
-            }
         }
 
-        // Handle glidng
+        // Handle gliding
         if ((state & State.Gliding) == State.Gliding)
         {
-            velocity.y -= (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime) * (glide.gravityMultiplier - 1f);
+            float horizontalSpeed = velocity.Horizontal().magnitude;
+            Vector3 horizontalAim = aim.Horizontal().normalized;
+            Vector3 desiredDirection = (horizontalAim + Vector3.Cross(Vector3.up, horizontalAim) * input.moveHorizontalAxis).normalized;
 
-            Vector3 movementAim = aim.Horizontal().normalized;
-            Vector3 aimRight = Vector3.Cross(Vector3.up, movementAim).normalized;
-            Vector3 aimUp = Vector3.up;
+            // gravity cancel and fall control
+            velocity.y = Math.Max(velocity.y, -glide.fallSpeedBySpeed.Evaluate(horizontalSpeed));
 
-            // adjust aim based on directional keys (side gliding)
-            if (Mathf.Abs(input.moveHorizontalAxis) > 0.01f)
-            {
-                movementAim = (movementAim + aimRight * (input.moveHorizontalAxis * Mathf.Sign(Vector3.Dot(aim, velocity)))).normalized;
-                aimRight = Vector3.Cross(Vector3.up, movementAim).normalized;
-            }
+            // speed up/slow down
+            float targetSpeed = horizontalSpeed + glide.accelerationBySpeed.Evaluate(horizontalSpeed) * input.moveVerticalAxis * deltaTime;
 
-            // glide up/down
-            if (Mathf.Abs(input.moveVerticalAxis) > 0.01f)
-            {
-                movementAim += (aimUp * -input.moveVerticalAxis) * glide.verticalTurnLimit;
-                movementAim.Normalize();
-                aimUp = Vector3.Cross(movementAim, aimRight);
-            }
+            velocity.SetHorizontal(velocity.Horizontal().normalized * targetSpeed);
 
-            float forwardVelocitySign = Mathf.Sign(Vector3.Dot(movementAim, velocity));
+            // turn!
+            float turnSpeed = glide.turnSpeedBySpeed.Evaluate(horizontalSpeed); // in degrees/sec
 
-            // Add tunnel friction
-            float velocityAlongAim = Mathf.Abs(velocity.AlongAxis(movementAim));
-            Vector3 tunnelHorizontalFrictionForce = aimRight * (-velocity.AlongAxis(aimRight) * (1f - Mathf.Pow(glide.tunnelHorizontalFrictionBySpeed.Evaluate(velocityAlongAim), deltaTime)));
-            Vector3 tunnelVerticalFrictionForce = aimUp * -velocity.AlongAxis(aimUp) * (1f - Mathf.Pow(glide.tunnelVerticalFrictionBySpeed.Evaluate(velocityAlongAim), deltaTime));
+            velocity.SetHorizontal(Vector3.RotateTowards(velocity.Horizontal(), desiredDirection, turnSpeed * Mathf.Deg2Rad * deltaTime, 0f));
 
-            // Air resistance
-            float airResistance = glide.airResistanceBySpeed.Evaluate(velocityAlongAim);
-            velocity -= movementAim * (airResistance * forwardVelocitySign * deltaTime); // air resistance
-
-            // Apply friction and maintain all speed while turning horizontally
-            velocity += tunnelVerticalFrictionForce;
-            float velLen = velocity.Horizontal().magnitude;
-            velocity += tunnelHorizontalFrictionForce;
-            velocity.SetHorizontal(velocity.Horizontal().normalized * velLen);
-
-            // max speed
-            float maxSpeed = glide.maxSpeed;
-            if (velocity.magnitude > maxSpeed)
-                velocity = velocity * (maxSpeed / velocity.magnitude);
+            // speed clamps
+            Vector3 clampedHorizontal = velocity.Horizontal();
+            float clampedHorizontalMag = clampedHorizontal.magnitude;
+            if (clampedHorizontalMag < glide.minSpeed)
+                velocity.SetHorizontal(clampedHorizontal * (glide.minSpeed / clampedHorizontalMag));
+            else if (clampedHorizontalMag > glide.maxSpeed)
+                velocity.SetHorizontal(clampedHorizontal * (glide.maxSpeed / clampedHorizontalMag));
         }
     }
 

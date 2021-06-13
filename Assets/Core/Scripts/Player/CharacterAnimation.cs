@@ -15,6 +15,8 @@ public class CharacterAnimation : MonoBehaviour
     public float legTurnDegreesPerSecond = 360f;
     public float fallTiltDegreesPerSecond = 50f;
     public float fallTiltMaxDegrees = 20f;
+    [Tooltip("As a dot product. A blend between neutral and turning tilt angle where the full angle is lerped until this dot product between speed and direction is met.")]
+    public float glideTiltSpeedBlend = 0.05f;
 
     private Quaternion lastRootRotation = Quaternion.identity;
     private Vector3 lastCharacterUp = Vector3.up;
@@ -66,21 +68,22 @@ public class CharacterAnimation : MonoBehaviour
             lastRootRotation = root.rotation;
         }
 
-        // think of this as rotation = originalRotation - forwardRotation + newHeadForwardRotation
-        // head - (head.forward, charUp) + (aim, up)
-        head.transform.rotation = Quaternion.LookRotation(player.liveInput.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(head.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
-
         if ((movement.state & CharacterMovement.State.Gliding) != 0)
         {
             float tiltAngle = 0f;
+            Vector3 groundSide = Vector3.Cross(groundForward, Vector3.up);
+            float dot = Vector3.Dot(groundVelocity.normalized, groundAimForward.normalized);
 
-            if (groundVelocity.sqrMagnitude > 1f)
-            {
-                Vector3 groundSide = Vector3.Cross(groundForward, Vector3.up);
-                tiltAngle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(groundVelocity.normalized, groundAimForward.normalized), -0.9999f, 0.9999f)) * Mathf.Rad2Deg * -Mathf.Sign(Vector3.Dot(groundSide, groundVelocity - groundAimForward));
-            }
+            tiltAngle = Mathf.Acos(Mathf.Clamp(dot, 0f, 1f)) * Mathf.Rad2Deg * -Mathf.Sign(Vector3.Dot(groundSide, groundVelocity - groundAimForward));
+            tiltAngle = Mathf.Lerp(0f, tiltAngle, Mathf.Abs(dot / glideTiltSpeedBlend));
 
-            root.rotation = root.rotation * Quaternion.Euler(player.liveInput.verticalAim, tiltAngle, 0f);
+            characterUp = Quaternion.Inverse(root.rotation) * characterUp;
+            root.rotation = root.rotation * Quaternion.Euler(0f, tiltAngle, 0f);
+            characterUp = root.rotation * characterUp;
         }
+
+        // think of this as rotation = originalRotation - forwardRotation + newHeadForwardRotation
+        // head - (head.forward, charUp) + (aim, up)
+        head.transform.rotation = Quaternion.LookRotation(player.liveInput.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(head.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
     }
 }
