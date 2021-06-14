@@ -152,7 +152,14 @@ public class ThrownRing : NetworkBehaviour
         if (currentNumWallSlides < effectiveSettings.numWallSlides)
         {
             velocity = velocity.AlongPlane(collision.contacts[0].normal).normalized * velocity.magnitude + collision.contacts[0].normal * 0.001f;
-            transform.position += velocity.normalized * collision.contacts[0].separation;
+
+            Collider myself = collision.contacts[0].thisCollider, victim = collision.contacts[0].otherCollider;
+            if (Physics.ComputePenetration(myself, myself.transform.position, myself.transform.rotation, 
+                victim, victim.transform.position, victim.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
+            {
+                transform.position += depenetrationDir * depenetrationDistance;
+            }
+
             currentNumWallSlides++;
             return;
         }
