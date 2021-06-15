@@ -23,6 +23,9 @@ public class Character : NetworkBehaviour
     /// </summary>
     [SyncVar(hook=nameof(OnPlayerIdChanged))] public int playerId;
 
+    [SyncVar]
+    public GameObject shield;
+
     /// <summary>
     /// Is this the locally-controlled player?
     /// </summary>
@@ -99,6 +102,10 @@ public class Character : NetworkBehaviour
 
     public bool isHoldingFlag => holdingFlag != null;
 
+    private static int nextSpawner = 0;
+
+    public float localTime = -1;
+
     public TheFlag holdingFlag
     {
         get
@@ -113,8 +120,6 @@ public class Character : NetworkBehaviour
             return null;
         }
     }
-
-    public float localTime = -1;
 
     void Awake()
     {
@@ -167,8 +172,6 @@ public class Character : NetworkBehaviour
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = true;
     }
-
-    private static int nextSpawner = 0;
 
     public void Respawn()
     {
@@ -242,8 +245,16 @@ public class Character : NetworkBehaviour
                     MessageFeed.Post($"<player>{attackerAsPlayer.playerName}</player> hit <player>{playerName}</player> with a {attackerAsPlayer.GetComponent<RingShooting>().effectiveWeaponSettings.name} ring!");
                 }
 
-                // Drop some rings
-                DropRings();
+                if (shield == null)
+                {
+                    // Drop some rings
+                    DropRings();
+                }
+                else
+                {
+                    // Just lose the shield we have
+                    LoseShield();
+                }
             }
         }
 
@@ -383,6 +394,30 @@ public class Character : NetworkBehaviour
         playerId = newVal;
 
         Netplay.singleton.RegisterPlayer(this, newVal);
+    }
+
+    [Server]
+    public void ApplyShield(GameObject shieldPrefab)
+    {
+        if (shield)
+            LoseShield();
+
+        shield = Spawner.Spawn(shieldPrefab);
+
+        if (shield.TryGetComponent(out Shield shieldComponent))
+            shieldComponent.target = gameObject;
+    }
+
+    [Server]
+    public void LoseShield()
+    {
+        if (shield)
+        {
+            Spawner.Despawn(shield);
+            shield = null;
+
+            sounds.PlayNetworked(PlayerSounds.PlayerSoundType.ShieldLoss);
+        }
     }
 
     /// <summary>
