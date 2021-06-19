@@ -45,6 +45,46 @@ public static class GamePreferences
         }
     }
 
+    public static float minClientDelayMs
+    {
+        get => PlayerPrefs.GetFloat("minClientDelay", 16f);
+        set
+        {
+            PlayerPrefs.SetFloat("minClientDelay", value);
+            OnPreferencesChanged();
+        }
+    }
+
+    public static float maxClientDelayMs
+    {
+        get => PlayerPrefs.GetFloat("maxClientDelay", 50f);
+        set
+        {
+            PlayerPrefs.SetFloat("maxClientDelay", value);
+            OnPreferencesChanged();
+        }
+    }
+
+    public static float minServerDelayMs
+    {
+        get => PlayerPrefs.GetFloat("minServerDelay", 16f);
+        set
+        {
+            PlayerPrefs.SetFloat("minServerDelay", value);
+            OnPreferencesChanged();
+        }
+    }
+
+    public static float maxServerDelayMs
+    {
+        get => PlayerPrefs.GetFloat("maxServerDelay", 50f);
+        set
+        {
+            PlayerPrefs.SetFloat("maxServerDelay", value);
+            OnPreferencesChanged();
+        }
+    }
+
     private static float _mouseSpeed;
 
     public static event Action onPreferencesChanged;

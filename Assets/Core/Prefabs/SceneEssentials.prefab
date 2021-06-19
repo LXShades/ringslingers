@@ -48,7 +48,7 @@ MonoBehaviour:
     mapShot: {fileID: 0}
     defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
     defaultPlayerLimit: 32
-    includeInRotation: 0
+    includeInRotation: 1
     minRotationPlayers: 0
     maxRotationPlayers: 32
 --- !u!1 &3413194138189725758
@@ -387,18 +387,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  serverFlowControlSettings:
-    jitterSampleSize: 3
-    upperPercentile: 1
-    addToDelay: 0
-    maxDelay: 0.1
-    minDelay: 0
-  clientFlowControlSettings:
-    jitterSampleSize: 3
-    upperPercentile: 1
-    addToDelay: 0
-    maxDelay: 0.1
-    minDelay: 0
   pingTolerance: 1
   sendBufferLength: 0.2
   extrapolateLocalInput: 1
@@ -407,16 +395,11 @@ MonoBehaviour:
   maxRemotePrediction: 0.3
   remotePredictionTimeStep: 0.08
   localPlayerInput:
-    moveHorizontalAxis: 0
-    moveVerticalAxis: 0
-    horizontalAim: 0
-    verticalAim: 0
-    btnJump: 0
-    btnFire: 0
-    btnJumpPressed: 0
-    btnJumpReleased: 0
-    btnFirePressed: 0
-    btnFireReleased: 0
+    _moveHorizontalAxis: 0
+    _moveVerticalAxis: 0
+    _horizontalAim: 0
+    _verticalAim: 0
+    _buttons: 0
 --- !u!1001 &5855508452200257497
 PrefabInstance:
   m_ObjectHideFlags: 0

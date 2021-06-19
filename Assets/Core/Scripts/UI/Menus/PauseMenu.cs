@@ -22,9 +22,4 @@ public class PauseMenu : MonoBehaviour
     {
         GameManager.singleton.isPaused = false;
     }
-
-    public void GoNextLevel()
-    {
-        Netplay.singleton.ServerNextMap();
-    }
 }

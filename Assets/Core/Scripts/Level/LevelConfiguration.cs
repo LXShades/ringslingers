@@ -13,7 +13,7 @@ public class LevelConfiguration
     public int defaultPlayerLimit = 12;
 
     [Header("Whether to include the map in the rotation")]
-    public bool includeInRotation = false;
+    public bool includeInRotation = true;
 
     [Tooltip("Minimum amount of players in the server for this to be considered in the rotation")]
     public int minRotationPlayers;

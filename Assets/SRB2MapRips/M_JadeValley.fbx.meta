@@ -1,9 +1,69 @@
 fileFormatVersion: 2
 guid: cae6303cd87795e4990c57ae15c75b63
 ModelImporter:
-  serializedVersion: 20101
+  serializedVersion: 21100
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: ACWRFL1A
+    second: {fileID: 2100000, guid: cb2dac5da537cd94ba6594b9359b0de7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CFALL1
+    second: {fileID: 2100000, guid: fbdf408dc08b24b47811d8c4f2b2852f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Default
+    second: {fileID: 2100000, guid: d7e7842c027f7364784d8dda59066ffe, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: FWATER1
+    second: {fileID: 2100000, guid: 66078a8ea947c724ca165d9016188752, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZCHEK1
+    second: {fileID: 2100000, guid: bc643d95a411a20438feb2171c00911a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZCHEK2
+    second: {fileID: 2100000, guid: 092038773915f7e4caf13b25a571d55a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZFLR01
+    second: {fileID: 2100000, guid: 0b282e6319a262a458dd8bb75033664f, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZFLR02
+    second: {fileID: 2100000, guid: 6632f6a060d4df54db2367de2c925213, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZFLR10
+    second: {fileID: 2100000, guid: 8bdafa20aec33fc4b989131bfa63d24a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZGRASS
+    second: {fileID: 2100000, guid: df6cb88bfb69fb942856ddf7d3c13623, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZROCK
+    second: {fileID: 2100000, guid: ce953f171f246ff44bdaa693163ff3fc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZWALL
+    second: {fileID: 2100000, guid: 2ab4c759d869b454ba4ef0147317a584, type: 2}
   materials:
     materialImportMode: 1
     materialName: 0
@@ -95,6 +155,7 @@ ModelImporter:
   animationType: 2
   humanoidOversampling: 1
   avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 0
   additionalBone: 0
   userData: 
   assetBundleName: 

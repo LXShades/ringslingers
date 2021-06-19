@@ -9,9 +9,18 @@ public class SliderNumberPair : MonoBehaviour
 
     public float value
     {
-        set => slider.value = value;
+        set
+        {
+            slider.minValue = minValue;
+            slider.maxValue = maxValue; // in case awake not yet called
+            slider.value = value;
+            number.text = value.ToString();
+        }
         get => slider.value;
     }
+
+    public float minValue = 0f;
+    public float maxValue = 1f;
 
     public UnityEvent<float> onValueChanged;
 
@@ -23,6 +32,9 @@ public class SliderNumberPair : MonoBehaviour
         {
             number.onValueChanged.AddListener(OnNumberChanged);
             slider.onValueChanged.AddListener(OnSliderChanged);
+
+            slider.minValue = minValue;
+            slider.maxValue = maxValue;
         }
     }
 
@@ -46,5 +58,13 @@ public class SliderNumberPair : MonoBehaviour
             suppressCallbacks = false;
             onValueChanged?.Invoke(slider.value);
         }
+    }
+
+    private void OnValidate()
+    {
+        if (slider == null)
+            slider = GetComponentInChildren<Slider>();
+        if (number == null)
+            number = GetComponentInChildren<InputField>();
     }
 }

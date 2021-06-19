@@ -37,6 +37,8 @@ public class Netplay : MonoBehaviour
     [Header("Connection")]
     public ConnectionStatus connectionStatus = ConnectionStatus.Offline;
 
+    public Mirror.FlowControlSettings defaultFlowControlSettings = Mirror.FlowControlSettings.Default;
+
     [Range(0.5f, 20f)]
     public float pingsPerSecond = 2f;
 
@@ -417,19 +419,14 @@ public class Netplay : MonoBehaviour
     #region Net Configuration
     private void ApplyNetPreferences()
     {
-        Mirror.FlowControlSettings flowControlSettings = Mirror.FlowControlSettings.Default;
-
-        flowControlSettings.minDelay = 0.0f;
-        flowControlSettings.maxDelay = 0.1f;
-        flowControlSettings.upperPercentile = 0.1f;
-
-
         if (NetworkClient.active && !NetworkServer.active /* don't throttle host self-connection */)
         {
             NetworkClient.connection.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
 
             // current default netflow settings
-            NetworkClient.connection.flowController.flowControlSettings = flowControlSettings;
+            NetworkClient.connection.flowController.flowControlSettings = defaultFlowControlSettings;
+            NetworkClient.connection.flowController.flowControlSettings.minDelay = GamePreferences.minClientDelayMs * 0.001f;
+            NetworkClient.connection.flowController.flowControlSettings.maxDelay = GamePreferences.maxClientDelayMs * 0.001f;
         }
 
         if (NetworkServer.active)
@@ -439,7 +436,9 @@ public class Netplay : MonoBehaviour
                 if (conn.Value != NetworkServer.localConnection)
                 {
                     conn.Value.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
-                    NetworkClient.connection.flowController.flowControlSettings = flowControlSettings;
+                    NetworkClient.connection.flowController.flowControlSettings = defaultFlowControlSettings;
+                    NetworkClient.connection.flowController.flowControlSettings.minDelay = GamePreferences.minServerDelayMs * 0.001f;
+                    NetworkClient.connection.flowController.flowControlSettings.maxDelay = GamePreferences.maxServerDelayMs * 0.001f;
                 }
             }
         }
