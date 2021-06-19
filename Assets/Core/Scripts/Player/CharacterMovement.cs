@@ -37,6 +37,7 @@ public class CharacterMovement : Movement
 
     [Header("3D movement")]
     public bool enableWallRun = true;
+    public float wallRunSpeedThreshold = 10f;
     public float wallRunRotationResetSpeed = 180f;
     [Tooltip("When wall running on the previous frame, this force pushes you down towards the ground on the next frame if in range and running fast enough. Based on how much your orientation diverged from up=(0,1,0) in degrees. 1 means push fully to the ground.")]
     public AnimationCurve wallRunPushForceByUprightness = AnimationCurve.Linear(0, 0, 180, 1);
@@ -549,6 +550,9 @@ public class CharacterMovement : Movement
             // this is our new ground normal
             groundNormal = targetUp;
         }
+
+        if (velocity.magnitude < wallRunSpeedThreshold)
+            targetUp = Vector3.up;
 
         // Rotate towards our target
         if (Vector3.Angle(up, targetUp) > 0f)
