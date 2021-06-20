@@ -39,12 +39,19 @@ public struct PlayerInput : IEquatable<PlayerInput>
         get => (_buttons & 2) != 0;
         set => _buttons = (byte)(value ? (_buttons | 2) : (_buttons & ~2));
     }
+    public bool btnSpin
+    {
+        get => (_buttons & 4) != 0;
+        set => _buttons = (byte)(value ? (_buttons | 4) : (_buttons & ~4));
+    }
 
     // these aren't serialized
     public bool btnJumpPressed { get; set; }
     public bool btnJumpReleased { get; set; }
     public bool btnFirePressed { get; set; }
     public bool btnFireReleased { get; set; }
+    public bool btnSpinPressed { get; set; }
+    public bool btnSpinReleased { get; set; }
 
     // actual compressed data
     // 7 bytes
@@ -103,6 +110,7 @@ public struct PlayerInput : IEquatable<PlayerInput>
 
         localInput.btnFire = controls.Gameplay.Fire.ReadValue<float>() > 0.5f; // seriously unity what the f***
         localInput.btnJump = controls.Gameplay.Jump.ReadValue<float>() > 0.5f; // this is apparently the way to read digital buttons, look it up
+        localInput.btnSpin = controls.Gameplay.Spindash.ReadValue<float>() > 0.5f; // yeah these are all floating points I mean duh
 
         return localInput;
     }
@@ -116,9 +124,11 @@ public struct PlayerInput : IEquatable<PlayerInput>
 
         output.btnJumpPressed = !lastInput.btnJump && btnJump;
         output.btnFirePressed = !lastInput.btnFire && btnFire;
+        output.btnSpinPressed = !lastInput.btnSpin && btnSpin;
 
         output.btnJumpReleased = lastInput.btnJump && !btnJump;
         output.btnFireReleased = lastInput.btnFire && !btnFire;
+        output.btnSpinReleased = lastInput.btnSpin && !btnSpin;
 
         return output;
     }
@@ -132,6 +142,7 @@ public struct PlayerInput : IEquatable<PlayerInput>
 
         output.btnFirePressed = output.btnFireReleased = false;
         output.btnJumpPressed = output.btnJumpReleased = false;
+        output.btnSpinPressed = output.btnSpinReleased = false;
 
         return output;
     }
@@ -140,12 +151,15 @@ public struct PlayerInput : IEquatable<PlayerInput>
     {
         return moveHorizontalAxis == other.moveHorizontalAxis && moveVerticalAxis == other.moveVerticalAxis
             && horizontalAim == other.horizontalAim && verticalAim == other.verticalAim
-            && btnFire == other.btnFire && btnJump == other.btnJump;
+            && btnFire == other.btnFire && btnJump == other.btnJump && btnSpin == other.btnSpin;
     }
 
     public override string ToString()
     {
-        return $"H {moveHorizontalAxis:0.00} V {moveVerticalAxis:0.00} Jmp {btnJump}/P{btnJumpPressed}/R{btnJumpReleased} Fire {btnFire}/P{btnFirePressed}/R{btnFireReleased}";
+        return $"H {moveHorizontalAxis:0.00} V {moveVerticalAxis:0.00} " +
+            $"Jump {btnJump}/P{btnJumpPressed}/R{btnJumpReleased} " +
+            $"Fire {btnFire}/P{btnFirePressed}/R{btnFireReleased} " +
+            $"Spin {btnSpin}/P{btnSpinPressed}/R{btnFireReleased}";
     }
 }
 public struct InputDelta

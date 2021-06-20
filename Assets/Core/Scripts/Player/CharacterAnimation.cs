@@ -32,19 +32,34 @@ public class CharacterAnimation : MonoBehaviour
     {
         Vector3 groundVelocity = movement.groundVelocity;
         float forwardSpeedMultiplier = Vector3.Dot(transform.forward.Horizontal(), groundVelocity) <= 0f ? -1 : 1;
+        float spinSpeed = 15f;
+
+        if ((movement.state & CharacterMovement.State.Rolling) != 0f)
+        {
+            if (movement.spindashChargeLevel > 0f)
+                spinSpeed = movement.spindashChargeLevel * movement.spindashMaxSpeed;
+            else
+                spinSpeed = movement.velocity.magnitude;
+        }
 
         animation.SetFloat("HorizontalSpeed", groundVelocity.magnitude);
         animation.SetFloat("HorizontalForwardSpeed", groundVelocity.magnitude * forwardSpeedMultiplier);
         animation.SetBool("IsOnGround", movement.isOnGround);
-        animation.SetBool("IsRolling", !movement.isOnGround && (movement.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0);
+        animation.SetBool("IsRolling", (movement.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0);
         animation.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
         animation.SetBool("IsFreeFalling", !movement.isOnGround && movement.velocity.y < 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
         animation.SetBool("IsHurt", (movement.state & CharacterMovement.State.Pained) != 0);
         animation.SetBool("IsGliding", (movement.state & CharacterMovement.State.Gliding) != 0);
+        animation.SetFloat("SpinSpeed", spinSpeed);
     }
 
     private void LateUpdate()
     {
+        if ((movement.state & (CharacterMovement.State.Rolling | CharacterMovement.State.Jumped)) != 0)
+        {
+            return; // spinning animation shouldn't be tampered with
+        }
+
         Vector3 groundVelocity = movement.groundVelocity;
         Vector3 characterUp = movement.up;
         Vector3 groundForward = transform.forward.AlongPlane(characterUp).normalized;

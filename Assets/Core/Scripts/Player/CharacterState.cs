@@ -42,6 +42,11 @@ public struct CharacterState : IEquatable<CharacterState>
         get => (CharacterMovement.State)_state;
         set => _state = (byte)value;
     }
+    public float spindashChargeLevel
+    {
+        get => _spindashChargeAmount / 65535f;
+        set => _spindashChargeAmount = (ushort)(value * 65535f);
+    }
 
     // internal - actual data sent/received and confirmed/deconfirmed
     // public because Mirror only serializes public stuff
@@ -54,6 +59,7 @@ public struct CharacterState : IEquatable<CharacterState>
     public ushort _upLow;
     public byte _upHigh;
     public byte _state;
+    public ushort _spindashChargeAmount;
 
     public void DebugDraw(Color colour)
     {
@@ -69,7 +75,8 @@ public struct CharacterState : IEquatable<CharacterState>
             && other._velocityX == _velocityX && other._velocityY == _velocityY && other._velocityZ == _velocityZ
             && other._upLow == _upLow
             && other._upHigh == _upHigh
-            && other._state == _state;
+            && other._state == _state
+            && other._spindashChargeAmount == _spindashChargeAmount;
     }
 
     // Compresses upIn in the same way as regular up and returns the result. Used to quantize in the same way we expect it to be quantized when saved/loaded
@@ -95,6 +102,8 @@ public struct CharacterState : IEquatable<CharacterState>
             differences += $"A-vel: {stateA.velocity} B-vel: {stateB.velocity}\n";
         if (stateA.up != stateB.up)
             differences += $"A-up: {stateA.up} B-up: {stateB.up}\n";
+        if (stateA.spindashChargeLevel != stateB.spindashChargeLevel)
+            differences += $"A-dash: {stateA.spindashChargeLevel.ToString("F2")} B-dash: {stateB.spindashChargeLevel.ToString("F2")}";
         return differences;
     }
 }

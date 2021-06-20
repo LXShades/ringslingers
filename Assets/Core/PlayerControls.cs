@@ -35,6 +35,14 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""interactions"": """"
                 },
                 {
+                    ""name"": ""Spindash"",
+                    ""type"": ""Value"",
+                    ""id"": ""92a0912c-e35b-4e48-8287-e2e511759eee"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
                     ""name"": ""Fire"",
                     ""type"": ""Value"",
                     ""id"": ""3753e377-a961-4534-baf8-20ec4f9c1670"",
@@ -154,6 +162,39 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
+                    ""name"": ""1D Axis"",
+                    ""id"": ""889a3e11-c76e-4901-8463-cd3296a89fd3"",
+                    ""path"": ""1DAxis(minValue=-10,maxValue=10)"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": true,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": ""negative"",
+                    ""id"": ""466e9760-27f8-4e83-902e-475b719d39e1"",
+                    ""path"": ""<Keyboard>/rightBracket"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": ""positive"",
+                    ""id"": ""e218c489-fad7-4e0c-8b6c-60dd927926d5"",
+                    ""path"": ""<Keyboard>/leftBracket"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Zoom"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": true
+                },
+                {
                     ""name"": """",
                     ""id"": ""b9ad8515-cccd-4595-a6ad-b5b08e8f0615"",
                     ""path"": ""<Keyboard>/t"",
@@ -207,6 +248,17 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""action"": ""Center Camera"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""319be93a-a1bf-4549-8bf8-ae91fb4c84de"",
+                    ""path"": ""<Keyboard>/leftShift"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Spindash"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -217,6 +269,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
         m_Gameplay_Movement = m_Gameplay.FindAction("Movement", throwIfNotFound: true);
         m_Gameplay_Jump = m_Gameplay.FindAction("Jump", throwIfNotFound: true);
+        m_Gameplay_Spindash = m_Gameplay.FindAction("Spindash", throwIfNotFound: true);
         m_Gameplay_Fire = m_Gameplay.FindAction("Fire", throwIfNotFound: true);
         m_Gameplay_Zoom = m_Gameplay.FindAction("Zoom", throwIfNotFound: true);
         m_Gameplay_Talk = m_Gameplay.FindAction("Talk", throwIfNotFound: true);
@@ -273,6 +326,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
     private IGameplayActions m_GameplayActionsCallbackInterface;
     private readonly InputAction m_Gameplay_Movement;
     private readonly InputAction m_Gameplay_Jump;
+    private readonly InputAction m_Gameplay_Spindash;
     private readonly InputAction m_Gameplay_Fire;
     private readonly InputAction m_Gameplay_Zoom;
     private readonly InputAction m_Gameplay_Talk;
@@ -284,6 +338,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         public GameplayActions(@PlayerControls wrapper) { m_Wrapper = wrapper; }
         public InputAction @Movement => m_Wrapper.m_Gameplay_Movement;
         public InputAction @Jump => m_Wrapper.m_Gameplay_Jump;
+        public InputAction @Spindash => m_Wrapper.m_Gameplay_Spindash;
         public InputAction @Fire => m_Wrapper.m_Gameplay_Fire;
         public InputAction @Zoom => m_Wrapper.m_Gameplay_Zoom;
         public InputAction @Talk => m_Wrapper.m_Gameplay_Talk;
@@ -304,6 +359,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @Jump.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnJump;
                 @Jump.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnJump;
                 @Jump.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnJump;
+                @Spindash.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnSpindash;
+                @Spindash.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnSpindash;
+                @Spindash.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnSpindash;
                 @Fire.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnFire;
                 @Fire.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnFire;
                 @Fire.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnFire;
@@ -329,6 +387,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @Jump.started += instance.OnJump;
                 @Jump.performed += instance.OnJump;
                 @Jump.canceled += instance.OnJump;
+                @Spindash.started += instance.OnSpindash;
+                @Spindash.performed += instance.OnSpindash;
+                @Spindash.canceled += instance.OnSpindash;
                 @Fire.started += instance.OnFire;
                 @Fire.performed += instance.OnFire;
                 @Fire.canceled += instance.OnFire;
@@ -352,6 +413,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
     {
         void OnMovement(InputAction.CallbackContext context);
         void OnJump(InputAction.CallbackContext context);
+        void OnSpindash(InputAction.CallbackContext context);
         void OnFire(InputAction.CallbackContext context);
         void OnZoom(InputAction.CallbackContext context);
         void OnTalk(InputAction.CallbackContext context);

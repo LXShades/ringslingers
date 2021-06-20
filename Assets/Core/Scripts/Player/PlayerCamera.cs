@@ -81,7 +81,7 @@ public class PlayerCamera : MonoBehaviour
             transform.rotation = Quaternion.LookRotation(effectiveAimDirection, characterUp);
 
             // Apply zoom in/out
-            float zoom = Input.GetAxis("CameraZoom") * zoomSpeed;
+            float zoom = GameManager.singleton.input.Gameplay.Zoom.ReadValue<float>() * zoomSpeed;
             if (zoom != 0f)
             {
                 if (zoom > 0)

@@ -127,36 +127,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
---- !u!1 &1395042948679237298
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1736103052617720840}
-  m_Layer: 0
-  m_Name: FlagBone
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1736103052617720840
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1395042948679237298}
-  m_LocalRotation: {x: 0.90787494, y: -0.31458363, z: -0.25918618, w: 0.098096155}
-  m_LocalPosition: {x: 0.00072, y: 0.00102, z: -0.00041}
-  m_LocalScale: {x: 0.004, y: 0.004, z: 0.004}
-  m_Children: []
-  m_Father: {fileID: 5053737623419823833}
-  m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0.862, y: -147.832, z: -141.528}
 --- !u!95 &6531024565112359843
 Animator:
   serializedVersion: 3
@@ -194,6 +164,7 @@ MonoBehaviour:
   legTurnDegreesPerSecond: 720
   fallTiltDegreesPerSecond: 50
   fallTiltMaxDegrees: 20
+  glideTiltSpeedBlend: 0.05
 --- !u!95 &1801470514470862043
 Animator:
   serializedVersion: 3
@@ -231,6 +202,7 @@ MonoBehaviour:
   legTurnDegreesPerSecond: 720
   fallTiltDegreesPerSecond: 50
   fallTiltMaxDegrees: 20
+  glideTiltSpeedBlend: 0.05
 --- !u!1 &3144757497066685934
 GameObject:
   m_ObjectHideFlags: 0
@@ -583,6 +555,7 @@ MonoBehaviour:
   syncInterval: 0.1
   playerName: Fred
   playerId: 0
+  shield: {fileID: 0}
   time: 0
   colour: {r: 0, g: 0, b: 0, a: 0}
   colourByTeam:
@@ -591,7 +564,7 @@ MonoBehaviour:
   - {r: 0.1321622, g: 0.09251513, b: 0.9339623, a: 0}
   score: 0
   characterModel: {fileID: 2407978492390594985}
-  flagHoldBone: {fileID: 1736103052617720840}
+  flagHoldBone: {fileID: 0}
   speedTrails: {fileID: 3454492979416601205}
   droppedRingPrefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
   droppedRingSpawnPoint: {fileID: 3310946930297574031}
@@ -604,6 +577,7 @@ MonoBehaviour:
     maxNumRings: 16
   hurtDefaultHorizontalKnockback: 7
   hurtDefaultVerticalKnockback: 3.8
+  logLocalPlayerReconciles: 1
   movement: {fileID: 0}
   damageable: {fileID: 0}
   ticker: {fileID: 0}
@@ -666,6 +640,7 @@ MonoBehaviour:
   gravity: 0.5
   airAccelerationMultiplier: 0.25
   enableWallRun: 1
+  wallRunSpeedThreshold: 10
   wallRunRotationResetSpeed: 270
   wallRunPushForceByUprightness:
     serializedVersion: 2
@@ -718,6 +693,12 @@ MonoBehaviour:
   jumpAbility: 0
   actionSpeed: 60
   glide: {fileID: 0}
+  minRollSpeed: 1
+  rollingAccelerationMultiplier: 0.03
+  rollingFriction: 0.985
+  spindashChargeDuration: 1
+  spindashMaxSpeed: 28
+  spindashMinSpeed: 1
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
     additionalClips: []
@@ -745,6 +726,7 @@ MonoBehaviour:
   debugDisableCollision: 0
   debugDrawMovement: 0
   debugDrawWallrunSensors: 0
+  spindashChargeLevel: 0
 --- !u!114 &1227556274159782272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -930,6 +912,18 @@ MonoBehaviour:
     minRange: 5
     midRange: 22.5
     maxRange: 50
+    volumeDecibels: 0
+    pitch: 1
+    pitchVariance: 0
+    looping: 0
+  shieldLossSound:
+    clip: {fileID: 0}
+    additionalClips: []
+    blend3D: 1
+    rangePreset: 0
+    minRange: 1
+    midRange: 10
+    maxRange: 20
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -1149,14 +1143,19 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 2e91ece265165b941b124ae73b592666, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
+--- !u!137 &2407978492390594985 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3733700690988744884, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
+  m_PrefabInstance: {fileID: 1349425472474913053}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &7707168638965207191 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -554151267778803318, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
   m_PrefabInstance: {fileID: 1349425472474913053}
   m_PrefabAsset: {fileID: 0}
---- !u!137 &2407978492390594985 stripped
-SkinnedMeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 3733700690988744884, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
+--- !u!4 &6797645665708461201 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3680555907789498996, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
   m_PrefabInstance: {fileID: 1349425472474913053}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &2153966524698617702 stripped
@@ -1177,16 +1176,6 @@ GameObject:
 --- !u!23 &8063423744937777608 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 9033401157053858005, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
-  m_PrefabInstance: {fileID: 1349425472474913053}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &5053737623419823833 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -3127639135778750524, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
-  m_PrefabInstance: {fileID: 1349425472474913053}
-  m_PrefabAsset: {fileID: 0}
---- !u!4 &6797645665708461201 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -3680555907789498996, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
   m_PrefabInstance: {fileID: 1349425472474913053}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1675726462121178646

@@ -431,7 +431,8 @@ public class Character : NetworkBehaviour
             rotation = transform.rotation,
             state = movement.state,
             velocity = movement.velocity,
-            up = movement.up
+            up = movement.up,
+            spindashChargeLevel = movement.spindashChargeLevel
         };
     }
 
@@ -446,6 +447,7 @@ public class Character : NetworkBehaviour
         movement.state = state.state;
         movement.velocity = state.velocity;
         movement.up = state.up;
+        movement.spindashChargeLevel = state.spindashChargeLevel;
 
         Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
     }

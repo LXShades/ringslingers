@@ -66,7 +66,16 @@ public class CharacterMovement : Movement
 
     public GlideSettings glide;
 
-    //[Header("Abilities|Gliding")]
+    [Header("Spindash and Roll")]
+    public float minRollSpeed = 1f;
+    [Range(0f, 1f)]
+    public float rollingAccelerationMultiplier = 0.5f;
+    [Range(0f, 1f)]
+    public float rollingFriction = 0.999f;
+
+    public float spindashChargeDuration = 1f;
+    public float spindashMaxSpeed = 20f;
+    public float spindashMinSpeed = 1f;
 
     [Header("Sounds")]
     public GameSound jumpSound = new GameSound();
@@ -79,7 +88,7 @@ public class CharacterMovement : Movement
 
     // States
     [Flags]
-    public enum State
+    public enum State : byte
     {
         Jumped   = 1,
         Rolling  = 2,
@@ -89,6 +98,9 @@ public class CharacterMovement : Movement
         Gliding = 32
     };
     public State state { get; set; }
+
+    // while charging a spindash, how much it's charged
+    public float spindashChargeLevel;
 
     /// <summary>
     /// Retrieves the velocity vector along the current ground plane (horizontal if you're in the air)
@@ -225,6 +237,9 @@ public class CharacterMovement : Movement
         // Jump button
         HandleJumpAbilities(input, deltaTime, isRealtime);
 
+        // Spin button
+        HandleSpinAbilities(input, deltaTime);
+
         // 3D rotation - do this after movement to encourage push down
         ApplyRotation(deltaTime, input);
 
@@ -292,9 +307,13 @@ public class CharacterMovement : Movement
 
     private void ApplyFriction(float deltaTime)
     {
-        // Friction
+        float currentFriction = friction;
+
+        if ((state & State.Rolling) != 0)
+            currentFriction = rollingFriction;
+
         if (groundVelocity.magnitude > 0 && isOnGround)
-            groundVelocity = velocity * Mathf.Pow(friction, deltaTime * 35f);
+            groundVelocity = velocity * Mathf.Pow(currentFriction, deltaTime * 35f);
     }
 
     private void ApplyRunAcceleration(float deltaTime, PlayerInput input)
@@ -313,6 +332,8 @@ public class CharacterMovement : Movement
 
         if (!isOnGround)
             currentAcceleration *= airAccelerationMultiplier;
+        if ((state & State.Rolling) != 0)
+            currentAcceleration *= rollingAccelerationMultiplier;
 
         velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration / 65536f * deltaTime * 35f);
         velocity /= GameManager.singleton.fracunitsPerM / 35f;
@@ -322,7 +343,8 @@ public class CharacterMovement : Movement
     {
         float speedToClamp = groundVelocity.magnitude;
 
-        if (speedToClamp > topSpeed / GameManager.singleton.fracunitsPerM * 35f && speedToClamp > lastHorizontalSpeed)
+        // speed limit doesn't apply while rolling
+        if ((state & State.Rolling) == 0 && speedToClamp > topSpeed / GameManager.singleton.fracunitsPerM * 35f && speedToClamp > lastHorizontalSpeed)
             groundVelocity = (groundVelocity * (Mathf.Max(lastHorizontalSpeed, topSpeed / GameManager.singleton.fracunitsPerM * 35f) / speedToClamp));
     }
 
@@ -391,6 +413,36 @@ public class CharacterMovement : Movement
 
         // Run other abilities
         HandleJumpAbilities_Gliding(input, deltaTime);
+    }
+
+    private void HandleSpinAbilities(PlayerInput input, float deltaTime)
+    {
+        if (isOnGround && input.btnSpinPressed)
+        {
+            if (groundVelocity.magnitude > minRollSpeed)
+                state |= State.Rolling;
+        }
+
+        if ((groundVelocity.magnitude < minRollSpeed && !input.btnSpin)
+            || (state & State.Jumped) != 0)
+        {
+            state &= ~State.Rolling;
+            spindashChargeLevel = 0f;
+        }
+
+        if ((state & State.Rolling) != 0 && input.btnSpin)
+        {
+            spindashChargeLevel = Mathf.Min(spindashChargeLevel + deltaTime / spindashChargeDuration, 1f);
+        }
+        else if ((state & State.Rolling) != 0 && input.btnSpinReleased)
+        {
+            groundVelocity = input.aimDirection.AlongPlane(groundNormal).normalized * (spindashMaxSpeed * spindashChargeLevel);
+            spindashChargeLevel = 0f;
+        }
+        else if ((state & State.Rolling) == 0f)
+        {
+            spindashChargeLevel = 0f;
+        }
     }
 
     private void HandleJumpAbilities_Gliding(PlayerInput input, float deltaTime)

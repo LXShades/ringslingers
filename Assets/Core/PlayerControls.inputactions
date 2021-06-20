@@ -22,6 +22,14 @@
                     "interactions": ""
                 },
                 {
+                    "name": "Spindash",
+                    "type": "Value",
+                    "id": "92a0912c-e35b-4e48-8287-e2e511759eee",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
                     "name": "Fire",
                     "type": "Value",
                     "id": "3753e377-a961-4534-baf8-20ec4f9c1670",
@@ -141,6 +149,39 @@
                     "isPartOfComposite": false
                 },
                 {
+                    "name": "1D Axis",
+                    "id": "889a3e11-c76e-4901-8463-cd3296a89fd3",
+                    "path": "1DAxis(minValue=-10,maxValue=10)",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom",
+                    "isComposite": true,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "negative",
+                    "id": "466e9760-27f8-4e83-902e-475b719d39e1",
+                    "path": "<Keyboard>/rightBracket",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
+                    "name": "positive",
+                    "id": "e218c489-fad7-4e0c-8b6c-60dd927926d5",
+                    "path": "<Keyboard>/leftBracket",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom",
+                    "isComposite": false,
+                    "isPartOfComposite": true
+                },
+                {
                     "name": "",
                     "id": "b9ad8515-cccd-4595-a6ad-b5b08e8f0615",
                     "path": "<Keyboard>/t",
@@ -192,6 +233,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Center Camera",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "319be93a-a1bf-4549-8bf8-ae91fb4c84de",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Spindash",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
