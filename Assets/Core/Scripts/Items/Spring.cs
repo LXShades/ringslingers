@@ -10,6 +10,8 @@ public class Spring : MonoBehaviour, IMovementCollisions
 
     public bool springAbsolutely = false;
 
+    public float absoluteStartHeight = 0.5f;
+
     [Header("Sounds")]
     public GameSound springSound = new GameSound();
 
@@ -26,6 +28,9 @@ public class Spring : MonoBehaviour, IMovementCollisions
 
         if (movement && Vector3.Dot(movement.velocity, transform.up) < maxSpeedDotForSpring * springForce)
         {
+            if (springAbsolutely)
+                movement.transform.position = transform.position + transform.up * absoluteStartHeight; // line up player with spring centre
+
             movement.SpringUp(springForce, transform.up, springAbsolutely);
 
             if (isRealtime)

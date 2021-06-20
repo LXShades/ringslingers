@@ -60,6 +60,7 @@ public class ArcMakerEditor : Editor
 
         if (EditorGUI.EndChangeCheck())
         {
+            Undo.RecordObject(target, "Move arc spawner target");
             arcMaker.arcTarget = arcMaker.transform.InverseTransformPoint(globalTarget);
             arcMaker.RefreshChildren();
         }
