@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -32,6 +30,10 @@ public class ArcMaker : ObjectSpawner {
         float angleInterval = arcDegrees / Mathf.Max(numObjects - 1, 1);
         float angleStart = -angleInterval * (numObjects - 1) / 2.0f;
         Vector3 toArc = transform.TransformVector(arcTarget);
+        float circumference = Mathf.PI * toArc.magnitude * 2;
+        float degreePerDistance = 360f / circumference;
+
+        angleInterval = degreePerDistance * objectSpacing;
 
         obj.transform.position = transform.position + (Quaternion.AngleAxis(angleStart + angleInterval * objIndex, Quaternion.AngleAxis(arcRotation, toArc) * Vector3.Cross(toArc, Vector3.up)) * toArc);
     }

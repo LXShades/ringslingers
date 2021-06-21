@@ -56,10 +56,16 @@ Shader "Custom/Water"
             rotation += v.vertex.z + v.vertex.y * 215.f;
             sincos(rotation % (UNITY_PI*2), sine, cosine);
 
-            float3 toCamera = normalize(mul(unity_ObjectToWorld, float4(v.vertex.xyz, 1)));
-            v.vertex.xyz += v.normal * 
+            float3 worldNormal = mul(unity_ObjectToWorld, v.normal);
+            float3 worldVertex = mul(unity_ObjectToWorld, float4(v.vertex.xyz, 1)).xyz;
+            float3 toCamera = normalize(_WorldSpaceCameraPos - worldVertex);
+
+            worldNormal = float3(0, 1, 0); // TEMP
+            worldVertex += worldNormal * 
                 ((sine * cosine + v.vertex.x / 1.1f + v.vertex.z / 1.5f + v.vertex.x / 1.7f + v.vertex.y / -1.6f) * _WobbleStrength * 0.01f + _Offset);
-            v.color = float4(1, 1, 1, lerp(_OuterAlpha, _InnerAlpha, max(0, -dot(mul(unity_ObjectToWorld, v.normal.xyz), toCamera))));
+
+            v.vertex.xyz = mul(unity_WorldToObject, float4(worldVertex.xyz, 1)).xyz;
+            v.color = float4(1, 1, 1, lerp(_OuterAlpha, _InnerAlpha, max(0, dot(worldNormal, toCamera))));
         }
 
         void surf (Input IN, inout SurfaceOutputStandard o)

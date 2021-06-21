@@ -13,6 +13,15 @@ MonoBehaviour:
   m_Name: LevelDatabase
   m_EditorClassIdentifier: 
   levels:
+  - path: Assets/Core/Scenes/M_Jade.unity
+    configuration:
+      friendlyName: Jade Valley
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
   - path: Assets/Core/Scenes/M_ThunderCitadel.unity
     configuration:
       friendlyName: Thunder Citadel
