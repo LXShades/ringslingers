@@ -489,10 +489,10 @@ GameObject:
   - component: {fileID: 1227556274159782272}
   - component: {fileID: 933529237501604302}
   - component: {fileID: 7641004092905895223}
+  - component: {fileID: 2266500768883055632}
   - component: {fileID: 4408426014098253173}
   - component: {fileID: 2222083882362034574}
   - component: {fileID: 8686370219680115010}
-  - component: {fileID: 2266500768883055632}
   m_Layer: 8
   m_Name: CharacterBase
   m_TagString: Untagged
@@ -565,7 +565,6 @@ MonoBehaviour:
   score: 0
   characterModel: {fileID: 2407978492390594985}
   flagHoldBone: {fileID: 0}
-  speedTrails: {fileID: 3454492979416601205}
   droppedRingPrefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
   droppedRingSpawnPoint: {fileID: 3310946930297574031}
   ringDropLayers:
@@ -695,9 +694,9 @@ MonoBehaviour:
   glide: {fileID: 0}
   minRollSpeed: 1
   rollingAccelerationMultiplier: 0.03
-  rollingFriction: 0.985
+  rollingFriction: 0.988
   spindashChargeDuration: 1
-  spindashMaxSpeed: 28
+  spindashMaxSpeed: 36
   spindashMinSpeed: 1
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
@@ -824,49 +823,6 @@ MonoBehaviour:
     m_RotationOrder: 4
   thokPulseDuration: 0.2
   opacityWhileRolling: 0.4
---- !u!136 &4408426014098253173
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7352825796714013436}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  m_Radius: 0.3
-  m_Height: 0.9
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.45, z: 0}
---- !u!54 &2222083882362034574
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7352825796714013436}
-  serializedVersion: 2
-  m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
-  m_UseGravity: 0
-  m_IsKinematic: 1
-  m_Interpolate: 0
-  m_Constraints: 0
-  m_CollisionDetection: 0
---- !u!65 &8686370219680115010
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7352825796714013436}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Size: {x: 0.5, y: 1, z: 0.5}
-  m_Center: {x: 0, y: 0.48, z: 0}
 --- !u!114 &2266500768883055632
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -918,17 +874,84 @@ MonoBehaviour:
     pitchVariance: 0
     looping: 0
   shieldLossSound:
-    clip: {fileID: 0}
+    clip: {fileID: 8300000, guid: 5bbbae009eac7a44ea7f8a801adfa884, type: 3}
     additionalClips: []
     blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    rangePreset: 1
+    minRange: 5
+    midRange: 22.5
+    maxRange: 50
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
     looping: 0
+  spinChargeSound:
+    clip: {fileID: 8300000, guid: 73a8089321f9a934488148fb9fe2d5bc, type: 3}
+    additionalClips: []
+    blend3D: 1
+    rangePreset: 2
+    minRange: 5
+    midRange: 15
+    maxRange: 50
+    volumeDecibels: 0
+    pitch: 1
+    pitchVariance: 0
+    looping: 0
+  spinReleaseSound:
+    clip: {fileID: 8300000, guid: b00c7ce7043edc54e8dcd5e4b0b87660, type: 3}
+    additionalClips: []
+    blend3D: 1
+    rangePreset: 2
+    minRange: 5
+    midRange: 15
+    maxRange: 50
+    volumeDecibels: 0
+    pitch: 1
+    pitchVariance: 0
+    looping: 0
+--- !u!136 &4408426014098253173
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.3
+  m_Height: 0.9
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.45, z: 0}
+--- !u!54 &2222083882362034574
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  serializedVersion: 2
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!65 &8686370219680115010
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Size: {x: 0.5, y: 1, z: 0.5}
+  m_Center: {x: 0, y: 0.48, z: 0}
 --- !u!1 &7396597584314610511
 GameObject:
   m_ObjectHideFlags: 0

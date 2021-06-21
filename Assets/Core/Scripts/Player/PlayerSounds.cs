@@ -9,6 +9,8 @@ public class PlayerSounds : NetworkBehaviour
         Thok,
         RingDrop,
         ShieldLoss,
+        SpinCharge,
+        SpinRelease,
         NumLimit = 8
     }
 
@@ -17,6 +19,8 @@ public class PlayerSounds : NetworkBehaviour
     public GameSound thokSound = new GameSound();
     public GameSound ringDropSound = new GameSound();
     public GameSound shieldLossSound = new GameSound();
+    public GameSound spinChargeSound = new GameSound();
+    public GameSound spinReleaseSound = new GameSound();
 
     // current layout: NNsssSSS where N = number (looping) 
     const int kNumCountBits = 2;
@@ -57,6 +61,12 @@ public class PlayerSounds : NetworkBehaviour
                 break;
             case PlayerSoundType.ShieldLoss:
                 GameSounds.PlaySound(gameObject, shieldLossSound);
+                break;
+            case PlayerSoundType.SpinCharge:
+                GameSounds.PlaySound(gameObject, spinChargeSound);
+                break;
+            case PlayerSoundType.SpinRelease:
+                GameSounds.PlaySound(gameObject, spinReleaseSound);
                 break;
         }
     }

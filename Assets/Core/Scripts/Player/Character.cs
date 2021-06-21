@@ -318,6 +318,8 @@ public class Character : NetworkBehaviour
 
         if (numToDrop > 0)
             sounds.PlayNetworked(PlayerSounds.PlayerSoundType.RingDrop);
+        else
+            sounds.PlayNetworked(PlayerSounds.PlayerSoundType.ShieldLoss); // temp, better than hearing nothing
 
         numRings = 0;
     }

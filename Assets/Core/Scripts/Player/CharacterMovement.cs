@@ -238,7 +238,7 @@ public class CharacterMovement : Movement
         HandleJumpAbilities(input, deltaTime, isRealtime);
 
         // Spin button
-        HandleSpinAbilities(input, deltaTime);
+        HandleSpinAbilities(input, deltaTime, isRealtime);
 
         // 3D rotation - do this after movement to encourage push down
         ApplyRotation(deltaTime, input);
@@ -415,19 +415,14 @@ public class CharacterMovement : Movement
         HandleJumpAbilities_Gliding(input, deltaTime);
     }
 
-    private void HandleSpinAbilities(PlayerInput input, float deltaTime)
+    private void HandleSpinAbilities(PlayerInput input, float deltaTime, bool isRealtime)
     {
         if (isOnGround && input.btnSpinPressed)
         {
-            if (groundVelocity.magnitude > minRollSpeed)
-                state |= State.Rolling;
-        }
+            state |= State.Rolling;
 
-        if ((groundVelocity.magnitude < minRollSpeed && !input.btnSpin)
-            || (state & State.Jumped) != 0)
-        {
-            state &= ~State.Rolling;
-            spindashChargeLevel = 0f;
+            if (isRealtime)
+                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinCharge);
         }
 
         if ((state & State.Rolling) != 0 && input.btnSpin)
@@ -438,9 +433,19 @@ public class CharacterMovement : Movement
         {
             groundVelocity = input.aimDirection.AlongPlane(groundNormal).normalized * (spindashMaxSpeed * spindashChargeLevel);
             spindashChargeLevel = 0f;
+
+            if (isRealtime)
+                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
         }
         else if ((state & State.Rolling) == 0f)
         {
+            spindashChargeLevel = 0f;
+        }
+
+        if ((groundVelocity.magnitude < minRollSpeed && !input.btnSpin)
+            || (state & State.Jumped) != 0)
+        {
+            state &= ~State.Rolling;
             spindashChargeLevel = 0f;
         }
     }

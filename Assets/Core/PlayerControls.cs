@@ -259,6 +259,17 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""action"": ""Spindash"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""f0234fd1-b9c0-4edb-9d53-719cc547ffc6"",
+                    ""path"": ""<Mouse>/middleButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Spindash"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
