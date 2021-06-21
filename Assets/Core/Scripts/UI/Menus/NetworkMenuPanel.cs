@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class NetworkMenuPanel : MonoBehaviour
@@ -26,5 +24,13 @@ public class NetworkMenuPanel : MonoBehaviour
         maxClientDelay.value = GamePreferences.maxClientDelayMs;
         minServerDelay.value = Mathf.Min(GamePreferences.minServerDelayMs, GamePreferences.maxServerDelayMs);
         maxServerDelay.value = GamePreferences.maxServerDelayMs;
+    }
+
+    public void ResetToDefault()
+    {
+        minClientDelay.value = Netplay.kDefaultMinClientDelay;
+        maxClientDelay.value = Netplay.kDefaultMaxClientDelay;
+        minServerDelay.value = Netplay.kDefaultMinServerDelay;
+        maxServerDelay.value = Netplay.kDefaultMaxServerDelay;
     }
 }

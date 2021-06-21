@@ -54,6 +54,7 @@ public class Character : NetworkBehaviour
         {
             _team = value;
             damageable.damageTeam = (int)_team;
+            OnColourChanged(colour, colourByTeam[(int)team]);
         }
         get => _team;
     }
@@ -74,7 +75,6 @@ public class Character : NetworkBehaviour
     [Header("Visuals")]
     public Renderer characterModel;
     public Transform flagHoldBone;
-    public TrailRenderer speedTrails;
 
     [Header("Ring drop")]
     public GameObject droppedRingPrefab;
@@ -357,25 +357,20 @@ public class Character : NetworkBehaviour
     public void ChangeTeam(PlayerTeam team)
     {
         this.team = team;
-        OnColourChanged(colour, colourByTeam[(int)team]);
+    }
+
+    public Color GetCharacterColour()
+    {
+        if (colour.r == 0 && colour.g == 0 && colour.b == 0)
+            return characterModel.material.GetColor("_SourceColor");
+        else
+            return colour;
     }
 
     private void OnColourChanged(Color oldColour, Color newColour)
     {
         colour = newColour;
         characterModel.material.color = newColour;
-
-        if (newColour.r == 0 && newColour.g == 0 && newColour.b == 0)
-        {
-            Color defaultColour = characterModel.material.GetColor("_SourceColor");
-            speedTrails.startColor = defaultColour;
-            speedTrails.endColor = new Color(defaultColour.r, defaultColour.g, defaultColour.b, 0f);
-        }
-        else
-        {
-            speedTrails.startColor = newColour;
-            speedTrails.endColor = new Color(newColour.r, newColour.g, newColour.b, 0f);
-        }
     }
 
     private void OnPlayerNameChanged(string oldVal, string newVal)

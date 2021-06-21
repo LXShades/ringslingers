@@ -164,7 +164,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 {
                     ""name"": ""1D Axis"",
                     ""id"": ""889a3e11-c76e-4901-8463-cd3296a89fd3"",
-                    ""path"": ""1DAxis(minValue=-10,maxValue=10)"",
+                    ""path"": ""1DAxis"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -175,7 +175,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 {
                     ""name"": ""negative"",
                     ""id"": ""466e9760-27f8-4e83-902e-475b719d39e1"",
-                    ""path"": ""<Keyboard>/rightBracket"",
+                    ""path"": ""<Keyboard>/leftBracket"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
@@ -186,7 +186,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 {
                     ""name"": ""positive"",
                     ""id"": ""e218c489-fad7-4e0c-8b6c-60dd927926d5"",
-                    ""path"": ""<Keyboard>/leftBracket"",
+                    ""path"": ""<Keyboard>/rightBracket"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",

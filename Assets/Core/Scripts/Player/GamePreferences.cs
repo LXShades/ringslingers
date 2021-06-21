@@ -47,7 +47,7 @@ public static class GamePreferences
 
     public static float minClientDelayMs
     {
-        get => PlayerPrefs.GetFloat("minClientDelay", 16f);
+        get => PlayerPrefs.GetFloat("minClientDelay", Netplay.kDefaultMinClientDelay);
         set
         {
             PlayerPrefs.SetFloat("minClientDelay", value);
@@ -57,7 +57,7 @@ public static class GamePreferences
 
     public static float maxClientDelayMs
     {
-        get => PlayerPrefs.GetFloat("maxClientDelay", 50f);
+        get => PlayerPrefs.GetFloat("maxClientDelay", Netplay.kDefaultMaxClientDelay);
         set
         {
             PlayerPrefs.SetFloat("maxClientDelay", value);
@@ -67,7 +67,7 @@ public static class GamePreferences
 
     public static float minServerDelayMs
     {
-        get => PlayerPrefs.GetFloat("minServerDelay", 16f);
+        get => PlayerPrefs.GetFloat("minServerDelay", Netplay.kDefaultMinServerDelay);
         set
         {
             PlayerPrefs.SetFloat("minServerDelay", value);
@@ -77,7 +77,7 @@ public static class GamePreferences
 
     public static float maxServerDelayMs
     {
-        get => PlayerPrefs.GetFloat("maxServerDelay", 50f);
+        get => PlayerPrefs.GetFloat("maxServerDelay", Netplay.kDefaultMaxServerDelay);
         set
         {
             PlayerPrefs.SetFloat("maxServerDelay", value);

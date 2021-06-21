@@ -823,6 +823,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   thokPulseDuration: 0.2
+  opacityWhileRolling: 0.4
 --- !u!136 &4408426014098253173
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -1023,7 +1024,7 @@ TrailRenderer:
     colorGradient:
       serializedVersion: 2
       key0: {r: 1, g: 0, b: 0.9591489, a: 1}
-      key1: {r: 0.8396226, g: 0.099012084, b: 0.64972365, a: 0}
+      key1: {r: 1, g: 0, b: 0.9591489, a: 1}
       key2: {r: 0, g: 0, b: 0, a: 0}
       key3: {r: 0, g: 0, b: 0, a: 0}
       key4: {r: 0, g: 0, b: 0, a: 0}

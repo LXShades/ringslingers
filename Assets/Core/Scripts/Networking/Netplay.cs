@@ -8,6 +8,11 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class Netplay : MonoBehaviour
 {
+    public const float kDefaultMinClientDelay = 16f;
+    public const float kDefaultMaxClientDelay = 50f;
+    public const float kDefaultMinServerDelay = 16f;
+    public const float kDefaultMaxServerDelay = 35f;
+
     public struct PingMessage : NetworkMessage
     {
         public ushort time;
@@ -431,14 +436,15 @@ public class Netplay : MonoBehaviour
 
         if (NetworkServer.active)
         {
-            foreach (KeyValuePair<int, NetworkConnectionToClient> conn in NetworkServer.connections)
+            foreach (KeyValuePair<int, NetworkConnectionToClient> kp in NetworkServer.connections)
             {
-                if (conn.Value != NetworkServer.localConnection)
+                NetworkConnection conn = kp.Value;
+                if (conn != NetworkServer.localConnection)
                 {
-                    conn.Value.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
-                    NetworkClient.connection.flowController.flowControlSettings = defaultFlowControlSettings;
-                    NetworkClient.connection.flowController.flowControlSettings.minDelay = GamePreferences.minServerDelayMs * 0.001f;
-                    NetworkClient.connection.flowController.flowControlSettings.maxDelay = GamePreferences.maxServerDelayMs * 0.001f;
+                    conn.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
+                    conn.flowController.flowControlSettings = defaultFlowControlSettings;
+                    conn.flowController.flowControlSettings.minDelay = GamePreferences.minServerDelayMs * 0.001f;
+                    conn.flowController.flowControlSettings.maxDelay = GamePreferences.maxServerDelayMs * 0.001f;
                 }
             }
         }

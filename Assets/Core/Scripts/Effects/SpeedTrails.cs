@@ -1,5 +1,5 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class SpeedTrails : MonoBehaviour
 {
@@ -20,16 +20,22 @@ public class SpeedTrails : MonoBehaviour
 
     private Timer thokPulseProgress = new Timer();
 
+    private Character character;
     private CharacterMovement movement;
 
     private readonly List<GradientAlphaKey> trailAlphas = new List<GradientAlphaKey>(256);
 
     private readonly GradientAlphaKey[] trailAlphasAsArray = new GradientAlphaKey[8];
-    private readonly GradientColorKey[] trailMainColour = new GradientColorKey[1];
+    private readonly GradientColorKey[] trailMainColour = new GradientColorKey[2];
+
+    private Gradient gradient;
 
     private void Start()
     {
         movement = GetComponent<CharacterMovement>();
+        character = GetComponent<Character>();
+        
+        gradient = new Gradient() { alphaKeys = trailAlphasAsArray, colorKeys = trailMainColour, mode = GradientMode.Blend };
     }
 
     private void Update()
@@ -84,8 +90,12 @@ public class SpeedTrails : MonoBehaviour
         }
 
         // update trail
-        trailMainColour[0] = new GradientColorKey(new Color(trails.startColor.r, trails.startColor.g, trails.startColor.b), 0f);
-        trails.colorGradient.SetKeys(trailMainColour, trailAlphasAsArray);
+        Color characterColour = character.GetCharacterColour();
+
+        trailMainColour[0] = new GradientColorKey(new Color(characterColour.r, characterColour.g, characterColour.b, 1f), 0f);
+        trailMainColour[1] = new GradientColorKey(new Color(characterColour.r, characterColour.g, characterColour.b, 1f), 1f);
+        gradient.SetKeys(trailMainColour, trailAlphasAsArray);
+        trails.colorGradient = gradient;
         trails.emitting = opacity >= 0.05f;
     }
 }
