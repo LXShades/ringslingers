@@ -873,6 +873,18 @@ MonoBehaviour:
     pitch: 1
     pitchVariance: 0
     looping: 0
+  shieldGainSound:
+    clip: {fileID: 8300000, guid: ce27139bf62280846af7603eda165518, type: 3}
+    additionalClips: []
+    blend3D: 1
+    rangePreset: 0
+    minRange: 5
+    midRange: 10
+    maxRange: 25
+    volumeDecibels: 0
+    pitch: 1
+    pitchVariance: 0
+    looping: 0
   shieldLossSound:
     clip: {fileID: 8300000, guid: 5bbbae009eac7a44ea7f8a801adfa884, type: 3}
     additionalClips: []

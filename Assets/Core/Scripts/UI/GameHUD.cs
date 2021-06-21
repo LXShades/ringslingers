@@ -12,6 +12,7 @@ public class GameHUD : MonoBehaviour
     public Text scoreText;
     public Text timeText;
     public RectTransform autoaimCrosshair;
+    public Image shieldOverlay;
     public WeaponSlotUI[] weaponSlots = new WeaponSlotUI[0];
 
     [Header("Teams")]
@@ -87,7 +88,7 @@ public class GameHUD : MonoBehaviour
             timeText.text = "--:--";
         }
 
-        // team stuff
+        // Team stuff
         if (MatchState.Get(out MatchTeams matchTeams))
         {
             if (!teamsHud.gameObject.activeSelf)
@@ -149,6 +150,10 @@ public class GameHUD : MonoBehaviour
             }
             else if (autoaimCrosshair.gameObject.activeSelf)
                 autoaimCrosshair.gameObject.SetActive(false);
+
+            // Update shield overlay
+            if ((player.shield != null) != shieldOverlay.gameObject.activeSelf)
+                shieldOverlay.gameObject.SetActive(player.shield != null);
         }
         else
         {

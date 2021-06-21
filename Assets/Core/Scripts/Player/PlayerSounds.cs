@@ -8,6 +8,7 @@ public class PlayerSounds : NetworkBehaviour
         Jump,
         Thok,
         RingDrop,
+        ShieldGain,
         ShieldLoss,
         SpinCharge,
         SpinRelease,
@@ -18,6 +19,7 @@ public class PlayerSounds : NetworkBehaviour
     public GameSound jumpSound = new GameSound();
     public GameSound thokSound = new GameSound();
     public GameSound ringDropSound = new GameSound();
+    public GameSound shieldGainSound = new GameSound();
     public GameSound shieldLossSound = new GameSound();
     public GameSound spinChargeSound = new GameSound();
     public GameSound spinReleaseSound = new GameSound();
@@ -58,6 +60,9 @@ public class PlayerSounds : NetworkBehaviour
                 break;
             case PlayerSoundType.RingDrop:
                 GameSounds.PlaySound(gameObject, ringDropSound);
+                break;
+            case PlayerSoundType.ShieldGain:
+                GameSounds.PlaySound(gameObject, shieldGainSound);
                 break;
             case PlayerSoundType.ShieldLoss:
                 GameSounds.PlaySound(gameObject, shieldLossSound);

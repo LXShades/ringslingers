@@ -403,6 +403,8 @@ public class Character : NetworkBehaviour
 
         if (shield.TryGetComponent(out Shield shieldComponent))
             shieldComponent.target = gameObject;
+
+        sounds.PlayNetworked(PlayerSounds.PlayerSoundType.ShieldGain);
     }
 
     [Server]
