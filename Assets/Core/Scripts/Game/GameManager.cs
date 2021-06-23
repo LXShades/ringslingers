@@ -90,7 +90,16 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        Cursor.lockState = (isPaused || string.Compare(SceneManager.GetActiveScene().path, defaultMenuScenePath, true) == 0) ? CursorLockMode.None : CursorLockMode.Locked;
+        bool needsCursor = false;
+        
+        needsCursor |= isPaused; // pause menu needs mouse
+        needsCursor |= string.Compare(SceneManager.GetActiveScene().path, defaultMenuScenePath, true) == 0; // main menu needs mouse
+        needsCursor |= input.Gameplay.WeaponWheel.ReadValue<float>() > 0.5f; // weapon wheel needs mouse
+
+        CursorLockMode lockMode = needsCursor ? CursorLockMode.None : CursorLockMode.Locked;
+
+        if (Cursor.lockState != lockMode) // is it a lock state or lock mode, who knows
+            Cursor.lockState = lockMode;
 
         // Do debug stuff
         RunDebugCommands();

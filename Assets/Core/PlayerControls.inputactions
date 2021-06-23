@@ -84,6 +84,14 @@
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
+                },
+                {
+                    "name": "Weapon Wheel",
+                    "type": "Button",
+                    "id": "e291a211-2985-4438-ba1d-c8ba04e44cb3",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
                 }
             ],
             "bindings": [
@@ -293,6 +301,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Prev Weapon",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "75883754-9162-4f46-bd75-dffa06aed965",
+                    "path": "<Keyboard>/r",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Weapon Wheel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

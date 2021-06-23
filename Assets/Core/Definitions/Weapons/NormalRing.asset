@@ -16,7 +16,7 @@ MonoBehaviour:
     name: 
     prefab: {fileID: 6167014272590406206, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
     droppedRingPrefab: {fileID: 0}
-    uiIcon: {fileID: 0}
+    uiIcon: {fileID: 21300000, guid: 9a72f599a732e2d42b1e059b15ff28c5, type: 3}
     fireSound:
       clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
       additionalClips: []
@@ -41,9 +41,10 @@ MonoBehaviour:
       pitch: 1
       pitchVariance: 0
       looping: 0
+    timeOnPickup: 10
     ammoOnPickup: 10
     maxAmmo: 99
-    ammoIsTime: 1
+    maxTime: 99
     shotsPerSecond: 5
     isAutomatic: 0
     autoAimHitboxRadius: 0

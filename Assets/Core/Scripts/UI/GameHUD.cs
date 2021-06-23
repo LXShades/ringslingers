@@ -13,6 +13,7 @@ public class GameHUD : MonoBehaviour
     public Text timeText;
     public RectTransform autoaimCrosshair;
     public Image shieldOverlay;
+    public GameObject weaponWheel;
     public WeaponSlotUI[] weaponSlots = new WeaponSlotUI[0];
 
     [Header("Teams")]
@@ -139,6 +140,12 @@ public class GameHUD : MonoBehaviour
 
             for (int j = Mathf.Max(ringShooting.weapons.Count - 1 /* skip default weapon */, 0); j < weaponSlots.Length; j++)
                 weaponSlots[j].hasWeapon = false;
+
+            // Update weapon wheel
+            bool shouldDisplayWeaponWheel = GameManager.singleton.input.Gameplay.WeaponWheel.ReadValue<float>() > 0.5f; // this is so dumb I fricken swear
+
+            if (shouldDisplayWeaponWheel != weaponWheel.activeSelf)
+                weaponWheel.SetActive(shouldDisplayWeaponWheel);
 
             // Update autoaim crosshair
             if (ringShooting.autoAimTarget)

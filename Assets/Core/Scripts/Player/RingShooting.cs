@@ -21,6 +21,26 @@ public class RingShooting : NetworkBehaviour
     public SyncList<RingWeapon> weapons = new SyncList<RingWeapon>();
 
     /// <summary>
+    /// When applicable, this is the weapon that has been selected by this player. Typically only used for local players
+    /// </summary>
+    public RingWeaponSettingsAsset localSelectedWeapon
+    {
+        get => _localSelectedWeapon;
+        set
+        {
+            if (_localSelectedWeapon != value)
+            {
+                _localSelectedWeapon = value;
+
+                if (hasAuthority && !isServer)
+                    CmdSelectWeapon(_localSelectedWeapon); // we don't use a syncvar because not all players need to know about it
+                RegenerateEffectiveWeapon();
+            }
+        }
+    }
+    private RingWeaponSettingsAsset _localSelectedWeapon;
+
+    /// <summary>
     /// [Server, Client] Generated from the combination of weapons. This is not networked directly but uses the weapons list which is.
     /// This handles combined weapon ring settings
     /// Currently updated whenever the weapons list refreshes
@@ -242,7 +262,13 @@ public class RingShooting : NetworkBehaviour
 
     public void AddWeaponAmmo(RingWeaponSettingsAsset weaponType, bool doOverrideAmmo, float ammoOverride)
     {
-        float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.settings.ammoOnPickup;
+        float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.settings.timeOnPickup;
+
+        if (MatchState.Get<MatchConfiguration>(out MatchConfiguration config))
+        {
+            if (config.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
+                ammoToAdd = weaponType.settings.ammoOnPickup;
+        }
 
         for (int i = 0; i < weapons.Count; i++)
         {
@@ -258,6 +284,13 @@ public class RingShooting : NetworkBehaviour
 
         // no weapon was found - add to our list
         weapons.Add(new RingWeapon() { weaponType = weaponType, ammo = ammoToAdd });
+    }
+
+    [Command(channel = Channels.Reliable)] // our weapon selection should be reliable ideally!
+    private void CmdSelectWeapon(RingWeaponSettingsAsset weaponType)
+    {
+        _localSelectedWeapon = weaponType;
+        RegenerateEffectiveWeapon();
     }
 
     private bool CanThrowRing(float lenience) => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / effectiveWeaponSettings.shotsPerSecond - lenience;
@@ -345,8 +378,25 @@ public class RingShooting : NetworkBehaviour
         RegenerateEffectiveWeapon();
     }
 
+    private bool HasWeapon(RingWeaponSettingsAsset asset)
+    {
+        foreach (RingWeapon weapon in weapons)
+        {
+            if (weapon.weaponType == asset)
+                return true;
+        }
+        return false;
+    }
+
     private void RegenerateEffectiveWeapon()
     {
+        // if a weapon is explicitly selected, it overrides the combination for now
+        if (localSelectedWeapon != null && HasWeapon(localSelectedWeapon))
+        {
+            effectiveWeaponSettings = localSelectedWeapon.settings.Clone();
+            return;
+        }
+
         // figure out which weapon takes priority. some examples as of whenever this comment was written (who am i. what day is it)
         // Bomb ring effects:
         //   ^-- Automatic ring

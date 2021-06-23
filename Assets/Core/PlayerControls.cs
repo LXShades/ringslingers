@@ -97,6 +97,14 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Weapon Wheel"",
+                    ""type"": ""Button"",
+                    ""id"": ""e291a211-2985-4438-ba1d-c8ba04e44cb3"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -308,6 +316,17 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""action"": ""Prev Weapon"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""75883754-9162-4f46-bd75-dffa06aed965"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Weapon Wheel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -326,6 +345,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         m_Gameplay_CenterCamera = m_Gameplay.FindAction("Center Camera", throwIfNotFound: true);
         m_Gameplay_NextWeapon = m_Gameplay.FindAction("Next Weapon", throwIfNotFound: true);
         m_Gameplay_PrevWeapon = m_Gameplay.FindAction("Prev Weapon", throwIfNotFound: true);
+        m_Gameplay_WeaponWheel = m_Gameplay.FindAction("Weapon Wheel", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -385,6 +405,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
     private readonly InputAction m_Gameplay_CenterCamera;
     private readonly InputAction m_Gameplay_NextWeapon;
     private readonly InputAction m_Gameplay_PrevWeapon;
+    private readonly InputAction m_Gameplay_WeaponWheel;
     public struct GameplayActions
     {
         private @PlayerControls m_Wrapper;
@@ -399,6 +420,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         public InputAction @CenterCamera => m_Wrapper.m_Gameplay_CenterCamera;
         public InputAction @NextWeapon => m_Wrapper.m_Gameplay_NextWeapon;
         public InputAction @PrevWeapon => m_Wrapper.m_Gameplay_PrevWeapon;
+        public InputAction @WeaponWheel => m_Wrapper.m_Gameplay_WeaponWheel;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -438,6 +460,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @PrevWeapon.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
                 @PrevWeapon.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
                 @PrevWeapon.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
+                @WeaponWheel.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
+                @WeaponWheel.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
+                @WeaponWheel.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
             }
             m_Wrapper.m_GameplayActionsCallbackInterface = instance;
             if (instance != null)
@@ -472,6 +497,9 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @PrevWeapon.started += instance.OnPrevWeapon;
                 @PrevWeapon.performed += instance.OnPrevWeapon;
                 @PrevWeapon.canceled += instance.OnPrevWeapon;
+                @WeaponWheel.started += instance.OnWeaponWheel;
+                @WeaponWheel.performed += instance.OnWeaponWheel;
+                @WeaponWheel.canceled += instance.OnWeaponWheel;
             }
         }
     }
@@ -488,5 +516,6 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         void OnCenterCamera(InputAction.CallbackContext context);
         void OnNextWeapon(InputAction.CallbackContext context);
         void OnPrevWeapon(InputAction.CallbackContext context);
+        void OnWeaponWheel(InputAction.CallbackContext context);
     }
 }
