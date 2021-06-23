@@ -321,7 +321,8 @@ public class RingShooting : NetworkBehaviour
 
         // Update stats
         player.numRings--;
-        if (!effectiveWeaponSettings.ammoIsTime)
+
+        if (MatchState.Get(out MatchConfiguration matchConfig) && matchConfig.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
         {
             RingWeapon weapon = weapons[equippedWeaponIndex];
             weapon.ammo--;

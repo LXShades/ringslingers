@@ -56,21 +56,26 @@ public class RingWeaponSettings
     /// </summary>
     public GameSound despawnSound;
 
-    [Header("Stats")]
+    [Header("Ammo/Time")]
     /// <summary>
-    /// How much ammunition should be granted when this weapon is picked up
+    /// How much time should be granted when this weapon is picked up, if time-based
+    /// </summary>
+    public float timeOnPickup = 10;
+
+    /// <summary>
+    /// How much ammunition should be granted when this weapon is picked up, if ammo-based
     /// </summary>
     public float ammoOnPickup = 10;
 
     /// <summary>
-    /// Maximum ammunition that can be held for this weapon ring
+    /// Maximum ammunition that can be held for this weapon ring, if ammo-based
     /// </summary>
     public float maxAmmo = 99;
 
     /// <summary>
-    /// If true, ammo is a timer that counts down while the weapon is held
+    /// Maximum time on this weapon ring, if time-based
     /// </summary>
-    public bool ammoIsTime = true;
+    public float maxTime = 99;
 
     [Header("Firing")]
     /// <summary>

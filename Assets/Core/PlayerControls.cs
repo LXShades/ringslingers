@@ -81,6 +81,22 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Next Weapon"",
+                    ""type"": ""Button"",
+                    ""id"": ""8cb23682-cd6d-4da6-9ebc-2c1aea6a2121"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""Prev Weapon"",
+                    ""type"": ""Button"",
+                    ""id"": ""92153a79-fb1f-4c47-9fe9-c33692e22861"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -270,6 +286,28 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""action"": ""Spindash"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""335a215f-14f4-4374-b983-e2311bee4f52"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Next Weapon"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1edac87a-5ecc-44b4-b988-efa9675e41cc"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Prev Weapon"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -286,6 +324,8 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         m_Gameplay_Talk = m_Gameplay.FindAction("Talk", throwIfNotFound: true);
         m_Gameplay_ViewScores = m_Gameplay.FindAction("View Scores", throwIfNotFound: true);
         m_Gameplay_CenterCamera = m_Gameplay.FindAction("Center Camera", throwIfNotFound: true);
+        m_Gameplay_NextWeapon = m_Gameplay.FindAction("Next Weapon", throwIfNotFound: true);
+        m_Gameplay_PrevWeapon = m_Gameplay.FindAction("Prev Weapon", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -343,6 +383,8 @@ public class @PlayerControls : IInputActionCollection, IDisposable
     private readonly InputAction m_Gameplay_Talk;
     private readonly InputAction m_Gameplay_ViewScores;
     private readonly InputAction m_Gameplay_CenterCamera;
+    private readonly InputAction m_Gameplay_NextWeapon;
+    private readonly InputAction m_Gameplay_PrevWeapon;
     public struct GameplayActions
     {
         private @PlayerControls m_Wrapper;
@@ -355,6 +397,8 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         public InputAction @Talk => m_Wrapper.m_Gameplay_Talk;
         public InputAction @ViewScores => m_Wrapper.m_Gameplay_ViewScores;
         public InputAction @CenterCamera => m_Wrapper.m_Gameplay_CenterCamera;
+        public InputAction @NextWeapon => m_Wrapper.m_Gameplay_NextWeapon;
+        public InputAction @PrevWeapon => m_Wrapper.m_Gameplay_PrevWeapon;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -388,6 +432,12 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @CenterCamera.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
                 @CenterCamera.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
                 @CenterCamera.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
+                @NextWeapon.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnNextWeapon;
+                @NextWeapon.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnNextWeapon;
+                @NextWeapon.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnNextWeapon;
+                @PrevWeapon.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
+                @PrevWeapon.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
+                @PrevWeapon.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
             }
             m_Wrapper.m_GameplayActionsCallbackInterface = instance;
             if (instance != null)
@@ -416,6 +466,12 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @CenterCamera.started += instance.OnCenterCamera;
                 @CenterCamera.performed += instance.OnCenterCamera;
                 @CenterCamera.canceled += instance.OnCenterCamera;
+                @NextWeapon.started += instance.OnNextWeapon;
+                @NextWeapon.performed += instance.OnNextWeapon;
+                @NextWeapon.canceled += instance.OnNextWeapon;
+                @PrevWeapon.started += instance.OnPrevWeapon;
+                @PrevWeapon.performed += instance.OnPrevWeapon;
+                @PrevWeapon.canceled += instance.OnPrevWeapon;
             }
         }
     }
@@ -430,5 +486,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         void OnTalk(InputAction.CallbackContext context);
         void OnViewScores(InputAction.CallbackContext context);
         void OnCenterCamera(InputAction.CallbackContext context);
+        void OnNextWeapon(InputAction.CallbackContext context);
+        void OnPrevWeapon(InputAction.CallbackContext context);
     }
 }

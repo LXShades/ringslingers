@@ -9,6 +9,8 @@ public class LevelConfiguration
 
     [Header("The default game mode to load for this scene")]
     public GameObject defaultGameModePrefab;
+    public WeaponAmmoStyle defaultWeaponAmmoStyle = WeaponAmmoStyle.Time;
+    public WeaponCombinationStyle defaultWeaponCombinationStyle = WeaponCombinationStyle.Combinable;
 
     public int defaultPlayerLimit = 12;
 

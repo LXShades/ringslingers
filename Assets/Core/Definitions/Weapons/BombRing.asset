@@ -41,9 +41,10 @@ MonoBehaviour:
       pitch: 1
       pitchVariance: 0
       looping: 0
-    ammoOnPickup: 30
+    timeOnPickup: 30
+    ammoOnPickup: 10
     maxAmmo: 99
-    ammoIsTime: 1
+    maxTime: 99
     shotsPerSecond: 3.5
     isAutomatic: 0
     autoAimHitboxRadius: 0
@@ -52,6 +53,7 @@ MonoBehaviour:
     projectileSpinAxisType: 0
     projectileSpinSpeed: 800
     projectileLifetime: 10
+    numWallSlides: 0
     contactEffect: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}
     projectileKnockback: 15
     comboSettings:

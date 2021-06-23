@@ -68,6 +68,22 @@
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
+                },
+                {
+                    "name": "Next Weapon",
+                    "type": "Button",
+                    "id": "8cb23682-cd6d-4da6-9ebc-2c1aea6a2121",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "Prev Weapon",
+                    "type": "Button",
+                    "id": "92153a79-fb1f-4c47-9fe9-c33692e22861",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
                 }
             ],
             "bindings": [
@@ -255,6 +271,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "Spindash",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "335a215f-14f4-4374-b983-e2311bee4f52",
+                    "path": "<Keyboard>/e",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Next Weapon",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1edac87a-5ecc-44b4-b988-efa9675e41cc",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Prev Weapon",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
