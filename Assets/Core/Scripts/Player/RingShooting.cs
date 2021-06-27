@@ -11,11 +11,6 @@ public class RingShooting : NetworkBehaviour
     public RingWeapon defaultWeapon;
 
     /// <summary>
-    /// The weapon currently equipped to fire
-    /// </summary>
-    public RingWeapon currentWeapon => weapons[equippedWeaponIndex];
-
-    /// <summary>
     /// List of weapons that have been picked up
     /// </summary>
     public SyncList<RingWeapon> weapons = new SyncList<RingWeapon>();
@@ -79,19 +74,6 @@ public class RingShooting : NetworkBehaviour
     /// </summary>
     private bool hasFiredOnThisClick = false;
 
-    private int equippedWeaponIndex
-    {
-        set
-        {
-            _equippedWeaponIndex = value < weapons.Count ? value : 0;
-        }
-        get
-        {
-            return _equippedWeaponIndex;
-        }
-    }
-    private int _equippedWeaponIndex;
-
     public GameObject autoAimTarget { get;  private set; }
     private Vector3 autoAimPredictedDirection = Vector3.zero;
 
@@ -152,11 +134,18 @@ public class RingShooting : NetworkBehaviour
         if (NetworkServer.active)
         {
             // Remove weapons with no ammo remaining
+            bool shouldRegenerateWeapon = false;
             for (int i = 0; i < weapons.Count; i++)
             {
                 if (!weapons[i].isInfinite && weapons[i].ammo <= 0)
+                {
                     weapons.RemoveAt(i--);
+                    shouldRegenerateWeapon = true;
+                }
             }
+
+            if (shouldRegenerateWeapon)
+                RegenerateEffectiveWeapon();
         }
 
         hasFiredOnThisClick &= player.liveInput.btnFire;
@@ -328,36 +317,34 @@ public class RingShooting : NetworkBehaviour
             if (autoAimTarget)
                 direction = autoAimPredictedDirection;
 
-            CmdThrowRing(spawnPosition.position, direction, Spawner.EndSpawnPrediction(), equippedWeaponIndex, GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f);
+            CmdThrowRing(spawnPosition.position, direction, Spawner.EndSpawnPrediction(), GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f);
             hasFiredOnThisClick = true;
         }
     }
 
     [Command(channel = Channels.Unreliable)]
-    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon, float predictedServerTime)
+    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime)
     {
         float timeToThrowAt = predictedServerTime;
         if (timeToThrowAt > Time.realtimeSinceStartup)
         {
             // the client threw this, in what they predicted ahead of current time... this means we need to delay the shot until roughly the correct time arrives
-            bufferedThrowEvents.Insert(timeToThrowAt, () => OnCmdThrowRing(position, direction, spawnPrediction, equippedWeapon, predictedServerTime));
+            bufferedThrowEvents.Insert(timeToThrowAt, () => OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime));
         }
         else
         {
             // throw it now then
-            OnCmdThrowRing(position, direction, spawnPrediction, equippedWeapon, predictedServerTime);
+            OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime);
         }
     }
 
-    private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, int equippedWeapon, float predictedServerTime)
+    private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime)
     {
         if (!CanThrowRing(0.01f) || Vector3.Distance(position, spawnPosition.position) > 2f)
         {
             Log.WriteWarning($"Discarding ring throw: dist is {Vector3.Distance(position, spawnPosition.position)} CanThrow: {CanThrowRing(0.01f)}");
             return; // invalid throw
         }
-
-        equippedWeaponIndex = equippedWeapon;
 
         // on server, spawn the ring properly and match it to the client prediction
         Spawner.ApplySpawnPrediction(spawnPrediction);
@@ -373,9 +360,16 @@ public class RingShooting : NetworkBehaviour
 
         if (MatchState.Get(out MatchConfiguration matchConfig) && matchConfig.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
         {
-            RingWeapon weapon = weapons[equippedWeaponIndex];
-            weapon.ammo--;
-            weapons[equippedWeaponIndex] = weapon;
+            // consume ammo
+            for (int i = 0; i < weapons.Count; i++)
+            {
+                if (!weapons[i].isInfinite && IsWeaponEquipped(weapons[i].weaponType))
+                {
+                    RingWeapon modified = weapons[i];
+                    modified.ammo = (int)(modified.ammo - 0.999f); // avoid rounding errors
+                    weapons[i] = modified;
+                }
+            }
         }
     }
 
@@ -404,6 +398,11 @@ public class RingShooting : NetworkBehaviour
         return false;
     }
 
+    private bool IsWeaponEquipped(RingWeaponSettingsAsset asset)
+    {
+        return localSelectedWeapons == null || localSelectedWeapons.Length == 0 || Array.IndexOf(localSelectedWeapons, asset) >= 0;
+    }
+
     private void RegenerateEffectiveWeapon()
     {
         // figure out which weapon takes priority. some examples as of whenever this comment was written (who am i. what day is it)
@@ -419,10 +418,9 @@ public class RingShooting : NetworkBehaviour
         List<RingWeaponSettingsAsset> effectors = new List<RingWeaponSettingsAsset>();
 
         // start with primaries filled with all combinable weapon candidates
-        bool doCombineAllWeapons = localSelectedWeapons == null || localSelectedWeapons.Length == 0;
         foreach (var weapon in weapons)
         {
-            if (doCombineAllWeapons || System.Array.IndexOf(localSelectedWeapons, weapon.weaponType) >= 0)
+            if (IsWeaponEquipped(weapon.weaponType))
                 primaries.Add(weapon.weaponType);
         }
 
@@ -449,16 +447,12 @@ public class RingShooting : NetworkBehaviour
                 effectors.Add(primaries[current]);
                 primaries.RemoveAt(current--);
             }
-
-            equippedWeaponIndex = 0;
         }
 
         if (primaries.Count > 0)
         {
             // select the second weapon (first is always the default red ring) as the primary
-            equippedWeaponIndex = Mathf.Min(1, primaries.Count - 1);
-
-            effectiveWeaponSettings = primaries[equippedWeaponIndex].settings.Clone();
+            effectiveWeaponSettings = primaries[Mathf.Min(1, primaries.Count - 1)].settings.Clone();
 
             // apply combos
             string effectsDebug = "";
@@ -470,8 +464,6 @@ public class RingShooting : NetworkBehaviour
                     effectsDebug += $"{combo.effector}";
                 }
             }
-
-            Log.Write($"Primary weapon is {equippedWeaponIndex} ({primaries[equippedWeaponIndex]}), effects are {effectsDebug}");
         }
         else
             Log.WriteWarning("Cannot generate primary weapon: there is none.");
