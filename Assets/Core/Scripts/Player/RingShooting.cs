@@ -400,7 +400,7 @@ public class RingShooting : NetworkBehaviour
 
     private bool IsWeaponEquipped(RingWeaponSettingsAsset asset)
     {
-        return localSelectedWeapons == null || localSelectedWeapons.Length == 0 || Array.IndexOf(localSelectedWeapons, asset) >= 0;
+        return localSelectedWeapons == null || localSelectedWeapons.Length == 0 || Array.IndexOf(localSelectedWeapons, asset) >= 0 || asset == defaultWeapon.weaponType;
     }
 
     private void RegenerateEffectiveWeapon()
