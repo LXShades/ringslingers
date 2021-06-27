@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class WeaponWheel : MonoBehaviour
@@ -15,6 +16,8 @@ public class WeaponWheel : MonoBehaviour
     public float normalizedMinimumWeaponHighlightRadius = 0.5f;
     public float highlightedWeaponScale = 1.5f;
     public float weaponSelectionSpriteScale = 1.5f;
+
+    public bool requireClickToSelect = true;
 
     private readonly List<WeaponSlotUI> spawnedWeaponSlots = new List<WeaponSlotUI>();
     private readonly List<Image> spawnedWeaponIcons = new List<Image>();
@@ -150,15 +153,19 @@ public class WeaponWheel : MonoBehaviour
             {
                 spawnedWeaponIcons[closestIndex].transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 1f);
 
-                if (!hasStartedSelecting)
+                if (!requireClickToSelect || Mouse.current.leftButton.isPressed)
                 {
-                    // when we first start selecting we'll clear all the selections first
-                    hasStartedSelecting = true;
-                    selectedWeapons.Clear();
-                }
+                    // clear weapons when starting selection
+                    if ((!requireClickToSelect && !hasStartedSelecting) || (requireClickToSelect && Mouse.current.leftButton.wasPressedThisFrame))
+                    {
+                        // when we first start selecting we'll clear all the selections first
+                        hasStartedSelecting = true;
+                        selectedWeapons.Clear();
+                    }
 
-                if (!selectedWeapons.Contains(ringWeapons[closestIndex]) && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
-                    selectedWeapons.Add(ringWeapons[closestIndex]);
+                    if (!selectedWeapons.Contains(ringWeapons[closestIndex]))
+                        selectedWeapons.Add(ringWeapons[closestIndex]);
+                }
             }
         }
     }

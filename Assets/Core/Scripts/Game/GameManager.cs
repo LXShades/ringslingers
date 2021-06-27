@@ -65,6 +65,7 @@ public class GameManager : MonoBehaviour
 
     public bool canPlayInputs { get; private set; } = true;
     public bool canPlayMouselook { get; private set; } = true;
+    public bool canPlayWeaponFire { get; private set; } = true;
 
     private bool areInputsEnabled = false;
     private bool doSuppressGameplayInputs = false;
@@ -106,7 +107,7 @@ public class GameManager : MonoBehaviour
             Cursor.lockState = lockMode;
 
         canPlayInputs = !isPaused;
-        canPlayMouselook = !needsCursor;
+        canPlayMouselook = canPlayWeaponFire = !needsCursor;
 
         // Do debug stuff
         RunDebugCommands();

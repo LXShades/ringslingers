@@ -119,7 +119,7 @@ public struct PlayerInput : IEquatable<PlayerInput>
             localInput.aimDirection = lastInput.aimDirection;
         }
 
-        localInput.btnFire = controls.Gameplay.Fire.ReadValue<float>() > 0.5f; // seriously unity what the f***
+        localInput.btnFire = GameManager.singleton.canPlayWeaponFire && controls.Gameplay.Fire.ReadValue<float>() > 0.5f; // seriously unity what the f***
         localInput.btnJump = controls.Gameplay.Jump.ReadValue<float>() > 0.5f; // this is apparently the way to read digital buttons, look it up
         localInput.btnSpin = controls.Gameplay.Spindash.ReadValue<float>() > 0.5f; // yeah these are all floating points I mean duh
 
