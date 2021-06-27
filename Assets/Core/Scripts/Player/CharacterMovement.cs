@@ -434,6 +434,9 @@ public class CharacterMovement : Movement
             groundVelocity = input.aimDirection.AlongPlane(groundNormal).normalized * (spindashMaxSpeed * spindashChargeLevel);
             spindashChargeLevel = 0f;
 
+            if (!isOnGround) // experiment: we'll let you release a spindash in the air. but you can't do it repeatedly
+                state &= ~State.Rolling;
+
             if (isRealtime)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
         }
