@@ -47,7 +47,6 @@ public class WeaponSlotUI : MonoBehaviour
             {
                 icon.color = new Color(icon.color.r, icon.color.g, icon.color.b, alphaWhenAvailable);
                 ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, alphaWhenAvailable);
-
             }
         }
         else

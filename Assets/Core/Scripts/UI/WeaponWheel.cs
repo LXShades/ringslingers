@@ -21,15 +21,21 @@ public class WeaponWheel : MonoBehaviour
     private readonly List<bool> weaponAvailabilities = new List<bool>();
     private readonly List<Image> spawnedSelectionIcons = new List<Image>();
 
+    private readonly List<RingWeaponSettingsAsset> selectedWeapons = new List<RingWeaponSettingsAsset>();
+
+    private bool hasStartedSelecting = false;
+
     private void Start()
     {
         float radiansPerWeapon = Mathf.PI * 2f / ringWeapons.Length;
 
         for (int i = 0; i < ringWeapons.Length; i++)
         {
+            // Spawn weapon slot and weapon availability
             WeaponSlotUI slot = Instantiate(weaponSlotPrefab);
             Vector2 normalizedPos = new Vector2(0.5f, 0.5f) + new Vector2(Mathf.Sin(radiansPerWeapon * i), Mathf.Cos(radiansPerWeapon * i)) * (normalizedWeaponOptionRadius * 0.5f);
             RectTransform slotRectTransform = slot.transform as RectTransform;
+            RectTransform iconRectTransform = slot.icon.rectTransform;
 
             slot.gameObject.name = $"WeaponWheelOption {ringWeapons[i].settings.name}";
             slot.weapon.weaponType = ringWeapons[i];
@@ -42,8 +48,43 @@ public class WeaponWheel : MonoBehaviour
 
             spawnedWeaponSlots.Add(slot);
             spawnedWeaponIcons.Add(slot.icon);
+
+            // Spawn selection icon
+            Image selectionIcon = new GameObject("WeaponWheelSelection", new System.Type[] { typeof(CanvasRenderer), typeof(Image) }).GetComponent<Image>();
+            RectTransform selectionIconRect = selectionIcon.rectTransform;
+
+            selectionIcon.enabled = false;
+
+            selectionIcon.sprite = weaponSelectionSprite;
+            selectionIcon.preserveAspect = true;
+            selectionIconRect.SetParent(spawnedWeaponSlots[i].transform, false);
+            selectionIconRect.SetAsFirstSibling(); // im the boss now
+            selectionIconRect.anchorMin = iconRectTransform.anchorMin;
+            selectionIconRect.anchorMax = iconRectTransform.anchorMax;
+            selectionIconRect.anchoredPosition = iconRectTransform.anchoredPosition;
+            selectionIconRect.sizeDelta = iconRectTransform.sizeDelta;
+            selectionIconRect.localScale = new Vector3(weaponSelectionSpriteScale, weaponSelectionSpriteScale, weaponSelectionSpriteScale);
+
+            spawnedSelectionIcons.Add(selectionIcon);
+
+            // and weapon availability
             weaponAvailabilities.Add(true);
         }
+    }
+
+    private void OnEnable()
+    {
+        hasStartedSelecting = false;
+        selectedWeapons.Clear();
+
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+            selectedWeapons.AddRange(shooting.localSelectedWeapons);
+    }
+
+    private void OnDisable()
+    {
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+            shooting.localSelectedWeapons = selectedWeapons.ToArray();
     }
 
     private void Update()
@@ -109,8 +150,15 @@ public class WeaponWheel : MonoBehaviour
             {
                 spawnedWeaponIcons[closestIndex].transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 1f);
 
-                if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
-                    shooting.localSelectedWeapon = ringWeapons[closestIndex];
+                if (!hasStartedSelecting)
+                {
+                    // when we first start selecting we'll clear all the selections first
+                    hasStartedSelecting = true;
+                    selectedWeapons.Clear();
+                }
+
+                if (!selectedWeapons.Contains(ringWeapons[closestIndex]) && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+                    selectedWeapons.Add(ringWeapons[closestIndex]);
             }
         }
     }
@@ -119,43 +167,22 @@ public class WeaponWheel : MonoBehaviour
     {
         if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
         {
-            if (shooting.localSelectedWeapon != null)
+            if (shooting.localSelectedWeapons != null)
             {
-                int targetWeaponSlot = -1;
-                // which weapon is it?
-                for (int i = 0; i < spawnedWeaponSlots.Count; i++)
+                // drop selection icons onto the weapons
+                for (int i = 0; i < ringWeapons.Length; i++)
                 {
-                    if (ringWeapons[i] == shooting.localSelectedWeapon)
+                    RingWeaponSettingsAsset weapon = ringWeapons[i];
+                    if (selectedWeapons.Contains(weapon) || selectedWeapons.Count == 0)
                     {
-                        targetWeaponSlot = i;
-                        break;
+                        if (!spawnedSelectionIcons[i].enabled)
+                            spawnedSelectionIcons[i].enabled = true;
                     }
-                }
-
-                if (targetWeaponSlot != -1)
-                {
-                    Image selectionIcon = null;
-
-                    if (spawnedSelectionIcons.Count > 0)
-                        selectionIcon = spawnedSelectionIcons[0];
                     else
                     {
-                        selectionIcon = new GameObject("WeaponWheelSelection", new System.Type[] { typeof(CanvasRenderer), typeof(Image) }).GetComponent<Image>();
-                        spawnedSelectionIcons.Add(selectionIcon);
+                        if (spawnedSelectionIcons[i].enabled)
+                            spawnedSelectionIcons[i].enabled = false;
                     }
-
-                    RectTransform selectionIconRect = selectionIcon.rectTransform;
-                    RectTransform weaponIconRect = spawnedWeaponIcons[targetWeaponSlot].rectTransform;
-
-                    selectionIcon.sprite = weaponSelectionSprite;
-                    selectionIcon.preserveAspect = true;
-                    selectionIconRect.SetParent(spawnedWeaponSlots[targetWeaponSlot].transform, false);
-                    selectionIconRect.SetAsFirstSibling(); // im the boss now
-                    selectionIconRect.anchorMin = weaponIconRect.anchorMin;
-                    selectionIconRect.anchorMax = weaponIconRect.anchorMax;
-                    selectionIconRect.anchoredPosition = weaponIconRect.anchoredPosition;
-                    selectionIconRect.sizeDelta = weaponIconRect.sizeDelta;
-                    selectionIconRect.localScale = new Vector3(weaponSelectionSpriteScale, weaponSelectionSpriteScale, weaponSelectionSpriteScale);
                 }
             }
         }

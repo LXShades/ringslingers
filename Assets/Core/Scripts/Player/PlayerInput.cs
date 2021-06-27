@@ -82,31 +82,42 @@ public struct PlayerInput : IEquatable<PlayerInput>
     /// <returns></returns>
     public static PlayerInput MakeLocalInput(PlayerInput lastInput, Vector3 up)
     {
+        if (!GameManager.singleton.canPlayInputs)
+            return lastInput; // no new inputs are being accepted
+
         PlayerControls controls = GameManager.singleton.input;
         PlayerInput localInput = default;
 
         localInput.moveHorizontalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().x;
         localInput.moveVerticalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().y;
 
-        Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, up) * lastInput.aimDirection;
-        // we need to clamp this...
-        const float limit = 1f;
-        float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, up)) * Mathf.Rad2Deg;
-        float verticalAngleDelta = -Input.GetAxis("Mouse Y") * GamePreferences.mouseSpeed;
-
-        if (degreesFromUp + verticalAngleDelta <= limit)
-            verticalAngleDelta = limit - degreesFromUp;
-        if (degreesFromUp + verticalAngleDelta >= 180f - limit)
-            verticalAngleDelta = 180f - limit - degreesFromUp;
-        newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(up, newAim)) * newAim;
-
-        if (controls.Gameplay.CenterCamera.ReadValue<float>() > 0.5f)
+        // mouselook
+        if (GameManager.singleton.canPlayMouselook)
         {
-            newAim.SetAlongAxis(up, 0);
-            newAim.Normalize();
-        }
+            Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, up) * lastInput.aimDirection;
+            // we need to clamp this...
+            const float limit = 1f;
+            float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, up)) * Mathf.Rad2Deg;
+            float verticalAngleDelta = -Input.GetAxis("Mouse Y") * GamePreferences.mouseSpeed;
 
-        localInput.aimDirection = newAim;
+            if (degreesFromUp + verticalAngleDelta <= limit)
+                verticalAngleDelta = limit - degreesFromUp;
+            if (degreesFromUp + verticalAngleDelta >= 180f - limit)
+                verticalAngleDelta = 180f - limit - degreesFromUp;
+            newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(up, newAim)) * newAim;
+
+            if (controls.Gameplay.CenterCamera.ReadValue<float>() > 0.5f)
+            {
+                newAim.SetAlongAxis(up, 0);
+                newAim.Normalize();
+            }
+
+            localInput.aimDirection = newAim;
+        }
+        else 
+        {
+            localInput.aimDirection = lastInput.aimDirection;
+        }
 
         localInput.btnFire = controls.Gameplay.Fire.ReadValue<float>() > 0.5f; // seriously unity what the f***
         localInput.btnJump = controls.Gameplay.Jump.ReadValue<float>() > 0.5f; // this is apparently the way to read digital buttons, look it up

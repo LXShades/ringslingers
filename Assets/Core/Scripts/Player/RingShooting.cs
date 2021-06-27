@@ -23,22 +23,38 @@ public class RingShooting : NetworkBehaviour
     /// <summary>
     /// When applicable, this is the weapon that has been selected by this player. Typically only used for local players
     /// </summary>
-    public RingWeaponSettingsAsset localSelectedWeapon
+    public RingWeaponSettingsAsset[] localSelectedWeapons
     {
-        get => _localSelectedWeapon;
+        get => _localSelectedWeapons;
         set
         {
-            if (_localSelectedWeapon != value)
+            // don't bother changing if lists are identical
+            bool isListIdentical = false;
+
+            if (value.Length == _localSelectedWeapons.Length)
             {
-                _localSelectedWeapon = value;
+                isListIdentical = true;
+                for (int i = 0; i < _localSelectedWeapons.Length; i++)
+                {
+                    if (_localSelectedWeapons[i] != value[i])
+                    {
+                        isListIdentical = false;
+                        break;
+                    }
+                }
+            }
+
+            if (!isListIdentical)
+            {
+                _localSelectedWeapons = value;
 
                 if (hasAuthority && !isServer)
-                    CmdSelectWeapon(_localSelectedWeapon); // we don't use a syncvar because not all players need to know about it
+                    CmdSelectWeapon(_localSelectedWeapons); // we don't use a syncvar because not all players need to know about it
                 RegenerateEffectiveWeapon();
             }
         }
     }
-    private RingWeaponSettingsAsset _localSelectedWeapon;
+    private RingWeaponSettingsAsset[] _localSelectedWeapons = new RingWeaponSettingsAsset[0];
 
     /// <summary>
     /// [Server, Client] Generated from the combination of weapons. This is not networked directly but uses the weapons list which is.
@@ -287,9 +303,9 @@ public class RingShooting : NetworkBehaviour
     }
 
     [Command(channel = Channels.Reliable)] // our weapon selection should be reliable ideally!
-    private void CmdSelectWeapon(RingWeaponSettingsAsset weaponType)
+    private void CmdSelectWeapon(RingWeaponSettingsAsset[] weaponTypes)
     {
-        _localSelectedWeapon = weaponType;
+        _localSelectedWeapons = weaponTypes;
         RegenerateEffectiveWeapon();
     }
 
@@ -390,13 +406,6 @@ public class RingShooting : NetworkBehaviour
 
     private void RegenerateEffectiveWeapon()
     {
-        // if a weapon is explicitly selected, it overrides the combination for now
-        if (localSelectedWeapon != null && HasWeapon(localSelectedWeapon))
-        {
-            effectiveWeaponSettings = localSelectedWeapon.settings.Clone();
-            return;
-        }
-
         // figure out which weapon takes priority. some examples as of whenever this comment was written (who am i. what day is it)
         // Bomb ring effects:
         //   ^-- Automatic ring
@@ -409,8 +418,13 @@ public class RingShooting : NetworkBehaviour
         List<RingWeaponSettingsAsset> primaries = new List<RingWeaponSettingsAsset>();
         List<RingWeaponSettingsAsset> effectors = new List<RingWeaponSettingsAsset>();
 
+        // start with primaries filled with all combinable weapon candidates
+        bool doCombineAllWeapons = localSelectedWeapons == null || localSelectedWeapons.Length == 0;
         foreach (var weapon in weapons)
-            primaries.Add(weapon.weaponType);
+        {
+            if (doCombineAllWeapons || System.Array.IndexOf(localSelectedWeapons, weapon.weaponType) >= 0)
+                primaries.Add(weapon.weaponType);
+        }
 
         // determine the primary weapon to use
         for (int current = 0; current < primaries.Count; current++)
@@ -418,13 +432,14 @@ public class RingShooting : NetworkBehaviour
             bool shouldExcludeCurrent = false;
             for (int other = 0; other < primaries.Count; other++)
             {
-                if (other != current)
+                if (other == current)
+                    continue;
+
+                foreach (var comboSettings in primaries[other].settings.comboSettings)
                 {
-                    foreach (var comboSettings in primaries[other].settings.comboSettings)
-                    {
-                        if (comboSettings.effector == primaries[current])
-                            shouldExcludeCurrent = true;
-                    }
+                    // this other weapon contains this primary as a modifier (effector) so this other weapon is higher prio and more likely to become a primary
+                    if (comboSettings.effector == primaries[current])
+                        shouldExcludeCurrent = true;
                 }
             }
 
