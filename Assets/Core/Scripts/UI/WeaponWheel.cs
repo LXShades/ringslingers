@@ -5,19 +5,21 @@ using UnityEngine.UI;
 public class WeaponWheel : MonoBehaviour
 {
     public RingWeaponSettingsAsset[] ringWeapons = new RingWeaponSettingsAsset[0];
+    public RingWeaponSettingsAsset defaultWeapon;
+
+    public WeaponSlotUI weaponSlotPrefab;
+    public Sprite weaponSelectionSprite;
 
     public float normalizedIconSize = 0.2f;
     public float normalizedWeaponOptionRadius = 0.9f;
     public float normalizedMinimumWeaponHighlightRadius = 0.5f;
     public float highlightedWeaponScale = 1.5f;
+    public float weaponSelectionSpriteScale = 1.5f;
 
-    [Range(0f, 1f)]
-    public float availableWeaponAlpha = 1f;
-    [Range(0f, 1f)]
-    public float unavailableWeaponAlpha = 0.25f;
-
+    private readonly List<WeaponSlotUI> spawnedWeaponSlots = new List<WeaponSlotUI>();
     private readonly List<Image> spawnedWeaponIcons = new List<Image>();
     private readonly List<bool> weaponAvailabilities = new List<bool>();
+    private readonly List<Image> spawnedSelectionIcons = new List<Image>();
 
     private void Start()
     {
@@ -25,17 +27,21 @@ public class WeaponWheel : MonoBehaviour
 
         for (int i = 0; i < ringWeapons.Length; i++)
         {
-            Image icon = new GameObject($"WeaponWheelOption {ringWeapons[i].settings.name}", new System.Type[] { typeof(RectTransform), typeof (CanvasRenderer), typeof(Image) }).GetComponent<Image>();
+            WeaponSlotUI slot = Instantiate(weaponSlotPrefab);
             Vector2 normalizedPos = new Vector2(0.5f, 0.5f) + new Vector2(Mathf.Sin(radiansPerWeapon * i), Mathf.Cos(radiansPerWeapon * i)) * (normalizedWeaponOptionRadius * 0.5f);
+            RectTransform slotRectTransform = slot.transform as RectTransform;
 
-            icon.sprite = ringWeapons[i].settings.uiIcon;
-            icon.rectTransform.SetParent(transform);
-            icon.rectTransform.anchorMin = normalizedPos;
-            icon.rectTransform.anchorMax = normalizedPos;
-            icon.rectTransform.anchoredPosition = new Vector2(0f, 0f);
-            icon.rectTransform.sizeDelta = (transform as RectTransform).sizeDelta * normalizedIconSize;
+            slot.gameObject.name = $"WeaponWheelOption {ringWeapons[i].settings.name}";
+            slot.weapon.weaponType = ringWeapons[i];
+            slot.hasWeapon = true; // I guess
+            slotRectTransform.SetParent(transform);
+            slotRectTransform.anchorMin = normalizedPos;
+            slotRectTransform.anchorMax = normalizedPos;
+            slotRectTransform.anchoredPosition = new Vector2(0f, 0f);
+            slotRectTransform.sizeDelta = (transform as RectTransform).sizeDelta * normalizedIconSize;
 
-            spawnedWeaponIcons.Add(icon);
+            spawnedWeaponSlots.Add(slot);
+            spawnedWeaponIcons.Add(slot.icon);
             weaponAvailabilities.Add(true);
         }
     }
@@ -44,9 +50,9 @@ public class WeaponWheel : MonoBehaviour
     {
         UpdateWeaponAvailabilities();
 
-        UpdateWeaponVisibilities();
-
         HandleWeaponMouseSelection();
+
+        UpdateSelectionIcons();
     }
 
     private void UpdateWeaponAvailabilities()
@@ -55,27 +61,25 @@ public class WeaponWheel : MonoBehaviour
         {
             for (int j = 0; j < ringWeapons.Length; j++)
             {
-                weaponAvailabilities[j] = false;
+                spawnedWeaponSlots[j].hasWeapon = false;
+                spawnedWeaponSlots[j].weapon.ammo = 0f;
 
                 for (int i = 0; i < shooting.weapons.Count; i++)
                 {
                     if (shooting.weapons[i].weaponType == ringWeapons[j])
                     {
-                        weaponAvailabilities[j] = true;
+                        spawnedWeaponSlots[j].hasWeapon = true;
+                        spawnedWeaponSlots[j].weapon.ammo = shooting.weapons[i].ammo;
                         break;
                     }
                 }
-            }
-        }
-    }
 
-    private void UpdateWeaponVisibilities()
-    {
-        for (int j = 0; j < ringWeapons.Length; j++)
-        {
-            float alpha = weaponAvailabilities[j] ? availableWeaponAlpha : unavailableWeaponAlpha;
-            if (spawnedWeaponIcons[j].color.a != alpha)
-                spawnedWeaponIcons[j].color = new Color(spawnedWeaponIcons[j].color.r, spawnedWeaponIcons[j].color.g, spawnedWeaponIcons[j].color.b, alpha);
+                weaponAvailabilities[j] = spawnedWeaponSlots[j].hasWeapon;
+
+                // default weapon ammo = rings in general
+                if (ringWeapons[j] == defaultWeapon)
+                    spawnedWeaponSlots[j].weapon.ammo = Netplay.singleton.localPlayer.numRings + 0.9f; // HACK, BIG HACK: time-based ring modes will tick down immediately causing flicker...lazy solution here.
+            }
         }
     }
 
@@ -107,6 +111,52 @@ public class WeaponWheel : MonoBehaviour
 
                 if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
                     shooting.localSelectedWeapon = ringWeapons[closestIndex];
+            }
+        }
+    }
+
+    private void UpdateSelectionIcons()
+    {
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+        {
+            if (shooting.localSelectedWeapon != null)
+            {
+                int targetWeaponSlot = -1;
+                // which weapon is it?
+                for (int i = 0; i < spawnedWeaponSlots.Count; i++)
+                {
+                    if (ringWeapons[i] == shooting.localSelectedWeapon)
+                    {
+                        targetWeaponSlot = i;
+                        break;
+                    }
+                }
+
+                if (targetWeaponSlot != -1)
+                {
+                    Image selectionIcon = null;
+
+                    if (spawnedSelectionIcons.Count > 0)
+                        selectionIcon = spawnedSelectionIcons[0];
+                    else
+                    {
+                        selectionIcon = new GameObject("WeaponWheelSelection", new System.Type[] { typeof(CanvasRenderer), typeof(Image) }).GetComponent<Image>();
+                        spawnedSelectionIcons.Add(selectionIcon);
+                    }
+
+                    RectTransform selectionIconRect = selectionIcon.rectTransform;
+                    RectTransform weaponIconRect = spawnedWeaponIcons[targetWeaponSlot].rectTransform;
+
+                    selectionIcon.sprite = weaponSelectionSprite;
+                    selectionIcon.preserveAspect = true;
+                    selectionIconRect.SetParent(spawnedWeaponSlots[targetWeaponSlot].transform, false);
+                    selectionIconRect.SetAsFirstSibling(); // im the boss now
+                    selectionIconRect.anchorMin = weaponIconRect.anchorMin;
+                    selectionIconRect.anchorMax = weaponIconRect.anchorMax;
+                    selectionIconRect.anchoredPosition = weaponIconRect.anchoredPosition;
+                    selectionIconRect.sizeDelta = weaponIconRect.sizeDelta;
+                    selectionIconRect.localScale = new Vector3(weaponSelectionSpriteScale, weaponSelectionSpriteScale, weaponSelectionSpriteScale);
+                }
             }
         }
     }
