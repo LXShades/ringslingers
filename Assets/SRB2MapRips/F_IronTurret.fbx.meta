@@ -1,13 +1,78 @@
 fileFormatVersion: 2
 guid: 208d049e63ca6f347b41604ee8644216
 ModelImporter:
-  serializedVersion: 20101
+  serializedVersion: 21100
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CTFFLG01.003
+    second: {fileID: 2100000, guid: f68618395580d124481e2feb6db97108, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: CTFFLG04.003
+    second: {fileID: 2100000, guid: 197b0b8301c53b543bafe864714ecd00, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: FLOOR0_6.003
+    second: {fileID: 2100000, guid: 9a28f7f301b153743a17855b07a04b59, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: GFZROCK.004
+    second: {fileID: 2100000, guid: ce953f171f246ff44bdaa693163ff3fc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZFLR05
+    second: {fileID: 2100000, guid: fc92fd0f2c9be1c4bb7e02bab285a3d9, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZFLR07
+    second: {fileID: 2100000, guid: 7019fc1450aa0ac4599fef24daa12035, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZFLR08
+    second: {fileID: 2100000, guid: 35283f2829a61564f87ecbe34a185533, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZFLR09
+    second: {fileID: 2100000, guid: 025b6d12f272c2841ab0ed84a9931a88, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZFLR10
+    second: {fileID: 2100000, guid: 8c1cac546a99a00488e403b45a093d1e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZFLR11
+    second: {fileID: 2100000, guid: 31565d2cd5390d341971f06a3fe42916, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZMETL2
+    second: {fileID: 2100000, guid: ecadc142cb3bac34abf4e7bbcf39137b, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZROCK
+    second: {fileID: 2100000, guid: 8700208a9d0952041aaf937029743345, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: THZWAL03
+    second: {fileID: 2100000, guid: 124ec164db0d27642bb1afe3b17bb314, type: 2}
   materials:
     materialImportMode: 1
     materialName: 0
-    materialSearch: 1
+    materialSearch: 2
     materialLocation: 1
   animations:
     legacyGenerateAnimations: 4
@@ -67,11 +132,11 @@ ModelImporter:
   tangentSpace:
     normalSmoothAngle: 60
     normalImportMode: 1
-    tangentImportMode: 3
-    normalCalculationMode: 2
+    tangentImportMode: 2
+    normalCalculationMode: 1
     legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
     blendShapeNormalImportMode: 1
-    normalSmoothingSource: 2
+    normalSmoothingSource: 3
   referencedClips: []
   importAnimation: 1
   humanDescription:
@@ -95,6 +160,7 @@ ModelImporter:
   animationType: 2
   humanoidOversampling: 1
   avatarSetup: 0
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 0
   additionalBone: 0
   userData: 
   assetBundleName: 

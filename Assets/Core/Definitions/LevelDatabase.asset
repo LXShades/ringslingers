@@ -18,6 +18,8 @@ MonoBehaviour:
       friendlyName: Jade Valley
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 1
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
@@ -27,6 +29,8 @@ MonoBehaviour:
       friendlyName: Thunder Citadel
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
@@ -36,6 +40,8 @@ MonoBehaviour:
       friendlyName: Desolate Twilight
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
@@ -45,6 +51,8 @@ MonoBehaviour:
       friendlyName: Airborne Temple
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
@@ -54,6 +62,8 @@ MonoBehaviour:
       friendlyName: Meadow Match
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
@@ -63,15 +73,8 @@ MonoBehaviour:
       friendlyName: Cloud Palace
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/F_IsolatedCanyon.unity
-    configuration:
-      friendlyName: Isolated Canyon
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
@@ -81,6 +84,19 @@ MonoBehaviour:
       friendlyName: Metal Star
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/F_IronTurret.unity
+    configuration:
+      friendlyName: Icon Turret
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
@@ -90,6 +106,19 @@ MonoBehaviour:
       friendlyName: Nimbus Ruins
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/F_IsolatedCanyon.unity
+    configuration:
+      friendlyName: Isolated Canyon
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
       minRotationPlayers: 0
