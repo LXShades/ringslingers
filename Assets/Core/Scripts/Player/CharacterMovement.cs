@@ -45,9 +45,9 @@ public class CharacterMovement : Movement
     public float wallRunTestDepth = 0.3f;
     public float wallRunTestRadius = 0.4f;
     public float wallRunTestHeight = 0.08f;
-    [Tooltip("Tests the average normal of the three points against the normal of the sensor triangle. If the angle diverges above this amount, the up vector is reset. Used to avoid treating small steps as slopes.")]
-    public float wallRunAngleFromAverageNormalMaxTolerance = 10.0f;
     public bool wallRunCameraAssist = true;
+    [Tooltip("In degrees. If this is e.g. 1 degree, if the three sensors are within 1 degree of each other we assume they are coplanar and we do not try to angle up them, instead treating them as steps.")]
+    public float wallMaxAngleRangeForStepping = 1.0f;
     public Transform rotateableModel;
 
     [Header("Collision")]
@@ -186,7 +186,7 @@ public class CharacterMovement : Movement
             DebugPauseStart();
 
         // Check whether on ground
-        bool wasGroundDetected = DetectGround(Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal, out GameObject _groundObject);
+        bool wasGroundDetected = DetectGround(deltaTime, Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal, out GameObject _groundObject);
 
         groundNormal = Vector3.up;
         groundDistance = float.MaxValue;
@@ -195,11 +195,7 @@ public class CharacterMovement : Movement
 
         if (wasGroundDetected)
         {
-            if (enableWallRun)
-                groundNormal = _groundNormal;
-            else
-                groundNormal = Vector3.up; // why are we doing this..? needed for steps to work. think it prevents player from wallrunning up steps or something... not working very well
-
+            groundNormal = _groundNormal;
             groundDistance = _groundDistance;
         }
 
@@ -275,29 +271,108 @@ public class CharacterMovement : Movement
         }
     }
 
-    private bool DetectGround(float testDistance, out float foundDistance, out Vector3 groundNormal, out GameObject groundObject)
+    private bool DetectGround(float deltaTime, float searchDistance, out float outGroundDistance, out Vector3 outGroundNormal, out GameObject groundObject)
     {
-        groundNormal = Vector3.up;
-        foundDistance = -1f;
+        outGroundNormal = Vector3.up;
+        outGroundDistance = -1f;
         groundObject = null;
 
         if (!debugDisableCollision)
         {
-            int numHits = move.ColliderCast(bufferedHits, transform.position, -up, testDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
-            float closestGroundDistance = testDistance;
+            // Start by trying our feet sensors
+            // We need to look ahead a bit so that we can push towards the ground after we've moved
+            Vector3 position = transform.position + velocity * deltaTime;
+            Vector3 frontRight = position + (transform.forward + transform.right) * wallRunTestRadius + up * wallRunTestHeight;
+            Vector3 frontLeft = position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
+            Vector3 back = position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
+            Vector3 central = position + up * wallRunTestHeight;
+            RaycastHit frontLeftHit, frontRightHit, backHit, centralHit;
+            bool hasSensedAllPoints = true;
 
-            for (int i = 0; i < numHits; i++)
+            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(frontLeft,  -up, out frontLeftHit,  wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
+            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(frontRight, -up, out frontRightHit, wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
+            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(back,       -up, out backHit,       wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
+            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(central,    -up, out centralHit,    wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
+
+            // If all sensors were activated, we can rotate
+            if (hasSensedAllPoints)
             {
-                if (bufferedHits[i].collider.GetComponentInParent<CharacterMovement>() != this && bufferedHits[i].distance <= closestGroundDistance + Mathf.Epsilon)
+                // Try smooth wall running, when the mesh allows it
+                MeshCollider centralMeshCollider = centralHit.collider as MeshCollider;
+                bool hasFoundSmoothNormal = false;
+
+                if (centralMeshCollider != null && centralMeshCollider.sharedMesh.isReadable)
                 {
-                    groundNormal = bufferedHits[i].normal;
-                    foundDistance = bufferedHits[i].distance;
-                    groundObject = bufferedHits[i].collider.gameObject;
-                    closestGroundDistance = foundDistance;
+                    int index = centralHit.triangleIndex * 3;
+                    Mesh mesh = centralMeshCollider.sharedMesh;
+
+                    mesh.GetNormals(normalBuffer);
+
+                    for (int i = 0; i < mesh.subMeshCount; i++)
+                    {
+                        int start = mesh.GetSubMesh(i).indexStart;
+                        int count = mesh.GetSubMesh(i).indexCount;
+
+                        if (index >= start && index < start + count)
+                        {
+                            mesh.GetIndices(triangleBuffer, i);
+
+                            Vector3 smoothNormal = normalBuffer[triangleBuffer[index - start]] * centralHit.barycentricCoordinate.x +
+                                normalBuffer[triangleBuffer[index - start + 1]] * centralHit.barycentricCoordinate.y +
+                                normalBuffer[triangleBuffer[index - start + 2]] * centralHit.barycentricCoordinate.z;
+
+                            outGroundNormal = centralMeshCollider.transform.TransformDirection(smoothNormal).normalized;
+                            hasFoundSmoothNormal = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Otherwise we build our own normal
+                if (!hasFoundSmoothNormal)
+                {
+                    // If the polygons comprising the angle diverge strongly from the angle we've determined, recognise it as a step and not a slope
+                    float sensorAngleRange = Mathf.Acos(Mathf.Min(Mathf.Min(Vector3.Dot(frontLeftHit.normal, frontRightHit.normal), Vector3.Dot(frontRightHit.normal, backHit.normal)), Vector3.Dot(backHit.normal, frontLeftHit.normal))) * Mathf.Rad2Deg;
+
+                    if (sensorAngleRange < wallMaxAngleRangeForStepping)
+                        outGroundNormal = (frontLeftHit.normal + frontRightHit.normal + backHit.normal).normalized; // we should assume they are steps
+                    else
+                        outGroundNormal = Vector3.Cross(frontRightHit.point - frontLeftHit.point, backHit.point - frontLeftHit.point).normalized; // we can generate the normal based on the contact points
+                }
+
+                outGroundDistance = (frontLeftHit.distance + frontRightHit.distance + backHit.distance) / 3 - wallRunTestHeight;
+
+                if (outGroundDistance < searchDistance)
+                {
+                    groundObject = centralHit.collider.gameObject;
+                    return true;
+                }
+                else
+                {
+                    groundObject = null;
+                    return false;
                 }
             }
+            else
+            {
+                // Do a basic collider cast downward to verify whether ground exists
+                // Assume normal to be up as we haven't managed to get enough info from the sensors
+                int numHits = move.ColliderCast(bufferedHits, transform.position, -up, searchDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
+                float closestGroundDistance = searchDistance;
 
-            return groundObject != null;
+                for (int i = 0; i < numHits; i++)
+                {
+                    if (bufferedHits[i].collider.GetComponentInParent<CharacterMovement>() != this && bufferedHits[i].distance <= closestGroundDistance + Mathf.Epsilon)
+                    {
+                        groundObject = bufferedHits[i].collider.gameObject;
+
+                        outGroundDistance = bufferedHits[i].distance;
+                        closestGroundDistance = outGroundDistance;
+                    }
+                }
+
+                return groundObject != null;
+            }
         }
         else // if (debugDisableCollision)
         {
@@ -506,113 +581,17 @@ public class CharacterMovement : Movement
             return;
         }
 
-        Vector3 targetUp = Vector3.up;
-
-        // We need to look ahead a bit so that we can push towards the ground after we've moved
-        Vector3 position = transform.position + velocity * deltaTime;
-        Vector3 frontRight = position + (transform.forward + transform.right) * wallRunTestRadius + up * wallRunTestHeight;
-        Vector3 frontLeft = position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
-        Vector3 back = position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
-        Vector3 central = position + up * wallRunTestHeight;
-        Vector3 frontLeftHit = default, frontRightHit = default, backHit = default;
-        Vector3 frontLeftNormal = default, frontRightNormal = default, backNormal = default;
-        RaycastHit centralHitInfo = default;
-        int numSuccessfulCollisions = 0;
-
-        // Detect our target rotation using three sensors
-        for (int i = 0; i < 4; i++)
-        {
-            Vector3 start = i == 0 ? frontLeft : (i == 1 ? frontRight : (i == 2 ? back : central));
-            Color color = Color.red;
-
-            if (Physics.Raycast(start, -up, out RaycastHit hit, wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore))
-            {
-                switch (i)
-                {
-                    case 0:
-                        frontLeftHit = hit.point;
-                        frontLeftNormal = hit.normal;
-                        break;
-                    case 1:
-                        frontRightHit = hit.point;
-                        frontRightNormal = hit.normal;
-                        break;
-                    case 2:
-                        backHit = hit.point;
-                        backNormal = hit.normal;
-                        break;
-                    case 3:
-                        centralHitInfo = hit;
-                        break;
-                }
-                
-                numSuccessfulCollisions++;
-                color = Color.green;
-            }
-
-            if (debugDrawWallrunSensors)
-                Debug.DrawLine(start, start - up * wallRunTestDepth, color);
-        }
-
-        // If all sensors were activated, we can rotate
-        if (numSuccessfulCollisions == 4)
-        {
-            // Smooth wall running, when the mesh allows it
-            MeshCollider backMeshCollider = centralHitInfo.collider as MeshCollider;
-            bool hasFoundSmoothNormal = false;
-            if (backMeshCollider != null && backMeshCollider.sharedMesh.isReadable)
-            {
-                int index = centralHitInfo.triangleIndex * 3;
-                Mesh mesh = backMeshCollider.sharedMesh;
-                
-                mesh.GetNormals(normalBuffer);
-
-                for (int i = 0; i < mesh.subMeshCount; i++)
-                {
-                    int start = mesh.GetSubMesh(i).indexStart;
-                    int count = mesh.GetSubMesh(i).indexCount;
-
-                    if (index >= start && index < start + count)
-                    {
-                        mesh.GetIndices(triangleBuffer, i);
-
-                        Vector3 smoothNormal = normalBuffer[triangleBuffer[index - start]] * centralHitInfo.barycentricCoordinate.x +
-                            normalBuffer[triangleBuffer[index - start + 1]] * centralHitInfo.barycentricCoordinate.y +
-                            normalBuffer[triangleBuffer[index - start + 2]] * centralHitInfo.barycentricCoordinate.z;
-
-                        targetUp = backMeshCollider.transform.TransformDirection(smoothNormal).normalized;
-                        hasFoundSmoothNormal = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!hasFoundSmoothNormal)
-            {
-                // Set target up vector from the three points
-                targetUp = Vector3.Cross(frontRightHit - frontLeftHit, backHit - frontLeftHit).normalized;
-
-                // If the polygons comprising the angle diverge strongly from the angle we've determined, recognise it as a step and not a slope
-                float varianceFromAverageNormal = Mathf.Acos(Vector3.Dot((frontLeftNormal + frontRightNormal + backNormal).normalized, targetUp)) * Mathf.Rad2Deg;
-
-                if (varianceFromAverageNormal > wallRunAngleFromAverageNormalMaxTolerance)
-                    targetUp = (frontLeftNormal + frontRightNormal + backNormal).normalized;
-            }
-
-            // Push down towards the ground
-            if (deltaTime > 0f && verticalVelocity < wallRunEscapeVelocity)
-            {
-                float averageDistance = Vector3.Distance((frontLeftHit + frontRightHit + backHit) / 3, position);
-                float forceMultiplier = wallRunPushForceByUprightness.Evaluate(Mathf.Acos(Vector3.Dot(targetUp, Vector3.up)) * Mathf.Rad2Deg);
-                velocity += -targetUp * (averageDistance / deltaTime * forceMultiplier);
-            }
-
-            // this is our new ground normal
-            groundNormal = targetUp;
-        }
+        Vector3 targetUp = groundNormal;
 
         if (velocity.magnitude < wallRunSpeedThreshold)
             targetUp = Vector3.up;
+
+        // Push down towards the ground
+        if (deltaTime > 0f && verticalVelocity < wallRunEscapeVelocity)
+        {
+            float forceMultiplier = wallRunPushForceByUprightness.Evaluate(Mathf.Acos(Vector3.Dot(groundNormal, Vector3.up)) * Mathf.Rad2Deg);
+            velocity += -groundNormal * (groundDistance / deltaTime * forceMultiplier);
+        }
 
         // Rotate towards our target
         if (Vector3.Angle(up, targetUp) > 0f)
@@ -654,11 +633,11 @@ public class CharacterMovement : Movement
         Vector3 originalPosition = transform.position;
         Vector3 originalVelocity = velocity;
         Vector3 stepUpVector = up * maxStepHeight;
-        bool stepUp = maxStepHeight > 0f;
+        bool canTryStepUp = maxStepHeight > 0f;
 
         move.enableCollision = !debugDisableCollision;
 
-        if (stepUp)
+        if (canTryStepUp)
             transform.position += stepUpVector;
 
         if (collisionType == CollisionType.Penetration)
@@ -666,12 +645,12 @@ public class CharacterMovement : Movement
         else
             move.Move(velocity * deltaTime, out RaycastHit _, isRealtime);
 
-        if (stepUp)
+        if (canTryStepUp)
         {
             Vector3 stepReturn = -stepUpVector;
             bool doStepDownwards = false;
 
-            if (isOnGround && velocity.AlongAxis(groundNormal) <= groundingForce + 0.001f)
+            if (isOnGround && velocity.AlongAxis(up) <= groundingForce + 0.001f)
             {
                 stepReturn -= stepUpVector; // step _down_ as well
                 doStepDownwards = true;
@@ -701,7 +680,7 @@ public class CharacterMovement : Movement
                 velocity -= originalVelocity.normalized * Vector3.Dot(velocity, originalVelocity.normalized);
 
             // don't accumulate vertical velocity from stepping up, that's another fishy sign
-            if (stepUp && velocity.AlongAxis(stepUpVector) > originalVelocity.AlongAxis(stepUpVector))
+            if (canTryStepUp && velocity.AlongAxis(stepUpVector) > originalVelocity.AlongAxis(stepUpVector))
                 velocity.SetAlongAxis(stepUpVector, originalVelocity.AlongAxis(stepUpVector));
 
             // overall, don't let velocity exceed its original magnitude, its a sign made of fish
@@ -746,5 +725,18 @@ public class CharacterMovement : Movement
             Gizmos.DrawLine(frontLeft, frontLeft - transform.up * wallRunTestDepth);
             Gizmos.DrawLine(back, back - transform.up * wallRunTestDepth);
         }
+    }
+}
+
+public static class RaycastExtensions
+{
+    public static bool RaycastWithDebug(Vector3 start, Vector3 direction, out RaycastHit hit, float maxDistance, int layerMask, QueryTriggerInteraction triggerInteraction, bool drawDebug)
+    {
+        bool result = Physics.Raycast(start, direction, out hit, maxDistance, layerMask, triggerInteraction);
+
+        if (drawDebug)
+            Debug.DrawLine(start, start + direction * maxDistance, result ? Color.blue : Color.red);
+
+        return result;
     }
 }

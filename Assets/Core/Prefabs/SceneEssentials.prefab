@@ -47,6 +47,8 @@ MonoBehaviour:
     friendlyName: Nameless
     mapShot: {fileID: 0}
     defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+    defaultWeaponAmmoStyle: 0
+    defaultWeaponCombinationStyle: 0
     defaultPlayerLimit: 32
     includeInRotation: 1
     minRotationPlayers: 0
@@ -311,7 +313,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3413194139303834066}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 40.020763, y: 3.6375444, z: 11.114972}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8856561641098017492}
