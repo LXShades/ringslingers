@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2754337ee27746a42a7574d39212c5a0, type: 3}
+  m_Name: ScatterRing
+  m_EditorClassIdentifier: 
+  settings:
+    name: Scatter
+    prefab: {fileID: 7394150888847876007, guid: 395fd6378910eb648947a3410ec6c752, type: 3}
+    droppedRingPrefab: {fileID: 1203937048721973902, guid: 57ca2a69e274d0a4caaa0dd2d91e3cdb, type: 3}
+    uiIcon: {fileID: 21300000, guid: 45113161bd0041741a1e2ee7cf8c6868, type: 3}
+    fireSound:
+      clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
+      additionalClips: []
+      blend3D: 1
+      rangePreset: 1
+      minRange: 5
+      midRange: 22.5
+      maxRange: 50
+      volumeDecibels: -3
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    despawnSound:
+      clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
+      additionalClips: []
+      blend3D: 1
+      rangePreset: 1
+      minRange: 5
+      midRange: 22.5
+      maxRange: 50
+      volumeDecibels: -3
+      pitch: 1
+      pitchVariance: 0
+      looping: 0
+    timeOnPickup: 30
+    ammoOnPickup: 10
+    maxAmmo: 99
+    maxTime: 99
+    shotsPerSecond: 2
+    isAutomatic: 0
+    autoAimHitboxRadius: 0
+    autoAimDegreesRadius: 0
+    projectileSpeed: 32.81
+    projectileSpinAxisType: 0
+    projectileSpinSpeed: 800
+    projectileLifetime: 10
+    numWallSlides: 0
+    contactEffect: {fileID: 0}
+    projectileKnockback: 15
+    comboSettings:
+    - effector: {fileID: 11400000, guid: b3ac2b389097b2d46a9376592fe8d37f, type: 2}
+      shotsPerSecondMultiplier: 2.29
+      shouldOverrideAutomatic: 1
+      isAutomatic: 1
+      shouldOverrideDespawnSound: 0
+      despawnSound:
+        clip: {fileID: 0}
+        additionalClips: []
+        blend3D: 1
+        rangePreset: 0
+        minRange: 1
+        midRange: 10
+        maxRange: 20
+        volumeDecibels: 0
+        pitch: 1
+        pitchVariance: 0
+        looping: 0
+      contactEffectOverride: {fileID: 0}

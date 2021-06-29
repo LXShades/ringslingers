@@ -116,6 +116,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionStatus: 0
+  defaultFlowControlSettings:
+    jitterSampleSize: 3
+    upperPercentile: 5
+    addToDelay: 0
+    maxDelay: 0.1
+    minDelay: 0
+    maxMessageAge: -1
+    earlyReleaseTolerance: 0.01
   pingsPerSecond: 2
   playerTickrate: 30
   localPlayerId: -1
@@ -283,6 +291,8 @@ MonoBehaviour:
     asset: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
   - id: 6969
     asset: {fileID: 11400000, guid: 7e46de247a2c11641a827c2545ab70eb, type: 2}
+  - id: 11708
+    asset: {fileID: 11400000, guid: ffe668499644d9e47865b8485f8d24ce, type: 2}
 --- !u!1 &6795168565319469267
 GameObject:
   m_ObjectHideFlags: 0
