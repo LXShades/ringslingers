@@ -22,7 +22,6 @@ public class WeaponWheel : MonoBehaviour
     private readonly List<WeaponSlotUI> spawnedWeaponSlots = new List<WeaponSlotUI>();
     private readonly List<Image> spawnedWeaponIcons = new List<Image>();
     private readonly List<bool> weaponAvailabilities = new List<bool>();
-    private readonly List<Image> spawnedSelectionIcons = new List<Image>();
 
     private readonly List<RingWeaponSettingsAsset> selectedWeapons = new List<RingWeaponSettingsAsset>();
 
@@ -51,24 +50,6 @@ public class WeaponWheel : MonoBehaviour
 
             spawnedWeaponSlots.Add(slot);
             spawnedWeaponIcons.Add(slot.icon);
-
-            // Spawn selection icon
-            Image selectionIcon = new GameObject("WeaponWheelSelection", new System.Type[] { typeof(CanvasRenderer), typeof(Image) }).GetComponent<Image>();
-            RectTransform selectionIconRect = selectionIcon.rectTransform;
-
-            selectionIcon.enabled = false;
-
-            selectionIcon.sprite = weaponSelectionSprite;
-            selectionIcon.preserveAspect = true;
-            selectionIconRect.SetParent(spawnedWeaponSlots[i].transform, false);
-            selectionIconRect.SetAsFirstSibling(); // im the boss now
-            selectionIconRect.anchorMin = iconRectTransform.anchorMin;
-            selectionIconRect.anchorMax = iconRectTransform.anchorMax;
-            selectionIconRect.anchoredPosition = iconRectTransform.anchoredPosition;
-            selectionIconRect.sizeDelta = iconRectTransform.sizeDelta;
-            selectionIconRect.localScale = new Vector3(weaponSelectionSpriteScale, weaponSelectionSpriteScale, weaponSelectionSpriteScale);
-
-            spawnedSelectionIcons.Add(selectionIcon);
 
             // and weapon availability
             weaponAvailabilities.Add(true);
@@ -149,7 +130,7 @@ public class WeaponWheel : MonoBehaviour
 
         if (normalizedMouseDistanceFromCentre > normalizedMinimumWeaponHighlightRadius)
         {
-            if (closestIndex != -1 && weaponAvailabilities[closestIndex])
+            if (closestIndex != -1)
             {
                 spawnedWeaponIcons[closestIndex].transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 1f);
 
@@ -178,19 +159,7 @@ public class WeaponWheel : MonoBehaviour
             {
                 // drop selection icons onto the weapons
                 for (int i = 0; i < ringWeapons.Length; i++)
-                {
-                    RingWeaponSettingsAsset weapon = ringWeapons[i];
-                    if (selectedWeapons.Contains(weapon) || selectedWeapons.Count == 0)
-                    {
-                        if (!spawnedSelectionIcons[i].enabled)
-                            spawnedSelectionIcons[i].enabled = true;
-                    }
-                    else
-                    {
-                        if (spawnedSelectionIcons[i].enabled)
-                            spawnedSelectionIcons[i].enabled = false;
-                    }
-                }
+                    spawnedWeaponSlots[i].isEquipped = selectedWeapons.Contains(ringWeapons[i]) || selectedWeapons.Count == 0;
             }
         }
     }
