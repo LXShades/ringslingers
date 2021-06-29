@@ -85,10 +85,16 @@ public class ThrownRing : NetworkBehaviour
 
     public override void OnStartClient()
     {
-        RingWeaponSettings ownerEffectiveSettings = owner?.GetComponent<RingShooting>()?.effectiveWeaponSettings;
+        RingWeaponSettings ownerEffectiveSettings = owner?.GetComponent<CharacterShooting>()?.effectiveWeaponSettings;
 
         if (ownerEffectiveSettings != null)
             effectiveSettings = ownerEffectiveSettings;
+
+        foreach (Renderer renderer in GetComponentsInChildren<Renderer>())
+        {
+            foreach (Material material in renderer.materials)
+                material.SetFloat("_RotationSpeed", effectiveSettings.projectileSpinSpeed);
+        }
     }
 
     private void Update()
@@ -98,9 +104,6 @@ public class ThrownRing : NetworkBehaviour
 
     public virtual void Simulate(float deltaTime)
     {
-        // Spin
-        transform.rotation *= Quaternion.AngleAxis(effectiveSettings.projectileSpinSpeed * deltaTime, spinAxis);
-
         // Move manually cuz... uh well, hmm, dangit rigidbody interpolation is not a thing in manually-simulated physics
         transform.position += velocity * deltaTime;
 
@@ -120,7 +123,8 @@ public class ThrownRing : NetworkBehaviour
         this.wasLocallyThrown = true;
 
         velocity = direction.normalized * effectiveSettings.projectileSpeed;
-        transform.position = spawnPosition;
+
+        transform.SetPositionAndRotation(spawnPosition, Quaternion.LookRotation(direction));
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -197,7 +201,7 @@ public class ThrownRing : NetworkBehaviour
 
     private void OnOwnerChanged(GameObject oldOwner, GameObject newOwner)
     {
-        if (newOwner.TryGetComponent(out RingShooting ringShooting))
+        if (newOwner.TryGetComponent(out CharacterShooting ringShooting))
         {
             effectiveSettings = ringShooting.effectiveWeaponSettings;
         }

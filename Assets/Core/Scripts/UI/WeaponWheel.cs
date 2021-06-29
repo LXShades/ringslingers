@@ -80,13 +80,13 @@ public class WeaponWheel : MonoBehaviour
         hasStartedSelecting = false;
         selectedWeapons.Clear();
 
-        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
             selectedWeapons.AddRange(shooting.localSelectedWeapons);
     }
 
     private void OnDisable()
     {
-        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
             shooting.localSelectedWeapons = selectedWeapons.ToArray();
     }
 
@@ -101,7 +101,7 @@ public class WeaponWheel : MonoBehaviour
 
     private void UpdateWeaponAvailabilities()
     {
-        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
         {
             for (int j = 0; j < ringWeapons.Length; j++)
             {
@@ -172,7 +172,7 @@ public class WeaponWheel : MonoBehaviour
 
     private void UpdateSelectionIcons()
     {
-        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out RingShooting shooting))
+        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
         {
             if (shooting.localSelectedWeapons != null)
             {

@@ -49,6 +49,23 @@ MonoBehaviour:
     isAutomatic: 0
     autoAimHitboxRadius: 0
     autoAimDegreesRadius: 0
+    additionalSpawns:
+    - horizontalAngleOffset: 0
+      verticalAngleOffset: 1
+      horizontalPositionOffset: 0
+      verticalPositionOffset: 0.1875
+    - horizontalAngleOffset: 2
+      verticalAngleOffset: 0
+      horizontalPositionOffset: 0
+      verticalPositionOffset: 0
+    - horizontalAngleOffset: 0
+      verticalAngleOffset: -1
+      horizontalPositionOffset: 0
+      verticalPositionOffset: -0.1875
+    - horizontalAngleOffset: -2
+      verticalAngleOffset: 0
+      horizontalPositionOffset: 0
+      verticalPositionOffset: 0
     projectileSpeed: 32.81
     projectileSpinAxisType: 0
     projectileSpinSpeed: 800

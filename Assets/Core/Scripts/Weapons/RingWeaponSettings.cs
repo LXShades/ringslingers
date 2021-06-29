@@ -101,8 +101,9 @@ public class RingWeaponSettings
     public float projectileSpeed = 60;
 
     /// <summary>
-    /// How the projectile spins
+    /// [OUT OF USE] How the projectile spins
     /// </summary>
+    [HideInInspector] // OUT OF USE
     public SpinAxisType projectileSpinAxisType = SpinAxisType.Up;
 
     /// <summary>
@@ -177,12 +178,26 @@ public class RingWeaponComboSettings
     }
 }
 
+[System.Serializable]
 public struct AdditionalRingSpawn
 {
+    /// <summary>
+    /// Horizontal angle to add while firing in degrees relative to aim direction. Negative = left Positive = right
+    /// </summary>
     public float horizontalAngleOffset;
+
+    /// <summary>
+    /// Vertical angle to add while firing in degrees relative to aim direction. Negative = down Positive = up
+    /// </summary>
     public float verticalAngleOffset;
 
+    /// <summary>
+    /// Horizontal location offset to spawn at relative to the aim direction, in metres. Negative = left Positive = right
+    /// </summary>
     public float horizontalPositionOffset;
+    /// <summary>
+    /// Vertical location offset to spawn at relative to the aim direction, in metres. Negative = down Positive = up
+    /// </summary>
     public float verticalPositionOffset;
 }
 
