@@ -102,12 +102,17 @@ public class ThrownRing : NetworkBehaviour
         Simulate(Time.deltaTime);
     }
 
+    private void FixedUpdate()
+    {
+        // ditto, interpolation station
+        //transform.position -= velocity * Time.fixedDeltaTime;
+    }
+
     public virtual void Simulate(float deltaTime)
     {
-        // Move manually cuz... uh well, hmm, dangit rigidbody interpolation is not a thing in manually-simulated physics
-        transform.position += velocity * deltaTime;
+        // using interpolation this shouldn't be needed
+        //transform.position += velocity * deltaTime;
 
-        // Improves collisions, kinda annoying but it be that way
         rb.velocity = velocity;
 
         // Despawn on proximity
@@ -138,6 +143,7 @@ public class ThrownRing : NetworkBehaviour
 
         velocity = direction.normalized * effectiveSettings.projectileSpeed;
 
+        rb.MovePosition(spawnPosition);
         transform.SetPositionAndRotation(spawnPosition, Quaternion.LookRotation(direction));
     }
 
