@@ -131,7 +131,7 @@ public class GameHUD : MonoBehaviour
             scoreText.text = player.score.ToString();
 
             // Update weapon panels
-            RingShooting ringShooting = player.GetComponent<RingShooting>();
+            CharacterShooting ringShooting = player.GetComponent<CharacterShooting>();
             for (int i = 0; i < ringShooting.weapons.Count - 1 && i < weaponSlots.Length; i++)
             {
                 weaponSlots[i].weapon = ringShooting.weapons[i + 1]; // skip default weapon

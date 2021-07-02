@@ -4,13 +4,18 @@ using UnityEngine.UI;
 public class WeaponSlotUI : MonoBehaviour
 {
     public bool hasWeapon;
+    public bool isEquipped;
+
     public Text ammoRemaining;
     public Image icon;
+    public Image equipHighlight;
 
     [Range(0f, 1f)]
     public float alphaWhenUnavailable = 0.25f;
     [Range(0f, 1f)]
     public float alphaWhenAvailable = 1f;
+    public Color equipColorWhenAvailable = Color.white;
+    public Color equipColorWhenUnavailable = Color.white;
 
     private int ammoRemainingValue
     {
@@ -27,6 +32,11 @@ public class WeaponSlotUI : MonoBehaviour
     private int _ammoRemainingString = int.MaxValue;
 
     [System.NonSerialized] public RingWeapon weapon;
+
+    private void Start()
+    {
+        equipHighlight.color = equipColorWhenAvailable;
+    }
 
     private void Update()
     {
@@ -47,6 +57,7 @@ public class WeaponSlotUI : MonoBehaviour
             {
                 icon.color = new Color(icon.color.r, icon.color.g, icon.color.b, alphaWhenAvailable);
                 ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, alphaWhenAvailable);
+                equipHighlight.color = equipColorWhenAvailable;
             }
         }
         else
@@ -60,7 +71,11 @@ public class WeaponSlotUI : MonoBehaviour
             {
                 icon.color = new Color(icon.color.r, icon.color.g, icon.color.b, alphaWhenUnavailable);
                 ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, alphaWhenUnavailable);
+                equipHighlight.color = equipColorWhenUnavailable;
             }
         }
+
+        if (isEquipped != equipHighlight.enabled)
+            equipHighlight.enabled = isEquipped;
     }
 }

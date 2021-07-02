@@ -7,7 +7,37 @@ public class Spawner : MonoBehaviour
 {
     public struct SpawnPrediction
     {
+        /// <summary>
+        /// The prediction ID of the first object spawned. Does not change, gets sent to server so the server can begin from the same ID.
+        /// </summary>
         public ushort startId;
+
+        /// <summary>
+        /// The current prediction ID. Incremented after every spawn or spawn prediction. NOT SERIALIZED.
+        /// </summary>
+        public ushort currentId
+        {
+            get
+            {
+                if (!_hasAccessedCurrentId)
+                {
+                    _hasAccessedCurrentId = true;
+                    return (_currentId = startId);
+                }
+                return _currentId;
+            }
+            set => _currentId = value;
+        }
+        private bool _hasAccessedCurrentId;
+        private ushort _currentId;
+
+        public void Increment()
+        {
+            currentId = (ushort)((currentId & ~0xFF) | ((currentId + 1) & 0xFF));
+
+            if (NetworkClient.isConnected && !NetworkServer.active)
+                Spawner.singleton.nextClientPredictionId++; // needed for producing future client predictions
+        }
     }
 
     public static Spawner singleton => _singleton ?? (_singleton = FindObjectOfType<Spawner>());
@@ -17,12 +47,8 @@ public class Spawner : MonoBehaviour
     private readonly Dictionary<Guid, GameObject> prefabByGuid = new Dictionary<Guid, GameObject>();
 
     public List<GameObject> spawnablePrefabs = new List<GameObject>();
-    
-    private bool isPredictingSpawn = false;
-    private SpawnPrediction activeSpawnPrediction;
 
     private byte nextClientPredictionId = 0;
-    private ushort nextServerPredictionId = 0;
 
     void Awake()
     {
@@ -93,6 +119,32 @@ public class Spawner : MonoBehaviour
         return Instantiate(prefab, position, rotation);
     }
 
+    /// <summary>
+    /// Starts an object spawn sequence, allowing time for SyncVars to be set
+    /// </summary>
+    public static GameObject StartSpawn(GameObject prefab, Vector3 position, Quaternion rotation, ref SpawnPrediction prediction)
+    {
+        if (NetworkClient.isConnected && !NetworkServer.active && (!prefab.GetComponent<NetworkIdentity>() || !prefab.GetComponent<Predictable>()))
+        {
+            Log.WriteError($"Cannot predict {prefab.name}! It must be predictable and networkable.");
+            return null;
+        }
+
+        GameObject obj = Instantiate(prefab, position, rotation);
+
+        if (obj.TryGetComponent(out NetworkIdentity identity) && obj.TryGetComponent(out Predictable predictable))
+        {
+            // player-specific "predictable object ID" which we can use later to replace the object
+            singleton.predictedSpawns[prediction.currentId] = predictable;
+            identity.predictedId = prediction.currentId;
+            predictable.isPrediction = !NetworkServer.active;
+
+            prediction.Increment(); // consume this prediction, go to next
+        }
+
+        return obj;
+    }
+
     public static GameObject Spawn(GameObject prefab)
     {
         GameObject obj = Instantiate(prefab);
@@ -109,20 +161,25 @@ public class Spawner : MonoBehaviour
         return obj;
     }
 
+    public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, ref SpawnPrediction prediction)
+    {
+        GameObject obj = StartSpawn(prefab, position, rotation);
+
+        if (obj)
+            FinalizeSpawn(obj);
+
+        return obj;
+    }
+
     /// <summary>
-    /// Finalizes and networks a spawn, sending relevant info to clients.
+    /// Finalizes and networks a spawn, sending relevant info to clients if server.
+    /// Client predictions do nothing extra, but this can be called anyway so the code path can be reused
     /// </summary>
     /// <param name="target"></param>
     public static void FinalizeSpawn(GameObject target)
     {
         if (NetworkServer.active && target.TryGetComponent(out NetworkIdentity identity))
         {
-            if (target.GetComponent<Predictable>() != null)
-            {
-                identity.predictedId = singleton.nextServerPredictionId;
-                singleton.nextServerPredictionId = (ushort)((singleton.nextServerPredictionId & ~0xFF) | ((singleton.nextServerPredictionId + 1) & 0xFF));
-            }
-
             NetworkServer.Spawn(target);
             SyncActionSystem.RegisterSyncActions(target);
         }
@@ -142,50 +199,9 @@ public class Spawner : MonoBehaviour
         return prefab.GetComponent<Predictable>() && prefab.GetComponent<NetworkIdentity>();
     }
 
-    public static void StartSpawnPrediction()
+    public static SpawnPrediction MakeSpawnPrediction()
     {
-        singleton.isPredictingSpawn = true;
-        singleton.activeSpawnPrediction = new SpawnPrediction() { startId = (ushort)((Netplay.singleton.localPlayerId << 8) | singleton.nextClientPredictionId) };
-    }
-
-    public static SpawnPrediction EndSpawnPrediction()
-    {
-        singleton.isPredictingSpawn = false;
-        return singleton.activeSpawnPrediction;
-    }
-
-    public static void ApplySpawnPrediction(SpawnPrediction prediction)
-    {
-        singleton.nextServerPredictionId = prediction.startId;
-    }
-
-    /// <summary>
-    /// Spawns a predicted object
-    /// </summary>
-    [Client]
-    public static GameObject PredictSpawn(GameObject prefab, Vector3 position, Quaternion rotation)
-    {
-        if (!singleton.isPredictingSpawn)
-            Log.WriteWarning("You should call StartSpawnPrediction before predicting a spawn and send the result to the server after EndSpawnPrediction.");
-
-        GameObject obj = Instantiate(prefab, position, rotation);
-
-        if (obj && obj.TryGetComponent(out NetworkIdentity identity) && obj.TryGetComponent(out Predictable predictable))
-        {
-            // player-specific "predictable object ID" which we can use later to replace the object
-            identity.predictedId = (ushort)((Netplay.singleton.localPlayerId << 8) | singleton.nextClientPredictionId);
-
-            predictable.isPrediction = true;
-
-            singleton.predictedSpawns[identity.predictedId] = predictable;
-            singleton.nextClientPredictionId++;
-        }
-        else
-        {
-            Log.WriteError($"Cannot predict {prefab}! It must be predictable and networkable.");
-        }
-
-        return obj;
+        return new SpawnPrediction() { startId = (ushort)((Netplay.singleton.localPlayerId << 8) | singleton.nextClientPredictionId) };
     }
 
     private GameObject SpawnHandler(SpawnMessage spawnMessage)
