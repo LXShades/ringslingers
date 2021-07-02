@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2754337ee27746a42a7574d39212c5a0, type: 3}
-  m_Name: AimRing
+  m_Name: GrenadeRing
   m_EditorClassIdentifier: 
   settings:
-    name: Aim
-    prefab: {fileID: 5180647389967111679, guid: cb76cd5e549efe041b127b4bf4af68b3, type: 3}
-    droppedRingPrefab: {fileID: 1297403141984525710, guid: f0c306dbc1be08e4fb8eaf64b03d6283, type: 3}
-    uiIcon: {fileID: 21300000, guid: 6e999e6bbcf25504ba0869ac79f38e57, type: 3}
+    name: Grenade
+    prefab: {fileID: 942187780836486323, guid: 52656c092083f7748a00806c01ff391c, type: 3}
+    droppedRingPrefab: {fileID: 1203937048721973902, guid: b86ff3404074a4e4ba95af8c1498fb08, type: 3}
+    uiIcon: {fileID: 21300000, guid: 39c76347e223d8840860e8222aa5dcd9, type: 3}
     fireSound:
       clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
       additionalClips: []
@@ -30,67 +30,50 @@ MonoBehaviour:
       pitchVariance: 0
       looping: 0
     despawnSound:
-      clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
+      clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
       additionalClips: []
       blend3D: 1
       rangePreset: 1
       minRange: 5
       midRange: 22.5
       maxRange: 50
-      volumeDecibels: -3
+      volumeDecibels: 0
       pitch: 1
       pitchVariance: 0
       looping: 0
     timeOnPickup: 30
-    ammoOnPickup: 15
+    ammoOnPickup: 10
     maxAmmo: 99
     maxTime: 99
-    shotsPerSecond: 4
+    shotsPerSecond: 1.5
     isAutomatic: 0
-    autoAimHitboxRadius: 3
-    autoAimDegreesRadius: 35
+    autoAimHitboxRadius: 0
+    autoAimDegreesRadius: 0
     projectileSpeed: 32.81
-    projectileSpinAxisType: 0
+    projectileSpinAxisType: 2
     projectileSpinSpeed: 800
     projectileLifetime: 10
     numWallSlides: 0
-    contactAction: 0
-    contactEffect: {fileID: 0}
-    projectileKnockback: 10
+    contactAction: 1
+    contactEffect: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}
+    projectileKnockback: 15
+    proximityDespawnTriggerRange: 1.5
     comboSettings:
     - effector: {fileID: 11400000, guid: b3ac2b389097b2d46a9376592fe8d37f, type: 2}
-      shotsPerSecondMultiplier: 2
+      shotsPerSecondMultiplier: 2.29
       shouldOverrideAutomatic: 1
       isAutomatic: 1
       shouldOverrideDespawnSound: 0
       despawnSound:
         clip: {fileID: 0}
         additionalClips: []
-        blend3D: 0
+        blend3D: 1
         rangePreset: 0
         minRange: 1
         midRange: 10
         maxRange: 20
         volumeDecibels: 0
-        pitch: 0
-        pitchVariance: 0
-        looping: 0
-      contactEffectOverride: {fileID: 0}
-    - effector: {fileID: 11400000, guid: 23540450384143746b56315067dc3483, type: 2}
-      shotsPerSecondMultiplier: 1
-      shouldOverrideAutomatic: 0
-      isAutomatic: 0
-      shouldOverrideDespawnSound: 1
-      despawnSound:
-        clip: {fileID: 8300000, guid: 013331d654cf0534ea9704d9bbe38de7, type: 3}
-        additionalClips: []
-        blend3D: 1
-        rangePreset: 1
-        minRange: 5
-        midRange: 22.5
-        maxRange: 50
-        volumeDecibels: 0
         pitch: 1
         pitchVariance: 0
         looping: 0
-      contactEffectOverride: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}
+      contactEffectOverride: {fileID: 0}

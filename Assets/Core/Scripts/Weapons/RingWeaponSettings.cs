@@ -11,6 +11,12 @@ public class RingWeaponSettings
         Wobble
     }
 
+    public enum ContactAction
+    {
+        Despawn,
+        Stop
+    }
+
     public RingWeaponSettings() { }
 
     public RingWeaponSettings Clone()
@@ -122,6 +128,11 @@ public class RingWeaponSettings
 
     [Header("Contact")]
     /// <summary>
+    /// What happens when the ring hits something that isn't a player
+    /// </summary>
+    public ContactAction contactAction = ContactAction.Despawn;
+
+    /// <summary>
     /// Spawns an optional effect on collide and despawn
     /// </summary>
     public GameObject contactEffect = null;
@@ -130,6 +141,12 @@ public class RingWeaponSettings
     /// How fast in m/s will the projectile knock you back?
     /// </summary>
     public float projectileKnockback = 10f;
+
+    [Header("Proximity")]
+    /// <summary>
+    /// If nonzero, triggers despawn when an enemy player is nearby
+    /// </summary>
+    public float proximityDespawnTriggerRange = 0f;
 
     [Header("Ring Combinations")]
     /// <summary>

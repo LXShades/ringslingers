@@ -106,6 +106,20 @@ public class ThrownRing : NetworkBehaviour
 
         // Improves collisions, kinda annoying but it be that way
         rb.velocity = velocity;
+
+        // Despawn on proximity
+        if (effectiveSettings.proximityDespawnTriggerRange > 0f && velocity.sqrMagnitude <= 1f) // kinda hack, grenades
+        {
+            Vector3 myPosition = transform.position;
+            foreach (Character character in Netplay.singleton.players)
+            {
+                if (character && character.gameObject != owner && Vector3.Distance(character.transform.position, myPosition) < effectiveSettings.proximityDespawnTriggerRange)
+                {
+                    Despawn();
+                    return;
+                }
+            }
+        }
     }
 
     public virtual void Throw(Character owner, Vector3 spawnPosition, Vector3 direction)
@@ -164,6 +178,27 @@ public class ThrownRing : NetworkBehaviour
             return;
         }
 
+        if (effectiveSettings.contactAction == RingWeaponSettings.ContactAction.Despawn)
+        {
+            Despawn();
+        }
+        else if (effectiveSettings.contactAction == RingWeaponSettings.ContactAction.Stop)
+        {
+            // Don't despawn, just stop
+            rb.velocity = Vector3.zero;
+            velocity = Vector3.zero;
+
+            Collider myself = collision.contacts[0].thisCollider, victim = collision.contacts[0].otherCollider;
+            if (Physics.ComputePenetration(myself, myself.transform.position, myself.transform.rotation,
+                victim, victim.transform.position, victim.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
+            {
+                transform.position += depenetrationDir * depenetrationDistance;
+            }
+        }
+    }
+
+    private void Despawn()
+    {
         // Play despawn sound
         GameSounds.PlaySound(gameObject, effectiveSettings.despawnSound);
 
