@@ -419,6 +419,17 @@ public class Character : NetworkBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        if (NetworkServer.active)
+        {
+            if (holdingFlag != null)
+            {
+                holdingFlag.ReturnToBase(true);
+            }
+        }
+    }
+
     /// <summary>
     /// Makes a state package
     /// </summary>
