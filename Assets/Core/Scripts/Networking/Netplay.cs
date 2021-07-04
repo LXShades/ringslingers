@@ -58,12 +58,7 @@ public class Netplay : MonoBehaviour
     /// </summary>
     public int localPlayerId = -1;
 
-    public Player localClient => NetworkClient.connection.identity.GetComponent<Player>();
-
-    public string localPlayerIntendedName { get; set; }
-    public Color localPlayerIntendedColour { get; set; }
-
-    public int localPlayerIndendedCharacter { get; set; } // by index in GameManager.playerCharacters
+    public Player localClient => NetworkClient.connection?.identity != null ? NetworkClient.connection.identity.GetComponent<Player>() : null;
 
     public Character localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
 
@@ -325,8 +320,8 @@ public class Netplay : MonoBehaviour
     }
     #endregion
 
-    #region Players
-    public Character AddPlayer()
+    #region Characters
+    public Character AddPlayer(int characterIndex)
     {
         if (!NetworkServer.active)
         {
@@ -335,8 +330,9 @@ public class Netplay : MonoBehaviour
         }
 
         // Spawn the player
-        Character player = Spawner.Spawn(GameManager.singleton.playerCharacters[0].prefab).GetComponent<Character>();
+        Character player = Spawner.Spawn(GameManager.singleton.playerCharacters[characterIndex].prefab).GetComponent<Character>();
 
+        player.characterIndex = characterIndex;
         player.Rename($"Player {player.playerId}");
         Log.Write($"{player.playerName} ({player.playerId}) has entered the game");
         MessageFeed.Post($"<player>{player.playerName}</player> has joined the game!");
@@ -364,6 +360,7 @@ public class Netplay : MonoBehaviour
 
         Character player = Spawner.Spawn(GameManager.singleton.playerCharacters[characterIndex].prefab).GetComponent<Character>();
 
+        player.characterIndex = characterIndex;
         player.Rename(playerName);
 
         return player;

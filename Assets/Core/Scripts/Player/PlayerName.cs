@@ -16,6 +16,9 @@ public class PlayerName : MonoBehaviour
             text.text = player.playerName;
         }
 
+        if (text.enabled != (player != Netplay.singleton.localPlayer))
+            text.enabled = player != Netplay.singleton.localPlayer;
+
         transform.rotation = Quaternion.LookRotation(-(GameManager.singleton.camera.transform.position - transform.position)); // why is it negative? i don't know.
     }
 

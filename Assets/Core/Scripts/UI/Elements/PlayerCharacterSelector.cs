@@ -32,6 +32,9 @@ public class PlayerCharacterSelector : MonoBehaviour
 
     void OnCharacterChanged(int index)
     {
-        Netplay.singleton.localClient.CmdRequestCharacter(index);
+        LocalPersistentPlayer persistent = Player.localPersistent;
+
+        persistent.characterIndex = index;
+        Player.localPersistent = persistent;
     }
 }

@@ -315,7 +315,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: pixels per degree
+  m_Text: px per degree (higher=faster)
 --- !u!1 &2911961273541257642
 GameObject:
   m_ObjectHideFlags: 0
@@ -1053,7 +1053,7 @@ MonoBehaviour:
   slider: {fileID: 2911961274013838713}
   number: {fileID: 2911961273211268661}
   minValue: 0
-  maxValue: 1
+  maxValue: 20
   onValueChanged:
     m_PersistentCalls:
       m_Calls: []

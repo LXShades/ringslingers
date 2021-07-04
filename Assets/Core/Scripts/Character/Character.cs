@@ -106,6 +106,8 @@ public class Character : NetworkBehaviour
 
     public float localTime = -1;
 
+    public int characterIndex { get; set; }
+
     public TheFlag holdingFlag
     {
         get

@@ -15,11 +15,9 @@ public class MainMenu : MonoBehaviour
     {
         joinButton.onClick.AddListener(OnJoinClicked);
         hostButton.onClick.AddListener(OnHostClicked);
-    }
+        playerName.onValueChanged.AddListener(OnNameChanged);
 
-    private void Update()
-    {
-        Netplay.singleton.localPlayerIntendedName = playerName.text;
+        OnNameChanged(playerName.text);
     }
 
     private void OnJoinClicked()
@@ -41,6 +39,14 @@ public class MainMenu : MonoBehaviour
         {
             Netplay.singleton.HostServer();
         };
+    }
+
+    private void OnNameChanged(string newName)
+    {
+        LocalPersistentPlayer persistent = Player.localPersistent;
+
+        persistent.name = newName;
+        Player.localPersistent = persistent;
     }
 
     private void SetMenuEnabled(bool enabled)
