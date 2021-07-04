@@ -564,7 +564,7 @@ MonoBehaviour:
   - {r: 0.1321622, g: 0.09251513, b: 0.9339623, a: 0}
   score: 0
   characterModel: {fileID: 2407978492390594985}
-  flagHoldBone: {fileID: 0}
+  flagHoldBone: {fileID: 5973140925193253550}
   droppedRingPrefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
   droppedRingSpawnPoint: {fileID: 3310946930297574031}
   ringDropLayers:
@@ -678,8 +678,8 @@ MonoBehaviour:
   wallRunTestDepth: 0.69
   wallRunTestRadius: 0.22
   wallRunTestHeight: 0.14
-  wallRunAngleFromAverageNormalMaxTolerance: 10
   wallRunCameraAssist: 1
+  wallMaxAngleRangeForStepping: 1
   rotateableModel: {fileID: 1526902982376324854}
   collisionType: 0
   groundTestDistance: 0.05
@@ -1179,19 +1179,24 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 2e91ece265165b941b124ae73b592666, type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
+--- !u!4 &5973140925193253550 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -4585012590328484941, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
+  m_PrefabInstance: {fileID: 1349425472474913053}
+  m_PrefabAsset: {fileID: 0}
 --- !u!137 &2407978492390594985 stripped
 SkinnedMeshRenderer:
   m_CorrespondingSourceObject: {fileID: 3733700690988744884, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
   m_PrefabInstance: {fileID: 1349425472474913053}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &7707168638965207191 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: -554151267778803318, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
-  m_PrefabInstance: {fileID: 1349425472474913053}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6797645665708461201 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3680555907789498996, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
+  m_PrefabInstance: {fileID: 1349425472474913053}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7707168638965207191 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -554151267778803318, guid: acde4176bc9cdf64f9111eeb12a18777, type: 3}
   m_PrefabInstance: {fileID: 1349425472474913053}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &2153966524698617702 stripped

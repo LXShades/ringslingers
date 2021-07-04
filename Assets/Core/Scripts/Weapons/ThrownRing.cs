@@ -64,6 +64,8 @@ public class ThrownRing : NetworkBehaviour
         {
             // shoot further ahead
             Simulate(GameTicker.singleton.localPlayerPing);
+            // Simulation doesn't work atm due to rigidbodies
+            //transform.position += GameTicker.singleton.localPlayerPing * velocity;
         }
 
         // colour the ring
@@ -104,14 +106,17 @@ public class ThrownRing : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        // ditto, interpolation station
-        //transform.position -= velocity * Time.fixedDeltaTime;
+        if (Time.time - spawnTime >= Time.fixedDeltaTime) // don't spawn backwards
+        {
+            // ditto, interpolation station
+            transform.position -= velocity * Time.fixedDeltaTime;
+        }
     }
 
     public virtual void Simulate(float deltaTime)
     {
         // using interpolation this shouldn't be needed
-        //transform.position += velocity * deltaTime;
+        transform.position += velocity * deltaTime;
 
         rb.velocity = velocity;
 

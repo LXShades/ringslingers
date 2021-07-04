@@ -26,7 +26,8 @@ public class GameManager : MonoBehaviour
     public CharacterNamePair[] playerCharacters;
 
     [Header("Level Settings")]
-    public string defaultMenuScene;
+    [Mirror.Scene]
+    public string menuScene;
 
     public LevelDatabase levelDatabase;
 
@@ -83,8 +84,6 @@ public class GameManager : MonoBehaviour
         EnableInputs();
 
         GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
-
-        defaultMenuScenePath = SceneManager.GetSceneByName(defaultMenuScene).path;
     }
 
     private void Start()
@@ -98,7 +97,7 @@ public class GameManager : MonoBehaviour
         bool isWeaponWheelOpen = input.Gameplay.WeaponWheel.ReadValue<float>() > 0.5f;
 
         needsCursor |= isPaused; // pause menu needs mouse
-        needsCursor |= string.Compare(SceneManager.GetActiveScene().path, defaultMenuScenePath, true) == 0; // main menu needs mouse
+        needsCursor |= string.Compare(SceneManager.GetActiveScene().path, menuScene, true) == 0; // main menu needs mouse
         needsCursor |= isWeaponWheelOpen; // weapon wheel needs mouse
 
         CursorLockMode lockMode = needsCursor ? CursorLockMode.None : CursorLockMode.Locked;
@@ -143,7 +142,7 @@ public class GameManager : MonoBehaviour
     private void OnClientDisconnected(Mirror.NetworkConnection conn)
     {
         // go back to the main menu
-        SceneManager.LoadSceneAsync(defaultMenuScene);
+        SceneManager.LoadSceneAsync(menuScene);
     }
 
     public void SuppressGameplayInputs()

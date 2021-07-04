@@ -58,6 +58,7 @@ public class TheFlag : NetworkBehaviour
 
     // Spawning
     private Vector3 basePosition;
+    private Quaternion baseRotation;
 
     // Components
     private Movement movement;
@@ -67,6 +68,8 @@ public class TheFlag : NetworkBehaviour
     private void Awake()
     {
         basePosition = transform.position;
+        baseRotation = transform.rotation;
+
         movement = GetComponent<Movement>();
         blinker = GetComponent<Blinker>();
         syncMovement = GetComponent<SyncMovement>();
@@ -97,9 +100,6 @@ public class TheFlag : NetworkBehaviour
 
                 if (player)
                 {
-                    transform.SetParent(player.flagHoldBone, false);
-                    transform.localPosition = Vector3.zero;
-                    transform.localRotation = Quaternion.identity;
                     attachedToPlayer = currentCarrier;
                 }
                 else
@@ -110,7 +110,7 @@ public class TheFlag : NetworkBehaviour
             }
             else
             {
-                transform.SetParent(null, false);
+                transform.rotation = baseRotation;
                 blinker.timeRemaining = 0f;
             }
 
@@ -146,6 +146,7 @@ public class TheFlag : NetworkBehaviour
                 }
 
                 gotFlagIndicator.transform.SetPositionAndRotation(carryingPlayer.transform.position + Vector3.up * gotFlagIndicatorHoverHeight, Quaternion.LookRotation(gotFlagIndicator.transform.position - GameManager.singleton.camera.transform.position));
+                transform.SetPositionAndRotation(carryingPlayer.flagHoldBone.position, carryingPlayer.flagHoldBone.rotation);
             }
         }
         else
@@ -204,8 +205,9 @@ public class TheFlag : NetworkBehaviour
 
     public void ReturnToBase(bool postReturnMessage)
     {
-        transform.SetParent(null, false);
         transform.position = basePosition;
+        transform.rotation = baseRotation;
+
         state = State.Idle;
 
         dropRespawnCountdown = 0f;
