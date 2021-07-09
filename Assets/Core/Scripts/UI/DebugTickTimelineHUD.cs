@@ -24,7 +24,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
     // Update is called once per frame
     void LateUpdate()
     {
-        Ticker targetTicker = null;
+        Ticker<PlayerInput, CharacterState> targetTicker = null;
 
         if (targetLocalPlayer && Netplay.singleton.localPlayer != null)
             targetTicker = Netplay.singleton.localPlayer.ticker;
@@ -38,15 +38,15 @@ public class DebugTickTimelineHUD : MonoBehaviour
             }
         }
 
-        if (targetTicker)
+        if (targetTicker != null)
         {
-            timeline.timeStart = (int)(Mathf.Max(targetTicker.playbackTime, targetTicker.confirmedPlaybackTime) / timelineLength) * timelineLength;
+            timeline.timeStart = (int)(Mathf.Max(targetTicker.playbackTime, targetTicker.confirmedStateTime) / timelineLength) * timelineLength;
             timeline.timeEnd = timeline.timeStart + timelineLength;
 
             timeline.ClearDraw();
 
             timeline.DrawTick(targetTicker.playbackTime, 1.5f, 0.5f, playbackTimeColor, "PT", 0);
-            timeline.DrawTick(targetTicker.confirmedPlaybackTime, 1.5f, 0.5f, confirmedTimeColor, "CT", 1);
+            timeline.DrawTick(targetTicker.confirmedStateTime, 1.5f, 0.5f, confirmedTimeColor, "CT", 1);
             timeline.DrawTick(targetTicker.realtimePlaybackTime, 1.5f, 0.5f, realtimeColor, "RT", 2); ;
 
             for (int i = 0; i < targetTicker.inputHistory.Count; i++)
@@ -55,7 +55,7 @@ public class DebugTickTimelineHUD : MonoBehaviour
                 timeline.DrawTick(targetTicker.stateHistory.TimeAt(i), 0.5f, 0f, stateColor);
 
             if (playerNameText)
-                playerNameText.text = targetTicker.gameObject.name;
+                playerNameText.text = targetTicker.targetName;
 
             if (showServerTime)
                 timeline.DrawTick(GameTicker.singleton.predictedServerTime, 2f, 2f, serverTimeColor, "ST", 3);

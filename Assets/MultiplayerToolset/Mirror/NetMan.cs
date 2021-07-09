@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class NetMan : NetworkManager
@@ -44,13 +45,11 @@ public class NetMan : NetworkManager
     {
         base.Awake();
 
-        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceTransport.Ignorance>() != null);
+        Debug.Assert(transport.GetComponent<IgnoranceTransport.Ignorance>() != null);
         singleton = this;
         defaultPort = transport.GetComponent<IgnoranceTransport.Ignorance>().port;
         transform.SetParent(null, false);
         DontDestroyOnLoad(gameObject);
-
-        SyncActionChain.RegisterHandlers();
     }
 
     public void Host(bool withLocalPlayer, int port = -1)
@@ -70,7 +69,7 @@ public class NetMan : NetworkManager
 
     public void Connect(string ip)
     {
-        UnityEngine.Debug.Assert(transport.GetComponent<IgnoranceTransport.Ignorance>() != null);
+        Debug.Assert(transport.GetComponent<IgnoranceTransport.Ignorance>() != null);
 
         if (ip.Contains(":"))
         {
@@ -83,7 +82,7 @@ public class NetMan : NetworkManager
             }
             else
             {
-                Log.WriteWarning($"Could not read port {ip.Substring(ip.IndexOf(":") + 1)}, using default of {defaultPort}.");
+                Debug.LogWarning($"Could not read port {ip.Substring(ip.IndexOf(":") + 1)}, using default of {defaultPort}.");
                 transport.GetComponent<IgnoranceTransport.Ignorance>().port = defaultPort;
             }
         }

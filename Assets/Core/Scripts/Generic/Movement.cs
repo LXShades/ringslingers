@@ -83,6 +83,9 @@ public class Movement : MonoBehaviour
         NoSlide = 1
     }
 
+    Color[] debugColorByStage = new Color[] { Color.red, Color.green, Color.blue, Color.yellow };
+    List<IMovementCollisions> cachedMovementCollisionComponents = new List<IMovementCollisions>(12);
+
     /// <summary>
     /// Moves with collision checking. Can be a computationally expensive operation
     /// </summary>
@@ -101,7 +104,6 @@ public class Movement : MonoBehaviour
 
         const float kSkin = 0.005f;
         int numIterations = (flags & MoveFlags.NoSlide) != 0 ? 1 : 3; // final iteration always blocks without slide, so just use one iteration
-        Color[] colorByStage = new Color[] { Color.red, Color.green, Color.blue, Color.yellow };
         Vector3 currentMovement = offset;
         bool hasHitOccurred = false;
 
@@ -114,7 +116,7 @@ public class Movement : MonoBehaviour
             float kPullback = iteration == 0 ? 1f : 0f;
             Vector3 normalMovement = currentMovement.normalized;
 
-            int numHits = ColliderCast(hits, transform.position, normalMovement, currentMovementMagnitude + kSkin, blockingCollisionLayers, QueryTriggerInteraction.Collide, kPullback, debugDrawMovementShapes, colorByStage[iteration]);
+            int numHits = ColliderCast(hits, transform.position, normalMovement, currentMovementMagnitude + kSkin, blockingCollisionLayers, QueryTriggerInteraction.Collide, kPullback, debugDrawMovementShapes, debugColorByStage[iteration]);
             float lowestDist = currentMovementMagnitude + kSkin;
             int lowestHitId = -1;
 
@@ -128,7 +130,8 @@ public class Movement : MonoBehaviour
                 }
 
                 // acknowledge all collided movementcollision objects
-                foreach (IMovementCollisions movementCollision in hits[i].collider.GetComponents<IMovementCollisions>())
+                hits[i].collider.GetComponents<IMovementCollisions>(cachedMovementCollisionComponents);
+                foreach (IMovementCollisions movementCollision in cachedMovementCollisionComponents)
                     movementCollisions.Add(movementCollision);
             }
 
@@ -152,7 +155,7 @@ public class Movement : MonoBehaviour
 
                 if (debugDrawMovementShapes)
                 {
-                    Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
+                    Color finalColour = Color.Lerp(debugColorByStage[iteration], Color.white, 0.5f);
                     DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
                     DebugExtension.DebugWireSphere(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
                 }
@@ -161,7 +164,7 @@ public class Movement : MonoBehaviour
             {
                 if (debugDrawMovementShapes)
                 {
-                    Color finalColour = Color.Lerp(colorByStage[iteration], Color.white, 0.5f);
+                    Color finalColour = Color.Lerp(debugColorByStage[iteration], Color.white, 0.5f);
                     DebugExtension.DebugPoint(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
                     DebugExtension.DebugWireSphere(transform.position + currentMovement, finalColour, 0.15f + iteration * 0.05f);
                 }
@@ -222,7 +225,8 @@ public class Movement : MonoBehaviour
 
                         if (Physics.ComputePenetration(collider, currentPosition, transform.rotation, nearbyColliderBuffer[i], nearbyColliderBuffer[i].transform.position, nearbyColliderBuffer[i].transform.rotation, out Vector3 direction, out float distance))
                         {
-                            foreach (IMovementCollisions movementCollision in nearbyColliderBuffer[i].GetComponents<IMovementCollisions>())
+                            nearbyColliderBuffer[i].GetComponents<IMovementCollisions>(cachedMovementCollisionComponents);
+                            foreach (IMovementCollisions movementCollision in cachedMovementCollisionComponents)
                                 movementCollisions.Add(movementCollision);
 
                             if (!nearbyColliderBuffer[i].isTrigger)

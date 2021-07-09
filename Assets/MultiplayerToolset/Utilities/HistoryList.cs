@@ -2,7 +2,19 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HistoryListBase { }
+public class HistoryListBase
+{
+    public virtual int Count { get; }
+
+    public virtual float LatestTime { get; }
+
+    public virtual void Clear() { }
+
+    public virtual int IndexAt(float time, float tolerance = 0.01f) { return -1; }
+    public virtual float TimeAt(int index) { return -1f; }
+    public virtual void RemoveAt(int index) { }
+    public virtual void Prune(float minTime) { }
+}
 
 [Serializable]
 public class HistoryList<T> : HistoryListBase
@@ -26,23 +38,23 @@ public class HistoryList<T> : HistoryListBase
         };
     }
 
-    public int Count => items.Count;
+    public override int Count => items.Count;
 
     public T Latest => items.Count > 0 ? items[0].item : default;
 
-    public float LatestTime => items.Count > 0 ? items[0].time : 0.0f;
+    public override float LatestTime => items.Count > 0 ? items[0].time : 0.0f;
 
     public T ItemAt(float time, float tolerance = 0.01f)
     {
         return items.Find(a => a.time >= time - tolerance && a.time <= time + tolerance).item;
     }
 
-    public int IndexAt(float time, float tolerance = 0.01f)
+    public override int IndexAt(float time, float tolerance = 0.01f)
     {
         return items.FindIndex(a => a.time >= time - tolerance && a.time <= time + tolerance);
     }
 
-    public float TimeAt(int index)
+    public override float TimeAt(int index)
     {
         if (index == -1) return -1;
 
@@ -115,17 +127,17 @@ public class HistoryList<T> : HistoryListBase
         items.Insert(index, new HistoryItem() { item = item, time = time });
     }
 
-    public void Clear()
+    public override void Clear()
     {
         items.Clear();
     }
 
-    public void RemoveAt(int index)
+    public override void RemoveAt(int index)
     {
         items.RemoveAt(index);
     }
 
-    public void Prune(float minTime)
+    public override void Prune(float minTime)
     {
         for (int i = 0; i < items.Count; i++)
         {

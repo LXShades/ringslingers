@@ -484,7 +484,7 @@ GameObject:
   - component: {fileID: 7352825796714013432}
   - component: {fileID: 3620776001654559608}
   - component: {fileID: 7352825796714013433}
-  - component: {fileID: 1135752959894809543}
+  - component: {fileID: 674430721660637794}
   - component: {fileID: 7352825796714013435}
   - component: {fileID: 1227556274159782272}
   - component: {fileID: 933529237501604302}
@@ -576,12 +576,10 @@ MonoBehaviour:
     maxNumRings: 16
   hurtDefaultHorizontalKnockback: 7
   hurtDefaultVerticalKnockback: 3.8
-  logLocalPlayerReconciles: 1
   movement: {fileID: 0}
   damageable: {fileID: 0}
-  ticker: {fileID: 0}
   localTime: -1
---- !u!114 &1135752959894809543
+--- !u!114 &674430721660637794
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -590,18 +588,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 7352825796714013436}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b79507cd831dde542bedac2028ce364e, type: 3}
+  m_Script: {fileID: 11500000, guid: 328037851864489408b07cb0874f5169, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxDeltaTime: 0.034
-  maxSeekIterations: 20
-  maxInputRate: 60
-  alwaysReconcile: 0
-  historyLength: 1
-  debugLogReconciles: 0
-  debugSelfReconcileDelay: 0.3
-  debugSelfReconcile: 0
-  debugDrawReconciles: 0
+  settings:
+    maxDeltaTime: 0.034
+    maxSeekIterations: 20
+    maxInputRate: 60
+    alwaysReconcile: 0
+    historyLength: 1
+    debugLogReconciles: 0
+    debugSelfReconcileDelay: 0.3
+    debugSelfReconcile: 0
+    debugDrawReconciles: 0
 --- !u!114 &7352825796714013435
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -22,10 +22,8 @@ public class Predictable : MonoBehaviour
     {
         if (isPrediction && Time.unscaledTime - spawnTime > expiryTime)
         {
-            Log.Write($"Prediction \"{gameObject}\" expired, bye!");
+            Debug.Log($"Prediction \"{gameObject}\" expired, bye!");
             Spawner.Despawn(gameObject);
         }
     }
-
-
 }

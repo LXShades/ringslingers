@@ -228,7 +228,7 @@ public class CharacterShooting : NetworkBehaviour
     private bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
     {
         float interval = 0.07f;
-        Ticker ticker = target.ticker;
+        Ticker<PlayerInput, CharacterState> ticker = target.ticker;
         Vector3 startPosition = spawnPosition.position;
         float ringDistance = 0f; // theoretical thrown ring distance
         float ringSpeed = effectiveWeaponSettings.projectileSpeed * interval;
@@ -241,7 +241,7 @@ public class CharacterShooting : NetworkBehaviour
 
         for (int i = 1; i * interval < maxPredictionTime; i++)
         {
-            ticker.Seek(originalTime + i * interval, ticker.realtimePlaybackTime, Ticker.SeekFlags.IgnoreDeltas | Ticker.SeekFlags.DontConfirm);
+            ticker.Seek(originalTime + i * interval, ticker.realtimePlaybackTime, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.DontConfirm);
             ringDistance += ringSpeed;
 
             float currentTargetDistance = Vector3.Distance(target.transform.position, startPosition);
@@ -262,7 +262,7 @@ public class CharacterShooting : NetworkBehaviour
             lastTargetPosition = target.transform.position;
         }
 
-        ticker.Seek(originalTime, ticker.realtimePlaybackTime, Ticker.SeekFlags.IgnoreDeltas);
+        ticker.Seek(originalTime, ticker.realtimePlaybackTime, TickerSeekFlags.IgnoreDeltas);
 
         return succeeded;
     }
@@ -271,7 +271,7 @@ public class CharacterShooting : NetworkBehaviour
     {
         float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.settings.timeOnPickup;
 
-        if (MatchState.Get<MatchConfiguration>(out MatchConfiguration config))
+        if (MatchState.Get(out MatchConfiguration config))
         {
             if (config.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
                 ammoToAdd = weaponType.settings.ammoOnPickup;

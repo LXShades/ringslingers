@@ -48,6 +48,7 @@ public class Spawner : MonoBehaviour
 
     public List<GameObject> spawnablePrefabs = new List<GameObject>();
 
+    private byte localPlayerId;
     private byte nextClientPredictionId = 0;
 
     void Awake()
@@ -63,10 +64,9 @@ public class Spawner : MonoBehaviour
             prefabByGuid.Add(spawnable.GetComponent<NetworkIdentity>().assetId, spawnable);
         }
 
-        SyncActionSystem.RegisterSyncActions(gameObject, true);
-
         for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
         {
+            // todo: why are we doing this???
             OnSceneLoaded(UnityEngine.SceneManagement.SceneManager.GetSceneAt(i));
         }
 
@@ -94,20 +94,6 @@ public class Spawner : MonoBehaviour
 
     private void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene)
     {
-        if (NetworkServer.active)
-        {
-            foreach (GameObject obj in scene.GetRootGameObjects())
-            {
-                foreach (Transform child in obj.GetComponentsInChildren<Transform>())
-                {
-                    if (child.GetComponent<NetworkIdentity>())
-                    {
-                        SyncActionSystem.RegisterSyncActions(child.gameObject);
-                    }
-                }
-            }
-        }
-
         RegisterSpawnHandlers();
     }
 
@@ -126,7 +112,7 @@ public class Spawner : MonoBehaviour
     {
         if (NetworkClient.isConnected && !NetworkServer.active && (!prefab.GetComponent<NetworkIdentity>() || !prefab.GetComponent<Predictable>()))
         {
-            Log.WriteError($"Cannot predict {prefab.name}! It must be predictable and networkable.");
+            Debug.LogError($"Cannot predict {prefab.name}! It must be predictable and networkable.");
             return null;
         }
 
@@ -181,7 +167,6 @@ public class Spawner : MonoBehaviour
         if (NetworkServer.active && target.TryGetComponent(out NetworkIdentity identity))
         {
             NetworkServer.Spawn(target);
-            SyncActionSystem.RegisterSyncActions(target);
         }
     }
 
@@ -201,7 +186,12 @@ public class Spawner : MonoBehaviour
 
     public static SpawnPrediction MakeSpawnPrediction()
     {
-        return new SpawnPrediction() { startId = (ushort)((Netplay.singleton.localPlayerId << 8) | singleton.nextClientPredictionId) };
+        return new SpawnPrediction() { startId = (ushort)((singleton.localPlayerId << 8) | singleton.nextClientPredictionId) };
+    }
+
+    public static void SetLocalPlayerId(byte localPlayerId)
+    {
+        singleton.localPlayerId = localPlayerId;
     }
 
     private GameObject SpawnHandler(SpawnMessage spawnMessage)
@@ -219,7 +209,6 @@ public class Spawner : MonoBehaviour
                 }
             }
 
-            Log.Write($"Spawning a {prefabByGuid[spawnMessage.assetId]}");
             return Spawn(prefabByGuid[spawnMessage.assetId], spawnMessage.position, spawnMessage.rotation);
         }
         else
@@ -239,8 +228,6 @@ public class Spawner : MonoBehaviour
 
     private void PostSpawnHandler(GameObject target)
     {
-        SyncActionSystem.RegisterSyncActions(target);
-
         // inform successful predictions that they're ready!
         if (target.TryGetComponent(out Predictable predictable))
         {

@@ -53,10 +53,19 @@ public class Netplay : MonoBehaviour
     public bool isPlayerTick => (int)(Time.unscaledTime * playerTickrate) != (int)((Time.unscaledTime - Time.unscaledDeltaTime) * playerTickrate);
 
     [Header("Players")]
+    [SerializeField] private int _localPlayerId = -1;
     /// <summary>
     /// Local player ID
     /// </summary>
-    public int localPlayerId = -1;
+    public int localPlayerId
+    {
+        get => _localPlayerId;
+        set
+        {
+            _localPlayerId = value;
+            Spawner.SetLocalPlayerId((byte)value);
+        }
+    }
 
     public Player localClient => NetworkClient.connection?.identity != null ? NetworkClient.connection.identity.GetComponent<Player>() : null;
 

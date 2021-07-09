@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public struct PlayerInput : IEquatable<PlayerInput>
+public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
 {
     // Movement
     public float moveHorizontalAxis
@@ -172,57 +172,4 @@ public struct PlayerInput : IEquatable<PlayerInput>
             $"Fire {btnFire}/P{btnFirePressed}/R{btnFireReleased} " +
             $"Spin {btnSpin}/P{btnSpinPressed}/R{btnFireReleased}";
     }
-}
-public struct InputDelta
-{
-    public float time;
-    public PlayerInput input;
-
-    public InputDelta(float time, in PlayerInput input)
-    {
-        this.time = time;
-        this.input = input;
-    }
-}
-
-public struct InputPack
-{
-    public float extrapolation;
-    public InputDelta[] inputs;
-    public CharacterState state;
-
-    /// <summary>
-    /// Makes an InputPack
-    /// </summary>
-    /// <returns></returns>
-    public static InputPack MakeFromHistory(HistoryList<PlayerInput> inputHistory, float sendBufferLength)
-    {
-        int startIndex = inputHistory.ClosestIndexBeforeOrEarliest(inputHistory.LatestTime - sendBufferLength);
-
-        if (startIndex != -1)
-        {
-            InputDelta[] inputs = new InputDelta[startIndex + 1];
-            for (int i = startIndex; i >= 0; i--)
-            {
-                inputs[i].time = inputHistory.TimeAt(i);
-                inputs[i].input = inputHistory[i];
-            }
-
-            return new InputPack()
-            {
-                inputs = inputs
-            };
-        }
-
-        return new InputPack()
-        {
-            inputs = new InputDelta[0]
-        };
-    }
-}
-
-public struct MoveStateWithInput
-{
-    public CharacterState state;
-    public PlayerInput input;
 }

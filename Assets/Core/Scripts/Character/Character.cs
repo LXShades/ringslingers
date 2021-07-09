@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Character : NetworkBehaviour
+public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState>
 {
     [System.Serializable]
     public struct RingDropLayer
@@ -87,7 +87,7 @@ public class Character : NetworkBehaviour
     public float hurtDefaultVerticalKnockback = 5;
 
     [Header("Debug")]
-    public bool logLocalPlayerReconciles = true;
+    //public bool logLocalPlayerReconciles = true;
 
     // Components
     /// <summary>
@@ -95,7 +95,7 @@ public class Character : NetworkBehaviour
     /// </summary>
     [HideInInspector] public CharacterMovement movement;
     [HideInInspector] public Damageable damageable;
-    [HideInInspector] public Ticker ticker;
+    [HideInInspector] public Ticker<PlayerInput, CharacterState> ticker;
     private PlayerSounds sounds;
 
     public bool isInvisible { get; set; }
@@ -128,7 +128,16 @@ public class Character : NetworkBehaviour
         movement = GetComponent<CharacterMovement>();
         damageable = GetComponent<Damageable>();
         sounds = GetComponent<PlayerSounds>();
-        ticker = GetComponent<Ticker>();
+    }
+
+    void Start()
+    {
+        PlayerControls control = new PlayerControls();
+        ticker = GetComponent<TickerComponent>().ticker as Ticker<PlayerInput, CharacterState>;
+
+        damageable.onLocalDamaged.AddListener(OnDamaged);
+
+        OnColourChanged(colour, colour); // HACK: we need to update visuals
     }
 
     public override void OnStartServer()
@@ -154,17 +163,8 @@ public class Character : NetworkBehaviour
     {
         base.OnStartAuthority();
 
-        if (logLocalPlayerReconciles)
-            ticker.debugLogReconciles = true;
-    }
-
-    void Start()
-    {
-        PlayerControls control = new PlayerControls();
-
-        damageable.onLocalDamaged.AddListener(OnDamaged);
-
-        OnColourChanged(colour, colour); // HACK: we need to update visuals
+        //if (logLocalPlayerReconciles)
+            //ticker.ticker.settings.debugLogReconciles = true;
     }
 
     void Update()
@@ -173,6 +173,16 @@ public class Character : NetworkBehaviour
             characterModel.enabled = false;
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = true;
+    }
+
+    public void Tick(float deltaTime, PlayerInput input, bool isRealtime)
+    {
+        movement.TickMovement(deltaTime, input, isRealtime);
+    }
+
+    public ITickerBase CreateTicker()
+    {
+        return new Ticker<PlayerInput, CharacterState>(this);
     }
 
     public void Respawn()
@@ -193,7 +203,9 @@ public class Character : NetworkBehaviour
                 movement.velocity = Vector3.zero;
                 movement.state = 0;
 
-                ticker.ConfirmCurrentState();
+                if (ticker == null)// ticker might not be ready yet
+                    ticker = GetComponent<TickerComponent>().ticker as Ticker<PlayerInput, CharacterState>;
+                ticker?.ConfirmCurrentState();
 
                 TargetRespawn(spawnPoint.transform.forward);
             }

@@ -61,7 +61,7 @@ public class WeaponWheel : MonoBehaviour
         hasStartedSelecting = false;
         selectedWeapons.Clear();
 
-        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
+        if (Netplay.singleton && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
             selectedWeapons.AddRange(shooting.localSelectedWeapons);
     }
 

@@ -23,25 +23,26 @@ public class GameTicker : NetworkBehaviour
             get => _compressedExtrapolatedClientTime * kMaxExtrapolatedTimeOffset / 256f;
         }
         public byte _compressedExtrapolatedClientTime;
-        public ArraySegment<ServerPlayerTick> ticks;
+        public ArraySegment<ServerPlayerState> ticks;
     }
 
     /// <summary>
-    /// Per-player tick from server to clients indicating a player's current state
+    /// Per-player state from server to clients indicating a player's current state
     /// </summary>
-    private struct ServerPlayerTick
+    private struct ServerPlayerState
     {
         public byte id;
-        public MoveStateWithInput moveState;
+        public CharacterState state;
+        public PlayerInput lastInput;
         public byte sounds;
     }
 
     /// <summary>
     /// A player input message send from clients to server
     /// </summary>
-    private struct ClientPlayerInput : NetworkMessage
+    public struct ClientPlayerInput : NetworkMessage
     {
-        public InputPack inputPack;
+        public TickerInputPack<PlayerInput> inputPack;
     }
 
     // Client/server flow control settings for better network smoothing
@@ -67,10 +68,10 @@ public class GameTicker : NetworkBehaviour
     public float remotePredictionTimeStep = 0.08f;
 
     // preallocated outgoing player ticks
-    private readonly List<ServerPlayerTick> ticksOut = new List<ServerPlayerTick>(32);
+    private readonly List<ServerPlayerState> ticksOut = new List<ServerPlayerState>(32);
 
     // [server] Incoming input flow controller per player
-    private readonly Dictionary<int, List<InputPack>> incomingPlayerInputs = new Dictionary<int, List<InputPack>>();
+    private readonly Dictionary<int, List<TickerInputPack<PlayerInput>>> incomingPlayerInputs = new Dictionary<int, List<TickerInputPack<PlayerInput>>>();
     // [client] Incoming server tick flow
     private ServerTickMessage incomingServerTick = default;
     private bool hasIncomingServerTick = false;
@@ -144,7 +145,7 @@ public class GameTicker : NetworkBehaviour
 
             if (character && incomingPlayerInputs.ContainsKey(i))
             {
-                foreach (InputPack inputPack in incomingPlayerInputs[i])
+                foreach (TickerInputPack<PlayerInput> inputPack in incomingPlayerInputs[i])
                     character.ticker.PushInputPack(inputPack);
                 incomingPlayerInputs[i].Clear();
             }
@@ -166,7 +167,7 @@ public class GameTicker : NetworkBehaviour
                     if (isServer)
                     {
                         // on server it's pretty easy, just set realtimePlaybackTime to confirmedPlaybackTime, much like the other players
-                        player.ticker.Seek(Time.time, player.ticker.confirmedPlaybackTime);
+                        player.ticker.Seek(Time.time, player.ticker.confirmedStateTime);
                     }
                     else
                     {
@@ -179,9 +180,9 @@ public class GameTicker : NetworkBehaviour
                     }
                 }
                 else if (isServer) // other player on server
-                    player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedPlaybackTime); // extrapolate the player further than the last input we got from them
+                    player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedStateTime); // extrapolate the player further than the last input we got from them
                 else if (isClient) // replica on client
-                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, Ticker.SeekFlags.IgnoreDeltas); // deltas are ignored for clients' replicas because clients don't have full input info, so they can't discern deltas (or the future)
+                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, TickerSeekFlags.IgnoreDeltas); // deltas are ignored for clients' replicas because clients don't have full input info, so they can't discern deltas (or the future)
             }
         }
 
@@ -207,17 +208,17 @@ public class GameTicker : NetworkBehaviour
                 for (int i = 0; i < tick.ticks.Count; i++)
                 {
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
-                    tick.clientTimeExtrapolation = player.ticker.playbackTime - player.ticker.confirmedPlaybackTime;
-                    tick.confirmedClientTime = player.ticker.confirmedPlaybackTime;
+                    tick.clientTimeExtrapolation = player.ticker.playbackTime - player.ticker.confirmedStateTime;
+                    tick.confirmedClientTime = player.ticker.confirmedStateTime;
                     player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                 }
             }
             else if (NetworkClient.isConnected)
             {
                 // Send local player inputs to server
-                Ticker localTicker = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.GetComponent<Ticker>() : null;
+                Ticker<PlayerInput, CharacterState> localTicker = Netplay.singleton.localPlayer != null ? Netplay.singleton.localPlayer.ticker : null;
 
-                if (localTicker)
+                if (localTicker != null)
                     NetworkClient.Send(new ClientPlayerInput() { inputPack = localTicker.MakeInputPack(sendBufferLength) }, Channels.Unreliable);
             }
         }
@@ -237,17 +238,13 @@ public class GameTicker : NetworkBehaviour
             if (character)
             {
                 PlayerSounds sounds = character.GetComponent<PlayerSounds>();
-                Ticker ticker = character.GetComponent<Ticker>();
 
-                ticksOut.Add(new ServerPlayerTick()
+                ticksOut.Add(new ServerPlayerState()
                 {
                     id = (byte)i,
                     sounds = sounds.soundHistory,
-                    moveState = new MoveStateWithInput()
-                    {
-                        state = ticker.lastConfirmedState,
-                        input = ticker.inputHistory.Latest
-                    }
+                    state = character.ticker.lastConfirmedState,
+                    lastInput = character.ticker.inputHistory.Latest
                 });
             }
         }
@@ -255,7 +252,7 @@ public class GameTicker : NetworkBehaviour
         ServerTickMessage tick = new ServerTickMessage()
         {
             serverTime = predictedServerTime,
-            ticks = new ArraySegment<ServerPlayerTick>(ticksOut.ToArray()),
+            ticks = new ArraySegment<ServerPlayerState>(ticksOut.ToArray()),
         };
 
         return tick;
@@ -274,7 +271,7 @@ public class GameTicker : NetworkBehaviour
             {
                 // Receive character state and rewind character to the server time
                 PlayerSounds sounds = character.GetComponent<PlayerSounds>();
-                Ticker ticker = character.GetComponent<Ticker>();
+                Ticker<PlayerInput, CharacterState> ticker = character.ticker;
 
                 sounds.ReceiveSoundHistory(tick.sounds);
 
@@ -284,12 +281,12 @@ public class GameTicker : NetworkBehaviour
                     // but confirmedClientTime is more accurate to where the client actually is on the server, and more accurate to the client's local time...right?
                     // after testing, extrapolatedClientTime turned out to be smoother
                     localPlayerPing = ticker.playbackTime - tickMessage.extrapolatedClientTime;
-                    ticker.Rewind(tick.moveState.state, tickMessage.confirmedClientTime); // this line definitely uses confirmedClientTime! not sure about the other!
+                    ticker.Rewind(tick.state, tickMessage.confirmedClientTime); // this line definitely uses confirmedClientTime! not sure about the other!
                 }
                 else
                 {
-                    ticker.PushInput(tick.moveState.input, tickMessage.serverTime);
-                    ticker.Rewind(tick.moveState.state, tickMessage.serverTime);
+                    ticker.PushInput(tick.lastInput, tickMessage.serverTime);
+                    ticker.Rewind(tick.state, tickMessage.serverTime);
                 }
             }
         }
@@ -313,7 +310,7 @@ public class GameTicker : NetworkBehaviour
             if (!incomingPlayerInputs.ContainsKey(client.playerId))
             {
                 // lazy-create a player input flow for this player
-                incomingPlayerInputs.Add(client.playerId, new List<InputPack>());
+                incomingPlayerInputs.Add(client.playerId, new List<TickerInputPack<PlayerInput>>());
             }
 
             if (inputMessage.inputPack.inputs.Length > 0)
@@ -336,5 +333,24 @@ public class GameTicker : NetworkBehaviour
         string playerInputFlowDebug = "";
         
         return $"Ping: {(int)(localPlayerPing * 1000)}ms\n{playerInputFlowDebug}";
+    }
+}
+
+public static class ClientPlayerInputReaderWriter
+{
+    public static void WritePlayerInputMessage(this NetworkWriter writer, GameTicker.ClientPlayerInput playerInput)
+    {
+        writer.WriteArray<PlayerInput>(playerInput.inputPack.inputs);
+        writer.WriteArray<float>(playerInput.inputPack.times);
+    }
+
+    public static GameTicker.ClientPlayerInput ReadPlayerInputMessage(this NetworkReader reader)
+    {
+        GameTicker.ClientPlayerInput playerInput;
+
+        playerInput.inputPack.inputs = reader.ReadArray<PlayerInput>();
+        playerInput.inputPack.times = reader.ReadArray<float>();
+
+        return playerInput;
     }
 }

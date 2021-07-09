@@ -44,7 +44,7 @@ public class AssetLookup : MonoBehaviour
         }
         else
         {
-            Log.WriteError($"Cannot find asset {id}");
+            Debug.LogError($"Cannot find asset {id}");
             return null;
         }
     }
@@ -57,7 +57,7 @@ public class AssetLookup : MonoBehaviour
             return returnValue;
         }
         {
-            Log.WriteError($"Cannot find asset \"{asset.name}\"");
+            Debug.LogError($"Cannot find asset \"{asset.name}\"");
             return 0;
         }
     }
@@ -115,7 +115,7 @@ public class AssetLookup : MonoBehaviour
 
         if (numCollisionsResolved > 0)
         {
-            Log.Write($"Resolved {numCollisionsResolved} ID collisions");
+            Debug.Log($"Resolved {numCollisionsResolved} ID collisions");
         }
 
         // Save the asset!

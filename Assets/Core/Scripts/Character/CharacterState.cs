@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [Serializable]
-public struct CharacterState : IEquatable<CharacterState>
+public struct CharacterState : ITickerState<CharacterState>
 {
     private const float kVelocityRange = 100f;
 
