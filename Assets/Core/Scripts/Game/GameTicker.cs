@@ -116,7 +116,7 @@ public class GameTicker : NetworkBehaviour
             localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
 
             // Send inputs to the local player's ticker
-            Netplay.singleton.localPlayer.ticker.PushInput(localPlayerInput, Time.time);
+            Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, Time.time);
         }
 
         // We have all server inputs and our own inputs, tick the game
@@ -146,7 +146,11 @@ public class GameTicker : NetworkBehaviour
             if (character && incomingPlayerInputs.ContainsKey(i))
             {
                 foreach (TickerInputPack<PlayerInput> inputPack in incomingPlayerInputs[i])
-                    character.ticker.PushInputPack(inputPack);
+                {
+                    character.ticker.InsertInputPack(inputPack);
+                }
+
+                character.timeOfLastInputPush = Time.time;
                 incomingPlayerInputs[i].Clear();
             }
         }
@@ -173,14 +177,14 @@ public class GameTicker : NetworkBehaviour
                     {
                         // on the client, it's a bit more awkward, their confirmedPlaybackTime will be rewound periodically causing jump sounds to be replayed
                         // this approach anticipates when a new, full tick is about to execute by using Time.deltaTime
-                        if (Time.time - Time.deltaTime < player.ticker.inputHistory.LatestTime && player.ticker.inputHistory.Count > 1)
-                            player.ticker.Seek(Time.time, player.ticker.inputHistory.TimeAt(1));
+                        if (Time.time - Time.deltaTime < player.ticker.inputTimeline.LatestTime && player.ticker.inputTimeline.Count > 1)
+                            player.ticker.Seek(Time.time, player.ticker.inputTimeline.TimeAt(1));
                         else
-                            player.ticker.Seek(Time.time, player.ticker.inputHistory.LatestTime);
+                            player.ticker.Seek(Time.time, player.ticker.inputTimeline.LatestTime);
                     }
                 }
                 else if (isServer) // other player on server
-                    player.ticker.Seek(player.ticker.inputHistory.LatestTime + Time.time - player.ticker.timeOfLastInputPush, player.ticker.confirmedStateTime); // extrapolate the player further than the last input we got from them
+                    player.ticker.Seek(player.ticker.inputTimeline.LatestTime + Time.time - player.timeOfLastInputPush, player.ticker.confirmedStateTime); // extrapolate the player further than the last input we got from them
                 else if (isClient) // replica on client
                     player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, TickerSeekFlags.IgnoreDeltas); // deltas are ignored for clients' replicas because clients don't have full input info, so they can't discern deltas (or the future)
             }
@@ -244,7 +248,7 @@ public class GameTicker : NetworkBehaviour
                     id = (byte)i,
                     sounds = sounds.soundHistory,
                     state = character.ticker.lastConfirmedState,
-                    lastInput = character.ticker.inputHistory.Latest
+                    lastInput = character.ticker.inputTimeline.Latest
                 });
             }
         }
@@ -281,12 +285,12 @@ public class GameTicker : NetworkBehaviour
                     // but confirmedClientTime is more accurate to where the client actually is on the server, and more accurate to the client's local time...right?
                     // after testing, extrapolatedClientTime turned out to be smoother
                     localPlayerPing = ticker.playbackTime - tickMessage.extrapolatedClientTime;
-                    ticker.Rewind(tick.state, tickMessage.confirmedClientTime); // this line definitely uses confirmedClientTime! not sure about the other!
+                    ticker.ConfirmStateAt(tick.state, tickMessage.confirmedClientTime); // this line definitely uses confirmedClientTime! not sure about the other!
                 }
                 else
                 {
-                    ticker.PushInput(tick.lastInput, tickMessage.serverTime);
-                    ticker.Rewind(tick.state, tickMessage.serverTime);
+                    ticker.InsertInput(tick.lastInput, tickMessage.serverTime);
+                    ticker.ConfirmStateAt(tick.state, tickMessage.serverTime);
                 }
             }
         }

@@ -34,7 +34,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     /// <summary>
     /// Current inputs of this player. If this is the local player, inputs may be slightly later inputs than the player last processed.
     /// </summary>
-    public PlayerInput liveInput => isLocal ? GameTicker.singleton.localPlayerInput : ticker.inputHistory.Latest;
+    public PlayerInput liveInput => isLocal ? (GameTicker.singleton != null ? GameTicker.singleton.localPlayerInput : default) : (ticker != null ? ticker.inputTimeline.Latest : default);
 
     /// <summary>
     /// Time of this player
@@ -95,8 +95,11 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     /// </summary>
     [HideInInspector] public CharacterMovement movement;
     [HideInInspector] public Damageable damageable;
-    [HideInInspector] public Ticker<PlayerInput, CharacterState> ticker;
     private PlayerSounds sounds;
+
+    public Ticker<PlayerInput, CharacterState> ticker { get; private set; }
+
+    public float timeOfLastInputPush { get; set; }
 
     public bool isInvisible { get; set; }
 
@@ -128,12 +131,12 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         movement = GetComponent<CharacterMovement>();
         damageable = GetComponent<Damageable>();
         sounds = GetComponent<PlayerSounds>();
+        ticker = new Ticker<PlayerInput, CharacterState>(this);
     }
 
     void Start()
     {
         PlayerControls control = new PlayerControls();
-        ticker = GetComponent<TickerComponent>().ticker as Ticker<PlayerInput, CharacterState>;
 
         damageable.onLocalDamaged.AddListener(OnDamaged);
 
@@ -203,8 +206,6 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
                 movement.velocity = Vector3.zero;
                 movement.state = 0;
 
-                if (ticker == null)// ticker might not be ready yet
-                    ticker = GetComponent<TickerComponent>().ticker as Ticker<PlayerInput, CharacterState>;
                 ticker?.ConfirmCurrentState();
 
                 TargetRespawn(spawnPoint.transform.forward);
@@ -475,6 +476,8 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
 
         Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
     }
+
+    public ITickerBase GetTicker() => ticker;
 }
 
 public enum PlayerTeam

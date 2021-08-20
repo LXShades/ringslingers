@@ -172,4 +172,9 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
             $"Fire {btnFire}/P{btnFirePressed}/R{btnFireReleased} " +
             $"Spin {btnSpin}/P{btnSpinPressed}/R{btnFireReleased}";
     }
+
+    public PlayerInput GenerateLocal()
+    {
+        return new PlayerInput(); // hmm...
+    }
 }

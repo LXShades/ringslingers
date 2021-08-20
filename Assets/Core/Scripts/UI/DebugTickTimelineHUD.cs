@@ -49,10 +49,10 @@ public class DebugTickTimelineHUD : MonoBehaviour
             timeline.DrawTick(targetTicker.confirmedStateTime, 1.5f, 0.5f, confirmedTimeColor, "CT", 1);
             timeline.DrawTick(targetTicker.realtimePlaybackTime, 1.5f, 0.5f, realtimeColor, "RT", 2); ;
 
-            for (int i = 0; i < targetTicker.inputHistory.Count; i++)
-                timeline.DrawTick(targetTicker.inputHistory.TimeAt(i), 1f, -1f, inputColor);
-            for (int i = 0; i < targetTicker.stateHistory.Count; i++)
-                timeline.DrawTick(targetTicker.stateHistory.TimeAt(i), 0.5f, 0f, stateColor);
+            for (int i = 0; i < targetTicker.inputTimeline.Count; i++)
+                timeline.DrawTick(targetTicker.inputTimeline.TimeAt(i), 1f, -1f, inputColor);
+            for (int i = 0; i < targetTicker.inputTimeline.Count; i++)
+                timeline.DrawTick(targetTicker.inputTimeline.TimeAt(i), 0.5f, 0f, stateColor);
 
             if (playerNameText)
                 playerNameText.text = targetTicker.targetName;

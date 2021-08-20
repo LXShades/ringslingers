@@ -9,7 +9,7 @@ public class NetFlowController<TMessage> where TMessage : struct
         public float receivedTime;
         public float sentTime;
     }
-    private HistoryList<MessagePack> receivedMessages = new HistoryList<MessagePack>();
+    private TimelineList<MessagePack> receivedMessages = new TimelineList<MessagePack>();
 
     private float localToRemoteTime = 0f;
 
@@ -107,7 +107,7 @@ public class NetFlowController<TMessage> where TMessage : struct
                 localToRemoteTime = 0f; // who knows!
         }
 
-        receivedMessages.Prune(Mathf.Max(Time.realtimeSinceStartup - localToRemoteTime - Mathf.Max(flowControlSettings.jitterSampleSize, flowControlSettings.maxDelay * 2f)));
+        receivedMessages.TrimBefore(Mathf.Max(Time.realtimeSinceStartup - localToRemoteTime - Mathf.Max(flowControlSettings.jitterSampleSize, flowControlSettings.maxDelay * 2f)));
     }
 
     public override string ToString()

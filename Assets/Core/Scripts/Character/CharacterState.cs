@@ -14,8 +14,8 @@ public struct CharacterState : ITickerState<CharacterState>
     }
     public Quaternion rotation
     {
-        get => Compressor.DecompressQuaternion(_rotation);
-        set => _rotation = Compressor.CompressQuaternion(value);
+        get => Compressor.DecompressQuaternion32(_rotation);
+        set => _rotation = Compressor.CompressQuaternion32(value);
     }
     public Vector3 velocity
     {
@@ -29,10 +29,10 @@ public struct CharacterState : ITickerState<CharacterState>
     }
     public Vector3 up
     {
-        get => Compressor.DecompressNormal24(_upLow | (_upHigh << 16));
+        get => Compressor.DecompressNormal24(_upLow | ((uint)_upHigh << 16));
         set
         {
-            int compressed = Compressor.CompressNormal24(value);
+            uint compressed = Compressor.CompressNormal24(value);
             _upLow = (ushort)(compressed & 0xFFFF);
             _upHigh = (byte)(compressed >> 16);
         }
@@ -52,7 +52,7 @@ public struct CharacterState : ITickerState<CharacterState>
     // public because Mirror only serializes public stuff
     // 26 bytes
     public Vector3 _position;
-    public int _rotation;
+    public uint _rotation;
     public ushort _velocityX;
     public ushort _velocityY;
     public ushort _velocityZ;
