@@ -81,7 +81,7 @@ public class CharacterShooting : NetworkBehaviour
     private Character player;
     private CharacterMovement movement;
 
-    private HistoryList<Action> bufferedThrowEvents = new HistoryList<Action>();
+    private TimelineList<Action> bufferedThrowEvents = new TimelineList<Action>();
 
     public float testAutoAimSmoothDamp = 0.1f;
     private Vector3 autoAimDampVelocity;

@@ -132,7 +132,7 @@ MonoBehaviour:
     earlyReleaseTolerance: 0.01
   pingsPerSecond: 2
   playerTickrate: 30
-  localPlayerId: -1
+  _localPlayerId: -1
 --- !u!114 &6795168564576558630
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -150,8 +150,6 @@ MonoBehaviour:
   runInBackground: 1
   autoStartServerBuild: 0
   serverTickRate: 60
-  serverBatching: 1
-  serverBatchInterval: 0
   offlineScene: 
   onlineScene: 
   transport: {fileID: 6795168564576558628}

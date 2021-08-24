@@ -4,7 +4,7 @@ public class CharacterAnimation : MonoBehaviour
 {
     private CharacterMovement movement;
     private Character player;
-    private new Animator animation;
+    private Animator animator;
 
     [Header("Body parts")]
     public Transform root;
@@ -25,7 +25,7 @@ public class CharacterAnimation : MonoBehaviour
     {
         movement = GetComponentInParent<CharacterMovement>();
         player = GetComponentInParent<Character>();
-        animation = GetComponentInParent<Animator>();
+        animator = GetComponentInParent<Animator>();
     }
 
     private void Update()
@@ -42,15 +42,15 @@ public class CharacterAnimation : MonoBehaviour
                 spinSpeed = movement.velocity.magnitude;
         }
 
-        animation.SetFloat("HorizontalSpeed", groundVelocity.magnitude);
-        animation.SetFloat("HorizontalForwardSpeed", groundVelocity.magnitude * forwardSpeedMultiplier);
-        animation.SetBool("IsOnGround", movement.isOnGround);
-        animation.SetBool("IsRolling", (movement.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0);
-        animation.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
-        animation.SetBool("IsFreeFalling", !movement.isOnGround && movement.velocity.y < 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
-        animation.SetBool("IsHurt", (movement.state & CharacterMovement.State.Pained) != 0);
-        animation.SetBool("IsGliding", (movement.state & CharacterMovement.State.Gliding) != 0);
-        animation.SetFloat("SpinSpeed", spinSpeed);
+        animator.SetFloat("HorizontalSpeed", groundVelocity.magnitude);
+        animator.SetFloat("HorizontalForwardSpeed", groundVelocity.magnitude * forwardSpeedMultiplier);
+        animator.SetBool("IsOnGround", movement.isOnGround);
+        animator.SetBool("IsRolling", (movement.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0);
+        animator.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
+        animator.SetBool("IsFreeFalling", !movement.isOnGround && movement.velocity.y < 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
+        animator.SetBool("IsHurt", (movement.state & CharacterMovement.State.Pained) != 0);
+        animator.SetBool("IsGliding", (movement.state & CharacterMovement.State.Gliding) != 0);
+        animator.SetFloat("SpinSpeed", spinSpeed);
     }
 
     private void LateUpdate()

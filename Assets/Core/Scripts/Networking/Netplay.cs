@@ -42,7 +42,7 @@ public class Netplay : MonoBehaviour
     [Header("Connection")]
     public ConnectionStatus connectionStatus = ConnectionStatus.Offline;
 
-    public Mirror.FlowControlSettings defaultFlowControlSettings = Mirror.FlowControlSettings.Default;
+    public FlowControlSettings defaultFlowControlSettings = FlowControlSettings.Default;
 
     [Range(0.5f, 20f)]
     public float pingsPerSecond = 2f;
@@ -140,9 +140,6 @@ public class Netplay : MonoBehaviour
     {
         // Do debug stuff
         UpdateNetStat();
-
-        // Update SyncActions
-        SyncActionChain.Tick();
 
         // Update ping
         msTime += (uint)Mathf.RoundToInt(Time.deltaTime * 1000);
@@ -430,27 +427,34 @@ public class Netplay : MonoBehaviour
     #region Net Configuration
     private void ApplyNetPreferences()
     {
+        FlowControlSettings flowSettings = defaultFlowControlSettings;
+
+        if (NetMan.singleton.mode == NetworkManagerMode.ClientOnly)
+        {
+            flowSettings.minDelay = GamePreferences.minClientDelayMs * 0.001f;
+            flowSettings.maxDelay = GamePreferences.maxClientDelayMs * 0.001f;
+        }
+        else
+        {
+            flowSettings.minDelay = GamePreferences.minServerDelayMs * 0.001f;
+            flowSettings.maxDelay = GamePreferences.maxServerDelayMs * 0.001f;
+        }
+
         if (NetworkClient.active && !NetworkServer.active /* don't throttle host self-connection */)
         {
-            NetworkClient.connection.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
-
-            // current default netflow settings
-            NetworkClient.connection.flowController.flowControlSettings = defaultFlowControlSettings;
-            NetworkClient.connection.flowController.flowControlSettings.minDelay = GamePreferences.minClientDelayMs * 0.001f;
-            NetworkClient.connection.flowController.flowControlSettings.maxDelay = GamePreferences.maxClientDelayMs * 0.001f;
+            NetworkClient.unbatcher.enableFlowControl = GamePreferences.isNetFlowControlEnabled;
+            NetworkClient.unbatcher.flowControlSettings = flowSettings;
         }
 
         if (NetworkServer.active)
         {
             foreach (KeyValuePair<int, NetworkConnectionToClient> kp in NetworkServer.connections)
             {
-                NetworkConnection conn = kp.Value;
+                NetworkConnectionToClient conn = kp.Value;
                 if (conn != NetworkServer.localConnection)
                 {
-                    conn.isFlowControlled = GamePreferences.isNetFlowControlEnabled;
-                    conn.flowController.flowControlSettings = defaultFlowControlSettings;
-                    conn.flowController.flowControlSettings.minDelay = GamePreferences.minServerDelayMs * 0.001f;
-                    conn.flowController.flowControlSettings.maxDelay = GamePreferences.maxServerDelayMs * 0.001f;
+                    conn.unbatcher.enableFlowControl = GamePreferences.isNetFlowControlEnabled;
+                    conn.unbatcher.flowControlSettings = flowSettings;
                 }
             }
         }

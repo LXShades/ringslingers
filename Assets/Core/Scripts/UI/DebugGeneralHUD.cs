@@ -38,20 +38,23 @@ public class DebugGeneralHUD : MonoBehaviour
             debugText.text += $"Ticker info: ===\n{GameTicker.singleton.DebugInfo()}\n";
 
         // net smoothing debug
-        if (Mirror.NetworkClient.active)
+        if (NetworkServer.active)
         {
-            debugText.text +=
-                $"Net flow control: ===\n" +
-                $"Local: {(NetworkClient.connection.isFlowControlled ? NetworkClient.connection.flowController.ToString() : "[flow control disabled]")}\n";
-
-            if (NetworkServer.active)
+            debugText.text += $"Server net flow control: ===\n";
+            foreach (Character character in Netplay.singleton.players)
             {
-                foreach (Character character in Netplay.singleton.players)
+                if (character && character.connectionToClient != NetworkServer.localConnection)
                 {
-                    if (character)
-                        debugText.text += $"{character.playerName}: {(character.connectionToClient.isFlowControlled ? character.connectionToClient.flowController.ToString() : "[flow control disabled]")}\n";
+                    NetworkConnectionToClient clientConnection = character.connectionToClient as NetworkConnectionToClient;
+                    debugText.text += $"{character.playerName}: {(clientConnection != null ? clientConnection.unbatcher.flowController.ToString() : "[flow control disabled]")}\n";
                 }
             }
+        }
+        else if (NetworkClient.isConnected)
+        {
+            debugText.text +=
+                $"Client net flow control: ===\n" +
+                $"Local: {(NetworkClient.unbatcher.enableFlowControl ? NetworkClient.unbatcher.flowController.ToString() : "[flow control disabled]")}\n";
         }
     }
 }

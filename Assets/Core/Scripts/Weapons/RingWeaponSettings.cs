@@ -236,13 +236,13 @@ public static class RingWeaponSettingsReaderWriter
 {
     public static RingWeaponSettingsAsset ReadRingWeaponSettings(this NetworkReader reader)
     {
-        ushort id = reader.ReadUInt16();
+        ushort id = reader.ReadUShort();
 
         return AssetLookup.singleton.GetAsset<RingWeaponSettingsAsset>(id);
     }
 
     public static void WriteRingWeaponSettings(this NetworkWriter writer, RingWeaponSettingsAsset settings)
     {
-        writer.WriteUInt16(AssetLookup.singleton.GetId(settings));
+        writer.WriteUShort(AssetLookup.singleton.GetId(settings));
     }
 }

@@ -125,7 +125,7 @@ public class NetDebugUI : MonoBehaviour
         statsByCategory[msgType].Apply(msg, isInbound);
 
         NetworkIdentity identity = null;
-        if (msg.message is UpdateVarsMessage messageAsUpdateVars)
+        if (msg.message is EntityStateMessage messageAsUpdateVars)
         {
             NetworkIdentity.spawned.TryGetValue(messageAsUpdateVars.netId, out identity);
         }
