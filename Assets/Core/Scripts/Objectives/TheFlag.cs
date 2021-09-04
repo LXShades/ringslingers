@@ -49,12 +49,15 @@ public class TheFlag : NetworkBehaviour
     private float dropRespawnCountdown;
 
     // Carrying
+    [SyncVar]
+    private int _currentCarrier = -1;
+
     public int currentCarrier { get => _currentCarrier; set => _currentCarrier = value; }
 
     private int attachedToPlayer = -1;
 
-    [SyncVar]
-    private int _currentCarrier = -1;
+    private float timeOfLastInteraction = -1f;
+    private const float kInteractionCooldown = 0.5f; // basically needed due to physics system quirks and collisions
 
     // Spawning
     private Vector3 basePosition;
@@ -158,12 +161,14 @@ public class TheFlag : NetworkBehaviour
 
     private void OnTriggerStay(Collider other) // using Stay because an invincible player may stand and wait til they can pick up the flag
     {
-        if (NetworkServer.active && currentCarrier == -1)
+        if (NetworkServer.active && currentCarrier == -1 && Time.time - timeOfLastInteraction >= kInteractionCooldown)
         {
             Character player = other.GetComponent<Character>();
 
             if (player && !player.damageable.isInvincible)
             {
+                timeOfLastInteraction = Time.time;
+
                 // pick up the flag
                 if (player.team != team)
                 {
@@ -208,7 +213,6 @@ public class TheFlag : NetworkBehaviour
         transform.SetParent(null, false);
         transform.position = basePosition;
         transform.rotation = baseRotation;
-        Physics.SyncTransforms(); // otherwise it'll be picked up and dropped and picked up.......
 
         state = State.Idle;
 
