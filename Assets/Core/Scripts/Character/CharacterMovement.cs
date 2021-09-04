@@ -640,10 +640,7 @@ public class CharacterMovement : Movement
         if (canTryStepUp)
             transform.position += stepUpVector;
 
-        if (collisionType == CollisionType.Penetration)
-            move.MovePenetration(velocity * deltaTime, isRealtime);
-        else
-            move.Move(velocity * deltaTime, out RaycastHit _, isRealtime);
+        move.Move(velocity * deltaTime, out _, isRealtime);
 
         if (canTryStepUp)
         {
@@ -656,7 +653,7 @@ public class CharacterMovement : Movement
                 doStepDownwards = true;
             }
 
-            if (!move.Move(stepReturn, out RaycastHit _, isRealtime, MoveFlags.NoSlide) && doStepDownwards)
+            if (!move.Move(stepReturn, out _, isRealtime, MoveFlags.NoSlide) && doStepDownwards)
             {
                 // we didn't hit a step on the way down? then don't step downwards
                 transform.position += stepUpVector;
