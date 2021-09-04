@@ -55,6 +55,9 @@ public class SyncMovement : NetworkBehaviour
     [ClientRpc(channel = Channels.Unreliable)]
     private void RpcMovementUpdate(SyncMovementUpdate update)
     {
+        if (NetworkServer.active)
+            return;
+
         transform.localPosition = update.localPosition;
         transform.localRotation = update.localRotation;
         movement.velocity = update.velocity;

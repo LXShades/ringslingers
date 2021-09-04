@@ -57,7 +57,7 @@ MonoBehaviour:
   predictedId: 0
   serverOnly: 0
   visible: 0
-  m_AssetId: 
+  m_AssetId: 8bb4e75fff7305b4587ed91a8f1ee60e
   hasSpawned: 0
 --- !u!136 &233868881636913150
 CapsuleCollider:
@@ -148,7 +148,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1152841599159748358}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ec020f51922bab4f8a92a38ac34e8c2, type: 3}
+  m_Script: {fileID: 11500000, guid: 2bde2a94275e2fc4a8043cd15a52c4fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   enableCollision: 1
@@ -156,13 +156,14 @@ MonoBehaviour:
   - {fileID: 2551830685116736536}
   blockingCollisionLayers:
     serializedVersion: 2
-    m_Bits: 55
+    m_Bits: 2147483703
+  enableAutomaticPhysics: 1
+  gravityMultiplier: 2.2
+  bounceFactor: 0.7
+  bounceFriction: 0.2
   maxNumCollisionSteps: 3
   maxCollisionStepSize: 0.2
-  useManualPhysics: 0
-  bounceFactor: 0.703
-  bounceFriction: 0.198
-  gravityMultiplier: 2.2
+  sweepPullback: 0.05
   debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
 --- !u!114 &-1112997039969231955

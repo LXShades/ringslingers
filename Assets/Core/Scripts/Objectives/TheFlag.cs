@@ -126,7 +126,7 @@ public class TheFlag : NetworkBehaviour
                 if (NetworkServer.active && dropRespawnCountdown <= 0f)
                     ReturnToBase(true);
 
-                movement.SimulateDefault(Time.deltaTime);
+                movement.SimulateBasicPhysics(Time.deltaTime);
                 break;
         }
     }
@@ -205,8 +205,10 @@ public class TheFlag : NetworkBehaviour
 
     public void ReturnToBase(bool postReturnMessage)
     {
+        transform.SetParent(null, false);
         transform.position = basePosition;
         transform.rotation = baseRotation;
+        Physics.SyncTransforms(); // otherwise it'll be picked up and dropped and picked up.......
 
         state = State.Idle;
 
@@ -254,6 +256,7 @@ public class TheFlag : NetworkBehaviour
 
                     transform.SetParent(null, false);
                     transform.position = carryingPlayer.transform.position;
+                    transform.rotation = Quaternion.identity;
                     movement.velocity = new Vector3(dropDirection.x * dropHorizontalVelocity, dropVerticalVelocity, dropDirection.y * dropHorizontalVelocity);
 
                     // start countdown
