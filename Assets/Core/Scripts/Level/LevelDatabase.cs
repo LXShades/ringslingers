@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -26,7 +25,7 @@ public class LevelDatabase : ScriptableObject
     {
         // Scans all scenes for a LevelConfiguration and adds to the list
         List<Level> levelList = new List<Level>();
-        List<Scene> scenesToUnload = new List<Scene>();
+        List<UnityEngine.SceneManagement.Scene> scenesToUnload = new List<UnityEngine.SceneManagement.Scene>();
 
         foreach (var sceneSetting in EditorBuildSettings.scenes)
         {
@@ -34,7 +33,7 @@ public class LevelDatabase : ScriptableObject
                 continue;
 
             string scenePath = sceneSetting.path;
-            Scene loadedScene;
+            UnityEngine.SceneManagement.Scene loadedScene;
 
             if (!UnityEditor.SceneManagement.EditorSceneManager.GetSceneByPath(scenePath).IsValid())
             {
@@ -59,7 +58,7 @@ public class LevelDatabase : ScriptableObject
             }
         }
 
-        foreach (Scene scene in scenesToUnload)
+        foreach (UnityEngine.SceneManagement.Scene scene in scenesToUnload)
         {
             UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
         }
@@ -69,7 +68,7 @@ public class LevelDatabase : ScriptableObject
         AssetDatabase.SaveAssets();
     }
 
-    private LevelConfiguration FindConfigurationInScene(Scene scene)
+    private LevelConfiguration FindConfigurationInScene(UnityEngine.SceneManagement.Scene scene)
     {
         foreach (GameObject gameObject in scene.GetRootGameObjects())
         {

@@ -18,7 +18,6 @@ public class CharacterMovement : Movement
 
     private Character player;
     private PlayerSounds sounds;
-    private Movement move;
 
     [Header("Movement (all FRACUNITS)")]
     public float accelStart = 96;
@@ -174,14 +173,13 @@ public class CharacterMovement : Movement
     void Awake()
     {
         player = GetComponent<Character>();
-        move = GetComponent<Movement>();
         sounds = GetComponent<PlayerSounds>();
     }
 
     public void TickMovement(float deltaTime, PlayerInput input, bool isRealtime = true)
     {
         Physics.SyncTransforms();
-
+        
         if (isRealtime)
             DebugPauseStart();
 
@@ -357,7 +355,7 @@ public class CharacterMovement : Movement
             {
                 // Do a basic collider cast downward to verify whether ground exists
                 // Assume normal to be up as we haven't managed to get enough info from the sensors
-                int numHits = move.ColliderCast(bufferedHits, transform.position, -up, searchDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
+                int numHits = ColliderCast(bufferedHits, transform.position, -up, searchDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
                 float closestGroundDistance = searchDistance;
 
                 for (int i = 0; i < numHits; i++)
@@ -635,12 +633,12 @@ public class CharacterMovement : Movement
         Vector3 stepUpVector = up * maxStepHeight;
         bool canTryStepUp = maxStepHeight > 0f;
 
-        move.enableCollision = !debugDisableCollision;
+        enableCollision = !debugDisableCollision;
 
         if (canTryStepUp)
             transform.position += stepUpVector;
 
-        move.Move(velocity * deltaTime, out _, isRealtime);
+        Move(velocity * deltaTime, out _, isRealtime);
 
         if (canTryStepUp)
         {
@@ -653,7 +651,7 @@ public class CharacterMovement : Movement
                 doStepDownwards = true;
             }
 
-            if (!move.Move(stepReturn, out _, isRealtime, MoveFlags.NoSlide) && doStepDownwards)
+            if (!Move(stepReturn, out _, isRealtime, MoveFlags.NoSlide) && doStepDownwards)
             {
                 // we didn't hit a step on the way down? then don't step downwards
                 transform.position += stepUpVector;

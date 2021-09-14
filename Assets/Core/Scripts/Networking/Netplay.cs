@@ -175,7 +175,7 @@ public class Netplay : MonoBehaviour
     }
 
     #region Game
-    private void OnSceneChanged(Scene oldScene, Scene newScene)
+    private void OnSceneChanged(UnityEngine.SceneManagement.Scene oldScene, UnityEngine.SceneManagement.Scene newScene)
     {
         StartMatch();
     }
