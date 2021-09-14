@@ -8,22 +8,34 @@ namespace Ringslingers.Tests
         public Material debugMaterial;
         public UnityEngine.UI.Text debugText;
         private Movement movement;
+        private FreeCam cam;
 
         public Vector2 input = new Vector3(0f, 1f);
 
+        private Vector3 up;
+        private Vector3 forward;
+        private Vector3 right => Vector3.Cross(up, forward).normalized;
+
+        [Header("Velocities")]
         public float acceleration = 10f;
         public float friction = 10f;
         public float gravity = 10f;
+
+        [Header("Grounding")]
         public float groundSphereTestRadius = 0.25f;
         public float groundTestDistanceThreshold = 0.05f;
         public float groundEscapeThreshold = 3f;
         public float slipRadius = 0.25f;
         public float slipVelocity = 5f;
 
+        [Header("Loopy")]
+        public float loopyGroundTestDistance = 0.5f;
+
         [Header("Enable")]
         public bool enableSlip = true;
         public bool enableFriction = true;
         public bool enableCollisionsAffectVelocity = true;
+        public bool enableLoopy = true;
 
         [Header("Simulation")]
         public bool enableManualControl = false;
@@ -36,6 +48,7 @@ namespace Ringslingers.Tests
         {
             movement = GetComponent<Movement>();
             meshFilter = GetComponentInChildren<MeshFilter>();
+            cam = FindObjectOfType<FreeCam>();
         }
 
         private void Update()
@@ -47,22 +60,29 @@ namespace Ringslingers.Tests
             MovementDebugStats.Snapshot stats = MovementDebugStats.total;
             if (enableManualControl)
             {
-                Camera.main.transform.position = transform.position + Vector3.up;
-                Vector3 input3D = Camera.main.transform.TransformDirection(new Vector3(Input.GetAxisRaw("Horizontal"), 0f, Input.GetAxisRaw("Vertical")));
-                input = new Vector2(input3D.x, input3D.z);
+                Vector3 oldUp = up;
+                input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+                forward = Camera.main.transform.forward;
                 Tick(Time.deltaTime);
+                cam.transform.position = transform.position + up - cam.transform.forward * 4f;
+                cam.forward = Quaternion.FromToRotation(oldUp, up) * cam.forward;
+                cam.up = up;
             }
             else
             {
                 for (int i = 0; i < numSteps; i++)
                 {
+                    Vector3 oldUp = up;
                     Tick(stepSize);
+                    forward = Quaternion.FromToRotation(oldUp, up) * forward;
 
                     Graphics.DrawMesh(meshFilter.sharedMesh, meshFilter.transform.localToWorldMatrix, debugMaterial, gameObject.layer, null, 0, null, false, false, false);
                 }
 
                 transform.position = initialPosition;
                 transform.rotation = initialRotation;
+                up = Vector3.up;
+                forward = initialRotation * Vector3.forward;
                 movement.velocity = Vector3.zero;
             }
 
@@ -77,11 +97,12 @@ namespace Ringslingers.Tests
             Physics.SyncTransforms();
 
             // Do floor test
-            Vector3 up = Vector3.up;
-            bool hasGroundCastHit = Physics.SphereCast(new Ray(transform.position + up * (groundSphereTestRadius + 0.01f), Vector3.down), groundSphereTestRadius, out RaycastHit groundHit, groundSphereTestRadius + 0.01f, ~0, QueryTriggerInteraction.Ignore);
+            bool hasGroundCastHit = Physics.SphereCast(new Ray(transform.position + up * groundSphereTestRadius, -up), groundSphereTestRadius, out RaycastHit groundHit, Mathf.Max(groundSphereTestRadius, loopyGroundTestDistance), ~0, QueryTriggerInteraction.Ignore);
             bool isOnGround = false;
             bool isSlipping = false;
-            Vector3 groundNormal = up;
+            bool isLoopy = false;
+            Vector3 groundNormal = Vector3.up;
+            Vector3 loopyNormal = Vector3.up;
             Vector3 slipVector = Vector3.zero;
 
             if (hasGroundCastHit)
@@ -104,13 +125,24 @@ namespace Ringslingers.Tests
                         slipVector = (transform.position - groundHit.point).AlongPlane(up).normalized;
                     }
                 }
+
+                if (primaryDistance <= loopyGroundTestDistance)
+                {
+                    if (Physics.Raycast(new Ray(transform.position + up * 0.01f, -up), out RaycastHit rayHit, loopyGroundTestDistance, ~0, QueryTriggerInteraction.Ignore) && rayHit.distance <= loopyGroundTestDistance)
+                    {
+                        isLoopy = true;
+                        loopyNormal = rayHit.normal;
+
+                        Debug.DrawLine(transform.position + new Vector3(0, 2f, 0f), transform.position + new Vector3(0, 2f, 0) + loopyNormal, Color.red);
+                    }
+                }
             }
 
-            Debug.DrawLine(transform.position + new Vector3(0f, 2f, 0f), transform.position - new Vector3(0f, 2f, 0f), isOnGround ? Color.green : Color.blue);
+            Debug.DrawLine(transform.position + groundNormal * 2f, transform.position - groundNormal * 2f, isOnGround ? Color.green : Color.blue);
             DrawCircle(transform.position, groundSphereTestRadius, Color.white);
 
             // Accelerate
-            Vector3 inputDir = Vector3.ClampMagnitude(transform.forward.AlongPlane(groundNormal).normalized * input.y + transform.right.AlongPlane(groundNormal).normalized * input.x, 1f);
+            Vector3 inputDir = Vector3.ClampMagnitude(forward.AlongPlane(groundNormal).normalized * input.y + right.AlongPlane(groundNormal).normalized * input.x, 1f);
             movement.velocity += inputDir * ((acceleration + friction) * deltaTime);
 
             // Friction
@@ -136,7 +168,6 @@ namespace Ringslingers.Tests
             }
 
             // Do final movement
-            Vector3 positionBeforeMovement = transform.position;
             if (movement.Move(movement.velocity * deltaTime, out Movement.Hit hitOut))
             {
                 if (enableCollisionsAffectVelocity && deltaTime > 0f)
@@ -145,6 +176,13 @@ namespace Ringslingers.Tests
                     movement.velocity.SetAlongAxis(hitOut.normal, 0f);
                 }
             }
+
+            if (isLoopy)
+                up = loopyNormal;
+            else
+                up = Vector3.up;
+
+            transform.rotation = Quaternion.LookRotation(forward.AlongPlane(up), up);
         }
 
         private void DrawCircle(Vector3 position, float radius, Color color)
