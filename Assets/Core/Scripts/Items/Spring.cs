@@ -24,7 +24,7 @@ public class Spring : MonoBehaviour, IMovementCollisions
 
     public void OnMovementCollidedBy(Movement source, bool isRealtime)
     {
-        CharacterMovement movement = source as CharacterMovement;
+        PlayerCharacterMovement movement = source as PlayerCharacterMovement;
 
         if (movement && Vector3.Dot(movement.velocity, transform.up) < maxSpeedDotForSpring * springForce)
         {

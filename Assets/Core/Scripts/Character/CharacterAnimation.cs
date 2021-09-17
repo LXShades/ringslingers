@@ -2,7 +2,7 @@
 
 public class CharacterAnimation : MonoBehaviour
 {
-    private CharacterMovement movement;
+    private PlayerCharacterMovement movement;
     private Character player;
     private Animator animator;
 
@@ -23,7 +23,7 @@ public class CharacterAnimation : MonoBehaviour
 
     private void Start()
     {
-        movement = GetComponentInParent<CharacterMovement>();
+        movement = GetComponentInParent<PlayerCharacterMovement>();
         player = GetComponentInParent<Character>();
         animator = GetComponentInParent<Animator>();
     }
@@ -34,7 +34,7 @@ public class CharacterAnimation : MonoBehaviour
         float forwardSpeedMultiplier = Vector3.Dot(transform.forward.Horizontal(), groundVelocity) <= 0f ? -1 : 1;
         float spinSpeed = 15f;
 
-        if ((movement.state & CharacterMovement.State.Rolling) != 0f)
+        if ((movement.state & PlayerCharacterMovement.State.Rolling) != 0f)
         {
             if (movement.spindashChargeLevel > 0f)
                 spinSpeed = movement.spindashChargeLevel * movement.spindashMaxSpeed;
@@ -45,17 +45,17 @@ public class CharacterAnimation : MonoBehaviour
         animator.SetFloat("HorizontalSpeed", groundVelocity.magnitude);
         animator.SetFloat("HorizontalForwardSpeed", groundVelocity.magnitude * forwardSpeedMultiplier);
         animator.SetBool("IsOnGround", movement.isOnGround);
-        animator.SetBool("IsRolling", (movement.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0);
-        animator.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
-        animator.SetBool("IsFreeFalling", !movement.isOnGround && movement.velocity.y < 0 && (movement.state & CharacterMovement.State.Jumped) == 0);
-        animator.SetBool("IsHurt", (movement.state & CharacterMovement.State.Pained) != 0);
-        animator.SetBool("IsGliding", (movement.state & CharacterMovement.State.Gliding) != 0);
+        animator.SetBool("IsRolling", (movement.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0);
+        animator.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
+        animator.SetBool("IsFreeFalling", !movement.isOnGround && movement.velocity.y < 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
+        animator.SetBool("IsHurt", (movement.state & PlayerCharacterMovement.State.Pained) != 0);
+        animator.SetBool("IsGliding", (movement.state & PlayerCharacterMovement.State.Gliding) != 0);
         animator.SetFloat("SpinSpeed", spinSpeed);
     }
 
     private void LateUpdate()
     {
-        if ((movement.state & (CharacterMovement.State.Rolling | CharacterMovement.State.Jumped)) != 0)
+        if ((movement.state & (PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.Jumped)) != 0)
         {
             return; // spinning animation shouldn't be tampered with
         }
@@ -83,7 +83,7 @@ public class CharacterAnimation : MonoBehaviour
             lastRootRotation = root.rotation;
         }
 
-        if ((movement.state & CharacterMovement.State.Gliding) != 0)
+        if ((movement.state & PlayerCharacterMovement.State.Gliding) != 0)
         {
             float tiltAngle = 0f;
             Vector3 groundSide = Vector3.Cross(groundForward, Vector3.up);

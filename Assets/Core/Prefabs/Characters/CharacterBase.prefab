@@ -536,7 +536,7 @@ MonoBehaviour:
   predictedId: 0
   serverOnly: 0
   visible: 0
-  m_AssetId: 
+  m_AssetId: a4a3d056519020b428087d0a094c3a95
   hasSpawned: 0
 --- !u!114 &7352825796714013433
 MonoBehaviour:
@@ -596,14 +596,32 @@ MonoBehaviour:
   blockingCollisionLayers:
     serializedVersion: 2
     m_Bits: 1079
-  maxNumCollisionSteps: 7
-  maxCollisionStepSize: 0.3
-  useManualPhysics: 1
+  enableAutomaticPhysics: 0
+  gravityMultiplier: 1
   bounceFactor: 0
   bounceFriction: 0
-  gravityMultiplier: 1
+  defaultMoveType: 0
+  minSweepThresholdUntilPenetration: 0.05
+  maxNumCollisionSteps: 7
+  maxCollisionStepSize: 0.3
+  sweepPullback: 0.005
+  skinThickness: 0.025
   debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
+  gravity: 9.57
+  groundSphereTestRadius: 0.25
+  groundTestDistanceThreshold: 0.05
+  groundEscapeThreshold: 3
+  slipRadius: 0.25
+  slipVelocity: 5
+  enableLoopy: 1
+  loopyGroundTestDistance: 0.5
+  loopyPushdownMinRadius: 1
+  loopyPushdownDegreesRequired: 5
+  loopyPushdownNeutralLimit: 0.2
+  enableSlip: 1
+  enableCollisionsAffectVelocity: 1
+  enableLoopyPushdown: 1
   accelStart: 96
   acceleration: 40
   thrustFactor: 5
@@ -612,55 +630,12 @@ MonoBehaviour:
   stopSpeed: 1
   jumpSpeed: 9.75
   jumpFactor: 1
-  gravity: 0.5
   airAccelerationMultiplier: 0.25
   enableWallRun: 1
   wallRunSpeedThreshold: 10
   wallRunRotationResetSpeed: 270
-  wallRunPushForceByUprightness:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 31.831795
-      value: 1.0004568
-      inSlope: -0.000030391811
-      outSlope: -0.000030391811
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.10144344
-    - serializedVersion: 3
-      time: 180
-      value: 1
-      inSlope: -0
-      outSlope: -0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0.092450716
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  wallRunEscapeVelocity: 3
-  wallRunTestDepth: 0.69
-  wallRunTestRadius: 0.22
-  wallRunTestHeight: 0.14
   wallRunCameraAssist: 1
-  wallMaxAngleRangeForStepping: 1
   rotateableModel: {fileID: 1526902982376324854}
-  collisionType: 0
-  groundTestDistance: 0.05
-  groundingForce: 1
-  groundingEscapeVelocity: 1
   landableCollisionLayers:
     serializedVersion: 2
     m_Bits: 55
@@ -698,7 +673,6 @@ MonoBehaviour:
     pitch: 1
     pitchVariance: 0
     looping: 0
-  debugDisableCollision: 0
   debugDrawMovement: 0
   debugDrawWallrunSensors: 0
   spindashChargeLevel: 0

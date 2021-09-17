@@ -70,7 +70,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
 
     public void OnMovementCollidedBy(Movement source, bool isRealtime)
     {
-        if (source is CharacterMovement character && (character.state & (CharacterMovement.State.Jumped | CharacterMovement.State.Rolling)) != 0)
+        if (source is PlayerCharacterMovement character && (character.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0)
         {
             // bounce off
             if (character.velocity.y <= -1.0f)

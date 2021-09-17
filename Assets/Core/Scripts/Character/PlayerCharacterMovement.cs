@@ -2,14 +2,8 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Character))]
-public class CharacterMovement : Movement
+public class PlayerCharacterMovement : CharacterMovement
 {
-    public enum CollisionType
-    {
-        Penetration,
-        Cast
-    }
-
     public enum JumpAbility
     {
         Thok,
@@ -30,7 +24,6 @@ public class CharacterMovement : Movement
 
     public float jumpSpeed = (39f / 4f);
     public float jumpFactor = 1;
-    public float gravity = 0.5f;
 
     public float airAccelerationMultiplier = 0.25f;
 
@@ -38,22 +31,9 @@ public class CharacterMovement : Movement
     public bool enableWallRun = true;
     public float wallRunSpeedThreshold = 10f;
     public float wallRunRotationResetSpeed = 180f;
-    [Tooltip("When wall running on the previous frame, this force pushes you down towards the ground on the next frame if in range and running fast enough. Based on how much your orientation diverged from up=(0,1,0) in degrees. 1 means push fully to the ground.")]
-    public AnimationCurve wallRunPushForceByUprightness = AnimationCurve.Linear(0, 0, 180, 1);
-    public float wallRunEscapeVelocity = 6f;
-    public float wallRunTestDepth = 0.3f;
-    public float wallRunTestRadius = 0.4f;
-    public float wallRunTestHeight = 0.08f;
     public bool wallRunCameraAssist = true;
-    [Tooltip("In degrees. If this is e.g. 1 degree, if the three sensors are within 1 degree of each other we assume they are coplanar and we do not try to angle up them, instead treating them as steps.")]
-    public float wallMaxAngleRangeForStepping = 1.0f;
     public Transform rotateableModel;
 
-    [Header("Collision")]
-    public CollisionType collisionType = CollisionType.Penetration;
-    public float groundTestDistance = 0.05f;
-    public float groundingForce = 3f;
-    public float groundingEscapeVelocity = 1f;
     public LayerMask landableCollisionLayers;
 
     [Header("Step")]
@@ -81,7 +61,6 @@ public class CharacterMovement : Movement
     public GameSound thokSound = new GameSound();
 
     [Header("Debug")]
-    public bool debugDisableCollision = false;
     public bool debugDrawMovement = false;
     public bool debugDrawWallrunSensors = false;
 
@@ -137,8 +116,6 @@ public class CharacterMovement : Movement
 
     public Vector3 groundNormal { get; private set; }
 
-    public float groundDistance { get; private set; }
-
     /// <summary>
     /// Current up vector
     /// </summary>
@@ -160,14 +137,6 @@ public class CharacterMovement : Movement
 
     private Vector3 gravityDirection = new Vector3(0, -1, 0);
 
-    // debugging movement frame step
-    private bool doStep = false;
-
-    private Vector3 debugPausePosition;
-    private Quaternion debugPauseRotation;
-    private Vector3 debugPauseVelocity;
-    private Vector3 debugPauseUp;
-
     private RaycastHit[] bufferedHits = new RaycastHit[16];
 
     void Awake()
@@ -179,26 +148,23 @@ public class CharacterMovement : Movement
     public void TickMovement(float deltaTime, PlayerInput input, bool isRealtime = true)
     {
         Physics.SyncTransforms();
-        
-        if (isRealtime)
-            DebugPauseStart();
 
         // Check whether on ground
-        bool wasGroundDetected = DetectGround(deltaTime, Mathf.Max(wallRunTestDepth, groundTestDistance), out float _groundDistance, out Vector3 _groundNormal, out GameObject _groundObject);
+        CalculateGroundInfo(out GroundInfo groundInfo);
 
         groundNormal = Vector3.up;
-        groundDistance = float.MaxValue;
-
-        isOnGround = wasGroundDetected && _groundDistance < groundTestDistance;
-
-        if (wasGroundDetected)
+        
+        if (groundInfo.isOnGround)
         {
-            groundNormal = _groundNormal;
-            groundDistance = _groundDistance;
+            groundNormal = groundInfo.normal;
+        }
+        else
+        {
+            groundNormal = Vector3.up;
         }
 
         // Apply grounding effects straight away so we can be more up-to-date with wallrunning stuff
-        ApplyGrounding();
+        ApplyGroundStates();
 
         // Add/remove states depending on whether isOnGround
         if (isOnGround && velocity.AlongAxis(up) <= 0.5f)
@@ -219,7 +185,7 @@ public class CharacterMovement : Movement
         ApplyRunAcceleration(deltaTime, input);
 
         // Gravity
-        ApplyGravity(deltaTime);
+        ApplyCharacterGravity(groundInfo, deltaTime);
 
         // Top speed clamp
         ApplyTopSpeedLimit(lastHorizontalSpeed);
@@ -237,66 +203,12 @@ public class CharacterMovement : Movement
         // 3D rotation - do this after movement to encourage push down
         ApplyRotation(deltaTime, input);
 
-        // Apply rideables
-        ApplyRide(_groundObject);
-
         // Final movement
-        ApplyFinalMovement(deltaTime, isRealtime);
-
-        if (isRealtime)
-            DebugPauseEnd();
+        ApplyFinalMovement(groundInfo, deltaTime, isRealtime);
     }
 
-    private void DebugPauseStart()
-    {
-        if (Application.isEditor && UnityEngine.InputSystem.Keyboard.current.pKey.wasPressedThisFrame)
-            doStep = !doStep;
-
-        debugPauseUp = up;
-        debugPausePosition = transform.position;
-        debugPauseRotation = transform.rotation;
-        debugPauseVelocity = velocity;
-    }
-
-    private void DebugPauseEnd()
-    {
-        if (doStep && !UnityEngine.InputSystem.Keyboard.current.nKey.wasPressedThisFrame)
-        {
-            transform.position = debugPausePosition;
-            transform.rotation = debugPauseRotation;
-            velocity = debugPauseVelocity;
-            up = debugPauseUp;
-        }
-    }
-
-    private bool DetectGround(float deltaTime, float searchDistance, out float outGroundDistance, out Vector3 outGroundNormal, out GameObject groundObject)
-    {
-        outGroundNormal = Vector3.up;
-        outGroundDistance = -1f;
-        groundObject = null;
-
-        if (!debugDisableCollision)
-        {
-            // Start by trying our feet sensors
-            // We need to look ahead a bit so that we can push towards the ground after we've moved
-            Vector3 position = transform.position + velocity * deltaTime;
-            Vector3 frontRight = position + (transform.forward + transform.right) * wallRunTestRadius + up * wallRunTestHeight;
-            Vector3 frontLeft = position + (transform.forward - transform.right) * wallRunTestRadius + up * wallRunTestHeight;
-            Vector3 back = position - transform.forward * wallRunTestRadius + up * wallRunTestHeight;
-            Vector3 central = position + up * wallRunTestHeight;
-            RaycastHit frontLeftHit, frontRightHit, backHit, centralHit;
-            bool hasSensedAllPoints = true;
-
-            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(frontLeft,  -up, out frontLeftHit,  wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
-            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(frontRight, -up, out frontRightHit, wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
-            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(back,       -up, out backHit,       wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
-            hasSensedAllPoints &= RaycastExtensions.RaycastWithDebug(central,    -up, out centralHit,    wallRunTestDepth, landableCollisionLayers, QueryTriggerInteraction.Ignore, debugDrawWallrunSensors);
-
-            // If all sensors were activated, we can rotate
-            if (hasSensedAllPoints)
-            {
-                // Try smooth wall running, when the mesh allows it
-                MeshCollider centralMeshCollider = centralHit.collider as MeshCollider;
+                // smooth normal code, we might want later
+ /*               MeshCollider centralMeshCollider = centralHit.collider as MeshCollider;
                 bool hasFoundSmoothNormal = false;
 
                 if (centralMeshCollider != null && centralMeshCollider.sharedMesh.isReadable)
@@ -336,47 +248,7 @@ public class CharacterMovement : Movement
                         outGroundNormal = (frontLeftHit.normal + frontRightHit.normal + backHit.normal).normalized; // we should assume they are steps
                     else
                         outGroundNormal = Vector3.Cross(frontRightHit.point - frontLeftHit.point, backHit.point - frontLeftHit.point).normalized; // we can generate the normal based on the contact points
-                }
-
-                outGroundDistance = (frontLeftHit.distance + frontRightHit.distance + backHit.distance) / 3 - wallRunTestHeight;
-
-                if (outGroundDistance < searchDistance)
-                {
-                    groundObject = centralHit.collider.gameObject;
-                    return true;
-                }
-                else
-                {
-                    groundObject = null;
-                    return false;
-                }
-            }
-            else
-            {
-                // Do a basic collider cast downward to verify whether ground exists
-                // Assume normal to be up as we haven't managed to get enough info from the sensors
-                int numHits = ColliderCast(bufferedHits, transform.position, -up, searchDistance, landableCollisionLayers, QueryTriggerInteraction.Ignore, 0.1f);
-                float closestGroundDistance = searchDistance;
-
-                for (int i = 0; i < numHits; i++)
-                {
-                    if (bufferedHits[i].collider.GetComponentInParent<CharacterMovement>() != this && bufferedHits[i].distance <= closestGroundDistance + Mathf.Epsilon)
-                    {
-                        groundObject = bufferedHits[i].collider.gameObject;
-
-                        outGroundDistance = bufferedHits[i].distance;
-                        closestGroundDistance = outGroundDistance;
-                    }
-                }
-
-                return groundObject != null;
-            }
-        }
-        else // if (debugDisableCollision)
-        {
-            return transform.position.y <= 0;
-        }
-    }
+                }*/
 
     private void ApplyFriction(float deltaTime)
     {
@@ -584,13 +456,6 @@ public class CharacterMovement : Movement
         if (velocity.magnitude < wallRunSpeedThreshold)
             targetUp = Vector3.up;
 
-        // Push down towards the ground
-        if (deltaTime > 0f && verticalVelocity < wallRunEscapeVelocity)
-        {
-            float forceMultiplier = wallRunPushForceByUprightness.Evaluate(Mathf.Acos(Vector3.Dot(groundNormal, Vector3.up)) * Mathf.Rad2Deg);
-            velocity += -groundNormal * (groundDistance / deltaTime * forceMultiplier);
-        }
-
         // Rotate towards our target
         if (Vector3.Angle(up, targetUp) > 0f)
         {
@@ -606,41 +471,31 @@ public class CharacterMovement : Movement
             transform.rotation = Quaternion.LookRotation(velocity, up);
     }
 
-    private void ApplyGravity(float deltaTime)
-    {
-        if (!isOnGround) // wall run, etc cancels out gravity
-            velocity += gravityDirection * (gravity * 35f * 35f / GameManager.singleton.fracunitsPerM * deltaTime);
-    }
-
-    private void ApplyGrounding()
+    private void ApplyGroundStates()
     {
         if (isOnGround)
         {
-            // Push towards the ground, if we're not actively moving away from it
-            if (velocity.AlongAxis(groundNormal) <= groundingEscapeVelocity)
-            {
-                velocity.SetAlongAxis(groundNormal, -groundingForce);
-                state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
-            }
+            state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
         }
     }
 
-    private void ApplyFinalMovement(float deltaTime, bool isRealtime)
+    private void ApplyFinalMovement(in GroundInfo groundInfo, float deltaTime, bool isRealtime)
     {
+        ApplyCharacterVelocity(groundInfo, deltaTime);
+        return;
         // Perform final movement and collision
         Vector3 originalPosition = transform.position;
         Vector3 originalVelocity = velocity;
         Vector3 stepUpVector = up * maxStepHeight;
         bool canTryStepUp = maxStepHeight > 0f;
 
-        enableCollision = !debugDisableCollision;
+        /*if (canTryStepUp)
+            transform.position += stepUpVector;*/
 
-        if (canTryStepUp)
-            transform.position += stepUpVector;
 
-        Move(velocity * deltaTime, out _, isRealtime);
+        //Move(velocity * deltaTime, out _, isRealtime);
 
-        if (canTryStepUp)
+        /*if (canTryStepUp)
         {
             Vector3 stepReturn = -stepUpVector;
             bool doStepDownwards = false;
@@ -656,7 +511,7 @@ public class CharacterMovement : Movement
                 // we didn't hit a step on the way down? then don't step downwards
                 transform.position += stepUpVector;
             }
-        }
+        }*/
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
         {
@@ -689,14 +544,6 @@ public class CharacterMovement : Movement
         }
     }
 
-    void ApplyRide(GameObject target)
-    {
-        if (target != null && target.TryGetComponent(out Rideable rideable))
-        {
-            //rideable.GetFrameMovementDelta();
-        }
-    }
-
     public void SpringUp(float force, Vector3 direction, bool doSpringAbsolutely)
     {
         state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
@@ -705,21 +552,6 @@ public class CharacterMovement : Movement
             velocity = direction * force;
         else
             velocity.SetAlongAxis(direction, force);
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (!Application.isPlaying) // don't show with the other debug lines
-        {
-            Gizmos.color = Color.blue;
-            Vector3 frontRight = transform.position + (transform.forward + transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
-            Vector3 frontLeft = transform.position + (transform.forward - transform.right) * wallRunTestRadius + transform.up * wallRunTestHeight;
-            Vector3 back = transform.position - transform.forward * wallRunTestRadius + transform.up * wallRunTestHeight;
-
-            Gizmos.DrawLine(frontRight, frontRight - transform.up * wallRunTestDepth);
-            Gizmos.DrawLine(frontLeft, frontLeft - transform.up * wallRunTestDepth);
-            Gizmos.DrawLine(back, back - transform.up * wallRunTestDepth);
-        }
     }
 }
 

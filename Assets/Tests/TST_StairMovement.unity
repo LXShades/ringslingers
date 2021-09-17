@@ -432,7 +432,6 @@ MonoBehaviour:
   maxCollisionStepSize: 0.2
   sweepPullback: 0.05
   skinThickness: 0.025
-  debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
 --- !u!136 &205111936
 CapsuleCollider:
@@ -460,11 +459,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4e4d67214f024940b27cd26b59ad6d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugMaterial: {fileID: 2100000, guid: 19716920d29b32540a89d76db62bfcd7, type: 2}
-  numStepsToMake: 100
-  stepSize: 0.01
-  usePenetration: 0
-  debugText: {fileID: 918980536}
 --- !u!23 &205111938
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8043,7 +8037,6 @@ MonoBehaviour:
   maxCollisionStepSize: 0.2
   sweepPullback: 0.05
   skinThickness: 0.025
-  debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
 --- !u!136 &1340108130
 CapsuleCollider:
@@ -8071,11 +8064,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4e4d67214f024940b27cd26b59ad6d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugMaterial: {fileID: 2100000, guid: 19716920d29b32540a89d76db62bfcd7, type: 2}
-  numStepsToMake: 100
-  stepSize: 0.01
-  usePenetration: 0
-  debugText: {fileID: 1096082743}
 --- !u!23 &1340108132
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11259,7 +11247,6 @@ GameObject:
   - component: {fileID: 1665096874}
   - component: {fileID: 1665096871}
   - component: {fileID: 1665096870}
-  - component: {fileID: 1665096875}
   m_Layer: 0
   m_Name: Capsule (3)
   m_TagString: Untagged
@@ -11279,29 +11266,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86e97c4a654254548b0dc2a26ad04509, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  input: {x: 0, y: 1}
-  acceleration: 40
-  friction: 10
+  enableCollision: 1
+  colliders:
+  - {fileID: 1665096871}
+  blockingCollisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  enableAutomaticPhysics: 0
+  gravityMultiplier: 1
+  bounceFactor: 0
+  bounceFriction: 0
+  defaultMoveType: 0
+  minSweepThresholdUntilPenetration: 0.03
+  maxNumCollisionSteps: 3
+  maxCollisionStepSize: 0.2
+  sweepPullback: 0.005
+  skinThickness: 0.025
+  velocity: {x: 0, y: 0, z: 0}
   gravity: 10
   groundSphereTestRadius: 0.25
   groundTestDistanceThreshold: 0.05
   groundEscapeThreshold: 3
   slipRadius: 0.52
   slipVelocity: 5
+  enableLoopy: 1
   loopyGroundTestDistance: 0.5
   loopyPushdownMinRadius: 1
   loopyPushdownDegreesRequired: 5
+  loopyPushdownNeutralLimit: 0.2
   enableSlip: 1
-  enableFriction: 1
   enableCollisionsAffectVelocity: 1
-  enableLoopy: 1
   enableLoopyPushdown: 1
-  enableLoopyPushdownDegreeLimit: 1
   debugMaterial: {fileID: 2100000, guid: 19716920d29b32540a89d76db62bfcd7, type: 2}
   debugText: {fileID: 1290948603}
+  input: {x: 0, y: 1}
+  inputJump: 0
+  acceleration: 40
+  friction: 10
   enableManualControl: 0
   numSteps: 60
   stepSize: 0.03
+  enableFriction: 1
+  enableDebugDrawing: 1
 --- !u!136 &1665096871
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -11331,36 +11337,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1665096875
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665096869}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2bde2a94275e2fc4a8043cd15a52c4fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  enableCollision: 1
-  colliders:
-  - {fileID: 1665096871}
-  blockingCollisionLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  enableAutomaticPhysics: 0
-  gravityMultiplier: 1
-  bounceFactor: 0
-  bounceFriction: 0
-  defaultMoveType: 0
-  minSweepThresholdUntilPenetration: 0.03
-  maxNumCollisionSteps: 3
-  maxCollisionStepSize: 0.2
-  sweepPullback: 0.005
-  skinThickness: 0.025
-  debugDrawMovementShapes: 0
-  velocity: {x: 0, y: 0, z: 0}
 --- !u!1 &1790329238
 GameObject:
   m_ObjectHideFlags: 0
@@ -11662,11 +11638,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4e4d67214f024940b27cd26b59ad6d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugMaterial: {fileID: 2100000, guid: 19716920d29b32540a89d76db62bfcd7, type: 2}
-  numStepsToMake: 20
-  stepSize: 0.3
-  usePenetration: 0
-  debugText: {fileID: 1821586064}
 --- !u!114 &1828580525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11695,7 +11666,6 @@ MonoBehaviour:
   maxCollisionStepSize: 0.2
   sweepPullback: 0.05
   skinThickness: 0.025
-  debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
 --- !u!1 &1846067099
 GameObject:

@@ -111,7 +111,7 @@ public class GameTicker : NetworkBehaviour
         if (Netplay.singleton.localPlayer)
         {
             // Receive local player inputs
-            Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<CharacterMovement>().up;
+            Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<PlayerCharacterMovement>().up;
 
             localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
 

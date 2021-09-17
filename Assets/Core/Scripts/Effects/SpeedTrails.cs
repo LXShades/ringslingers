@@ -21,7 +21,7 @@ public class SpeedTrails : MonoBehaviour
     private Timer thokPulseProgress = new Timer();
 
     private Character character;
-    private CharacterMovement movement;
+    private PlayerCharacterMovement movement;
 
     private readonly List<GradientAlphaKey> trailAlphas = new List<GradientAlphaKey>(256);
 
@@ -32,7 +32,7 @@ public class SpeedTrails : MonoBehaviour
 
     private void Start()
     {
-        movement = GetComponent<CharacterMovement>();
+        movement = GetComponent<PlayerCharacterMovement>();
         character = GetComponent<Character>();
         
         gradient = new Gradient() { alphaKeys = trailAlphasAsArray, colorKeys = trailMainColour, mode = GradientMode.Blend };
@@ -43,7 +43,7 @@ public class SpeedTrails : MonoBehaviour
         float opacity = 0f;
 
         // thok pulses
-        if ((movement.state & CharacterMovement.State.Thokked) != 0)
+        if ((movement.state & PlayerCharacterMovement.State.Thokked) != 0)
         {
             if (!hasPulsedSinceLand)
             {
@@ -63,7 +63,7 @@ public class SpeedTrails : MonoBehaviour
         if (thokPulseProgress.isRunning)
             opacity = Mathf.Max(opacity, 1f - thokPulseProgress.progress);
 
-        if ((movement.state & CharacterMovement.State.Rolling) != 0)
+        if ((movement.state & PlayerCharacterMovement.State.Rolling) != 0)
             opacity = Mathf.Max(opacity, opacityWhileRolling);
 
         // handle alpha along the trail

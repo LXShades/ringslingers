@@ -93,7 +93,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     /// <summary>
     /// Player movement component
     /// </summary>
-    [HideInInspector] public CharacterMovement movement;
+    [HideInInspector] public PlayerCharacterMovement movement;
     [HideInInspector] public Damageable damageable;
     private PlayerSounds sounds;
 
@@ -128,7 +128,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
 
     void Awake()
     {
-        movement = GetComponent<CharacterMovement>();
+        movement = GetComponent<PlayerCharacterMovement>();
         damageable = GetComponent<Damageable>();
         sounds = GetComponent<PlayerSounds>();
         ticker = new Ticker<PlayerInput, CharacterState>(this);

@@ -94,7 +94,9 @@ namespace Ringslingers.Tests
             {
                 Debug.DrawLine(transform.position + up * 2f, transform.position - up * 2f, groundInfo.isOnGround ? Color.green : Color.blue);
                 DrawCircle(transform.position, groundSphereTestRadius, Color.white);
-                Debug.DrawLine(transform.position, groundInfo.hitPoint, Color.red);
+
+                if (groundInfo.isOnGround)
+                    Debug.DrawLine(transform.position, groundInfo.hitPoint, Color.red);
 
                 Debug.DrawLine(transform.position + new Vector3(0, 2f, 0f), transform.position + new Vector3(0, 2f, 0) + groundInfo.loopyNormal, Color.red);
             }

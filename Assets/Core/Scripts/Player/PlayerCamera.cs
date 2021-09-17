@@ -70,7 +70,7 @@ public class PlayerCamera : MonoBehaviour
 
         if (currentPlayer)
         {
-            Vector3 characterUp = currentPlayer.GetComponent<CharacterMovement>().up;
+            Vector3 characterUp = currentPlayer.GetComponent<PlayerCharacterMovement>().up;
             Vector3 effectiveAimDirection = currentPlayer.liveInput.aimDirection;
 
             if (GameManager.singleton.isPaused)

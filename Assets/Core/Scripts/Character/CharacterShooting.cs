@@ -79,7 +79,7 @@ public class CharacterShooting : NetworkBehaviour
 
     // Components
     private Character player;
-    private CharacterMovement movement;
+    private PlayerCharacterMovement movement;
 
     private TimelineList<Action> bufferedThrowEvents = new TimelineList<Action>();
 
@@ -89,7 +89,7 @@ public class CharacterShooting : NetworkBehaviour
     void Awake()
     {
         player = GetComponent<Character>();
-        movement = GetComponent<CharacterMovement>();
+        movement = GetComponent<PlayerCharacterMovement>();
     }
 
     private void Start()
