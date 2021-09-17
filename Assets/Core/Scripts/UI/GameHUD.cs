@@ -8,9 +8,9 @@ using UnityEngine.UI;
 public class GameHUD : MonoBehaviour
 {
     [Header("Gameplay")]
-    public Text ringsText;
-    public Text scoreText;
-    public Text timeText;
+    public TextMeshProUGUI ringsText;
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI timeText;
     public RectTransform autoaimCrosshair;
     public Image shieldOverlay;
     public GameObject weaponWheel;
