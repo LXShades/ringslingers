@@ -27,11 +27,9 @@ public class PlayerCharacterMovement : CharacterMovement
     public float airAccelerationMultiplier = 0.25f;
 
     [Header("3D movement")]
-    public float wallRunSpeedThreshold = 10f;
+    public float loopySpeedRequirement = 10f;
     public float wallRunRotationResetSpeed = 180f;
     public Transform rotateableModel;
-
-    public LayerMask landableCollisionLayers;
 
     [Header("Abilities")]
     public JumpAbility jumpAbility;
@@ -183,12 +181,16 @@ public class PlayerCharacterMovement : CharacterMovement
 
         // 3D rotation - do this after movement to encourage push down
         //ApplyRotation(deltaTime, input);
+        // enable/disable loopy movement based on our speed
+        enableLoopy = velocity.AlongPlane(up).magnitude > loopySpeedRequirement;
 
         // Final movement
         ApplyCharacterVelocity(groundInfo, deltaTime, isRealtime);
 
         // Set final rotation
+        Vector3 oldTransformUp = transform.up;
         transform.rotation = Quaternion.LookRotation(forward.AlongPlane(up), up);
+        transform.position = transform.position + oldTransformUp * 0.5f - up * 0.5f;
     }
 
     private void ApplyFriction(float deltaTime)
@@ -387,7 +389,7 @@ public class PlayerCharacterMovement : CharacterMovement
     {
         Vector3 targetUp = groundNormal;
 
-        if (velocity.magnitude < wallRunSpeedThreshold)
+        if (velocity.magnitude < loopySpeedRequirement)
             targetUp = Vector3.up;
 
         // Rotate towards our target

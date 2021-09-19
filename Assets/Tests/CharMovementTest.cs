@@ -95,7 +95,7 @@ namespace Ringslingers.Tests
             if (enableDebugDrawing)
             {
                 Debug.DrawLine(transform.position + up * 2f, transform.position - up * 2f, groundInfo.isOnGround ? Color.green : Color.blue);
-                DrawCircle(transform.position, groundSphereTestRadius, Color.white);
+                DrawCircle(transform.position, groundTestRadius, Color.white);
 
                 if (groundInfo.isOnGround)
                     Debug.DrawLine(transform.position, groundInfo.hitPoint, Color.red);

@@ -610,12 +610,13 @@ MonoBehaviour:
   gravity: 9.57
   groundLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
-  groundSphereTestRadius: 0.25
+    m_Bits: 55
+  groundTestRadius: 0.25
   groundTestDistanceThreshold: 0.05
   groundEscapeThreshold: 3
-  enableSlip: 1
-  slipRadius: 0.25
+  groundAngleLimit: 40
+  enableSlip: 0
+  slipRadius: 0.2
   slipVelocity: 5
   enableLoopy: 1
   enableLoopyPushdown: 1
@@ -637,7 +638,7 @@ MonoBehaviour:
   jumpSpeed: 9.75
   jumpFactor: 1
   airAccelerationMultiplier: 0.25
-  wallRunSpeedThreshold: 10
+  loopySpeedRequirement: 7
   wallRunRotationResetSpeed: 270
   rotateableModel: {fileID: 1526902982376324854}
   landableCollisionLayers:
