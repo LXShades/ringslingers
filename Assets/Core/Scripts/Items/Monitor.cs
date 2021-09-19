@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class Monitor : NetworkBehaviour, IMovementCollisions
+public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
 {
     public Collider mainCollider;
 
@@ -66,6 +66,14 @@ public class Monitor : NetworkBehaviour, IMovementCollisions
     {
         isDestroyed = true;
         GameSounds.PlaySound(gameObject, popSound);
+    }
+
+    public bool ShouldBlockMovement(Movement source, in RaycastHit hit)
+    {
+        if (source is PlayerCharacterMovement character && (character.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0)
+            return Vector3.Dot(hit.normal, Vector3.up) >= 0.95f; // being jumped on from the top means we should block, otherwise let the character through
+
+        return true;
     }
 
     public void OnMovementCollidedBy(Movement source, bool isRealtime)

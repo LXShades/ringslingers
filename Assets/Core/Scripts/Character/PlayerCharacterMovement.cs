@@ -190,53 +190,11 @@ public class PlayerCharacterMovement : CharacterMovement
 
         // Final movement
         //ApplyFinalMovement(groundInfo, deltaTime, isRealtime);
-        ApplyCharacterVelocity(groundInfo, deltaTime);
+        ApplyCharacterVelocity(groundInfo, deltaTime, isRealtime);
 
+        // Set final rotation
         transform.rotation = Quaternion.LookRotation(forward.AlongPlane(up), up);
     }
-
-                // smooth normal code, we might want later
- /*               MeshCollider centralMeshCollider = centralHit.collider as MeshCollider;
-                bool hasFoundSmoothNormal = false;
-
-                if (centralMeshCollider != null && centralMeshCollider.sharedMesh.isReadable)
-                {
-                    int index = centralHit.triangleIndex * 3;
-                    Mesh mesh = centralMeshCollider.sharedMesh;
-
-                    mesh.GetNormals(normalBuffer);
-
-                    for (int i = 0; i < mesh.subMeshCount; i++)
-                    {
-                        int start = mesh.GetSubMesh(i).indexStart;
-                        int count = mesh.GetSubMesh(i).indexCount;
-
-                        if (index >= start && index < start + count)
-                        {
-                            mesh.GetIndices(triangleBuffer, i);
-
-                            Vector3 smoothNormal = normalBuffer[triangleBuffer[index - start]] * centralHit.barycentricCoordinate.x +
-                                normalBuffer[triangleBuffer[index - start + 1]] * centralHit.barycentricCoordinate.y +
-                                normalBuffer[triangleBuffer[index - start + 2]] * centralHit.barycentricCoordinate.z;
-
-                            outGroundNormal = centralMeshCollider.transform.TransformDirection(smoothNormal).normalized;
-                            hasFoundSmoothNormal = true;
-                            break;
-                        }
-                    }
-                }
-
-                // Otherwise we build our own normal
-                if (!hasFoundSmoothNormal)
-                {
-                    // If the polygons comprising the angle diverge strongly from the angle we've determined, recognise it as a step and not a slope
-                    float sensorAngleRange = Mathf.Acos(Mathf.Min(Mathf.Min(Vector3.Dot(frontLeftHit.normal, frontRightHit.normal), Vector3.Dot(frontRightHit.normal, backHit.normal)), Vector3.Dot(backHit.normal, frontLeftHit.normal))) * Mathf.Rad2Deg;
-
-                    if (sensorAngleRange < wallMaxAngleRangeForStepping)
-                        outGroundNormal = (frontLeftHit.normal + frontRightHit.normal + backHit.normal).normalized; // we should assume they are steps
-                    else
-                        outGroundNormal = Vector3.Cross(frontRightHit.point - frontLeftHit.point, backHit.point - frontLeftHit.point).normalized; // we can generate the normal based on the contact points
-                }*/
 
     private void ApplyFriction(float deltaTime)
     {
@@ -469,7 +427,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void ApplyFinalMovement(in GroundInfo groundInfo, float deltaTime, bool isRealtime)
     {
-        ApplyCharacterVelocity(groundInfo, deltaTime);
+        Debug.LogWarning("ApplyFinalMovement is undergoing deprecation");
         return;
         // Perform final movement and collision
         Vector3 originalPosition = transform.position;
@@ -477,13 +435,14 @@ public class PlayerCharacterMovement : CharacterMovement
         Vector3 stepUpVector = up * maxStepHeight;
         bool canTryStepUp = maxStepHeight > 0f;
 
-        /*if (canTryStepUp)
-            transform.position += stepUpVector;*/
+        if (canTryStepUp)
+            transform.position += stepUpVector;
 
 
-        //Move(velocity * deltaTime, out _, isRealtime);
+        Move(velocity * deltaTime, out _, isRealtime);
 
-        /*if (canTryStepUp)
+        float groundingForce = 0f;
+        if (canTryStepUp)
         {
             Vector3 stepReturn = -stepUpVector;
             bool doStepDownwards = false;
@@ -499,7 +458,7 @@ public class PlayerCharacterMovement : CharacterMovement
                 // we didn't hit a step on the way down? then don't step downwards
                 transform.position += stepUpVector;
             }
-        }*/
+        }
 
         if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
         {

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class Spring : MonoBehaviour, IMovementCollisions
+public class Spring : MonoBehaviour, IMovementCollisionCallbacks
 {
     [Header("Spring properties")]
     // red: 32, yellow: 20, blue: 11
@@ -41,4 +41,6 @@ public class Spring : MonoBehaviour, IMovementCollisions
             }
         }
     }
+
+    public bool ShouldBlockMovement(Movement source, in RaycastHit hit) => true;
 }

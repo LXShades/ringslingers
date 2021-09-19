@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class DamageOnTouch : MonoBehaviour, IMovementCollisions
+public class DamageOnTouch : MonoBehaviour, IMovementCollisionCallbacks
 {
     public bool instaKill = false;
     public int team;
@@ -20,6 +20,8 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisions
                 flag.ReturnToBase(true);
         }
     }
+
+    public bool ShouldBlockMovement(Movement source, in RaycastHit hit) => true;
 
     private void OnTriggerEnter(Collider other)
     {

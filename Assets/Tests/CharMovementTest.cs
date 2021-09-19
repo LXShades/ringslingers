@@ -122,7 +122,7 @@ namespace Ringslingers.Tests
 
             Vector3 preMovePosition = transform.position;
 
-            ApplyCharacterVelocity(in groundInfo, deltaTime);
+            ApplyCharacterVelocity(in groundInfo, deltaTime, true);
 
             if (enableDebugDrawing && groundInfo.isLoopy && enableLoopyPushdown)
             {
