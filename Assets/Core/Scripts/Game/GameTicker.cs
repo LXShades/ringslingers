@@ -107,12 +107,17 @@ public class GameTicker : NetworkBehaviour
         // Receive incoming messages
         ReceiveIncomings();
 
+        // Camera updates go first
+        if (GameManager.singleton.camera)
+            GameManager.singleton.camera.UpdateAim();
+
         // Add states, etc to our local prediction history
         if (Netplay.singleton.localPlayer)
         {
             // Receive local player inputs
             Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<PlayerCharacterMovement>().up;
 
+            localPlayerInput.aimDirection = Netplay.singleton.localPlayer.movement.forward.normalized; // adjust the aim to the character's aim (only so that forward adjustments are applied, this might be risky in laggy games...)
             localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
 
             // Send inputs to the local player's ticker

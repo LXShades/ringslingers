@@ -150,6 +150,19 @@ public class GameManager : MonoBehaviour
         doSuppressGameplayInputs = true;
     }
 
+#if UNITY_EDITOR
+    [UnityEditor.Callbacks.DidReloadScripts]
+    static void OnScriptsRecompiled()
+    {
+        if (Application.isPlaying)
+        {
+            singleton.input = new PlayerControls();
+            singleton.areInputsEnabled = false;
+            GamePreferences.Load(singleton.input.asset.FindActionMap("Gameplay").actions.ToArray());
+        }
+    }
+#endif
+
     #region Debug
     void RunDebugCommands()
     {

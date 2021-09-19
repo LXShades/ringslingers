@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Ringslingers.Tests
 {
+    [SelectionBase]
     public class CharMovementTest : CharacterMovement
     {
         private MeshFilter meshFilter;
@@ -100,6 +101,9 @@ namespace Ringslingers.Tests
 
                 Debug.DrawLine(transform.position + new Vector3(0, 2f, 0f), transform.position + new Vector3(0, 2f, 0) + groundInfo.loopyNormal, Color.red);
             }
+
+            // Gravity
+            ApplyCharacterGravity(groundInfo, deltaTime);
 
             // Accelerate
             Vector3 inputDir = Vector3.ClampMagnitude(forward.AlongPlane(groundInfo.normal).normalized * input.y + right.AlongPlane(groundInfo.normal).normalized * input.x, 1f);

@@ -54,11 +54,64 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     public float maxPlayerLandForEyeBob = 30;
 
+    /// <summary>
+    /// Current aim direction of the camera
+    /// </summary>
+    public Vector3 aimDirection { get; set; } = Vector3.forward;
+
+    // Character movement "up" on last frame. Used to rotate camera
+    private Vector3 lastAimUpdateCharacterUp = Vector3.up;
+
     private float lastPlayerFallSpeed = 0;
 
     private float landBobTimer = 0;
     private float landBobMagnitude = 0;
     private float landBobDuration = 0;
+
+    public void UpdateAim()
+    {
+        // Rotate the camera based on loopy movement
+        Vector3 characterUp = Vector3.up;
+
+        if (currentPlayer)
+            characterUp = currentPlayer.movement.up;
+
+        if (characterUp != lastAimUpdateCharacterUp)
+        {
+            aimDirection = Quaternion.FromToRotation(lastAimUpdateCharacterUp, characterUp) * aimDirection;
+            lastAimUpdateCharacterUp = characterUp;
+        }
+
+        // Mouselook
+        if (GameManager.singleton.canPlayMouselook)
+        {
+            Vector3 up = transform.up;
+            Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, up) * aimDirection;
+
+            // we need to clamp this...
+            const float limit = 1f;
+            float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, up)) * Mathf.Rad2Deg;
+            float verticalAngleDelta = -Input.GetAxis("Mouse Y") * GamePreferences.mouseSpeed;
+
+            if (degreesFromUp + verticalAngleDelta <= limit)
+                verticalAngleDelta = limit - degreesFromUp;
+            if (degreesFromUp + verticalAngleDelta >= 180f - limit)
+                verticalAngleDelta = 180f - limit - degreesFromUp;
+            newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(up, newAim)) * newAim;
+
+            // center cam button
+            if (GameManager.singleton.input.Gameplay.CenterCamera.ReadValue<float>() > 0.5f)
+            {
+                newAim.SetAlongAxis(characterUp, 0);
+            }
+
+            // final new value
+            aimDirection = newAim.normalized;
+
+            if (aimDirection.sqrMagnitude == 0f)
+                aimDirection = Vector3.forward; // this can happen
+        }
+    }
 
     void LateUpdate()
     {
@@ -71,14 +124,13 @@ public class PlayerCamera : MonoBehaviour
         if (currentPlayer)
         {
             Vector3 characterUp = currentPlayer.GetComponent<PlayerCharacterMovement>().up;
-            Vector3 effectiveAimDirection = currentPlayer.liveInput.aimDirection;
-
-            if (GameManager.singleton.isPaused)
-                effectiveAimDirection = -currentPlayer.liveInput.aimDirection; // look towards the character when paused/potentially character config
 
             // Move and rotate to player position
             transform.position = currentPlayer.transform.position + characterUp * eyeHeight;
-            transform.rotation = Quaternion.LookRotation(effectiveAimDirection, characterUp);
+            transform.rotation = Quaternion.LookRotation(aimDirection, characterUp);
+
+            if (GameManager.singleton.isPaused)
+                transform.rotation = Quaternion.Euler(0, 180, 0) * transform.rotation; // look towards the character when paused/potentially character config
 
             // Apply zoom in/out
             float zoom = GameManager.singleton.input.Gameplay.Zoom.ReadValue<float>() * zoomSpeed;

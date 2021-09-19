@@ -1,7 +1,6 @@
 ﻿using System;
 using UnityEngine;
 
-[RequireComponent(typeof(Character))]
 public class PlayerCharacterMovement : CharacterMovement
 {
     public enum JumpAbility
@@ -13,7 +12,7 @@ public class PlayerCharacterMovement : CharacterMovement
     private Character player;
     private PlayerSounds sounds;
 
-    [Header("Movement (all FRACUNITS)")]
+    [Header("[PlayerCharacterMovement] Stats (FRACUNITS)")]
     public float accelStart = 96;
     public float acceleration = 40;
     public float thrustFactor = 5;
@@ -31,12 +30,11 @@ public class PlayerCharacterMovement : CharacterMovement
     public bool enableWallRun = true;
     public float wallRunSpeedThreshold = 10f;
     public float wallRunRotationResetSpeed = 180f;
-    public bool wallRunCameraAssist = true;
     public Transform rotateableModel;
 
     public LayerMask landableCollisionLayers;
 
-    [Header("Step")]
+    [Header("Stepping")]
     public float maxStepHeight = 0.4f;
 
     [Header("Abilities")]
@@ -116,16 +114,13 @@ public class PlayerCharacterMovement : CharacterMovement
 
     public Vector3 groundNormal { get; private set; }
 
-    /// <summary>
-    /// Current up vector
-    /// </summary>
-    public Vector3 up
+    /*public Vector3 up
     {
         get => _up;
         set
         {
             // change look rotation with wall run rotation motion if wallRunCameraAssist is enabled. Recompressed up to prevent drift when saving/loading quantized state
-            if (wallRunCameraAssist && Netplay.singleton.localPlayer == player)
+            if (wallRunCameraAssist && player != null && Netplay.singleton.localPlayer == player)
             {
                 GameTicker.singleton.localPlayerInput.aimDirection = Quaternion.FromToRotation(CharacterState.RecompressUp(_up), CharacterState.RecompressUp(value)) * GameTicker.singleton.localPlayerInput.aimDirection;
             }
@@ -133,11 +128,7 @@ public class PlayerCharacterMovement : CharacterMovement
             _up = value;
         }
     }
-    private Vector3 _up = Vector3.up;
-
-    private Vector3 gravityDirection = new Vector3(0, -1, 0);
-
-    private RaycastHit[] bufferedHits = new RaycastHit[16];
+    private Vector3 _up = Vector3.up;*/
 
     void Awake()
     {
@@ -152,16 +143,10 @@ public class PlayerCharacterMovement : CharacterMovement
         // Check whether on ground
         CalculateGroundInfo(out GroundInfo groundInfo);
 
-        groundNormal = Vector3.up;
-        
-        if (groundInfo.isOnGround)
-        {
-            groundNormal = groundInfo.normal;
-        }
-        else
-        {
-            groundNormal = Vector3.up;
-        }
+        isOnGround = groundInfo.isOnGround;
+        groundNormal = groundInfo.normal;
+
+        forward = input.aimDirection;
 
         // Apply grounding effects straight away so we can be more up-to-date with wallrunning stuff
         ApplyGroundStates();
@@ -201,10 +186,13 @@ public class PlayerCharacterMovement : CharacterMovement
         HandleSpinAbilities(input, deltaTime, isRealtime);
 
         // 3D rotation - do this after movement to encourage push down
-        ApplyRotation(deltaTime, input);
+        //ApplyRotation(deltaTime, input);
 
         // Final movement
-        ApplyFinalMovement(groundInfo, deltaTime, isRealtime);
+        //ApplyFinalMovement(groundInfo, deltaTime, isRealtime);
+        ApplyCharacterVelocity(groundInfo, deltaTime);
+
+        transform.rotation = Quaternion.LookRotation(forward.AlongPlane(up), up);
     }
 
                 // smooth normal code, we might want later
@@ -317,7 +305,7 @@ public class PlayerCharacterMovement : CharacterMovement
                 state |= State.Jumped;
             }
             // Start jump abilities
-            else if (state.HasFlag(State.Jumped) && !player.isHoldingFlag)
+            else if (state.HasFlag(State.Jumped) && (player == null || !player.isHoldingFlag))
             {
                 switch (jumpAbility)
                 {
