@@ -10,18 +10,18 @@ Everything is WIP! This readme was written at 11pm on a Sunday after a long day 
 # Compiling and opening
 **Make sure to follow these steps before opening the project in Unity.**
 
-Step 1. Clone the repo. Ensure LFS is enabled. Clone recursively (if not, run a Submodule Update after pulling). This repo currently uses multiple submodules.
-Step 2. Delete the Mirror folder in UnityMultiplayerEssentials (it conflicts with Mirror in the root folder).
-Step 3. Comment out the lines in IgnoranceToolbox that reference ENet.Native. For some reason this just doesn't work (third-party issue?)
-Step 4. Open in Unity.
+* Step 1. Clone the repo. Ensure LFS is enabled. Clone recursively (if not, run a Submodule Update after pulling). This repo currently uses multiple submodules.  
+* Step 2. Delete the Mirror folder in UnityMultiplayerEssentials (it conflicts with Mirror in the root folder).  
+* Step 3. Comment out the lines in IgnoranceToolbox that reference ENet.Native. For some reason this just doesn't work (third-party issue?)  
+* Step 4. Open in Unity.  
 
 This is all work-in-progress, and I understand it's a pain to deal with a couple of these steps. I'm still learning best practices and welcome any feedback to improve this in the future.
 
 # Playing the game in engine
-Step 1. Open a map (for example, Core/Scenes/TEST_Gameplay.unity).
-Step 1.5. (Make sure the map is in the Build Settings, and that Boot is the top map. This is usually fine as-is.)
-Step 2. Ensure the Playtest menu has Autohost in Playmode checked. This makes you start as a host and enters your character into the game when you play.
-Step 3. Click the Play button.
+* Step 1. Open a map (for example, Core/Scenes/TEST_Gameplay.unity).  
+* Step 1.5. (Make sure the map is in the Build Settings, and that Boot is the top map. This is usually fine as-is.)  
+* Step 2. Ensure the Playtest menu has Autohost in Playmode checked. This makes you start as a host and enters your character into the game when you play.  
+* Step 3. Click the Play button.  
 
 Sometimes, Unity crashes with a MemoryStream corruption error on the first run. I have no clue why it happens. The solution is to open and run again.
 
@@ -34,4 +34,4 @@ Code in this repo is free to use for any purpose without credit, **except for co
 # Credits
 This fangame contains ripped assets and levels, not only from Sonic itself, but another Sonic fangame: [Sonic Robo Blast 2](http://srb2.org) developed by Sonic Team Junior. All level designs, textures, sound effects, and characters belong to their respective owners. Sonic and related properties are the property of SEGA.
 
-This game and its creators has no direct relationship or affiliation with the aforementioned parties.
+This fangame and its creator(s) has no direct relationship or affiliation with the aforementioned parties.
