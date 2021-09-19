@@ -86,19 +86,18 @@ public class PlayerCamera : MonoBehaviour
         // Mouselook
         if (GameManager.singleton.canPlayMouselook)
         {
-            Vector3 up = transform.up;
-            Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, up) * aimDirection;
+            Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, characterUp) * aimDirection;
 
             // we need to clamp this...
             const float limit = 1f;
-            float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, up)) * Mathf.Rad2Deg;
+            float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, characterUp)) * Mathf.Rad2Deg;
             float verticalAngleDelta = -Input.GetAxis("Mouse Y") * GamePreferences.mouseSpeed;
 
             if (degreesFromUp + verticalAngleDelta <= limit)
                 verticalAngleDelta = limit - degreesFromUp;
             if (degreesFromUp + verticalAngleDelta >= 180f - limit)
                 verticalAngleDelta = 180f - limit - degreesFromUp;
-            newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(up, newAim)) * newAim;
+            newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(characterUp, newAim)) * newAim;
 
             // center cam button
             if (GameManager.singleton.input.Gameplay.CenterCamera.ReadValue<float>() > 0.5f)
@@ -195,7 +194,7 @@ public class PlayerCamera : MonoBehaviour
             }
 
             lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);
-            lastPlayerTimeInAir = currentPlayer.movement.isOnGround ? Time.time : lastPlayerTimeInAir; // means that the camera bob phase will begin the moment you land, making smoother landings
+            lastPlayerTimeInAir = currentPlayer.movement.isOnGround ? lastPlayerTimeInAir : Time.time; // means that the camera bob phase will begin the moment you land, making smoother landings
         }
         else
         {

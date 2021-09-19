@@ -606,22 +606,28 @@ MonoBehaviour:
   maxCollisionStepSize: 0.3
   sweepPullback: 0.005
   skinThickness: 0.025
-  debugDrawMovementShapes: 0
   velocity: {x: 0, y: 0, z: 0}
   gravity: 9.57
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
   groundSphereTestRadius: 0.25
   groundTestDistanceThreshold: 0.05
   groundEscapeThreshold: 3
+  enableSlip: 1
   slipRadius: 0.25
   slipVelocity: 5
   enableLoopy: 1
-  loopyGroundTestDistance: 0.5
-  loopyPushdownMinRadius: 1
-  loopyPushdownDegreesRequired: 5
-  loopyPushdownNeutralLimit: 0.2
-  enableSlip: 1
-  enableCollisionsAffectVelocity: 1
   enableLoopyPushdown: 1
+  enableLoopyForwardAdjustment: 1
+  enableLoopySmoothNormals: 1
+  loopyGroundTestDistance: 0.5
+  loopyPushdownNeutralLimit: 0.2
+  enableStepUp: 1
+  stepHeight: 0.375
+  stepLocalFootOffset: {x: 0, y: 0, z: 0}
+  enableCollisionsAffectVelocity: 1
+  enableCollisionsDontAffectVerticalVelocity: 1
   accelStart: 96
   acceleration: 40
   thrustFactor: 5
@@ -631,15 +637,12 @@ MonoBehaviour:
   jumpSpeed: 9.75
   jumpFactor: 1
   airAccelerationMultiplier: 0.25
-  enableWallRun: 1
   wallRunSpeedThreshold: 10
   wallRunRotationResetSpeed: 270
-  wallRunCameraAssist: 1
   rotateableModel: {fileID: 1526902982376324854}
   landableCollisionLayers:
     serializedVersion: 2
     m_Bits: 55
-  maxStepHeight: 0.15
   jumpAbility: 0
   actionSpeed: 60
   glide: {fileID: 0}

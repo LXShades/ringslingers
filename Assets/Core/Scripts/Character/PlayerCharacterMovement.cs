@@ -27,15 +27,11 @@ public class PlayerCharacterMovement : CharacterMovement
     public float airAccelerationMultiplier = 0.25f;
 
     [Header("3D movement")]
-    public bool enableWallRun = true;
     public float wallRunSpeedThreshold = 10f;
     public float wallRunRotationResetSpeed = 180f;
     public Transform rotateableModel;
 
     public LayerMask landableCollisionLayers;
-
-    [Header("Stepping")]
-    public float maxStepHeight = 0.4f;
 
     [Header("Abilities")]
     public JumpAbility jumpAbility;
@@ -189,7 +185,6 @@ public class PlayerCharacterMovement : CharacterMovement
         //ApplyRotation(deltaTime, input);
 
         // Final movement
-        //ApplyFinalMovement(groundInfo, deltaTime, isRealtime);
         ApplyCharacterVelocity(groundInfo, deltaTime, isRealtime);
 
         // Set final rotation
@@ -390,13 +385,6 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void ApplyRotation(float deltaTime, PlayerInput input)
     {
-        if (!enableWallRun)
-        {
-            up = Vector3.up;
-            transform.rotation = Quaternion.Euler(0, input.horizontalAim, 0);
-            return;
-        }
-
         Vector3 targetUp = groundNormal;
 
         if (velocity.magnitude < wallRunSpeedThreshold)
@@ -422,72 +410,6 @@ public class PlayerCharacterMovement : CharacterMovement
         if (isOnGround)
         {
             state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
-        }
-    }
-
-    private void ApplyFinalMovement(in GroundInfo groundInfo, float deltaTime, bool isRealtime)
-    {
-        Debug.LogWarning("ApplyFinalMovement is undergoing deprecation");
-        return;
-        // Perform final movement and collision
-        Vector3 originalPosition = transform.position;
-        Vector3 originalVelocity = velocity;
-        Vector3 stepUpVector = up * maxStepHeight;
-        bool canTryStepUp = maxStepHeight > 0f;
-
-        if (canTryStepUp)
-            transform.position += stepUpVector;
-
-
-        Move(velocity * deltaTime, out _, isRealtime);
-
-        float groundingForce = 0f;
-        if (canTryStepUp)
-        {
-            Vector3 stepReturn = -stepUpVector;
-            bool doStepDownwards = false;
-
-            if (isOnGround && velocity.AlongAxis(up) <= groundingForce + 0.001f)
-            {
-                stepReturn -= stepUpVector; // step _down_ as well
-                doStepDownwards = true;
-            }
-
-            if (!Move(stepReturn, out _, isRealtime, MoveFlags.NoSlide) && doStepDownwards)
-            {
-                // we didn't hit a step on the way down? then don't step downwards
-                transform.position += stepUpVector;
-            }
-        }
-
-        if (deltaTime > 0 && velocity == originalVelocity) // something might have changed our velocity during this tick - for example, a spring. only recalculate velocity if that didn't happen
-        {
-            // recalculate velocity. but some collisions will force us out of the ground, etc..
-            // normally we'd do this...
-            //  -> velocity = (transform.position - originalPosition) / deltaTime;
-            // but instead, let's restrict the pushback to the opposite of the vector and no further
-            // in other words the dot product of velocityNormal and pushAway should be <= 0 >= -1
-            Vector3 offset = originalVelocity * deltaTime;
-            Vector3 pushAwayVector = transform.position - (originalPosition + offset);
-
-            velocity += pushAwayVector / deltaTime;
-
-            // don't let velocity invert, that's a fishy sign
-            if (Vector3.Dot(velocity, originalVelocity) < 0f)
-                velocity -= originalVelocity.normalized * Vector3.Dot(velocity, originalVelocity.normalized);
-
-            // don't accumulate vertical velocity from stepping up, that's another fishy sign
-            if (canTryStepUp && velocity.AlongAxis(stepUpVector) > originalVelocity.AlongAxis(stepUpVector))
-                velocity.SetAlongAxis(stepUpVector, originalVelocity.AlongAxis(stepUpVector));
-
-            // overall, don't let velocity exceed its original magnitude, its a sign made of fish
-            velocity = Vector3.ClampMagnitude(velocity, originalVelocity.magnitude);
-        }
-
-        if (debugDrawMovement)
-        {
-            DebugExtension.DebugCapsule(originalPosition, originalPosition + originalVelocity * deltaTime, Color.red, 0.1f);
-            DebugExtension.DebugCapsule(originalPosition, originalPosition + velocity * deltaTime, Color.blue, 0.1f);
         }
     }
 
