@@ -63,6 +63,7 @@ public class PlayerCamera : MonoBehaviour
     private Vector3 lastAimUpdateCharacterUp = Vector3.up;
 
     private float lastPlayerFallSpeed = 0;
+    private float lastPlayerTimeInAir = 0;
 
     private float landBobTimer = 0;
     private float landBobMagnitude = 0;
@@ -190,10 +191,11 @@ public class PlayerCamera : MonoBehaviour
                     landBobTimer = Mathf.Max(landBobTimer - Time.deltaTime, 0);
                 }
 
-                transform.position += transform.up * (Mathf.Sin(eyeBobSpeed * Time.unscaledTime * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.groundVelocity.magnitude / maxPlayerVelocityForEyeBob));
+                transform.position += transform.up * (Mathf.Sin(eyeBobSpeed * (Time.time - lastPlayerTimeInAir) * Mathf.Deg2Rad) * eyeBobHeight * Mathf.Min(1, currentPlayer.movement.groundVelocity.magnitude / maxPlayerVelocityForEyeBob));
             }
 
             lastPlayerFallSpeed = currentPlayer.movement.isOnGround ? 0 : Mathf.Max(-currentPlayer.movement.velocity.y, 0);
+            lastPlayerTimeInAir = currentPlayer.movement.isOnGround ? Time.time : lastPlayerTimeInAir; // means that the camera bob phase will begin the moment you land, making smoother landings
         }
         else
         {
