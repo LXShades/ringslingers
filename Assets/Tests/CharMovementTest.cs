@@ -12,6 +12,7 @@ namespace Ringslingers.Tests
 
         private Vector3 spawnPosition;
 
+        [Header("CharMoveTest")]
         public Vector2 input = new Vector3(0f, 1f);
         public bool inputJump = false;
 
