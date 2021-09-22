@@ -61,15 +61,11 @@ public class WeaponSlotUI : MonoBehaviour
         }
         else
         {
-            if (ammoRemaining.enabled && colorWhenUnavailable.a <= 0f)
-            {
-                ammoRemaining.enabled = false;
-                icon.enabled = false;
-            }
-            else if (icon.color != colorWhenUnavailable)
+            if (icon.color != colorWhenUnavailable)
             {
                 icon.color = colorWhenUnavailable;
-                ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, colorWhenUnavailable.a);
+                //ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, colorWhenUnavailable.a);
+                ammoRemaining.enabled = false;
                 equipHighlight.color = equipColorWhenUnavailable;
             }
         }

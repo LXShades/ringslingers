@@ -25,6 +25,7 @@ public class WeaponWheel : MonoBehaviour
     private readonly List<WeaponSlotUI> spawnedWeaponSlots = new List<WeaponSlotUI>();
     private readonly List<Image> spawnedWeaponIcons = new List<Image>();
     private readonly List<bool> weaponAvailabilities = new List<bool>();
+    private readonly List<bool> weaponCompatibilities = new List<bool>();
 
     private readonly List<RingWeaponSettingsAsset> selectedWeapons = new List<RingWeaponSettingsAsset>();
     private readonly List<int> selectedWeaponIndexes = new List<int>();
@@ -57,16 +58,12 @@ public class WeaponWheel : MonoBehaviour
 
             // and weapon availability
             weaponAvailabilities.Add(true);
+            weaponCompatibilities.Add(true);
         }
     }
 
     private void OnEnable()
     {
-        hasStartedSelecting = false;
-        selectedWeapons.Clear();
-        selectedWeaponIndexes.Clear();
-        hasSelectedNakedWeapon = false;
-
         if (Netplay.singleton && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
             selectedWeapons.AddRange(shooting.localSelectedWeapons);
     }
@@ -100,13 +97,16 @@ public class WeaponWheel : MonoBehaviour
                 spawnedWeaponSlots[j].hasWeapon = false;
                 spawnedWeaponSlots[j].weapon.ammo = 0f;
 
-                for (int i = 0; i < shooting.weapons.Count; i++)
+                if (weaponCompatibilities[j] || !Mouse.current.leftButton.isPressed)
                 {
-                    if (shooting.weapons[i].weaponType == ringWeapons[j])
+                    for (int i = 0; i < shooting.weapons.Count; i++)
                     {
-                        spawnedWeaponSlots[j].hasWeapon = true;
-                        spawnedWeaponSlots[j].weapon.ammo = shooting.weapons[i].ammo;
-                        break;
+                        if (shooting.weapons[i].weaponType == ringWeapons[j])
+                        {
+                            spawnedWeaponSlots[j].hasWeapon = true;
+                            spawnedWeaponSlots[j].weapon.ammo = shooting.weapons[i].ammo;
+                            break;
+                        }
                     }
                 }
 
@@ -137,7 +137,7 @@ public class WeaponWheel : MonoBehaviour
             }
         }
         
-        if (normalizedMouseDistanceFromCentre <= normalizedMinimumWeaponHighlightRadius / 2 && selectedWeaponIndexes.Count == 0)
+        if (normalizedMouseDistanceFromCentre <= normalizedMinimumWeaponHighlightRadius / 2 && (selectedWeaponIndexes.Count == 0 || (!Mouse.current.leftButton.isPressed && requireClickToSelect)))
         {
             noWeaponIcon.transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 0f);
             noWeaponIcon.color = new Color(1, 1, 1, noWeaponIconSelectedOpacity);
@@ -145,7 +145,11 @@ public class WeaponWheel : MonoBehaviour
         }
         else
         {
-            float opacity = selectedWeaponIndexes.Count == 0 ? noWeaponIconUnselectedOpacity : 0f; // if we have other weapons selected hide the noweapons bit
+            float opacity = noWeaponIconUnselectedOpacity; // if we have other weapons selected hide the noweapons bit
+
+            if (selectedWeapons.Count >= 0 && (!requireClickToSelect || Mouse.current.leftButton.isPressed))
+                opacity = 0f;
+
             if (noWeaponIcon.transform.localScale != Vector3.one)
                 noWeaponIcon.transform.localScale = Vector3.one;
             if (noWeaponIcon.color.a != opacity)
@@ -158,9 +162,9 @@ public class WeaponWheel : MonoBehaviour
             if ((!requireClickToSelect && !hasStartedSelecting) || (requireClickToSelect && Mouse.current.leftButton.wasPressedThisFrame))
             {
                 // when we first start selecting we'll clear all the selections first
+                ClearSelections();
+
                 hasStartedSelecting = true;
-                selectedWeapons.Clear();
-                selectedWeaponIndexes.Clear();
                 hasSelectedNakedWeapon = isNakedWeaponHighlighted;
             }
 
@@ -171,6 +175,13 @@ public class WeaponWheel : MonoBehaviour
                 {
                     selectedWeapons.Add(ringWeapons[closestIndex]);
                     selectedWeaponIndexes.Add(closestIndex);
+
+                    // update weapon compatibilities
+                    for (int i = 0; i < spawnedWeaponSlots.Count; i++)
+                    {
+                        if (!selectedWeapons.Contains(spawnedWeaponSlots[i].weapon.weaponType))
+                            weaponCompatibilities[i] = spawnedWeaponSlots[i].weapon.weaponType.CanBeCombinedWith(selectedWeapons);
+                    }
                 }
 
                 // if we've selected a proper weapon, we're no longer naked
@@ -223,8 +234,19 @@ public class WeaponWheel : MonoBehaviour
             {
                 // drop selection icons onto the weapons
                 for (int i = 0; i < ringWeapons.Length; i++)
-                    spawnedWeaponSlots[i].isEquipped = selectedWeapons.Contains(ringWeapons[i]) || (selectedWeapons.Count == 0 && !hasSelectedNakedWeapon);
+                    spawnedWeaponSlots[i].isEquipped = selectedWeapons.Contains(ringWeapons[i]) || (shooting.localSelectedWeapons.Length == 0);
             }
         }
+    }
+
+    private void ClearSelections()
+    {
+        hasStartedSelecting = false;
+        selectedWeapons.Clear();
+        selectedWeaponIndexes.Clear();
+        hasSelectedNakedWeapon = false;
+
+        for (int i = 0; i < weaponCompatibilities.Count; i++)
+            weaponCompatibilities[i] = true;
     }
 }
