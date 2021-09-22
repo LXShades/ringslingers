@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class WeaponSlotUI : MonoBehaviour
@@ -6,14 +7,12 @@ public class WeaponSlotUI : MonoBehaviour
     public bool hasWeapon;
     public bool isEquipped;
 
-    public Text ammoRemaining;
+    public TextMeshProUGUI ammoRemaining;
     public Image icon;
     public Image equipHighlight;
 
-    [Range(0f, 1f)]
-    public float alphaWhenUnavailable = 0.25f;
-    [Range(0f, 1f)]
-    public float alphaWhenAvailable = 1f;
+    public Color colorWhenUnavailable = Color.black;
+    public Color colorWhenAvailable = Color.white;
     public Color equipColorWhenAvailable = Color.white;
     public Color equipColorWhenUnavailable = Color.white;
 
@@ -42,35 +41,35 @@ public class WeaponSlotUI : MonoBehaviour
     {
         ammoRemainingValue = (int)weapon.ammo;
 
+        if (weapon.weaponType != null && icon.sprite != weapon.weaponType.settings.uiIcon)
+            icon.sprite = weapon.weaponType.settings.uiIcon;
+
         if (hasWeapon)
         {
-            if (icon.sprite != weapon.weaponType.settings.uiIcon)
-                icon.sprite = weapon.weaponType.settings.uiIcon;
-
             if (!ammoRemaining.enabled)
             {
                 ammoRemaining.enabled = true;
                 icon.enabled = true;
             }
 
-            if (icon.color.a != alphaWhenAvailable)
+            if (icon.color != colorWhenAvailable)
             {
-                icon.color = new Color(icon.color.r, icon.color.g, icon.color.b, alphaWhenAvailable);
-                ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, alphaWhenAvailable);
+                icon.color = colorWhenAvailable;
+                ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, colorWhenAvailable.a);
                 equipHighlight.color = equipColorWhenAvailable;
             }
         }
         else
         {
-            if (ammoRemaining.enabled && alphaWhenUnavailable <= 0f)
+            if (ammoRemaining.enabled && colorWhenUnavailable.a <= 0f)
             {
                 ammoRemaining.enabled = false;
                 icon.enabled = false;
             }
-            else if (icon.color.a != alphaWhenUnavailable)
+            else if (icon.color != colorWhenUnavailable)
             {
-                icon.color = new Color(icon.color.r, icon.color.g, icon.color.b, alphaWhenUnavailable);
-                ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, alphaWhenUnavailable);
+                icon.color = colorWhenUnavailable;
+                ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, colorWhenUnavailable.a);
                 equipHighlight.color = equipColorWhenUnavailable;
             }
         }

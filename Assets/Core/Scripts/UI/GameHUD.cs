@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,13 +14,18 @@ public class GameHUD : MonoBehaviour
     public TextMeshProUGUI timeText;
     public RectTransform autoaimCrosshair;
     public Image shieldOverlay;
+
+    [Header("Weapons")]
     public GameObject weaponWheel;
-    public WeaponSlotUI[] weaponSlots = new WeaponSlotUI[0];
+    public WeaponSlotUI weaponSlotPrefab;
+    public Transform equippedWeaponArea;
+    public Transform unequippedWeaponArea;
+    public RingWeaponSettingsAsset[] weaponTypes;
 
     [Header("Teams")]
     public GameObject teamsHud;
-    public Text redTeamPoints;
-    public Text blueTeamPoints;
+    public TextMeshProUGUI redTeamPoints;
+    public TextMeshProUGUI blueTeamPoints;
     public GameObject redFlagStolen;
     public GameObject blueFlagStolen;
 
@@ -51,6 +57,8 @@ public class GameHUD : MonoBehaviour
 
     private string debugLog;
 
+    private List<WeaponSlotUI> weaponSlots = new List<WeaponSlotUI>();
+
     bool doRefreshLog = false;
 
     private void Start()
@@ -59,6 +67,19 @@ public class GameHUD : MonoBehaviour
 
         debugDisplay.SetActive(GamePreferences.isDebugInfoEnabled);
         GamePreferences.onPreferencesChanged += OnPreferencesChanged;
+
+        // Spawn weapon slots
+        for (int i = 0; i < weaponTypes.Length; i++)
+        {
+            WeaponSlotUI slot = Instantiate(weaponSlotPrefab, equippedWeaponArea);
+            slot.weapon = new RingWeapon()
+            {
+                ammo = 0,
+                weaponType = weaponTypes[i]
+            };
+            slot.hasWeapon = false;
+            weaponSlots.Add(slot);
+        }
     }
 
     private void OnDestroy()
@@ -130,22 +151,54 @@ public class GameHUD : MonoBehaviour
             ringsText.text = player.numRings.ToString();
             scoreText.text = player.score.ToString();
 
-            // Update weapon panels
-            CharacterShooting ringShooting = player.GetComponent<CharacterShooting>();
-            for (int i = 0; i < ringShooting.weapons.Count - 1 && i < weaponSlots.Length; i++)
-            {
-                weaponSlots[i].weapon = ringShooting.weapons[i + 1]; // skip default weapon
-                weaponSlots[i].hasWeapon = true;
-            }
-
-            for (int j = Mathf.Max(ringShooting.weapons.Count - 1 /* skip default weapon */, 0); j < weaponSlots.Length; j++)
-                weaponSlots[j].hasWeapon = false;
-
             // Update weapon wheel
             bool shouldDisplayWeaponWheel = GameManager.singleton.input.Gameplay.WeaponWheel.ReadValue<float>() > 0.5f; // this is so dumb I fricken swear
 
             if (shouldDisplayWeaponWheel != weaponWheel.activeSelf)
+            {
                 weaponWheel.SetActive(shouldDisplayWeaponWheel);
+                equippedWeaponArea.gameObject.SetActive(!shouldDisplayWeaponWheel);
+                unequippedWeaponArea.gameObject.SetActive(!shouldDisplayWeaponWheel);
+            }
+
+            CharacterShooting ringShooting = player.GetComponent<CharacterShooting>();
+            if (!shouldDisplayWeaponWheel)
+            {
+                // Update weapon panels
+                for (int i = 0; i < weaponSlots.Count; i++)
+                {
+                    bool hasWeapon = false;
+                    for (int j = 0; j < ringShooting.weapons.Count; j++)
+                    {
+                        if (ringShooting.weapons[j].weaponType == weaponSlots[i].weapon.weaponType)
+                        {
+                            hasWeapon = true;
+                            weaponSlots[i].weapon = ringShooting.weapons[j];
+                            weaponSlots[i].hasWeapon = true;
+                            break;
+                        }
+                    }
+
+                    if (!hasWeapon)
+                        weaponSlots[i].hasWeapon = false;
+
+                    bool isEquipped = ringShooting.localSelectedWeapons.Length == 0 || System.Array.IndexOf(ringShooting.localSelectedWeapons, weaponSlots[i].weapon.weaponType) != -1;
+
+                    if (isEquipped != (weaponSlots[i].transform.parent == equippedWeaponArea))
+                    {
+                        Transform newParent = isEquipped ? equippedWeaponArea : unequippedWeaponArea;
+                        int siblingIndex = 0;
+                        for (int j = 0; j < i; j++)
+                        {
+                            if (weaponSlots[j].transform.parent == newParent)
+                                ++siblingIndex;
+                        }
+
+                        weaponSlots[i].transform.SetParent(newParent, false);
+                        weaponSlots[i].transform.SetSiblingIndex(siblingIndex + 1);
+                    }
+                }
+            }
 
             // Update autoaim crosshair
             if (ringShooting.autoAimTarget)
