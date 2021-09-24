@@ -207,11 +207,14 @@ public class WeaponWheel : MonoBehaviour
             selectionLine.points.Add(selectionLine.transform.InverseTransformPoint(mousePosition));
             selectionLine.Redraw();
         }
-        else if (!Mouse.current.leftButton.isPressed && selectionLine.points.Count > 0 && selectedWeapons.Count == 0)
+        else if (Mouse.current.leftButton.wasReleasedThisFrame && selectionLine.points.Count > 0 && selectedWeapons.Count == 0)
         {
             // clear the selection line
             selectionLine.points.Clear();
             selectionLine.Redraw();
+
+            for (int i = 0; i < weaponCompatibilities.Count; i++)
+                weaponCompatibilities[i] = true;
         }
 
         // Highlight selected weapons

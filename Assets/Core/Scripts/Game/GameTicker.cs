@@ -219,7 +219,9 @@ public class GameTicker : NetworkBehaviour
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
                     tick.clientTimeExtrapolation = player.ticker.playbackTime - player.ticker.confirmedStateTime;
                     tick.confirmedClientTime = player.ticker.confirmedStateTime;
-                    player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
+
+                    if (player.netIdentity.connectionToClient != null) // bots don't have a connection
+                        player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                 }
             }
             else if (NetworkClient.isConnected)
@@ -335,6 +337,16 @@ public class GameTicker : NetworkBehaviour
         {
             Log.WriteWarning($"Cannot receive input message from {source}: no player found");
         }
+    }
+
+    public void OnRecvBotInput(int playerId, PlayerInput input)
+    {
+        if (!incomingPlayerInputs.ContainsKey(playerId))
+        {
+            incomingPlayerInputs.Add(playerId, new List<TickerInputPack<PlayerInput>>());
+        }
+
+        incomingPlayerInputs[playerId].Add(new TickerInputPack<PlayerInput>(new PlayerInput[] { input }, new float[] { Time.time }));
     }
 
     public string DebugInfo()

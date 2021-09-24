@@ -53,6 +53,49 @@ MonoBehaviour:
     includeInRotation: 1
     minRotationPlayers: 0
     maxRotationPlayers: 32
+--- !u!1 &2833946641929395052
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2426472716416978187}
+  - component: {fileID: 6038083264740615382}
+  m_Layer: 0
+  m_Name: BotNavMeshBuilder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2426472716416978187
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2833946641929395052}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 341.0047, y: 146.09421, z: 55.45225}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 3413194139303834065}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6038083264740615382
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2833946641929395052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c14ba64ee87fed44eb4a1713b90ef796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3413194138189725758
 GameObject:
   m_ObjectHideFlags: 0
@@ -101,7 +144,7 @@ MonoBehaviour:
   predictedId: 0
   serverOnly: 0
   visible: 0
-  m_AssetId: 
+  m_AssetId: 653cdbe8668720944a5cb053bad4b35a
   hasSpawned: 0
 --- !u!114 &3413194138189725757
 MonoBehaviour:
@@ -322,6 +365,7 @@ Transform:
   - {fileID: 3413194138946377959}
   - {fileID: 3413194139127699367}
   - {fileID: 2121933152899857662}
+  - {fileID: 2426472716416978187}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -373,7 +417,7 @@ MonoBehaviour:
   predictedId: 0
   serverOnly: 0
   visible: 0
-  m_AssetId: 
+  m_AssetId: 653cdbe8668720944a5cb053bad4b35a
   hasSpawned: 0
 --- !u!114 &8695489544314112460
 MonoBehaviour:

@@ -28,11 +28,11 @@ public class Player : NetworkBehaviour
 
     public override void OnStartServer()
     {
-        NetworkConnection connection = netIdentity.connectionToClient;
-
         // spawn the player
         Character newPlayer = Netplay.singleton.AddPlayer(0);
-        newPlayer.netIdentity.AssignClientAuthority(connection);
+        
+        if (netIdentity.connectionToClient != null)
+            newPlayer.netIdentity.AssignClientAuthority(netIdentity.connectionToClient);
 
         playerId = newPlayer.playerId;
 
