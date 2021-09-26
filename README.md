@@ -28,10 +28,15 @@ Sometimes, Unity crashes with a MemoryStream corruption error on the first run. 
 # Testing the game with multiple players
 Use the Playtest menu to run multi-player playtests. **The player count can be inaccurate sometimes because there is always a host character** and the playtest menu doesn't realize this yet (this will probably be fixed in the future).
 
-# License
-Code in this repo is free to use for any purpose without credit, **except for code within the [Mirror](https://github.com/vis2k/mirror) and [Ignorance](https://github.com/SoftwareGuy/Ignorance) submodules**. See relevant licenses. Other assets are subject to copyright - see below.
+# Licenses
+Code in this repo, **outside of the ThirdParty folder and submodules**, is free to use for any purpose without credit under Creative Commons 0. Code within the [Mirror](https://github.com/vis2k/mirror) and [Ignorance](https://github.com/SoftwareGuy/Ignorance) submodules, and possibly others during development, have their own licenses. See relevant credits. Some assets are subject to copyright - see below.
 
 # Credits
-This fangame contains ripped assets and levels, not only from Sonic itself, but another Sonic fangame: [Sonic Robo Blast 2](http://srb2.org) developed by Sonic Team Junior. All level designs, textures, sound effects, and characters belong to their respective owners. Sonic and related properties are the property of SEGA.
+This fangame contains ripped assets and levels, not only from Sonic itself, but another Sonic fangame: [Sonic Robo Blast 2](http://srb2.org) developed by Sonic Team Junior. All level designs, textures, sound effects, music and characters belong to their respective owners. Sonic and related properties are copyrighted properties of SEGA Corporation.
 
-This fangame and its creator(s) has no direct relationship or affiliation with the aforementioned parties.
+This fangame and its creator(s) has no direct relationship or affiliation with these parties.
+
+### Libraries and third-party sources:  
+[Mirror](https://github.com/vis2k/mirror)  
+[Ignorance](https://github.com/SoftwareGuy/Ignorance)  
+[MutationNetwork](https://github.com/kipgparker/MutationNetwork)  

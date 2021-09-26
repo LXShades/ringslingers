@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class PlayerCharacterMovement : CharacterMovement
 {
+    const float kFracunitSpeedToMetreSpeed = 35f / 64f;
+    const float kFracunitLengthToMetreLength = 1f / 64f;
+
     public enum JumpAbility
     {
         Thok,
@@ -12,16 +15,19 @@ public class PlayerCharacterMovement : CharacterMovement
     private Character player;
     private PlayerSounds sounds;
 
-    [Header("[PlayerCharacterMovement] Stats (FRACUNITS)")]
+    [Header("[PlayerCharacterMovement] Stats")]
     public float accelStart = 96;
     public float acceleration = 40;
     public float thrustFactor = 5;
-    public float topSpeed = 36;
+    public float topSpeed = 36 * kFracunitSpeedToMetreSpeed;
+
+    public AnimationCurve accelCurve = new AnimationCurve();
+    public AnimationCurve inverseAccelCurve = new AnimationCurve();
 
     public float friction = 0.90625f;
-    public float stopSpeed = (1f / 64f);
+    public float stopSpeed = (1f * kFracunitLengthToMetreLength);
 
-    public float jumpSpeed = (39f / 4f);
+    public float jumpSpeed = (39f / 4f) * kFracunitSpeedToMetreSpeed;
     public float jumpFactor = 1;
 
     public float airAccelerationMultiplier = 0.25f;
@@ -33,7 +39,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     [Header("Abilities")]
     public JumpAbility jumpAbility;
-    public float actionSpeed = 60;
+    public float actionSpeed = 60 * kFracunitSpeedToMetreSpeed;
 
     public GlideSettings glide;
 
@@ -132,7 +138,8 @@ public class PlayerCharacterMovement : CharacterMovement
 
     public void TickMovement(float deltaTime, PlayerInput input, bool isRealtime = true)
     {
-        Physics.SyncTransforms();
+        if (enableCollision)
+            Physics.SyncTransforms();
 
         // Check whether on ground
         CalculateGroundInfo(out GroundInfo groundInfo);
@@ -170,7 +177,7 @@ public class PlayerCharacterMovement : CharacterMovement
         ApplyTopSpeedLimit(lastHorizontalSpeed);
 
         // Stop speed
-        if (isOnGround && inputRunDirection.sqrMagnitude == 0 && groundVelocity.magnitude < stopSpeed / GameManager.singleton.fracunitsPerM * 35f)
+        if (isOnGround && inputRunDirection.sqrMagnitude == 0 && groundVelocity.magnitude < stopSpeed)
             groundVelocity = Vector3.zero;
 
         // Jump button
@@ -214,17 +221,15 @@ public class PlayerCharacterMovement : CharacterMovement
 
         inputRunDirection = Vector3.ClampMagnitude(groundForward * input.moveVerticalAxis + groundRight * input.moveHorizontalAxis, 1);
 
-        velocity *= GameManager.singleton.fracunitsPerM / 35f;
         float speed = groundVelocity.magnitude; // todo: use rmomentum
-        float currentAcceleration = accelStart + speed * acceleration; // divide by scale in the real game
+        float currentAcceleration = Mathf.Max(accelCurve.Evaluate(inverseAccelCurve.Evaluate(speed) + deltaTime) - speed, 0f);
 
         if (!isOnGround)
             currentAcceleration *= airAccelerationMultiplier;
         if ((state & State.Rolling) != 0)
             currentAcceleration *= rollingAccelerationMultiplier;
 
-        velocity += inputRunDirection * (50 * thrustFactor * currentAcceleration / 65536f * deltaTime * 35f);
-        velocity /= GameManager.singleton.fracunitsPerM / 35f;
+        velocity += inputRunDirection * currentAcceleration;
     }
 
     private void ApplyTopSpeedLimit(float lastHorizontalSpeed)
@@ -232,8 +237,8 @@ public class PlayerCharacterMovement : CharacterMovement
         float speedToClamp = groundVelocity.magnitude;
 
         // speed limit doesn't apply while rolling
-        if ((state & State.Rolling) == 0 && speedToClamp > topSpeed / GameManager.singleton.fracunitsPerM * 35f && speedToClamp > lastHorizontalSpeed)
-            groundVelocity = (groundVelocity * (Mathf.Max(lastHorizontalSpeed, topSpeed / GameManager.singleton.fracunitsPerM * 35f) / speedToClamp));
+        if ((state & State.Rolling) == 0 && speedToClamp > topSpeed && speedToClamp > lastHorizontalSpeed)
+            groundVelocity = (groundVelocity * (Mathf.Max(lastHorizontalSpeed, topSpeed) / speedToClamp));
     }
 
     public void ApplyHitKnockback(Vector3 force)
@@ -252,7 +257,7 @@ public class PlayerCharacterMovement : CharacterMovement
             // Start jump
             if (isOnGround && !state.HasFlag(State.Jumped))
             {
-                velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor * 35f / GameManager.singleton.fracunitsPerM);
+                velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor);
 
                 if (isRealtime)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
@@ -382,9 +387,6 @@ public class PlayerCharacterMovement : CharacterMovement
         }
     }
 
-    System.Collections.Generic.List<int> triangleBuffer = new System.Collections.Generic.List<int>(9999);
-    System.Collections.Generic.List<Vector3> normalBuffer = new System.Collections.Generic.List<Vector3>(9999);
-
     private void ApplyRotation(float deltaTime, PlayerInput input)
     {
         Vector3 targetUp = groundNormal;
@@ -423,6 +425,25 @@ public class PlayerCharacterMovement : CharacterMovement
             velocity = direction * force;
         else
             velocity.SetAlongAxis(direction, force);
+    }
+
+    private void OnValidate()
+    {
+        accelCurve = new AnimationCurve();
+        inverseAccelCurve = new AnimationCurve();
+
+        float speedFracunits = 0f;
+        for (int frame = 0; frame < 75; frame++)
+        {
+            float curAcceleration = accelStart + speedFracunits * acceleration;
+            speedFracunits += 50 * thrustFactor * curAcceleration / 65535f;
+
+            accelCurve.AddKey(frame / 35f, speedFracunits * (35f / 64f));
+            inverseAccelCurve.AddKey(speedFracunits * (35f / 64f), frame / 35f);
+
+            if (speedFracunits * (35f / 64f) > topSpeed * 2)
+                break;
+        }
     }
 }
 

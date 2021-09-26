@@ -22,9 +22,11 @@ namespace Ringslingers.Tests
 
         private void Update()
         {
+            forward = cam.forward;
             if (enableManualControl)
             {
                 PlayerInput nextInput = PlayerInput.MakeLocalInput(lastInput, up);
+                nextInput.aimDirection = cam.forward;
 
                 TickMovement(Time.deltaTime, nextInput.WithDeltas(lastInput), false);
 
@@ -33,8 +35,9 @@ namespace Ringslingers.Tests
             }
 
             cam.transform.position = transform.position + up * 0.5f - forward * manualCamDistance;
-            cam.forward = forward;
-            cam.up = up;
+
+            //cam.forward = forward;
+            //cam.up = up;
         }
 
         private void LateUpdate()

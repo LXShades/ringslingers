@@ -25,10 +25,16 @@ public class BotController : MonoBehaviour
 
     public List<IState> activeStates = new List<IState>();
 
+    public string airNeuralNetworkString;
+    public NeuralNetwork airNeuralNetwork { get; private set; }
+
     private void Awake()
     {
         availableStates.Add(new State_FollowPlayer());
         availableStates.Add(new State_MoveTowards());
+
+        airNeuralNetwork = new NeuralNetwork(new int[] { 6, 4, 2 });
+        airNeuralNetwork.LoadAsString(airNeuralNetworkString);
 
         State_FollowPlayer moveState = GetOrActivateState<State_FollowPlayer>();
         moveState.followPlayerId = followPlayerId;
@@ -78,10 +84,12 @@ public class BotController : MonoBehaviour
 
         NavMeshPath path = new NavMeshPath();
 
+        private BotController botController;
+
         public void Update(BotController controller, Character character, ref PlayerInput input)
         {
-            Vector3 nextPathPoint = GetNextPathPoint(character, targetPosition);
-            Vector3 moveIntentionDirection = (nextPathPoint - character.transform.position).Horizontal().normalized;
+            Vector3 nextPathPoint = GetNextPathPoint(character, targetPosition, out Vector3 recommendedAcceleration);
+            Vector3 moveIntentionDirection = recommendedAcceleration == Vector3.zero ? (nextPathPoint - character.transform.position).Horizontal().normalized : recommendedAcceleration;
 
             Debug.DrawLine(character.transform.position, nextPathPoint, Color.green);
 
@@ -92,9 +100,11 @@ public class BotController : MonoBehaviour
             input.moveVerticalAxis = -moveIntentionDirection.x * sin + moveIntentionDirection.z * cos;
 
             hasReachedDestination = Vector3.Distance(character.transform.position, targetPosition) <= 0.5f;
+
+            botController = controller;
         }
 
-        private Vector3 GetNextPathPoint(Character character, Vector3 target)
+        private Vector3 GetNextPathPoint(Character character, Vector3 target, out Vector3 recommendedAcceleration)
         {
             if (path.corners != null)
             {
@@ -102,48 +112,142 @@ public class BotController : MonoBehaviour
                     Debug.DrawLine(path.corners[i] + Vector3.up * 0.5f, path.corners[i + 1] + Vector3.up * 0.5f, Color.blue);
             }
 
-            float tTo0 = character.movement.velocity.y / character.movement.gravity;
-            float expectedPeakHeight = character.movement.transform.position.y + character.movement.velocity.y * tTo0 - (character.movement.gravity * tTo0 * tTo0 * 0.5f);
+            bool hasTargetPosition = NavMesh.SamplePosition(target, out NavMeshHit targetHit, 10.0f, ~0);
+            bool hasLocalPosition = NavMesh.SamplePosition(character.transform.position, out NavMeshHit myHit, 20.0f, ~0);
+            
+            if (hasTargetPosition && hasLocalPosition)
+                NavMesh.CalculatePath(myHit.position, targetHit.position, ~0, path);
 
-            if (NavMesh.SamplePosition(target, out NavMeshHit targetHit, 10.0f, ~0))
+            if (path.corners != null && path.corners.Length > 1 && path.status != NavMeshPathStatus.PathInvalid)
             {
-                if (NavMesh.SamplePosition(character.transform.position, out NavMeshHit myHit, 10.0f, ~0))
+                for (int i = path.corners.Length - 1; i > 0; i--)
                 {
-                    if (NavMesh.CalculatePath(myHit.position, targetHit.position, ~0, path) && path.corners.Length > 1 && path.status != NavMeshPathStatus.PathInvalid)
+                    Vector3 point = path.corners[i];
+
+                    bool shouldStopAtTarget = true;
+                    if (i + 1 < path.corners.Length)
                     {
-                        if (path.corners.Length > 2)
+                        if (path.corners[i + 1].y > path.corners[i].y + 0.5f)
                         {
-                            if (path.corners[2].y > path.corners[1].y + 0.1f) // i would love to just check if this part of the path is a link, but nope, unity won't allow that
+                            // PROBABLY A JUMP OR A SPRING
+                            // check if we could make it with our current velocity and the spring
+                            if (Vector3.Dot(character.movement.velocity.normalized, (path.corners[i + 1] - path.corners[i]).normalized) < 0.5f)
                             {
-                                // run towards a point a bit further back
-                                if (Vector3.Dot(character.movement.velocity.normalized, (path.corners[2] - path.corners[1]).normalized) < 0.75f)
-                                {
-                                    return path.corners[1] - (path.corners[2] - path.corners[1]).Horizontal().normalized * 2f;
-                                }
-                                else if (character.movement.velocity.y > 1f || character.transform.position.y > path.corners[2].y)
-                                {
-                                    return path.corners[2];
-                                }
-                            }
-                            else if (path.corners[2].y < path.corners[1].y - 0.1f)
-                            {
-                                // yeet into the lower area. don't wait around confusedly
-                                return path.corners[2];
+                                point = path.corners[i] - (path.corners[i + 1] - path.corners[i]).Horizontal().normalized * 2f;
+                                shouldStopAtTarget = false;
                             }
                         }
-
-                        return path.corners[1];
                     }
+
+                    if (i + 1 < path.corners.Length && path.corners[i + 1].y > path.corners[i].y + 0.5f)
+                        shouldStopAtTarget = false; // we want speed
+
+                    if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, point, out recommendedAcceleration, shouldStopAtTarget))
+                        return point;
+                }
+
+                recommendedAcceleration = Vector3.zero;
+                return path.corners[1];
+            }
+            else
+            {
+                // skip straight to the target if we can
+                if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, target, out recommendedAcceleration, true))
+                    return target;
+            }
+
+            // we can't really go anywhere, rip
+            recommendedAcceleration = Vector3.zero;
+            return character.transform.position;
+        }
+
+        private bool CanReachPoint(PlayerCharacterMovement movement, Vector3 position, Vector3 velocity, Vector3 target, out Vector3 recommendedAcceleration, bool shouldStopAtTarget)
+        {
+            float deltaTime = 0.05f;
+            float brakeFactor = 0.5f;
+
+            recommendedAcceleration = Vector3.zero;
+            Vector3 firstAcceleration = Vector3.zero;
+            Vector3 prevPosition = position;
+
+            for (int i = 0; i < 80; i++)
+            {
+                Vector3 directionToTarget = (target - position).Horizontal().normalized;
+                Vector3 bestAcceleration = directionToTarget;
+                float velocityDirectionDot = Vector3.Dot(directionToTarget, velocity.Horizontal().normalized);
+                bool isOnGround = Physics.Raycast(position + new Vector3(0, movement.groundTestDistanceThreshold, 0), Vector3.down, movement.groundTestDistanceThreshold * 2, ~(1 << movement.gameObject.layer), QueryTriggerInteraction.Ignore);
+
+                if (velocityDirectionDot >= 0f)
+                {
+                    bestAcceleration -= velocity.normalized * ((1f - velocityDirectionDot) * brakeFactor);
+                    bestAcceleration.Normalize();
+                }
+
+                float horSpeed = velocity.Horizontal().magnitude;
+
+                if (shouldStopAtTarget)
+                {
+                    // moderate speed so we don't overshoot target
+                    float timeToDecelerateToZero = movement.inverseAccelCurve.Evaluate(horSpeed);
+                    float timeToReachTargetAtCurrentSpeed = Vector3.Dot(velocity.Horizontal().normalized, target - position) / velocity.magnitude;
+                    if (timeToDecelerateToZero > timeToReachTargetAtCurrentSpeed)
+                    {
+                        bestAcceleration.SetAlongAxis(velocity.Horizontal(), -1f);
+                        bestAcceleration.Normalize();
+                    }
+                }
+
+                if (!isOnGround && botController != null)
+                {
+                    if (botController.airNeuralNetwork != null)
+                    {
+                        float[] inputs = new float[]
+                        {
+                            target.x - position.x,
+                            target.y - position.y,
+                            target.z - position.z,
+                            velocity.x,
+                            velocity.y,
+                            velocity.z
+                        };
+                        float[] outputs = botController.airNeuralNetwork.FeedForward(inputs);
+                        bestAcceleration = new Vector3(outputs[0], 0f, outputs[1]).normalized;
+                    }
+                }
+
+                // run accelerate
+                float accelMultiplier = 0.5f;
+                if (horSpeed < movement.topSpeed || Vector3.Dot(bestAcceleration, velocity) < 0f)
+                    velocity += bestAcceleration * (movement.accelCurve.Evaluate(movement.inverseAccelCurve.Evaluate(velocity.Horizontal().magnitude) + deltaTime) - horSpeed) * accelMultiplier;
+
+                // gravity
+                velocity.y -= movement.gravity * deltaTime;
+
+                if (Physics.Raycast(position, velocity, out RaycastHit hit, velocity.magnitude * deltaTime, ~0 & ~(1 << movement.gameObject.layer), QueryTriggerInteraction.Ignore))
+                {
+                    velocity.SetAlongAxis(hit.normal, 0f);
+                    position += velocity * deltaTime;
+                }
+                else
+                    position += velocity * deltaTime;
+
+                if (i == 0)
+                    firstAcceleration = bestAcceleration;
+
+                Debug.DrawLine(prevPosition, position, Color.black);
+                prevPosition = position;
+
+                if (target.y > position.y + 0.5f)
+                    return false;
+                if (Vector3.Distance(position, target) < 0.5f)
+                {
+                    Debug.DrawLine(position - Vector3.up, position + Vector3.up, Color.green);
+                    recommendedAcceleration = firstAcceleration;
+                    return true;
                 }
             }
 
-            return Vector3.zero;
-        }
-
-        private float TimeToGetToPoint(CharacterMovement movement, Vector3 target)
-        {
-            // todo
-            return 1f;
+            return false;
         }
     }
 
