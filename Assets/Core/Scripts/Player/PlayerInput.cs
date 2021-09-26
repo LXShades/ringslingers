@@ -122,20 +122,6 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
         return output;
     }
 
-    /// <summary>
-    /// Returns a copy with delta inputs (firePressed, fireReleased, etc) removed
-    /// </summary>
-    public PlayerInput WithoutDeltas()
-    {
-        PlayerInput output = this;
-
-        output.btnFirePressed = output.btnFireReleased = false;
-        output.btnJumpPressed = output.btnJumpReleased = false;
-        output.btnSpinPressed = output.btnSpinReleased = false;
-
-        return output;
-    }
-
     public bool Equals(PlayerInput other)
     {
         return moveHorizontalAxis == other.moveHorizontalAxis && moveVerticalAxis == other.moveVerticalAxis

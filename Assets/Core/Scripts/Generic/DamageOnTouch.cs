@@ -11,7 +11,7 @@ public class DamageOnTouch : MonoBehaviour, IMovementCollisionCallbacks
     [Tooltip("Message to post when damaged. The message will be posted in the format '[playername] [hitMessage]'")]
     public string hitMessage;
 
-    public void OnMovementCollidedBy(Movement source, bool isReconciliation)
+    public void OnMovementCollidedBy(Movement source, TickInfo tickInfo)
     {
         if (source.TryGetComponent(out TheFlag flag))
         {

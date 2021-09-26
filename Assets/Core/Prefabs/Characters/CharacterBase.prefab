@@ -575,6 +575,17 @@ MonoBehaviour:
     maxNumRings: 16
   hurtDefaultHorizontalKnockback: 7
   hurtDefaultVerticalKnockback: 3.8
+  tickerSettings:
+    maxDeltaTime: 0.03
+    maxSeekIterations: 20
+    maxInputRate: 60
+    alwaysReconcile: 0
+    historyLength: 1
+    debugLogReconciles: 0
+    debugLogSeekWarnings: 0
+    debugSelfReconcileDelay: 0.3
+    debugSelfReconcile: 0
+    debugDrawReconciles: 0
   movement: {fileID: 0}
   damageable: {fileID: 0}
   localTime: -1

@@ -76,7 +76,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
         return true;
     }
 
-    public void OnMovementCollidedBy(Movement source, bool isRealtime)
+    public void OnMovementCollidedBy(Movement source, TickInfo tickInfo)
     {
         if (source is PlayerCharacterMovement character && (character.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0)
         {
@@ -87,11 +87,11 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
             }
 
             // pop
-            if (isRealtime)
+            if (respawnable.isSpawned && tickInfo.isConfirming)
             {
                 onLocalPopped?.Invoke(source.GetComponent<Character>());
 
-                if (respawnable)
+                if (respawnable && isServer)
                     respawnable.Despawn();
             }
         }

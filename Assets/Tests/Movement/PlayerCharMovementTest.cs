@@ -28,7 +28,7 @@ namespace Ringslingers.Tests
                 PlayerInput nextInput = PlayerInput.MakeLocalInput(lastInput, up);
                 nextInput.aimDirection = cam.forward;
 
-                TickMovement(Time.deltaTime, nextInput.WithDeltas(lastInput), false);
+                TickMovement(Time.deltaTime, nextInput.WithDeltas(lastInput), new TickInfo() { isRealtime = false });
 
                 lastInput = nextInput;
                 lastInput.aimDirection = forward;

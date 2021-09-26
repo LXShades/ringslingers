@@ -22,7 +22,7 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
         animator = GetComponent<Animator>();
     }
 
-    public void OnMovementCollidedBy(Movement source, bool isRealtime)
+    public void OnMovementCollidedBy(Movement source, TickInfo tickInfo)
     {
         PlayerCharacterMovement movement = source as PlayerCharacterMovement;
 
@@ -33,7 +33,7 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
 
             movement.SpringUp(springForce, transform.up, springAbsolutely);
 
-            if (isRealtime)
+            if (tickInfo.isRealtime)
             {
                 animator.SetTrigger("DoSpring");
 

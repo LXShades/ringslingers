@@ -136,7 +136,9 @@ public class PlayerCharacterMovement : CharacterMovement
         sounds = GetComponent<PlayerSounds>();
     }
 
-    public void TickMovement(float deltaTime, PlayerInput input, bool isRealtime = true)
+    public void TickMovement(float deltaTime, PlayerInput input) => TickMovement(deltaTime, input, TickInfo.Default);
+
+    public void TickMovement(float deltaTime, PlayerInput input, TickInfo tickInfo)
     {
         if (enableCollision)
             Physics.SyncTransforms();
@@ -181,10 +183,10 @@ public class PlayerCharacterMovement : CharacterMovement
             groundVelocity = Vector3.zero;
 
         // Jump button
-        HandleJumpAbilities(input, deltaTime, isRealtime);
+        HandleJumpAbilities(input, deltaTime, tickInfo);
 
         // Spin button
-        HandleSpinAbilities(input, deltaTime, isRealtime);
+        HandleSpinAbilities(input, deltaTime, tickInfo);
 
         // 3D rotation - do this after movement to encourage push down
         //ApplyRotation(deltaTime, input);
@@ -192,7 +194,7 @@ public class PlayerCharacterMovement : CharacterMovement
         enableLoopy = velocity.AlongPlane(up).magnitude > loopySpeedRequirement;
 
         // Final movement
-        ApplyCharacterVelocity(groundInfo, deltaTime, isRealtime);
+        ApplyCharacterVelocity(groundInfo, deltaTime, tickInfo);
 
         // Set final rotation
         Vector3 oldTransformUp = transform.up;
@@ -247,7 +249,7 @@ public class PlayerCharacterMovement : CharacterMovement
         velocity = force;
     }
 
-    private void HandleJumpAbilities(PlayerInput input, float deltaTime, bool isRealtime)
+    private void HandleJumpAbilities(PlayerInput input, float deltaTime, TickInfo tickInfo)
     {
         if (state.HasFlag(State.Pained))
             return;
@@ -259,7 +261,7 @@ public class PlayerCharacterMovement : CharacterMovement
             {
                 velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor);
 
-                if (isRealtime)
+                if (tickInfo.isRealtime)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
 
                 state |= State.Jumped;
@@ -275,7 +277,7 @@ public class PlayerCharacterMovement : CharacterMovement
                             // Thok
                             velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
-                            if (isRealtime)
+                            if (tickInfo.isRealtime)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
 
                             state |= State.Thokked;
@@ -308,13 +310,13 @@ public class PlayerCharacterMovement : CharacterMovement
         HandleJumpAbilities_Gliding(input, deltaTime);
     }
 
-    private void HandleSpinAbilities(PlayerInput input, float deltaTime, bool isRealtime)
+    private void HandleSpinAbilities(PlayerInput input, float deltaTime, TickInfo tickInfo)
     {
         if (isOnGround && input.btnSpinPressed)
         {
             state |= State.Rolling;
 
-            if (isRealtime)
+            if (tickInfo.isRealtime)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinCharge);
         }
 
@@ -330,7 +332,7 @@ public class PlayerCharacterMovement : CharacterMovement
             if (!isOnGround) // experiment: we'll let you release a spindash in the air. but you can't do it repeatedly
                 state &= ~State.Rolling;
 
-            if (isRealtime)
+            if (tickInfo.isRealtime)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
         }
         else if ((state & State.Rolling) == 0f)

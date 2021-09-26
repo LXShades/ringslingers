@@ -26,6 +26,8 @@ public class Player : NetworkBehaviour
     }
     private static LocalPersistentPlayer _localPersistent;
 
+    public float lastInputEarlyness { get; set; }
+
     public override void OnStartServer()
     {
         // spawn the player

@@ -12,17 +12,8 @@ public class GameTicker : NetworkBehaviour
     /// </summary>
     private struct ServerTickMessage : NetworkMessage
     {
-        const float kMaxExtrapolatedTimeOffset = 0.5f;
-
         public float serverTime; // time of the server
-        public float confirmedClientTime; // time of the receiving client, as last seen on the server
-        public float extrapolatedClientTime => confirmedClientTime + clientTimeExtrapolation; // time of the receiving client, as last seen on the server, according to the server's smooth extrapolated playback of the client for more smoothness
-        public float clientTimeExtrapolation
-        {
-            set => _compressedExtrapolatedClientTime = (byte)Mathf.Min((int)(value * 256f / kMaxExtrapolatedTimeOffset), 255);
-            get => _compressedExtrapolatedClientTime * kMaxExtrapolatedTimeOffset / 256f;
-        }
-        public byte _compressedExtrapolatedClientTime;
+        public float lastClientEarlyness; // lateness of last input received from this client
         public ArraySegment<ServerPlayerState> ticks;
     }
 
@@ -45,45 +36,52 @@ public class GameTicker : NetworkBehaviour
         public TickerInputPack<PlayerInput> inputPack;
     }
 
-    // Client/server flow control settings for better network smoothing
+    [Header("Game")]
+    [Space, Tooltip("Maximum delta time allowed between game ticks")]
+    public float maxDeltaTime = 1f / 30f;
+
     [Header("Prediction")]
     [Range(0.1f, 1f), Tooltip("[client] How far ahead the player can predict")]
-    public float pingTolerance = 1f;
+    public float maxLocalPrediction = 1f;
     [Range(0.01f, 1f), Tooltip("[client] The length of buffered inputs to send to the server for safety, in seconds. Shorter means lower net traffic but possibly more missed inputs under bad net conditions")]
-    public float sendBufferLength = 0.2f;
+    public float sendBufferLength = 0.15f;
 
     [Space, Tooltip("Whether to extrapolate the local character's movement")]
     public bool extrapolateLocalInput = true;
 
-    [Space, Tooltip("Maximum delta time allowed between game ticks")]
-    public float maxDeltaTime = 0.5f;
-
     [Header("Remote playback")]
     [Tooltip("[client] Whether to extrapolate remote clients' movement based on their last input.")]
-    public bool extrapolateRemoteInput = true;
+    public bool predictRemotes = true;
     [Range(0f, 1f), Tooltip("[client] How far ahead we can predict other players' movements, maximally")]
     public float maxRemotePrediction = 0.3f;
-    [Range(0.01f, 0.5f), Tooltip("[client] When predicting other players, this is the tick rate to tick them by, expressed in second intervals. Should be small enough for accuracy but high enough to avoid spending too much processing time on them." +
-        "Recommended around 0.0666 for 15hz")]
-    public float remotePredictionTimeStep = 0.08f;
+    [Range(0.01f, 0.5f), Tooltip("[client] When predicting other players, this is the tick rate to tick them by. Should be small enough for accuracy but high enough to avoid spending too much processing time on them.")]
+    public float remotePredictionTickRate = 0.08f;
 
     // preallocated outgoing player ticks
     private readonly List<ServerPlayerState> ticksOut = new List<ServerPlayerState>(32);
 
-    // [server] Incoming input flow controller per player
-    private readonly Dictionary<int, List<TickerInputPack<PlayerInput>>> incomingPlayerInputs = new Dictionary<int, List<TickerInputPack<PlayerInput>>>();
     // [client] Incoming server tick flow
     private ServerTickMessage incomingServerTick = default;
     private bool hasIncomingServerTick = false;
 
     // ================== TIMING SECTION ================
-    // [client] what server time they are predicting into [server] actual server time
+    // [client] what server time they are predicting into
+    // [server] actual server time
     // client predicted server time will be extrapolated based on ping and prediction settings
     public float predictedServerTime { get; private set; }
 
     // ==================== LOCAL PLAYER SECTION ===================
-    // [client] returns the local player's ping
+    // [client] returns the local player's ping based on their predicted server time
     public float localPlayerPing { get; private set; }
+
+    // [client] When we send inputs to the server due for our predicted server time, it typically arrives slightly earlier or later than the time the server would like it (to keep inputs in the buffer)
+    // At the beginning we're completely out of sync and it will usually arrive at an extremely out-of-sync time - but that's ok, the server will tell us how late (<0) or early (>0) it arrived in seconds
+    // We track this with multiple samples in this history and use this to decide what our clock should be, relative to the server.
+    private TimelineList<float> clientInputEarlynessHistory = new TimelineList<float>();
+
+    private float clientInputEarlynessHistorySamplePeriod = 3f;
+
+    private float currentClientServerTimeOffset = 0f;
 
     // [client/server] returns the latest local player input this tick
     public PlayerInput localPlayerInput;
@@ -99,10 +97,21 @@ public class GameTicker : NetworkBehaviour
     private void Update()
     {
         // Advance the clock
+        // servers simply use Time.time, clients use an offset from Time.time to approximate predictedServerTime based on how late/early the server received their inputs
         if (NetworkServer.active)
-            predictedServerTime = Time.unscaledTime; // we technically don't run a prediction of the server time on the server
+            predictedServerTime = Time.time;
         else
-            predictedServerTime += Time.unscaledDeltaTime; // we just tick it up and update properly occasionally
+        {
+            if ((int)((Time.time - Time.deltaTime) / 3) != (int)(Time.time / 3) && clientInputEarlynessHistory.Count > 0)
+            {
+                currentClientServerTimeOffset -= clientInputEarlynessHistory.Latest - 0.1f;
+
+                if (Netplay.singleton.localPlayer) // if time has been shifted backwards, clear future inputs so they don't conflict with our upcoming real inputs
+                    Netplay.singleton.localPlayer.ticker.inputTimeline.TrimAfter(Time.time + currentClientServerTimeOffset);
+            }
+
+            predictedServerTime = Time.time + currentClientServerTimeOffset;
+        }
 
         // Receive incoming messages
         ReceiveIncomings();
@@ -112,7 +121,8 @@ public class GameTicker : NetworkBehaviour
             GameManager.singleton.camera.UpdateAim();
 
         // Add states, etc to our local prediction history
-        if (Netplay.singleton.localPlayer)
+        float quantizedTime = TimeTool.Quantize(predictedServerTime, 60);
+        if (Netplay.singleton.localPlayer && quantizedTime != Netplay.singleton.localPlayer.ticker.inputTimeline.LatestTime)
         {
             // Receive local player inputs
             Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<PlayerCharacterMovement>().up;
@@ -121,7 +131,7 @@ public class GameTicker : NetworkBehaviour
             localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
 
             // Send inputs to the local player's ticker
-            Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, Time.time);
+            Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, quantizedTime);
         }
 
         // We have all server inputs and our own inputs, tick the game
@@ -141,23 +151,9 @@ public class GameTicker : NetworkBehaviour
         {
             ApplyServerTick(incomingServerTick);
             hasIncomingServerTick = false;
-        }
 
-        // Server receive inputs from players
-        for (int i = 0; i < Netplay.singleton.players.Count; i++)
-        {
-            Character character = Netplay.singleton.players[i];
-
-            if (character && incomingPlayerInputs.ContainsKey(i))
-            {
-                foreach (TickerInputPack<PlayerInput> inputPack in incomingPlayerInputs[i])
-                {
-                    character.ticker.InsertInputPack(inputPack);
-                }
-
-                character.timeOfLastInputPush = Time.time;
-                incomingPlayerInputs[i].Clear();
-            }
+            clientInputEarlynessHistory.Insert(Time.time, incomingServerTick.lastClientEarlyness);
+            clientInputEarlynessHistory.TrimBefore(Time.time - clientInputEarlynessHistorySamplePeriod);
         }
     }
 
@@ -171,31 +167,11 @@ public class GameTicker : NetworkBehaviour
         {
             if (player)
             {
-                if (player == Netplay.singleton.localPlayer) // local player
-                {
-                    if (isServer)
-                    {
-                        // on server it's pretty easy, just set realtimePlaybackTime to confirmedPlaybackTime, much like the other players
-                        player.ticker.Seek(Time.time, player.ticker.confirmedStateTime);
-                    }
-                    else
-                    {
-                        // on the client, it's a bit more awkward, their confirmedPlaybackTime will be rewound periodically causing jump sounds to be replayed
-                        // this approach anticipates when a new, full tick is about to execute by using Time.deltaTime
-                        if (Time.time - Time.deltaTime < player.ticker.inputTimeline.LatestTime && player.ticker.inputTimeline.Count > 1)
-                            player.ticker.Seek(Time.time, player.ticker.inputTimeline.TimeAt(1));
-                        else
-                            player.ticker.Seek(Time.time, player.ticker.inputTimeline.LatestTime);
-                    }
-                }
-                else if (isServer) // other player on server
-                    player.ticker.Seek(player.ticker.inputTimeline.LatestTime + Time.time - player.timeOfLastInputPush, player.ticker.confirmedStateTime); // extrapolate the player further than the last input we got from them
-                else if (isClient) // replica on client
-                    player.ticker.Seek(predictedServerTime, player.ticker.playbackTime, TickerSeekFlags.IgnoreDeltas); // deltas are ignored for clients' replicas because clients don't have full input info, so they can't discern deltas (or the future)
+                // most players tick the same
+                // except for remote players on clients - clients do not know these players' input history, so they should not play deltas as they will usually be inaccurate
+                player.ticker.Seek(predictedServerTime, player.ticker.inputTimeline.TimeAt(player.ticker.inputTimeline.ClosestIndexBefore(predictedServerTime)), !isServer && player != Netplay.singleton.localPlayer ? TickerSeekFlags.IgnoreDeltas : 0);
             }
         }
-
-
     }
 
     /// <summary>
@@ -212,13 +188,13 @@ public class GameTicker : NetworkBehaviour
                 
                 tick = MakeTickMessage();
 
-                // we need to send it to each of them individually due to differing client times (
-
+                // we need to send it to each of them individually due to differing client times
                 for (int i = 0; i < tick.ticks.Count; i++)
                 {
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
-                    tick.clientTimeExtrapolation = player.ticker.playbackTime - player.ticker.confirmedStateTime;
-                    tick.confirmedClientTime = player.ticker.confirmedStateTime;
+                    Player client = player.connectionToClient.identity.GetComponent<Player>();
+
+                    tick.lastClientEarlyness = client.lastInputEarlyness;
 
                     if (player.netIdentity.connectionToClient != null) // bots don't have a connection
                         player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
@@ -286,23 +262,14 @@ public class GameTicker : NetworkBehaviour
 
                 sounds.ReceiveSoundHistory(tick.sounds);
 
-                if (tick.id == Netplay.singleton.localPlayerId)
-                {
-                    // extrapolatedClientTime is smoother as it considers how long it's been sinc ethe client did the thing...
-                    // but confirmedClientTime is more accurate to where the client actually is on the server, and more accurate to the client's local time...right?
-                    // after testing, extrapolatedClientTime turned out to be smoother
-                    localPlayerPing = ticker.playbackTime - tickMessage.extrapolatedClientTime;
-                    ticker.ConfirmStateAt(tick.state, tickMessage.confirmedClientTime); // this line definitely uses confirmedClientTime! not sure about the other!
-                }
-                else
-                {
+                if (character != Netplay.singleton.localPlayer) // local player's inputs are more accurate timing-wise, don't interweave them with poorly estimated inputs (serverTime is NOT the exact time the inputs went in!)
                     ticker.InsertInput(tick.lastInput, tickMessage.serverTime);
-                    ticker.ConfirmStateAt(tick.state, tickMessage.serverTime);
-                }
+
+                ticker.ConfirmStateAt(tick.state, TimeTool.Quantize(tickMessage.serverTime, 60));
             }
         }
 
-        predictedServerTime = tickMessage.serverTime + localPlayerPing;
+        localPlayerPing = predictedServerTime - tickMessage.serverTime;
     }
 
     private void OnRecvServerPlayerTick(ServerTickMessage tickMessage)
@@ -318,19 +285,15 @@ public class GameTicker : NetworkBehaviour
     {
         if (source.identity && source.identity.TryGetComponent(out Player client))
         {
-            if (!incomingPlayerInputs.ContainsKey(client.playerId))
+            if (Netplay.singleton.players[client.playerId])
             {
-                // lazy-create a player input flow for this player
-                incomingPlayerInputs.Add(client.playerId, new List<TickerInputPack<PlayerInput>>());
-            }
+                Netplay.singleton.players[client.playerId].ticker.InsertInputPack(inputMessage.inputPack);
 
-            if (inputMessage.inputPack.inputs.Length > 0)
-            {
-                incomingPlayerInputs[client.playerId].Add(inputMessage.inputPack);
-            }
-            else
-            {
-                Log.WriteError($"Input message from {source} has no inputs! This should never really happen!");
+                if (inputMessage.inputPack.times.Length > 0)
+                {
+                    client.lastInputEarlyness = inputMessage.inputPack.times[0] - predictedServerTime;
+                    Debug.Log($"Client earlyness is {client.lastInputEarlyness} servertime is {predictedServerTime}");
+                }
             }
         }
         else
@@ -341,19 +304,13 @@ public class GameTicker : NetworkBehaviour
 
     public void OnRecvBotInput(int playerId, PlayerInput input)
     {
-        if (!incomingPlayerInputs.ContainsKey(playerId))
-        {
-            incomingPlayerInputs.Add(playerId, new List<TickerInputPack<PlayerInput>>());
-        }
-
-        incomingPlayerInputs[playerId].Add(new TickerInputPack<PlayerInput>(new PlayerInput[] { input }, new float[] { Time.time }));
+        if (Netplay.singleton.players[playerId])
+            Netplay.singleton.players[playerId].ticker.InsertInput(input, predictedServerTime);
     }
 
     public string DebugInfo()
     {
-        string playerInputFlowDebug = "";
-        
-        return $"Ping: {(int)(localPlayerPing * 1000)}ms\n{playerInputFlowDebug}";
+        return $"Ping: {(int)(localPlayerPing * 1000)}ms";
     }
 }
 

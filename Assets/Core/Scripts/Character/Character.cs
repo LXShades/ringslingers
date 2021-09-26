@@ -86,6 +86,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     public float hurtDefaultHorizontalKnockback = 5;
     public float hurtDefaultVerticalKnockback = 5;
 
+    [Header("Networking")]
+    public TickerSettings tickerSettings = TickerSettings.Default;
+
     [Header("Debug")]
     //public bool logLocalPlayerReconciles = true;
 
@@ -132,6 +135,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         damageable = GetComponent<Damageable>();
         sounds = GetComponent<PlayerSounds>();
         ticker = new Ticker<PlayerInput, CharacterState>(this);
+        ticker.settings = tickerSettings;
     }
 
     void Start()
@@ -165,9 +169,6 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     public override void OnStartAuthority()
     {
         base.OnStartAuthority();
-
-        //if (logLocalPlayerReconciles)
-            //ticker.ticker.settings.debugLogReconciles = true;
     }
 
     void Update()
@@ -178,9 +179,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
             characterModel.enabled = true;
     }
 
-    public void Tick(float deltaTime, PlayerInput input, bool isRealtime)
+    public void Tick(float deltaTime, PlayerInput input, TickInfo tickInfo)
     {
-        movement.TickMovement(deltaTime, input, isRealtime);
+        movement.TickMovement(deltaTime, input, tickInfo);
     }
 
     public ITickerBase CreateTicker()
