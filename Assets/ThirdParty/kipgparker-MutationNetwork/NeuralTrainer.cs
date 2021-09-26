@@ -39,8 +39,8 @@ public class NeuralTrainer : MonoBehaviour
 
     public System.Action onCycle { get; set; }
 
-    public string fullNetworkNameBackup => $"Assets/{networkName}_{botPrefab?.networkName}_{System.DateTime.Now.ToString("s", System.Globalization.DateTimeFormatInfo.InvariantInfo).Replace(":", "-")}.txt";
-    public string fullNetworkName => $"Assets/{networkName}_{botPrefab?.networkName}.txt";
+    public string fullNetworkNameBackup => $"Assets/NeuralNetworks/{networkName}_{botPrefab?.networkName}_{System.DateTime.Now.ToString("s", System.Globalization.DateTimeFormatInfo.InvariantInfo).Replace(":", "-")}.txt";
+    public string fullNetworkName => $"Assets/NeuralNetworks/{networkName}_{botPrefab?.networkName}.txt";
 
     public List<NeuralNetwork> networks { get; private set; }
     private List<TrainingBotBase> bots = new List<TrainingBotBase>();
