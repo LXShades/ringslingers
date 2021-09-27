@@ -427,7 +427,10 @@ public class Netplay : MonoBehaviour
     #region Net Configuration
     private void ApplyNetPreferences()
     {
-        FlowControlSettings flowSettings = defaultFlowControlSettings;
+        // NET FLOW CONTROL
+        // disabled because it was unreliable and the ticker refactor smoothes things out in a new more reliable way
+
+        /*FlowControlSettings flowSettings = defaultFlowControlSettings;
 
         if (NetMan.singleton.mode == NetworkManagerMode.ClientOnly)
         {
@@ -440,7 +443,7 @@ public class Netplay : MonoBehaviour
             flowSettings.maxDelay = GamePreferences.maxServerDelayMs * 0.001f;
         }
 
-        if (NetworkClient.active && !NetworkServer.active /* don't throttle host self-connection */)
+        if (NetworkClient.active && !NetworkServer.active /* don't throttle host self-connection *//*)
         {
             NetworkClient.unbatcher.enableFlowControl = GamePreferences.isNetFlowControlEnabled;
             NetworkClient.unbatcher.flowControlSettings = flowSettings;
@@ -457,7 +460,7 @@ public class Netplay : MonoBehaviour
                     conn.unbatcher.flowControlSettings = flowSettings;
                 }
             }
-        }
+        }*/
     }
     #endregion
 

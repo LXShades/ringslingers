@@ -118,7 +118,7 @@ public class CharacterShooting : NetworkBehaviour
 
         for (int i = bufferedThrowEvents.Count - 1; i >= 0; i--)
         {
-            if (Time.realtimeSinceStartup >= bufferedThrowEvents.TimeAt(i))
+            if (GameTicker.singleton.predictedServerTime >= bufferedThrowEvents.TimeAt(i))
             {
                 bufferedThrowEvents[i].Invoke();
                 bufferedThrowEvents.RemoveAt(i);
@@ -325,11 +325,10 @@ public class CharacterShooting : NetworkBehaviour
     [Command(channel = Channels.Unreliable)]
     private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime)
     {
-        float timeToThrowAt = predictedServerTime;
-        if (timeToThrowAt > Time.realtimeSinceStartup)
+        if (predictedServerTime > GameTicker.singleton.predictedServerTime)
         {
             // the client threw this, in what they predicted ahead of current time... this means we need to delay the shot until roughly the correct time arrives
-            bufferedThrowEvents.Insert(timeToThrowAt, () => OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime));
+            bufferedThrowEvents.Insert(predictedServerTime, () => OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime));
         }
         else
         {
