@@ -57,7 +57,7 @@ public class TheFlag : NetworkBehaviour
     private int attachedToPlayer = -1;
 
     private float timeOfLastInteraction = -1f;
-    private const float kInteractionCooldown = 0.5f; // basically needed due to physics system quirks and collisions
+    private const float kInteractionCooldown = 0.2f; // basically needed due to physics system quirks and collisions
 
     // Spawning
     private Vector3 basePosition;
@@ -205,6 +205,7 @@ public class TheFlag : NetworkBehaviour
             player.holdingFlag.ReturnToBase(false);
 
             RpcPlaySound(FlagSoundIndex.Captured);
+            timeOfLastInteraction = Time.time;
         }
     }
 
