@@ -4,6 +4,8 @@ using UnityEngine.InputSystem;
 
 public static class GamePreferences
 {
+    public const float kDefaultExtraSmoothing = 0.017f;
+
     // Mouse speed in degrees per pixel (usually <1!)
     public static float mouseSpeed {
         get => _mouseSpeed;
@@ -45,42 +47,12 @@ public static class GamePreferences
         }
     }
 
-    public static float minClientDelayMs
+    public static float extraSmoothing
     {
-        get => PlayerPrefs.GetFloat("minClientDelay", Netplay.kDefaultMinClientDelay);
+        get => PlayerPrefs.GetFloat("extraSmoothing", kDefaultExtraSmoothing);
         set
         {
-            PlayerPrefs.SetFloat("minClientDelay", value);
-            OnPreferencesChanged();
-        }
-    }
-
-    public static float maxClientDelayMs
-    {
-        get => PlayerPrefs.GetFloat("maxClientDelay", Netplay.kDefaultMaxClientDelay);
-        set
-        {
-            PlayerPrefs.SetFloat("maxClientDelay", value);
-            OnPreferencesChanged();
-        }
-    }
-
-    public static float minServerDelayMs
-    {
-        get => PlayerPrefs.GetFloat("minServerDelay", Netplay.kDefaultMinServerDelay);
-        set
-        {
-            PlayerPrefs.SetFloat("minServerDelay", value);
-            OnPreferencesChanged();
-        }
-    }
-
-    public static float maxServerDelayMs
-    {
-        get => PlayerPrefs.GetFloat("maxServerDelay", Netplay.kDefaultMaxServerDelay);
-        set
-        {
-            PlayerPrefs.SetFloat("maxServerDelay", value);
+            PlayerPrefs.SetFloat("extraSmoothing", value);
             OnPreferencesChanged();
         }
     }

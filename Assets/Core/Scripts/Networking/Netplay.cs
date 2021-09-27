@@ -8,11 +8,6 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class Netplay : MonoBehaviour
 {
-    public const float kDefaultMinClientDelay = 16f;
-    public const float kDefaultMaxClientDelay = 50f;
-    public const float kDefaultMinServerDelay = 16f;
-    public const float kDefaultMaxServerDelay = 35f;
-
     public struct PingMessage : NetworkMessage
     {
         public ushort time;

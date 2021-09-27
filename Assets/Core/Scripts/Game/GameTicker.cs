@@ -42,6 +42,7 @@ public class GameTicker : NetworkBehaviour
 
     [Header("Time")]
     public float maxTimeSmoothing = 0.2f;
+    [Tooltip("WARNING: Set by GamePreferences.extraSmoothing and its defaults")]
     public float extraSmoothing = 0.0017f;
 
     [Header("Prediction")]
@@ -96,12 +97,24 @@ public class GameTicker : NetworkBehaviour
     // [client/server] returns the latest local player input this tick
     public PlayerInput localPlayerInput;
 
+    private void OnEnable()
+    {
+        GamePreferences.onPreferencesChanged += OnPreferencesChanged;
+    }
+
+    private void OnDisable()
+    {
+        GamePreferences.onPreferencesChanged -= OnPreferencesChanged;
+    }
+
     private void Awake()
     {
         singleton = this;
 
         NetworkClient.RegisterHandler<ServerTickMessage>(OnRecvServerPlayerTick);
         NetworkServer.RegisterHandler<ClientPlayerInput>(OnRecvClientInput);
+
+        extraSmoothing = GamePreferences.extraSmoothing;
     }
 
     private void Update()
@@ -349,6 +362,11 @@ public class GameTicker : NetworkBehaviour
     {
         if (Netplay.singleton.players[playerId])
             Netplay.singleton.players[playerId].ticker.InsertInput(input, predictedServerTime);
+    }
+
+    private void OnPreferencesChanged()
+    {
+        extraSmoothing = GamePreferences.extraSmoothing;
     }
 
     public string DebugInfo()

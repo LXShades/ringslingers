@@ -2,10 +2,7 @@ using UnityEngine;
 
 public class NetworkMenuPanel : MonoBehaviour
 {
-    public SliderNumberPair minClientDelay;
-    public SliderNumberPair maxClientDelay;
-    public SliderNumberPair minServerDelay;
-    public SliderNumberPair maxServerDelay;
+    public SliderNumberPair extraSmoothing;
 
     bool hasRegisteredCallbacks = false;
 
@@ -13,24 +10,15 @@ public class NetworkMenuPanel : MonoBehaviour
     {
         if (!hasRegisteredCallbacks)
         {
-            minClientDelay.onValueChanged.AddListener((float value) => GamePreferences.minClientDelayMs = value);
-            maxClientDelay.onValueChanged.AddListener((float value) => GamePreferences.maxClientDelayMs = value);
-            minServerDelay.onValueChanged.AddListener((float value) => GamePreferences.minServerDelayMs = value);
-            maxServerDelay.onValueChanged.AddListener((float value) => GamePreferences.maxServerDelayMs = value);
+            extraSmoothing.onValueChanged.AddListener((float value) => GamePreferences.extraSmoothing = value * 0.001f);
             hasRegisteredCallbacks = true;
         }
 
-        minClientDelay.value = Mathf.Min(GamePreferences.minClientDelayMs, GamePreferences.maxClientDelayMs);
-        maxClientDelay.value = GamePreferences.maxClientDelayMs;
-        minServerDelay.value = Mathf.Min(GamePreferences.minServerDelayMs, GamePreferences.maxServerDelayMs);
-        maxServerDelay.value = GamePreferences.maxServerDelayMs;
+        extraSmoothing.value = GamePreferences.extraSmoothing * 1000f;
     }
 
     public void ResetToDefault()
     {
-        minClientDelay.value = Netplay.kDefaultMinClientDelay;
-        maxClientDelay.value = Netplay.kDefaultMaxClientDelay;
-        minServerDelay.value = Netplay.kDefaultMinServerDelay;
-        maxServerDelay.value = Netplay.kDefaultMaxServerDelay;
+        extraSmoothing.value = GamePreferences.kDefaultExtraSmoothing * 1000f;
     }
 }
