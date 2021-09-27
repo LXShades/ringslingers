@@ -250,12 +250,15 @@ public class GameTicker : NetworkBehaviour
                 for (int i = 0; i < tick.ticks.Count; i++)
                 {
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
-                    Player client = player.connectionToClient.identity.GetComponent<Player>();
-
-                    tick.lastClientEarlyness = client.lastInputEarlyness;
 
                     if (player.netIdentity.connectionToClient != null) // bots don't have a connection
+                    {
+                        Player client = player.connectionToClient.identity.GetComponent<Player>();
+
+                        tick.lastClientEarlyness = client.lastInputEarlyness;
+
                         player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
+                    }
                 }
             }
             else if (NetworkClient.isConnected)
