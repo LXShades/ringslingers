@@ -231,9 +231,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     {
         if (instaKill)
         {
-            ticker.CallEvent((bool isRealtime) => 
+            ticker.CallEvent((TickInfo tickInfo) => 
             {
-                if (isRealtime)
+                if (tickInfo.isConfirming)
                     Respawn();
             });
         }
@@ -246,7 +246,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
             force += movement.up * hurtDefaultVerticalKnockback;
 
             // predict our hit
-            ticker.CallEvent((bool _) => movement.ApplyHitKnockback(force));
+            ticker.CallEvent((_) => movement.ApplyHitKnockback(force));
 
             // only the server can do the rest (ring drop, score, etc)
             if (NetworkServer.active)
