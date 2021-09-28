@@ -71,7 +71,8 @@ public class PlayerCharacterMovement : CharacterMovement
         Thokked  = 4,
         CanceledJump = 8,
         Pained = 16,
-        Gliding = 32
+        Gliding = 32,
+        Climbing = 64
     };
     public State state { get; set; }
 
@@ -149,21 +150,16 @@ public class PlayerCharacterMovement : CharacterMovement
         isOnGround = groundInfo.isOnGround;
         groundNormal = groundInfo.normal;
 
-        forward = input.aimDirection;
+        // Look direction
+        if ((state & State.Climbing) == 0)
+            forward = input.aimDirection;
 
         // Apply grounding effects straight away so we can be more up-to-date with wallrunning stuff
         ApplyGroundStates();
 
         // Add/remove states depending on whether isOnGround
         if (isOnGround && velocity.AlongAxis(up) <= 0.5f)
-        {
-            if (state.HasFlag(State.Pained))
-            {
-                //player.damageable.StartInvincibilityTime();
-            }
-
-            state &= ~(State.Pained | State.Gliding);
-        }
+            state &= ~(State.Pained | State.Gliding | State.Climbing);
 
         // Friction
         ApplyFriction(deltaTime);
@@ -173,7 +169,8 @@ public class PlayerCharacterMovement : CharacterMovement
         ApplyRunAcceleration(deltaTime, input);
 
         // Gravity
-        ApplyCharacterGravity(groundInfo, deltaTime);
+        if ((state & State.Climbing) == 0)
+            ApplyCharacterGravity(groundInfo, deltaTime);
 
         // Top speed clamp
         ApplyTopSpeedLimit(lastHorizontalSpeed);
@@ -215,7 +212,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void ApplyRunAcceleration(float deltaTime, PlayerInput input)
     {
-        if ((state & (State.Pained | State.Gliding)) != 0)
+        if ((state & (State.Pained | State.Gliding | State.Climbing)) != 0)
             return; // cannot accelerate in these states
 
         Vector3 aim = input.aimDirection;
@@ -256,10 +253,21 @@ public class PlayerCharacterMovement : CharacterMovement
 
         if (input.btnJumpPressed)
         {
-            // Start jump
-            if (isOnGround && !state.HasFlag(State.Jumped))
+            // Start  regular jump
+            if ((isOnGround && !state.HasFlag(State.Jumped)) || (state & State.Climbing) != 0)
             {
-                velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor);
+                if ((state & State.Climbing) != 0)
+                {
+                    // Climb jump
+                    velocity.SetAlongAxis(forward.Horizontal(), -jumpSpeed);
+                    velocity.SetAlongAxis(up, jumpSpeed);
+                    state &= ~State.Climbing;
+                }
+                else
+                {
+                    // Regular ground jump
+                    velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor);
+                }
 
                 if (tickInfo.isRealtime)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
@@ -289,8 +297,8 @@ public class PlayerCharacterMovement : CharacterMovement
 
                         // give an initial boost towards facing direction
                         float clampedHorizontalMag = velocity.Horizontal().magnitude;
-                        if (clampedHorizontalMag < glide.minSpeed)
-                            velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * glide.minSpeed);
+                        if (clampedHorizontalMag < glide.startSpeed)
+                            velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * glide.startSpeed);
                         break;
                     }
                 }
@@ -312,6 +320,9 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void HandleSpinAbilities(PlayerInput input, float deltaTime, TickInfo tickInfo)
     {
+        if ((state & State.Climbing) != 0)
+            return;
+
         if (isOnGround && input.btnSpinPressed)
         {
             state |= State.Rolling;
@@ -360,7 +371,7 @@ public class PlayerCharacterMovement : CharacterMovement
         }
 
         // Handle gliding
-        if ((state & State.Gliding) == State.Gliding)
+        if ((state & State.Gliding) != 0)
         {
             float horizontalSpeed = velocity.Horizontal().magnitude;
             Vector3 horizontalAim = aim.Horizontal().normalized;
@@ -379,6 +390,8 @@ public class PlayerCharacterMovement : CharacterMovement
 
             velocity.SetHorizontal(Vector3.RotateTowards(velocity.Horizontal(), desiredDirection, turnSpeed * Mathf.Deg2Rad * deltaTime, 0f));
 
+            forward = velocity.Horizontal();
+
             // speed clamps
             Vector3 clampedHorizontal = velocity.Horizontal();
             float clampedHorizontalMag = clampedHorizontal.magnitude;
@@ -386,6 +399,36 @@ public class PlayerCharacterMovement : CharacterMovement
                 velocity.SetHorizontal(clampedHorizontal * (glide.minSpeed / clampedHorizontalMag));
             else if (clampedHorizontalMag > glide.maxSpeed)
                 velocity.SetHorizontal(clampedHorizontal * (glide.maxSpeed / clampedHorizontalMag));
+        }
+
+        // Handle climbing
+        if ((state & State.Gliding) != 0 || (state & State.Climbing) != 0)
+        {
+            Vector3 wallDirection = input.aimDirection.Horizontal();
+
+            if (Physics.Raycast(transform.position, wallDirection, out RaycastHit hit, 0.5f, blockingCollisionLayers, QueryTriggerInteraction.Ignore))
+            {
+                forward = -hit.normal.Horizontal().normalized;
+
+                if ((state & State.Climbing) == 0)
+                {
+                    velocity = Vector3.zero;
+                    state = State.Climbing;
+                }
+                else
+                {
+                    velocity = (right * input.moveHorizontalAxis + up * input.moveVerticalAxis) * glide.climbSpeed;
+                }
+
+                if (hit.distance > 0.01f)
+                {
+                    velocity -= hit.normal * 5f;
+                }
+            }
+            else
+            {
+                state = (state & ~State.Climbing) | State.Jumped;
+            }
         }
     }
 
