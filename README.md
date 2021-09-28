@@ -36,6 +36,10 @@ This fangame contains ripped assets and levels, not only from Sonic itself, but 
 
 This fangame and its creator(s) has no direct relationship or affiliation with these parties.
 
+### Contributors
+LXShades - A whole lot of code, map rips, Blender models
+Spazzo - UI assistance
+
 ### Libraries and third-party sources:  
 [Mirror](https://github.com/vis2k/mirror)  
 [Ignorance](https://github.com/SoftwareGuy/Ignorance)  
