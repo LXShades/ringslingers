@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: GlideSettings
   m_EditorClassIdentifier: 
   minSpeed: 12
+  startSpeed: 8
   maxSpeed: 25
+  climbSpeed: 3
   accelerationBySpeed:
     serializedVersion: 2
     m_Curve:
@@ -43,7 +45,7 @@ MonoBehaviour:
     m_Curve:
     - serializedVersion: 3
       time: 12
-      value: 180
+      value: 247.96474
       inSlope: 0
       outSlope: -6.923077
       tangentMode: 65
@@ -52,7 +54,7 @@ MonoBehaviour:
       outWeight: 0
     - serializedVersion: 3
       time: 25
-      value: 90
+      value: 157.96474
       inSlope: -6.923077
       outSlope: 0
       tangentMode: 5
@@ -66,8 +68,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 2.25
+      time: 0.066755295
+      value: 2.199409
       inSlope: 0
       outSlope: 0
       tangentMode: 0
@@ -75,8 +77,8 @@ MonoBehaviour:
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 25
-      value: 2.25
+      time: 25.066755
+      value: 2.199409
       inSlope: 0
       outSlope: 0
       tangentMode: 0
