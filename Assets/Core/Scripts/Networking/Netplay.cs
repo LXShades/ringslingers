@@ -154,19 +154,44 @@ public class Netplay : MonoBehaviour
 
         LevelDatabase db = GameManager.singleton.levelDatabase;
 
-        if (db.levels.Length == 0)
+        if (db == null || db.levels == null || db.levels.Length == 0)
+        {
+            Log.WriteError("Cannot load levels database: list is empty or null");
             return;
+        }
 
         int currentLevelIndex = -1;
+        int nextLevelIndex = -1;
+        int currentBuildIndex = SceneManager.GetActiveScene().buildIndex;
 
         for (int i = 0; i < db.levels.Length; i++)
         {
-            if (db.levels[i].path.ToLower() == SceneManager.GetActiveScene().path.ToLower())
-                currentLevelIndex = i;
+            int buildIndex = SceneUtility.GetBuildIndexByScenePath(db.levels[i].path);
+
+            if (buildIndex != -1)
+            {
+                if (buildIndex == currentBuildIndex)
+                {
+                    currentLevelIndex = i;
+                    break;
+                }
+            }
         }
 
-        currentLevelIndex = (currentLevelIndex + 1) % db.levels.Length;
-        NetMan.singleton.ServerChangeScene(db.levels[currentLevelIndex].path, true);
+        // Find the next VALID scene
+        for (int i = (currentLevelIndex + 1) % db.levels.Length; i != currentLevelIndex; i = (i + 1) % db.levels.Length)
+        {
+            int buildIndex = SceneUtility.GetBuildIndexByScenePath(db.levels[i].path);
+
+            if (buildIndex != -1 && db.levels[i].configuration.includeInRotation)
+            {
+                nextLevelIndex = buildIndex;
+                break;
+            }
+        }
+
+        if (nextLevelIndex != -1)
+            NetMan.singleton.ServerChangeScene(db.levels[nextLevelIndex].path, true);
     }
 
     #region Game

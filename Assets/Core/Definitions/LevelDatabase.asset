@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: LevelDatabase
   m_EditorClassIdentifier: 
   levels:
-  - path: Assets/Core/Scenes/M_Jade.unity
+  - path: Assets/Core/Scenes/Zones/M_Jade.unity
     configuration:
       friendlyName: Jade Valley
       mapShot: {fileID: 0}
@@ -22,9 +22,10 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/M_ThunderCitadel.unity
+  - path: Assets/Core/Scenes/Zones/M_ThunderCitadel.unity
     configuration:
       friendlyName: Thunder Citadel
       mapShot: {fileID: 0}
@@ -33,9 +34,10 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/M_DesolateTwilight.unity
+  - path: Assets/Core/Scenes/Zones/M_DesolateTwilight.unity
     configuration:
       friendlyName: Desolate Twilight
       mapShot: {fileID: 0}
@@ -44,9 +46,10 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/M_AirborneTemple.unity
+  - path: Assets/Core/Scenes/Zones/M_AirborneTemple.unity
     configuration:
       friendlyName: Airborne Temple
       mapShot: {fileID: 0}
@@ -55,9 +58,10 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/M_MeadowMatch.unity
+  - path: Assets/Core/Scenes/Zones/M_MeadowMatch.unity
     configuration:
       friendlyName: Meadow Match
       mapShot: {fileID: 0}
@@ -66,9 +70,10 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/F_CloudPalace.unity
+  - path: Assets/Core/Scenes/Zones/F_CloudPalace.unity
     configuration:
       friendlyName: Cloud Palace
       mapShot: {fileID: 0}
@@ -77,9 +82,10 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/F_MetalStar.unity
+  - path: Assets/Core/Scenes/Zones/F_MetalStar.unity
     configuration:
       friendlyName: Metal Star
       mapShot: {fileID: 0}
@@ -88,20 +94,22 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/F_IronTurret.unity
+  - path: Assets/Core/Scenes/Zones/F_IronTurret.unity
     configuration:
-      friendlyName: Icon Turret
+      friendlyName: Iron Turret
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
       defaultWeaponAmmoStyle: 0
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/F_NimbusRuins.unity
+  - path: Assets/Core/Scenes/Zones/F_NimbusRuins.unity
     configuration:
       friendlyName: Nimbus Ruins
       mapShot: {fileID: 0}
@@ -110,9 +118,10 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/F_IsolatedCanyon.unity
+  - path: Assets/Core/Scenes/Zones/F_IsolatedCanyon.unity
     configuration:
       friendlyName: Isolated Canyon
       mapShot: {fileID: 0}
@@ -121,5 +130,18 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/TestScenes/TEST_Gameplay.unity
+    configuration:
+      friendlyName: Gameplay Test
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 0
+      includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32

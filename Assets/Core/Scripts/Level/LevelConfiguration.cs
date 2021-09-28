@@ -7,15 +7,17 @@ public class LevelConfiguration
 
     public Sprite mapShot;
 
-    [Header("The default game mode to load for this scene")]
+    [Tooltip("The default game mode to load for this scene")]
     public GameObject defaultGameModePrefab;
     public WeaponAmmoStyle defaultWeaponAmmoStyle = WeaponAmmoStyle.Time;
     public WeaponCombinationStyle defaultWeaponCombinationStyle = WeaponCombinationStyle.Combinable;
 
     public int defaultPlayerLimit = 12;
 
-    [Header("Whether to include the map in the rotation")]
+    [Tooltip("Whether to include the map in the automatic rotation")]
     public bool includeInRotation = true;
+    [Tooltip("Whether the map should be included in map selection dropdowns")]
+    public bool includeInMapSelection = true;
 
     [Tooltip("Minimum amount of players in the server for this to be considered in the rotation")]
     public int minRotationPlayers;

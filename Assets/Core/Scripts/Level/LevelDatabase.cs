@@ -48,7 +48,7 @@ public class LevelDatabase : ScriptableObject
 
             LevelConfiguration config = FindConfigurationInScene(loadedScene);
 
-            if (config != null && config.includeInRotation)
+            if (config != null)
             {
                 levelList.Add(new Level()
                 {
