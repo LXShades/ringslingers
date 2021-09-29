@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class HopTrails : MonoBehaviour
 {
+    private Character character;
     public LineRenderer referenceRenderer;
 
     public int poolSize = 6;
@@ -10,6 +11,7 @@ public class HopTrails : MonoBehaviour
     public float hopCooldown = 0.1f;
     public float trailAlpha = 1f;
     public float hopSpeedThreshold = 60f;
+    public float hopLengthThreshold = 3f;
 
     private List<LineRenderer> rendererPool = new List<LineRenderer>();
 
@@ -18,7 +20,9 @@ public class HopTrails : MonoBehaviour
 
     private void Start()
     {
-        Color clr = referenceRenderer.startColor;
+        character = GetComponentInParent<Character>();
+
+        Color clr = Color.white;// character.GetCharacterColour();
         clr.a = 0f;
         referenceRenderer.startColor = clr;
         referenceRenderer.endColor = clr;
@@ -37,19 +41,20 @@ public class HopTrails : MonoBehaviour
     private void Update()
     {
         float fadeAmt = Time.deltaTime / Mathf.Max(fadeDuration, 0.0001f) * trailAlpha;
+        Color neutralColour = Color.white;//character.GetCharacterColour();
 
         for (int i = 0; i < poolSize; i++)
         {
             if (rendererPool[i].startColor.a >= 0f)
             {
-                Color clr = rendererPool[i].startColor;
-                clr.a = Mathf.Max(clr.a - fadeAmt, 0f);
-                rendererPool[i].startColor = clr;
-                rendererPool[i].endColor = clr;
+                neutralColour.a = Mathf.Max(rendererPool[i].startColor.a - fadeAmt, 0f);
+                rendererPool[i].startColor = neutralColour;
+                rendererPool[i].endColor = neutralColour;
             }
         }
 
-        if (Vector3.Distance(lastPosition, transform.position) > hopSpeedThreshold * Time.deltaTime)
+        float hopDistance = Vector3.Distance(lastPosition, transform.position);
+        if (hopDistance > hopSpeedThreshold * Time.deltaTime && hopDistance > hopLengthThreshold)
             AddTrail(lastPosition, transform.position);
 
         lastPosition = transform.position;
