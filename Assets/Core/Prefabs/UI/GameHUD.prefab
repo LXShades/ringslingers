@@ -2245,7 +2245,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 9087393328249493373}
-  m_RootOrder: 7
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
@@ -3336,7 +3336,7 @@ RectTransform:
   - {fileID: 7523473981381576738}
   - {fileID: 1253512939788931275}
   m_Father: {fileID: 9087393328249493373}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -7561,9 +7561,9 @@ RectTransform:
   - {fileID: 8629494283460558864}
   - {fileID: 7342003676122795580}
   - {fileID: 7614478366673407312}
-  - {fileID: 8562962485227398938}
   - {fileID: 580346021016193950}
   - {fileID: 4045079338094576473}
+  - {fileID: 8562962485227398938}
   - {fileID: 4529179194286407339}
   - {fileID: 8329682926898880529}
   - {fileID: 1838870789641537347}
@@ -7904,7 +7904,7 @@ RectTransform:
   - {fileID: 5606984147434738582}
   - {fileID: 178613343882326335}
   m_Father: {fileID: 9087393328249493373}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -10731,16 +10731,36 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9177618060788506387, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9177618060788506387, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9177618060788506387, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9177618060788506387, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9177618060788506387, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
---- !u!1 &7309664479641931088 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3581284761630482275, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
-  m_PrefabInstance: {fileID: 6107552456501629491}
-  m_PrefabAsset: {fileID: 0}
 --- !u!224 &3367914430022735012 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 8826878029695469207, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
+  m_PrefabInstance: {fileID: 6107552456501629491}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7309664479641931088 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3581284761630482275, guid: 15586a84553b4cd4a801c0f7b6b1e923, type: 3}
   m_PrefabInstance: {fileID: 6107552456501629491}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6243024637066751506
