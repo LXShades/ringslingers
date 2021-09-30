@@ -185,7 +185,7 @@ public class Netplay : MonoBehaviour
 
             if (buildIndex != -1 && db.levels[i].configuration.includeInRotation)
             {
-                nextLevelIndex = buildIndex;
+                nextLevelIndex = i;
                 break;
             }
         }
