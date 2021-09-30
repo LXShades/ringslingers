@@ -25,7 +25,7 @@ public class SyncMovement : NetworkBehaviour
 
     private void Update()
     {
-        if (NetworkServer.active)
+        if (NetworkServer.active && updatesPerSecond > 0f)
         {
             if (Time.unscaledTime - lastUpdateTime > 1f / updatesPerSecond)
             {

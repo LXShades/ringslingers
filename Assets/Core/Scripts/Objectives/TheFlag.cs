@@ -1,7 +1,7 @@
 ﻿using Mirror;
 using UnityEngine;
 
-public class TheFlag : NetworkBehaviour
+public class TheFlag : NetworkBehaviour, IMovementCollisionCallbacks
 {
     public enum State
     {
@@ -34,6 +34,7 @@ public class TheFlag : NetworkBehaviour
     public float dropVerticalVelocity = 8f;
 
     public float dropRespawnCountdownDuration = 15f;
+    public float dropMovementSyncRate = 3f;
 
     // State
     [SyncVar]
@@ -132,6 +133,8 @@ public class TheFlag : NetworkBehaviour
                 movement.SimulateBasicPhysics(Time.deltaTime);
                 break;
         }
+
+        syncMovement.updatesPerSecond = state == State.Dropped ? dropMovementSyncRate : 0f;
     }
 
     private void LateUpdate()
@@ -142,11 +145,9 @@ public class TheFlag : NetworkBehaviour
 
             if (carryingPlayer)
             {
-                if (!gotFlagIndicator.activeSelf)
-                {
-                    gotFlagIndicator.SetActive(true);
-                    gotFlagIndicator.transform.SetParent(null, false);
-                }
+                bool shouldShowIndicator = carryingPlayer != Netplay.singleton.localPlayer;
+                if (gotFlagIndicator.activeSelf != shouldShowIndicator)
+                    gotFlagIndicator.SetActive(shouldShowIndicator);
 
                 gotFlagIndicator.transform.SetPositionAndRotation(carryingPlayer.transform.position + Vector3.up * gotFlagIndicatorHoverHeight, Quaternion.LookRotation(gotFlagIndicator.transform.position - GameManager.singleton.camera.transform.position));
                 transform.SetPositionAndRotation(carryingPlayer.flagHoldBone.position, carryingPlayer.flagHoldBone.rotation);
@@ -161,35 +162,37 @@ public class TheFlag : NetworkBehaviour
 
     private void OnTriggerStay(Collider other) // using Stay because an invincible player may stand and wait til they can pick up the flag
     {
-        if (NetworkServer.active && currentCarrier == -1 && Time.time - timeOfLastInteraction >= kInteractionCooldown)
+        if (NetworkServer.active && other.TryGetComponent(out Character character))
+            ServerOnContinuousCollisionWithPlayer(character);
+    }
+
+    private void ServerOnContinuousCollisionWithPlayer(Character player)
+    {
+        if (NetworkServer.active && currentCarrier == -1 && Time.time - timeOfLastInteraction >= kInteractionCooldown
+            && !player.damageable.isInvincible)
         {
-            Character player = other.GetComponent<Character>();
+            timeOfLastInteraction = Time.time;
 
-            if (player && !player.damageable.isInvincible)
+            // pick up the flag
+            if (player.team != team)
             {
-                timeOfLastInteraction = Time.time;
+                state = State.Carrying;
+                currentCarrier = player.playerId;
 
-                // pick up the flag
-                if (player.team != team)
-                {
-                    state = State.Carrying;
-                    currentCarrier = player.playerId;
+                MessageFeed.Post($"<player>{player.playerName}</player> picked up the {team.ToColoredString()} flag!");
+                RpcPlaySound(FlagSoundIndex.Pickup);
+            }
 
-                    MessageFeed.Post($"<player>{player.playerName}</player> picked up the {team.ToColoredString()} flag!");
-                    RpcPlaySound(FlagSoundIndex.Pickup);
-                }
+            // return the slab
+            // ...flag
+            if (state == State.Dropped && player.team == team)
+            {
+                MessageFeed.Post($"<player>{player.playerName}</player> returned the {team.ToColoredString()} flag to base!");
 
-                // return the slab
-                // ...flag
-                if (state == State.Dropped && player.team == team)
-                {
-                    MessageFeed.Post($"<player>{player.playerName}</player> returned the {team.ToColoredString()} flag to base!");
+                ReturnToBase(false);
 
-                    ReturnToBase(false);
-
-                    if (Netplay.singleton.localPlayer?.team == team)
-                        RpcPlaySound(FlagSoundIndex.Returned);
-                }
+                if (Netplay.singleton.localPlayer?.team == team)
+                    RpcPlaySound(FlagSoundIndex.Returned);
             }
         }
     }
@@ -211,7 +214,6 @@ public class TheFlag : NetworkBehaviour
 
     public void ReturnToBase(bool postReturnMessage)
     {
-        transform.SetParent(null, false);
         transform.position = basePosition;
         transform.rotation = baseRotation;
 
@@ -239,9 +241,7 @@ public class TheFlag : NetworkBehaviour
     private void RpcReturnToBase()
     {
         if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.team == team)
-        {
             GameSounds.PlaySound(null, returnedSound);
-        }
 
         blinker.timeRemaining = 0f; // stop a le blink
     }
@@ -259,7 +259,6 @@ public class TheFlag : NetworkBehaviour
                     // begin movement
                     Vector2 dropDirection = Random.insideUnitCircle.normalized;
 
-                    transform.SetParent(null, false);
                     transform.position = carryingPlayer.transform.position;
                     transform.rotation = Quaternion.identity;
                     movement.velocity = new Vector3(dropDirection.x * dropHorizontalVelocity, dropVerticalVelocity, dropDirection.y * dropHorizontalVelocity);
@@ -308,6 +307,16 @@ public class TheFlag : NetworkBehaviour
                 else
                     GameSounds.PlaySound(null, capturedByAllySound);
                 break;
+        }
+    }
+
+    public bool ShouldBlockMovement(Movement source, in RaycastHit hit) => false; // we almost always want things to go through the flag
+
+    public void OnMovementCollidedBy(Movement source, TickInfo tickInfo)
+    {
+        if (NetworkServer.active && source.TryGetComponent(out Character sourceCharacter))
+        {
+            ServerOnContinuousCollisionWithPlayer(sourceCharacter);
         }
     }
 }

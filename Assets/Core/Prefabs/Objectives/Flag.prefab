@@ -299,7 +299,7 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 1
   m_Enabled: 1
-  m_Radius: 0.26
+  m_Radius: 0.5
   m_Height: 2.06
   m_Direction: 1
   m_Center: {x: 0, y: 1.03, z: 0}
@@ -320,15 +320,17 @@ MonoBehaviour:
   - {fileID: 6683689043032468155}
   blockingCollisionLayers:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 2147482879
   enableAutomaticPhysics: 0
   gravityMultiplier: 1
   bounceFactor: 0.3
   bounceFriction: 0.5
+  defaultMoveType: 0
+  minSweepThresholdUntilPenetration: 0.05
   maxNumCollisionSteps: 3
   maxCollisionStepSize: 0.2
   sweepPullback: 0.05
-  debugDrawMovementShapes: 0
+  skinThickness: 0.025
   velocity: {x: 0, y: 0, z: 0}
 --- !u!114 &4087312465446270957
 MonoBehaviour:
