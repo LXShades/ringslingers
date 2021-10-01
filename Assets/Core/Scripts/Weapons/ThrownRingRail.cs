@@ -12,7 +12,7 @@ public class ThrownRingRail : ThrownRing
 
     private bool endPointWasSet = false;
 
-    public override void Simulate(float deltaTime)
+    public override void Simulate(float deltaTime, bool isFirstSimulation)
     {
         if (!endPointWasSet)
         {

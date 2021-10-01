@@ -22,6 +22,7 @@ public class ThrownRing : NetworkBehaviour
     [SyncVar(hook = nameof(OnOwnerChanged))]
     private GameObject _owner;
     private Rigidbody rb;
+    private Collider collider;
 
     private float spawnTime;
 
@@ -33,6 +34,7 @@ public class ThrownRing : NetworkBehaviour
 
     void Awake()
     {
+        collider = GetComponentInChildren<Collider>();
         rb = GetComponent<Rigidbody>();
         spawnTime = Time.time;
 
@@ -63,9 +65,7 @@ public class ThrownRing : NetworkBehaviour
         if (!NetworkServer.active && !wasLocallyThrown)
         {
             // shoot further ahead
-            Simulate(GameTicker.singleton.localPlayerPing);
-            // Simulation doesn't work atm due to rigidbodies
-            //transform.position += GameTicker.singleton.localPlayerPing * velocity;
+            Simulate(GameTicker.singleton.localPlayerPing, true);
         }
 
         // colour the ring
@@ -113,10 +113,39 @@ public class ThrownRing : NetworkBehaviour
         }
     }
 
-    public virtual void Simulate(float deltaTime)
+    public virtual void Simulate(float deltaTime, bool isFirstSimulation = false)
     {
-        // using interpolation this shouldn't be needed
-        transform.position += velocity * deltaTime;
+        if (isFirstSimulation)
+        {
+            // Simulate wall slides quickly
+            Vector3 step = velocity * deltaTime;
+
+            for (int i = 0; i < 3 && !isDead; i++)
+            {
+                if (step.magnitude < 0.01f)
+                    break;
+
+                if (rb.SweepTest(step.normalized, out RaycastHit collision, step.magnitude, QueryTriggerInteraction.Ignore))
+                {
+                    transform.position += step.normalized * (collision.distance - 0.1f);
+                    HandleCollision(collider, collision.collider, collision.normal);
+
+                    step = velocity.normalized * (step.magnitude - Mathf.Max(collision.distance - 0.01f, 0f)); // velocity might have changed so factor that in
+                }
+                else
+                {
+                    // no collisions, yay
+                    transform.position += step;
+                    break;
+                }
+            }
+            Physics.SyncTransforms();
+        }
+        else
+        {
+            // using interpolation this shouldn't be needed
+            transform.position += velocity * deltaTime;
+        }
 
         rb.velocity = velocity;
 
@@ -154,15 +183,20 @@ public class ThrownRing : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+        HandleCollision(collider, collision.collider, collision.contacts[0].normal);
+    }
+
+    private void HandleCollision(Collider myCollider, Collider otherCollider, Vector3 normal)
+    {
         if (isDead)
             return; // Unity physics bugs are pain
-        //if (Time.time - spawnTime < 0.1f)
-            //return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
-        if (collision.collider.gameObject == owner)
+                    //if (Time.time - spawnTime < 0.1f)
+                    //return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
+        if (otherCollider.gameObject == owner)
             return; // don't collide with the player who threw the ring
 
         // Hurt any players we collided with
-        if (collision.collider.TryGetComponent(out Damageable damageable) && owner)
+        if (otherCollider.TryGetComponent(out Damageable damageable) && owner)
         {
             if (damageable.gameObject == owner)
                 return; // actually we're fine here
@@ -171,7 +205,7 @@ public class ThrownRing : NetworkBehaviour
         }
 
         // Ignore collisions with other rings
-        if (collision.collider.TryGetComponent(out ThrownRing thrownRing))
+        if (otherCollider.TryGetComponent(out ThrownRing thrownRing))
         {
             if (thrownRing.owner == owner)
                 return; // don't collide with our other rings
@@ -180,11 +214,10 @@ public class ThrownRing : NetworkBehaviour
         // Do wall slides, if allowed
         if (currentNumWallSlides < effectiveSettings.numWallSlides)
         {
-            velocity = velocity.AlongPlane(collision.contacts[0].normal).normalized * velocity.magnitude + collision.contacts[0].normal * 0.001f;
+            velocity = velocity.AlongPlane(normal).normalized * velocity.magnitude + normal * 0.01f;
 
-            Collider myself = collision.contacts[0].thisCollider, victim = collision.contacts[0].otherCollider;
-            if (Physics.ComputePenetration(myself, myself.transform.position, myself.transform.rotation, 
-                victim, victim.transform.position, victim.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
+            if (Physics.ComputePenetration(myCollider, myCollider.transform.position, myCollider.transform.rotation,
+                otherCollider, otherCollider.transform.position, otherCollider.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
             {
                 transform.position += depenetrationDir * depenetrationDistance;
             }
@@ -203,9 +236,8 @@ public class ThrownRing : NetworkBehaviour
             rb.velocity = Vector3.zero;
             velocity = Vector3.zero;
 
-            Collider myself = collision.contacts[0].thisCollider, victim = collision.contacts[0].otherCollider;
-            if (Physics.ComputePenetration(myself, myself.transform.position, myself.transform.rotation,
-                victim, victim.transform.position, victim.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
+            if (Physics.ComputePenetration(myCollider, myCollider.transform.position, myCollider.transform.rotation,
+                otherCollider, otherCollider.transform.position, otherCollider.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
             {
                 transform.position += depenetrationDir * depenetrationDistance;
             }
