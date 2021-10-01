@@ -64,8 +64,9 @@ public class WeaponWheel : MonoBehaviour
 
     private void OnEnable()
     {
+        hasStartedSelecting = false;
         if (Netplay.singleton && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
-            selectedWeapons.AddRange(shooting.localSelectedWeapons);
+            selectedWeapons.AddRange(shooting.equippedWeapons);
     }
 
     private void OnDisable()
@@ -73,9 +74,9 @@ public class WeaponWheel : MonoBehaviour
         if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
         {
             if (hasSelectedNakedWeapon)
-                shooting.localSelectedWeapons = new RingWeaponSettingsAsset[] { shooting.defaultWeapon.weaponType };
+                shooting.LocalSetSelectedWeapons(new RingWeaponSettingsAsset[] { shooting.defaultWeapon.weaponType });
             else
-                shooting.localSelectedWeapons = selectedWeapons.ToArray();
+                shooting.LocalSetSelectedWeapons(selectedWeapons);
         }
     }
 
@@ -137,7 +138,7 @@ public class WeaponWheel : MonoBehaviour
             }
         }
         
-        if (normalizedMouseDistanceFromCentre <= normalizedMinimumWeaponHighlightRadius / 2 && (selectedWeaponIndexes.Count == 0 || (!Mouse.current.leftButton.isPressed && requireClickToSelect)))
+        if (normalizedMouseDistanceFromCentre <= normalizedMinimumWeaponHighlightRadius / 2 && !(selectedWeaponIndexes.Count > 0 && hasStartedSelecting))
         {
             noWeaponIcon.transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 0f);
             noWeaponIcon.color = new Color(1, 1, 1, noWeaponIconSelectedOpacity);
@@ -233,12 +234,9 @@ public class WeaponWheel : MonoBehaviour
     {
         if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
         {
-            if (shooting.localSelectedWeapons != null)
-            {
-                // drop selection icons onto the weapons
-                for (int i = 0; i < ringWeapons.Length; i++)
-                    spawnedWeaponSlots[i].isEquipped = selectedWeapons.Contains(ringWeapons[i]) || (shooting.localSelectedWeapons.Length == 0);
-            }
+            // drop selection icons onto the weapons
+            for (int i = 0; i < ringWeapons.Length; i++)
+                spawnedWeaponSlots[i].isEquipped = selectedWeapons.Contains(ringWeapons[i]) || (selectedWeapons.Count == 0 && !hasSelectedNakedWeapon);
         }
     }
 

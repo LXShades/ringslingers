@@ -16,40 +16,24 @@ public class CharacterShooting : NetworkBehaviour
     public SyncList<RingWeapon> weapons = new SyncList<RingWeapon>();
 
     /// <summary>
-    /// When applicable, this is the weapon that has been selected by this player. Typically only used for local players
+    /// Weapons currently equipped by the player. For local player it's locally predicted, for other players it's received form the server.
     /// </summary>
-    public RingWeaponSettingsAsset[] localSelectedWeapons
+    public IList<RingWeaponSettingsAsset> equippedWeapons
     {
-        get => _localSelectedWeapons;
-        set
+        get
         {
-            // don't bother changing if lists are identical
-            bool isListIdentical = false;
-
-            if (value.Length == _localSelectedWeapons.Length)
-            {
-                isListIdentical = true;
-                for (int i = 0; i < _localSelectedWeapons.Length; i++)
-                {
-                    if (_localSelectedWeapons[i] != value[i])
-                    {
-                        isListIdentical = false;
-                        break;
-                    }
-                }
-            }
-
-            if (!isListIdentical)
-            {
-                _localSelectedWeapons = value;
-
-                if (hasAuthority && !isServer)
-                    CmdSelectWeapon(_localSelectedWeapons); // we don't use a syncvar because not all players need to know about it
-                RegenerateEffectiveWeapon();
-            }
+            if (!NetworkServer.active && !hasAuthority)
+                return _remoteEquippedWeapons;
+            else
+                return _localEquippedWeapons;
         }
     }
-    private RingWeaponSettingsAsset[] _localSelectedWeapons = new RingWeaponSettingsAsset[0];
+
+    // Local selected weapons (local player + server)
+    private List<RingWeaponSettingsAsset> _localEquippedWeapons = new List<RingWeaponSettingsAsset>();
+
+    // Remote selected weapons (other player on client)
+    private SyncList<RingWeaponSettingsAsset> _remoteEquippedWeapons = new SyncList<RingWeaponSettingsAsset>();
 
     /// <summary>
     /// [Server, Client] Generated from the combination of weapons. This is not networked directly but uses the weapons list which is.
@@ -95,6 +79,7 @@ public class CharacterShooting : NetworkBehaviour
     private void Start()
     {
         weapons.Callback += OnWeaponsListChanged;
+        _remoteEquippedWeapons.Callback += OnRemoteEquippedWeaponsChanged;
     }
 
     public override void OnStartClient()
@@ -293,10 +278,33 @@ public class CharacterShooting : NetworkBehaviour
         weapons.Add(new RingWeapon() { weaponType = weaponType, ammo = ammoToAdd });
     }
 
+    public void LocalSetSelectedWeapons(IEnumerable<RingWeaponSettingsAsset> weapons)
+    {
+        if (hasAuthority)
+        {
+            if (!isServer)
+            {
+                CmdSelectWeapon(new List<RingWeaponSettingsAsset>(weapons).ToArray()); // ask the server for new weapons plz
+            }
+            else
+            {
+                _remoteEquippedWeapons.Clear();
+                _remoteEquippedWeapons.AddRange(weapons);
+            }
+
+            _localEquippedWeapons.Clear();
+            _localEquippedWeapons.AddRange(weapons);
+            RegenerateEffectiveWeapon();
+        }
+    }
+
     [Command(channel = Channels.Reliable)] // our weapon selection should be reliable ideally!
     private void CmdSelectWeapon(RingWeaponSettingsAsset[] weaponTypes)
     {
-        _localSelectedWeapons = weaponTypes;
+        _remoteEquippedWeapons.Clear();
+        _remoteEquippedWeapons.AddRange(weaponTypes);
+        _localEquippedWeapons.Clear();
+        _localEquippedWeapons.AddRange(weaponTypes);
         RegenerateEffectiveWeapon();
     }
 
@@ -403,6 +411,12 @@ public class CharacterShooting : NetworkBehaviour
         RegenerateEffectiveWeapon();
     }
 
+    private void OnRemoteEquippedWeaponsChanged(SyncList<RingWeaponSettingsAsset>.Operation op, int itemIndex, RingWeaponSettingsAsset oldItem, RingWeaponSettingsAsset newItem)
+    {
+        if (!NetworkServer.active && !hasAuthority)
+            RegenerateEffectiveWeapon();
+    }
+
     private bool HasWeapon(RingWeaponSettingsAsset asset)
     {
         foreach (RingWeapon weapon in weapons)
@@ -415,7 +429,7 @@ public class CharacterShooting : NetworkBehaviour
 
     private bool IsWeaponEquipped(RingWeaponSettingsAsset asset)
     {
-        return localSelectedWeapons == null || localSelectedWeapons.Length == 0 || Array.IndexOf(localSelectedWeapons, asset) >= 0 || asset == defaultWeapon.weaponType;
+        return equippedWeapons == null || equippedWeapons.Count == 0 || equippedWeapons.IndexOf(asset) >= 0 || asset == defaultWeapon.weaponType;
     }
 
     private void RegenerateEffectiveWeapon()

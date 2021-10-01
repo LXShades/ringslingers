@@ -19,7 +19,7 @@ public class ThrownRingRail : ThrownRing
             // clients need to do this because Throw doesn't get called
             RaycastHit hit;
 
-            if (Physics.Raycast(transform.position, transform.forward, out hit, maxRange, collisionLayers, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(transform.position + transform.forward * 0.5f, transform.forward, out hit, maxRange, collisionLayers, QueryTriggerInteraction.Ignore))
                 endPoint.transform.position = hit.point;
             else
                 endPoint.transform.position = transform.position + transform.forward * maxRange;

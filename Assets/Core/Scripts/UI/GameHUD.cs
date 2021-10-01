@@ -182,7 +182,7 @@ public class GameHUD : MonoBehaviour
                     if (!hasWeapon)
                         weaponSlots[i].hasWeapon = false;
 
-                    bool isEquipped = ringShooting.localSelectedWeapons.Length == 0 || System.Array.IndexOf(ringShooting.localSelectedWeapons, weaponSlots[i].weapon.weaponType) != -1;
+                    bool isEquipped = ringShooting.equippedWeapons.Count == 0 || ringShooting.equippedWeapons.IndexOf(weaponSlots[i].weapon.weaponType) != -1;
 
                     if (isEquipped != (weaponSlots[i].transform.parent == equippedWeaponArea))
                     {
