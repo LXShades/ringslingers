@@ -183,7 +183,8 @@ public class ThrownRing : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        HandleCollision(collider, collision.collider, collision.contacts[0].normal);
+        if (collision.contacts[0].separation <= 0f)
+            HandleCollision(collider, collision.collider, collision.contacts[0].normal);
     }
 
     private void HandleCollision(Collider myCollider, Collider otherCollider, Vector3 normal)
