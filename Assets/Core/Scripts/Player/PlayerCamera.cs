@@ -54,6 +54,12 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     public float maxPlayerLandForEyeBob = 30;
 
+    [Header("Loopy")]
+    /// <summary>
+    /// Dampening factor for the up vector while running around walls/ceilings
+    /// </summary>
+    public float loopyDampFactor = 0.1f;
+
     /// <summary>
     /// Current aim direction of the camera
     /// </summary>
@@ -61,6 +67,9 @@ public class PlayerCamera : MonoBehaviour
 
     // Character movement "up" on last frame. Used to rotate camera
     private Vector3 lastAimUpdateCharacterUp = Vector3.up;
+
+    private Vector3 interpolatedCharacterUp = Vector3.up;
+    private Vector3 interpolatedCharacterUpVelocity = Vector3.zero;
 
     private float lastPlayerFallSpeed = 0;
     private float lastPlayerTimeInAir = 0;
@@ -77,33 +86,33 @@ public class PlayerCamera : MonoBehaviour
         if (currentPlayer)
             characterUp = currentPlayer.movement.up;
 
+        interpolatedCharacterUp = Vector3.SmoothDamp(interpolatedCharacterUp, characterUp, ref interpolatedCharacterUpVelocity, loopyDampFactor);
+
         if (characterUp != lastAimUpdateCharacterUp)
         {
-            aimDirection = Quaternion.FromToRotation(lastAimUpdateCharacterUp, characterUp) * aimDirection;
-            lastAimUpdateCharacterUp = characterUp;
+            aimDirection = Quaternion.FromToRotation(lastAimUpdateCharacterUp, interpolatedCharacterUp) * aimDirection;
+            lastAimUpdateCharacterUp = interpolatedCharacterUp;
         }
 
         // Mouselook
         if (GameManager.singleton.canPlayMouselook)
         {
-            Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, characterUp) * aimDirection;
+            Vector3 newAim = Quaternion.AngleAxis(Input.GetAxis("Mouse X") * GamePreferences.mouseSpeed, interpolatedCharacterUp) * aimDirection;
 
             // we need to clamp this...
             const float limit = 1f;
-            float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, characterUp)) * Mathf.Rad2Deg;
+            float degreesFromUp = Mathf.Acos(Vector3.Dot(newAim, interpolatedCharacterUp)) * Mathf.Rad2Deg;
             float verticalAngleDelta = -Input.GetAxis("Mouse Y") * GamePreferences.mouseSpeed;
 
             if (degreesFromUp + verticalAngleDelta <= limit)
                 verticalAngleDelta = limit - degreesFromUp;
             if (degreesFromUp + verticalAngleDelta >= 180f - limit)
                 verticalAngleDelta = 180f - limit - degreesFromUp;
-            newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(characterUp, newAim)) * newAim;
+            newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(interpolatedCharacterUp, newAim)) * newAim;
 
             // center cam button
             if (GameManager.singleton.input.Gameplay.CenterCamera.ReadValue<float>() > 0.5f)
-            {
-                newAim.SetAlongAxis(characterUp, 0);
-            }
+                newAim.SetAlongAxis(interpolatedCharacterUp, 0);
 
             // final new value
             aimDirection = newAim.normalized;
@@ -127,7 +136,7 @@ public class PlayerCamera : MonoBehaviour
 
             // Move and rotate to player position
             transform.position = currentPlayer.transform.position + characterUp * eyeHeight;
-            transform.rotation = Quaternion.LookRotation(aimDirection, characterUp);
+            transform.rotation = Quaternion.LookRotation(aimDirection, interpolatedCharacterUp);
 
             if (GameManager.singleton.isPaused)
                 transform.rotation = Quaternion.Euler(0, 180, 0) * transform.rotation; // look towards the character when paused/potentially character config
