@@ -104,6 +104,7 @@ SkinnedMeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -250,6 +251,7 @@ SkinnedMeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -344,6 +346,7 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -422,7 +425,7 @@ Animator:
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: 509dd8ff764fdea4a8852f1c4e3fe1fa, type: 2}
-  m_CullingMode: 0
+  m_CullingMode: 2
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
@@ -443,12 +446,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   springForce: 17.5
+  maxSpeedDotForSpring: 0.9
   springAbsolutely: 0
+  absoluteStartHeight: 0.5
   springSound:
     clip: {fileID: 8300000, guid: bea3bd06b69d6574687ef74c64f82e9e, type: 3}
     additionalClips: []
     blend3D: 1
-    range: 10
+    rangePreset: 0
+    minRange: 1
+    midRange: 10
+    maxRange: 20
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
