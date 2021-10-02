@@ -15,6 +15,9 @@ public class GameHUD : MonoBehaviour
     public RectTransform autoaimCrosshair;
     public Image shieldOverlay;
 
+    [Header("Status")]
+    public Image invincibilityIcon;
+
     [Header("Weapons")]
     public GameObject weaponWheel;
     public WeaponSlotUI weaponSlotPrefab;
@@ -214,6 +217,12 @@ public class GameHUD : MonoBehaviour
             // Update shield overlay
             if ((player.shield != null) != shieldOverlay.gameObject.activeSelf)
                 shieldOverlay.gameObject.SetActive(player.shield != null);
+
+            // Update statoids (status..es? statusopedes?)
+            if (player.damageable.invincibilityTimeRemaining > 0f)
+                invincibilityIcon.enabled = ((int)(Time.time * 20) & 1) != 0;
+            else if (invincibilityIcon.enabled)
+                invincibilityIcon.enabled = false;
         }
         else
         {

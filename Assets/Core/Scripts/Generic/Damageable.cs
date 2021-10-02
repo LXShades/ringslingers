@@ -30,15 +30,18 @@ public class Damageable : NetworkBehaviour
         {
             invincibilityTimeRemaining = Mathf.Max(invincibilityTimeRemaining - Time.deltaTime, 0);
 
-            bool enableRenderers;
+            if (doInvincibilityBlink)
+            {
+                bool enableRenderers;
 
-            if (invincibilityTimeRemaining > 0)
-                enableRenderers = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
-            else
-                enableRenderers = true; // we finished blinky blinkying
+                if (invincibilityTimeRemaining > 0)
+                    enableRenderers = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
+                else
+                    enableRenderers = true; // we finished blinky blinkying
 
-            foreach (Renderer renderer in affectedRenderers)
-                renderer.enabled = enableRenderers;
+                foreach (Renderer renderer in affectedRenderers)
+                    renderer.enabled = enableRenderers;
+            }
         }
     }
 
