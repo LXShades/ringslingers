@@ -1,3 +1,6 @@
+# DISCLAIMER
+This is a fangame of [SRB2](http://srb2.org) and contains assets by Sonic Team JR, SEGA and Sonic Team. If you haven't checked out the [original long-running hit Sonic fangame](http://srb2.org), go check it out now!
+
 # Ringslingers
 Blast other Sonic characters with rings in this fast-paced multiplayer fangame inspired by Sonic Robo Blast 2's Ringslingers game modes!
 
@@ -32,7 +35,7 @@ Use the Playtest menu to run multi-player playtests. **The player count can be i
 Code in this repo, **outside of the ThirdParty folder and submodules**, is free to use for any purpose without credit under Creative Commons 0. Code within the [Mirror](https://github.com/vis2k/mirror) and [Ignorance](https://github.com/SoftwareGuy/Ignorance) submodules, and possibly others during development, have their own licenses. See relevant credits. Some assets are subject to copyright - see below.
 
 # Credits
-This fangame contains ripped assets and levels, not only from Sonic itself, but another Sonic fangame: [Sonic Robo Blast 2](http://srb2.org) developed by Sonic Team Junior. All level designs, textures, sound effects, music and characters belong to their respective owners. Sonic and related properties are copyrighted properties of SEGA Corporation.
+This fangame contains ripped assets, music and levels, not only from Sonic itself, but another Sonic fangame: [Sonic Robo Blast 2](http://srb2.org) developed by Sonic Team Junior. All level designs, textures, sound effects, music and characters belong to their respective owners. Sonic and related properties are copyrighted properties of SEGA Corporation.
 
 This fangame and its creator(s) has no direct relationship or affiliation with these parties.
 
