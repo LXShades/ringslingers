@@ -21,10 +21,11 @@ public class ThrownRing : NetworkBehaviour
     }
     [SyncVar(hook = nameof(OnOwnerChanged))]
     private GameObject _owner;
+    [SyncVar]
+    private float serverTimeAtSpawn;
+
     private Rigidbody rb;
     private Collider collider;
-
-    private float spawnTime;
 
     private int currentNumWallSlides = 0;
 
@@ -36,7 +37,6 @@ public class ThrownRing : NetworkBehaviour
     {
         collider = GetComponentInChildren<Collider>();
         rb = GetComponent<Rigidbody>();
-        spawnTime = Time.time;
 
         if (TryGetComponent(out Predictable predictable))
         {
@@ -60,12 +60,6 @@ public class ThrownRing : NetworkBehaviour
             case RingWeaponSettings.SpinAxisType.Up:
                 spinAxis = Vector3.up;
                 break;
-        }
-
-        if (!NetworkServer.active && !wasLocallyThrown)
-        {
-            // shoot further ahead
-            Simulate(GameTicker.singleton.localPlayerPing, true);
         }
 
         // colour the ring
@@ -97,6 +91,17 @@ public class ThrownRing : NetworkBehaviour
             foreach (Material material in renderer.materials)
                 material.SetFloat("_RotationSpeed", effectiveSettings.projectileSpinSpeed);
         }
+
+        if (!NetworkServer.active && !wasLocallyThrown)
+        {
+            // shoot further ahead
+            Simulate(GameTicker.singleton.predictedServerTime - serverTimeAtSpawn, true);
+        }
+    }
+
+    public override void OnStartServer()
+    {
+        serverTimeAtSpawn = GameTicker.singleton.predictedServerTime;
     }
 
     private void Update()
@@ -106,7 +111,7 @@ public class ThrownRing : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (Time.time - spawnTime >= Time.fixedDeltaTime) // don't spawn backwards
+        if (GameTicker.singleton.predictedServerTime - serverTimeAtSpawn >= Time.fixedDeltaTime) // don't spawn backwards
         {
             // ditto, interpolation station
             transform.position -= velocity * Time.fixedDeltaTime;
