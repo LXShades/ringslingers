@@ -831,10 +831,16 @@ MonoBehaviour:
   droppedRingSpawnPoint: {fileID: 3310946930297574031}
   ringDropLayers:
   - verticalSpeed: 5
-    horizontalSpeed: 2.5
+    horizontalSpeed: 2.8
     maxNumRings: 8
   - verticalSpeed: 8
     horizontalSpeed: 2
+    maxNumRings: 16
+  maxNumWeaponsToDrop: 3
+  averageWeaponDropPercentage: 50
+  weaponRingDropLayer:
+    verticalSpeed: 8
+    horizontalSpeed: 3.25
     maxNumRings: 16
   hurtDefaultHorizontalKnockback: 7
   hurtDefaultVerticalKnockback: 3.8

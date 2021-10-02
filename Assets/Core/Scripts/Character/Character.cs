@@ -82,6 +82,13 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
 
     public RingDropLayer[] ringDropLayers = new RingDropLayer[0];
 
+    [Tooltip("Number of weapons dropped is capped at this amount")]
+    public int maxNumWeaponsToDrop = 3;
+    [Tooltip("The number of weapons to drop on average, as a percentage of the weapons carried. Note that the cap still applies.")]
+    public float averageWeaponDropPercentage = 50f;
+    [Tooltip("Ring layer to drop weapons in")]
+    public RingDropLayer weaponRingDropLayer = new RingDropLayer();
+
     [Header("Hurt")]
     public float hurtDefaultHorizontalKnockback = 5;
     public float hurtDefaultVerticalKnockback = 5;
@@ -318,21 +325,41 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         CharacterShooting ringShooting = GetComponent<CharacterShooting>();
         if (ringShooting)
         {
-            if (ringShooting.weapons.Count > 1 && ringShooting.weapons[1].weaponType.settings.droppedRingPrefab)
-            {
-                GameObject droppedWeapon = Spawner.Spawn(ringShooting.weapons[1].weaponType.settings.droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity);
+            int numWeaponsToDrop = Mathf.CeilToInt((ringShooting.weapons.Count - 1) * averageWeaponDropPercentage / 100f - 0.001f);
+            float baseDropAngle = Random.Range(0f, Mathf.PI * 2f);
 
-                if (droppedWeapon && droppedWeapon.TryGetComponent(out RingWeaponPickup weaponPickup) && droppedWeapon.TryGetComponent(out Ring weaponRing))
+            for (int i = 0; i < numWeaponsToDrop; i++)
+            {
+                int indexToDrop = Random.Range(1, ringShooting.weapons.Count);
+
+                if (indexToDrop < ringShooting.weapons.Count && ringShooting.weapons[indexToDrop].weaponType.settings.droppedRingPrefab)
                 {
-                    weaponPickup.overrideAmmo = true;
-                    weaponPickup.ammo = ringShooting.weapons[1].ammo;
-                    weaponRing.isDroppedRing = true;
-                    ringShooting.weapons.RemoveAt(1);
+                    GameObject droppedWeapon = Spawner.StartSpawn(ringShooting.weapons[indexToDrop].weaponType.settings.droppedRingPrefab, droppedRingSpawnPoint.position, Quaternion.identity);
+                    float angleToDrop = baseDropAngle + i * Mathf.PI * 2f / numWeaponsToDrop;
+
+                    if (droppedWeapon && droppedWeapon.TryGetComponent(out RingWeaponPickup weaponPickup) && droppedWeapon.TryGetComponent(out Ring weaponRing) && droppedWeapon.TryGetComponent(out Movement ringMovement))
+                    {
+                        weaponPickup.overrideAmmo = true;
+                        weaponPickup.ammo = ringShooting.weapons[indexToDrop].ammo;
+                        weaponRing.isDroppedRing = true;
+
+                        ringMovement.velocity = new Vector3(Mathf.Sin(angleToDrop) * weaponRingDropLayer.horizontalSpeed, weaponRingDropLayer.verticalSpeed, Mathf.Cos(angleToDrop) * weaponRingDropLayer.horizontalSpeed);
+
+                        numDropped++;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Dropped weapon {droppedWeapon} is missing some components. Make sure it has a WeaponPickup, Ring and Movement component!");
+                    }
+
+                    Spawner.FinalizeSpawn(droppedWeapon);
+
+                    ringShooting.weapons.RemoveAt(indexToDrop);
                 }
             }
         }
 
-        if (numToDrop > 0)
+        if (numDropped > 0)
             sounds.PlayNetworked(PlayerSounds.PlayerSoundType.RingDrop);
         else
             sounds.PlayNetworked(PlayerSounds.PlayerSoundType.ShieldLoss); // temp, better than hearing nothing
