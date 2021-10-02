@@ -8,6 +8,7 @@ public class MainMenu : MonoBehaviour
     public InputField ipAddress;
     public Button joinButton;
     public Button hostButton;
+    public Button quitButton;
     public GameObject waitMessage;
 
     // Start is called before the first frame update
@@ -15,6 +16,7 @@ public class MainMenu : MonoBehaviour
     {
         joinButton.onClick.AddListener(OnJoinClicked);
         hostButton.onClick.AddListener(OnHostClicked);
+        quitButton.onClick.AddListener(OnQuitClicked);
         playerName.onValueChanged.AddListener(OnNameChanged);
 
         OnNameChanged(playerName.text);
@@ -39,6 +41,11 @@ public class MainMenu : MonoBehaviour
         {
             Netplay.singleton.HostServer();
         };
+    }
+
+    private void OnQuitClicked()
+    {
+        Application.Quit();
     }
 
     private void OnNameChanged(string newName)
