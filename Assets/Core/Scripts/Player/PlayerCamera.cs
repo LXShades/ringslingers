@@ -110,6 +110,28 @@ public class PlayerCamera : MonoBehaviour
                 verticalAngleDelta = 180f - limit - degreesFromUp;
             newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(interpolatedCharacterUp, newAim)) * newAim;
 
+            if (currentPlayer && (currentPlayer.movement.state & PlayerCharacterMovement.State.Climbing) != 0)
+            {
+                // it's 10pm, this is what I came up with for the angle limit, let's see if I regret this later
+                float angleLimit = 80f;
+                float rightLimit = Mathf.Sin(angleLimit * Mathf.Deg2Rad);
+                Vector3 aimAlongUpPlane = newAim.AlongPlane(interpolatedCharacterUp).normalized;
+                Vector3 aimAlongUp = interpolatedCharacterUp * newAim.AlongAxis(interpolatedCharacterUp);
+                Vector3 rightAlongUpPlane = currentPlayer.movement.right.AlongPlane(interpolatedCharacterUp).normalized;
+                Vector3 forwardAlongUpPlane = currentPlayer.movement.forward.AlongPlane(interpolatedCharacterUp).normalized;
+
+                if (Vector3.Dot(aimAlongUpPlane, rightAlongUpPlane) > rightLimit)
+                {
+                    aimAlongUpPlane = rightAlongUpPlane * rightLimit + forwardAlongUpPlane * (Mathf.Sqrt(1f - (rightLimit * rightLimit)));
+                    newAim = aimAlongUpPlane * (Mathf.Sqrt(1f - aimAlongUp.magnitude * aimAlongUp.magnitude)) + aimAlongUp;
+                }
+                else if (Vector3.Dot(aimAlongUpPlane, rightAlongUpPlane) < -rightLimit)
+                {
+                    aimAlongUpPlane = rightAlongUpPlane * -rightLimit + forwardAlongUpPlane * (Mathf.Sqrt(1f - (rightLimit * rightLimit)));
+                    newAim = aimAlongUpPlane * (Mathf.Sqrt(1f - aimAlongUp.magnitude * aimAlongUp.magnitude)) + aimAlongUp;
+                }
+            }
+
             // center cam button
             if (GameManager.singleton.input.Gameplay.CenterCamera.ReadValue<float>() > 0.5f)
                 newAim.SetAlongAxis(interpolatedCharacterUp, 0);

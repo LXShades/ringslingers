@@ -409,7 +409,7 @@ public class PlayerCharacterMovement : CharacterMovement
         // Handle climbing
         if ((state & State.Gliding) != 0 || (state & State.Climbing) != 0)
         {
-            Vector3 wallDirection = input.aimDirection.Horizontal();
+            Vector3 wallDirection = (state & State.Climbing) != 0 ? forward.Horizontal() : input.aimDirection.Horizontal();
 
             if (Physics.Raycast(transform.position, wallDirection, out RaycastHit hit, 0.5f, blockingCollisionLayers, QueryTriggerInteraction.Ignore))
             {
