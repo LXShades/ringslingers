@@ -891,7 +891,7 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 55
-  groundTestRadius: 0.41
+  groundTestRadius: 0.3
   groundTestDistanceThreshold: 0.05
   groundEscapeThreshold: 3
   groundAngleLimit: 40
@@ -909,6 +909,7 @@ MonoBehaviour:
   stepLocalFootOffset: {x: 0, y: 0, z: 0}
   enableCollisionsAffectVelocity: 1
   enableCollisionsDontAffectDownwardVelocity: 1
+  enableCollisionsDontIncreaseUpwardVelocityAboveZero: 1
   accelStart: 96
   acceleration: 40
   thrustFactor: 5
