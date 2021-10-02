@@ -12,30 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 024551778f562494b8388cd77d0b40a3, type: 3}
   m_Name: GlideSettings
   m_EditorClassIdentifier: 
-  minSpeed: 12
-  startSpeed: 8
+  minSpeed: 8
+  startSpeed: 12
   maxSpeed: 25
-  climbSpeed: 3
+  climbSpeed: 4
   accelerationBySpeed:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
-      value: 7.5
-      inSlope: -0.17505851
-      outSlope: -0.17505851
-      tangentMode: 0
+      time: 0.35524607
+      value: 8.002247
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
       weightedMode: 0
       inWeight: 0
-      outWeight: 0.032258064
+      outWeight: 0.33333334
     - serializedVersion: 3
-      time: 25
-      value: 4.934387
-      inSlope: -0.0062136655
-      outSlope: -0.0062136655
-      tangentMode: 0
+      time: 25.221762
+      value: 8.002247
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 34
       weightedMode: 0
-      inWeight: 0.075736314
+      inWeight: 0.33333334
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
@@ -47,15 +47,15 @@ MonoBehaviour:
       time: 12
       value: 247.96474
       inSlope: 0
-      outSlope: -6.923077
+      outSlope: -7.5267715
       tangentMode: 65
       weightedMode: 0
       inWeight: 0
       outWeight: 0
     - serializedVersion: 3
-      time: 25
-      value: 157.96474
-      inSlope: -6.923077
+      time: 24.97113
+      value: 150.334
+      inSlope: -7.5267715
       outSlope: 0
       tangentMode: 5
       weightedMode: 0
@@ -68,17 +68,26 @@ MonoBehaviour:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0.066755295
-      value: 2.199409
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
+      time: 8.178924
+      value: 4.0026712
+      inSlope: -0.069651164
+      outSlope: -0.6451835
+      tangentMode: 65
       weightedMode: 0
       inWeight: 0
-      outWeight: 0
+      outWeight: 0.15929225
     - serializedVersion: 3
-      time: 25.066755
-      value: 2.199409
+      time: 12.054697
+      value: 1.5020863
+      inSlope: -0.6451835
+      outSlope: 0
+      tangentMode: 5
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 25.014727
+      value: 1.5005909
       inSlope: 0
       outSlope: 0
       tangentMode: 0
