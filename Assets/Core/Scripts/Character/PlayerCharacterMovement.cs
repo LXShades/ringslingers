@@ -337,14 +337,19 @@ public class PlayerCharacterMovement : CharacterMovement
         }
         else if ((state & State.Rolling) != 0 && input.btnSpinReleased)
         {
-            groundVelocity = input.aimDirection.AlongPlane(groundNormal).normalized * (spindashMaxSpeed * spindashChargeLevel);
-            spindashChargeLevel = 0f;
+            Vector3 nextDirection = input.aimDirection.AlongPlane(groundNormal).normalized;
+            float releaseSpeed = (spindashMaxSpeed * spindashChargeLevel);
 
-            if (!isOnGround) // experiment: we'll let you release a spindash in the air. but you can't do it repeatedly
-                state &= ~State.Rolling;
+            if (groundVelocity.AlongAxis(nextDirection) < releaseSpeed)
+            {
+                float factor = groundVelocity.magnitude > 0 ? Mathf.Clamp(releaseSpeed / groundVelocity.magnitude, 0f, 1f) : 1f;
 
-            if (tickInfo.isRealtime)
-                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
+                groundVelocity = Vector3.Lerp(groundVelocity, nextDirection * releaseSpeed, factor);
+                spindashChargeLevel = 0f;
+
+                if (factor > 0 && tickInfo.isRealtime)
+                    sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
+            }
         }
         else if ((state & State.Rolling) == 0f)
         {
@@ -352,7 +357,7 @@ public class PlayerCharacterMovement : CharacterMovement
         }
 
         if ((groundVelocity.magnitude < minRollSpeed && !input.btnSpin)
-            || (state & State.Jumped) != 0)
+            || !isOnGround)
         {
             state &= ~State.Rolling;
             spindashChargeLevel = 0f;
