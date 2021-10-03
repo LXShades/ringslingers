@@ -2,6 +2,8 @@
 
 public class PlayerCamera : MonoBehaviour
 {
+    public static PlayerCamera singleton { get; private set; }
+
     /// <summary>
     /// Player we're currently following
     /// </summary>
@@ -65,6 +67,8 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     public Vector3 aimDirection { get; set; } = Vector3.forward;
 
+    public bool isFirstPerson => thirdPersonDistance <= 0f;
+
     // Character movement "up" on last frame. Used to rotate camera
     private Vector3 lastAimUpdateCharacterUp = Vector3.up;
 
@@ -77,6 +81,11 @@ public class PlayerCamera : MonoBehaviour
     private float landBobTimer = 0;
     private float landBobMagnitude = 0;
     private float landBobDuration = 0;
+
+    private void Awake()
+    {
+        singleton = this;
+    }
 
     public void UpdateAim()
     {

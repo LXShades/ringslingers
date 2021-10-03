@@ -17,6 +17,8 @@ public class GameHUD : MonoBehaviour
 
     [Header("Status")]
     public Image invincibilityIcon;
+    public GameObject gotRedFlagIcon;
+    public GameObject gotBlueFlagIcon;
 
     [Header("Weapons")]
     public GameObject weaponWheel;
@@ -133,11 +135,18 @@ public class GameHUD : MonoBehaviour
         {
             bool isRedFlagStolen = matchFlags.redFlag != null && (matchFlags.redFlag.currentCarrier != -1);
             bool isBlueFlagStolen = matchFlags.blueFlag != null && (matchFlags.blueFlag.currentCarrier != -1);
+            bool hasGotRedFlag = (matchFlags.redFlag.currentCarrier == Netplay.singleton.localPlayerId);
+            bool hasGotBlueFlag = (matchFlags.blueFlag.currentCarrier == Netplay.singleton.localPlayerId);
 
             if (redFlagStolen.activeSelf != isRedFlagStolen)
                 redFlagStolen.SetActive(isRedFlagStolen);
             if (blueFlagStolen.activeSelf != isBlueFlagStolen)
                 blueFlagStolen.SetActive(isBlueFlagStolen);
+
+            if (gotRedFlagIcon.activeSelf != hasGotRedFlag)
+                gotRedFlagIcon.SetActive(hasGotRedFlag);
+            if (gotBlueFlagIcon.activeSelf != hasGotBlueFlag)
+                gotBlueFlagIcon.SetActive(hasGotBlueFlag);
         }
         else
         {
@@ -145,6 +154,12 @@ public class GameHUD : MonoBehaviour
             {
                 redFlagStolen.SetActive(false);
                 blueFlagStolen.SetActive(false);
+            }
+
+            if (gotRedFlagIcon.activeSelf)
+            {
+                gotRedFlagIcon.SetActive(false);
+                gotBlueFlagIcon.SetActive(false);
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TheFlag : NetworkBehaviour, IMovementCollisionCallbacks
@@ -68,12 +69,14 @@ public class TheFlag : NetworkBehaviour, IMovementCollisionCallbacks
     private Movement movement;
     private Blinker blinker;
     private SyncMovement syncMovement;
+    private List<Renderer> renderers;
 
     private void Awake()
     {
         basePosition = transform.position;
         baseRotation = transform.rotation;
 
+        renderers = new List<Renderer>(GetComponentsInChildren<Renderer>());
         movement = GetComponent<Movement>();
         blinker = GetComponent<Blinker>();
         syncMovement = GetComponent<SyncMovement>();
@@ -134,6 +137,24 @@ public class TheFlag : NetworkBehaviour, IMovementCollisionCallbacks
                 break;
         }
 
+        // hide flag when holding it in firstperson
+        if (PlayerCamera.singleton.isFirstPerson && PlayerCamera.singleton.currentPlayer != null && currentCarrier == PlayerCamera.singleton.currentPlayer.playerId)
+        {
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer.enabled)
+                    renderer.enabled = false;
+            }
+        }
+        else if (blinker.timeRemaining <= 0f) // blinker interferes with render visibility. so many knobs...
+        {
+            foreach (Renderer renderer in renderers)
+            {
+                if (!renderer.enabled)
+                    renderer.enabled = true;
+            }
+        }
+
         syncMovement.updatesPerSecond = state == State.Dropped ? dropMovementSyncRate : 0f;
     }
 
@@ -150,7 +171,6 @@ public class TheFlag : NetworkBehaviour, IMovementCollisionCallbacks
                     gotFlagIndicator.SetActive(shouldShowIndicator);
 
                 gotFlagIndicator.transform.SetPositionAndRotation(carryingPlayer.transform.position + Vector3.up * gotFlagIndicatorHoverHeight, Quaternion.LookRotation(gotFlagIndicator.transform.position - GameManager.singleton.camera.transform.position));
-                transform.SetPositionAndRotation(carryingPlayer.flagHoldBone.position, carryingPlayer.flagHoldBone.rotation);
             }
         }
         else
