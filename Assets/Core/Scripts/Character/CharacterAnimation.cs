@@ -36,10 +36,7 @@ public class CharacterAnimation : MonoBehaviour
 
         if ((movement.state & PlayerCharacterMovement.State.Rolling) != 0f)
         {
-            if (movement.spindashChargeLevel > 0f)
-                spinSpeed = movement.spindashChargeLevel * movement.spindashMaxSpeed;
-            else
-                spinSpeed = movement.velocity.magnitude;
+            spinSpeed = Mathf.Max(movement.velocity.magnitude, movement.spindashChargeLevel * movement.spindashMaxSpeed);
         }
 
         animator.SetFloat("HorizontalSpeed", groundVelocity.magnitude);

@@ -47,6 +47,11 @@ public class Player : NetworkBehaviour
         base.OnStartLocalPlayer();
 
         Netplay.singleton.localPlayerId = playerId;
+
+        // local player character created, update everyone else's outline statuc
+        foreach (Character character in Netplay.singleton.players)
+            character.UpdateOutlineColour();
+
         CmdSendPersistentData(localPersistent);
     }
 

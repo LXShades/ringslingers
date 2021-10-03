@@ -75,6 +75,8 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     [Header("Visuals")]
     public Renderer characterModel;
     public Transform flagHoldBone;
+    public Color allyOutlineColour = Color.blue;
+    public Color enemyOutlineColour = Color.red;
 
     [Header("Ring drop")]
     public GameObject droppedRingPrefab;
@@ -171,6 +173,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         base.OnStartClient();
 
         Netplay.singleton.RegisterPlayer(this, playerId);
+
+        if (!hasAuthority)
+            UpdateOutlineColour();
     }
 
     public override void OnStartAuthority()
@@ -412,6 +417,13 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
             return colour;
     }
 
+    public void UpdateOutlineColour()
+    {
+        PlayerTeam localTeam = Netplay.singleton.localPlayer ? Netplay.singleton.localPlayer.team : PlayerTeam.None;
+
+        characterModel.material.SetColor("_OutlineColor", localTeam != team ? enemyOutlineColour : allyOutlineColour);
+    }
+
     private void OnColourChanged(Color oldColour, Color newColour)
     {
         colour = newColour;
@@ -427,6 +439,23 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     private void OnTeamChanged(PlayerTeam oldTeam, PlayerTeam newTeam)
     {
         team = newTeam;
+
+        if (Netplay.singleton.localPlayer)
+        {
+            PlayerTeam localTeam = Netplay.singleton.localPlayer.team;
+            if (this == Netplay.singleton.localPlayer) // we've changed team, now we need to update everyone else's outline
+            {
+                foreach (Character character in Netplay.singleton.players)
+                {
+                    if (character)
+                        character.UpdateOutlineColour();
+                }
+            }
+            else
+            {
+                UpdateOutlineColour();
+            }
+        }
     }
 
     private void OnPlayerIdChanged(int oldVal, int newVal)
