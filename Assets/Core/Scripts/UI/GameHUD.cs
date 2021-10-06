@@ -230,8 +230,8 @@ public class GameHUD : MonoBehaviour
                 autoaimCrosshair.gameObject.SetActive(false);
 
             // Update shield overlay
-            if ((player.shield != null) != shieldOverlay.gameObject.activeSelf)
-                shieldOverlay.gameObject.SetActive(player.shield != null);
+            if ((player.shield != null) != shieldOverlay.activeSelf)
+                shieldOverlay.SetActive(player.shield != null);
 
             // Update statoids (status..es? statusopedes?)
             if (player.damageable.invincibilityTimeRemaining > 0f)

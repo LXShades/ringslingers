@@ -1,38 +1,56 @@
-sampler2D _MainTex;
+#pragma vertex vert
+#pragma fragment frag
 
-struct Input
+// compile shader into multiple variants, with and without shadows
+// (we don't care about any lightmaps yet, so skip these variants)
+#pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
+// shadow helper functions and macros
+#include "AutoLight.cginc"
+#include "UnityCG.cginc"
+#include "Lighting.cginc"
+
+sampler2D _MainTex;
+float4 _MainTex_ST;
+
+struct v2f
 {
-    float2 uv_MainTex;
+    float2 uv : TEXCOORD0;
+    SHADOW_COORDS(1) // put shadows data into TEXCOORD1
+        fixed3 diff : COLOR0;
+    fixed3 ambient : COLOR1;
+    float4 pos : SV_POSITION;
+    fixed shadowEffect : TEXCOORD2;
 };
 
-half _Glossiness;
-half _Metallic;
-fixed4 _Color;
+v2f vert(appdata_base v)
+{
+    v2f o;
+    o.pos = UnityObjectToClipPos(v.vertex);
+    o.uv = TRANSFORM_TEX(v.texcoord, _MainTex);
+    half3 worldNormal = UnityObjectToWorldNormal(v.normal);
+    half nl = max(0, dot(worldNormal, _WorldSpaceLightPos0.xyz));
 
-// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
-// See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
-// #pragma instancing_options assumeuniformscaling
-UNITY_INSTANCING_BUFFER_START(Props)
-    // put more per-instance properties here
-UNITY_INSTANCING_BUFFER_END(Props)
+    float upness = abs(dot(worldNormal, half3(0, 1, 0))); // 1 = floor is directly upward (full shadow effect), 0.1 = no shadow effect
+    const float buffer = 0.9f;
+    o.shadowEffect = clamp(upness - (1 - buffer) / buffer, 0, 1);
+    nl = 1;
 
-void vert(inout appdata_full v) {
-    // neutralise lighting
-    v.normal = normalize(mul(unity_WorldToObject, float3(0, 1, 0)));
+    o.diff = nl * _LightColor0.rgb;
+    o.ambient = ShadeSH9(half4(worldNormal, 1));
+    TRANSFER_SHADOW(o)
+        return o;
 }
 
-void surf(Input IN, inout SurfaceOutputStandard o)
+fixed4 frag(v2f i) : SV_Target
 {
-    // Albedo comes from a texture tinted by color
-    fixed4 c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+    fixed4 col = tex2D(_MainTex, i.uv);
 
-#if defined(CUTOUT_ENABLED)
-    if (c.a < 0.5)
-        discard;
+#ifdef CUTOUT_ENABLED
+    clip(col.a - 0.5);
 #endif
 
-    o.Albedo = c.rgb;
-    o.Metallic = _Metallic;
-    o.Smoothness = _Glossiness;
-    o.Alpha = c.a;
+    fixed shadow = SHADOW_ATTENUATION(i);
+    fixed3 lighting = i.diff * lerp(1, shadow, i.shadowEffect) + i.ambient;
+    col.rgb *= lighting;
+    return col;
 }
