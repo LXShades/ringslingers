@@ -227,7 +227,7 @@ public class GameTicker : NetworkBehaviour
             {
                 // most players tick the same
                 // except for remote players on clients - clients do not know these players' input history, so they should not play deltas as they will usually be inaccurate
-                player.ticker.Seek(predictedServerTime, player.ticker.inputTimeline.TimeAt(player.ticker.inputTimeline.ClosestIndexBefore(predictedServerTime)), !isServer && player != Netplay.singleton.localPlayer ? TickerSeekFlags.IgnoreDeltas : 0);
+                player.ticker.Seek(predictedServerTime, !isServer && player != Netplay.singleton.localPlayer ? TickerSeekFlags.IgnoreDeltas : 0);
             }
         }
     }

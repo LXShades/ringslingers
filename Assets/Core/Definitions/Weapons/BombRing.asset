@@ -42,20 +42,23 @@ MonoBehaviour:
       pitchVariance: 0
       looping: 0
     timeOnPickup: 30
-    ammoOnPickup: 10
+    ammoOnPickup: 15
     maxAmmo: 99
     maxTime: 99
     shotsPerSecond: 3.5
     isAutomatic: 0
     autoAimHitboxRadius: 0
     autoAimDegreesRadius: 0
+    additionalSpawns: []
     projectileSpeed: 32.81
     projectileSpinAxisType: 0
     projectileSpinSpeed: 800
     projectileLifetime: 10
     numWallSlides: 0
+    contactAction: 0
     contactEffect: {fileID: 5447117789588823378, guid: e4808aa16e760694e9a48b54ffa121e5, type: 3}
     projectileKnockback: 15
+    proximityDespawnTriggerRange: 0
     comboSettings:
     - effector: {fileID: 11400000, guid: b3ac2b389097b2d46a9376592fe8d37f, type: 2}
       shotsPerSecondMultiplier: 2.29

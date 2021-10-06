@@ -50,7 +50,7 @@ public class TrainingBotBase : MonoBehaviour
             float dt = Mathf.Min(Time.deltaTime - t, maxDeltaTime);
 
             if (OnTick(dt, t, ref charInput))
-                movement.TickMovement(dt, charInput, new TickInfo() { isRealtime = false });
+                movement.TickMovement(dt, charInput, new TickInfo() { isReplaying = true, isConfirming = true });
             else
                 break;
         }

@@ -269,7 +269,7 @@ public class PlayerCharacterMovement : CharacterMovement
                     velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor);
                 }
 
-                if (tickInfo.isRealtime)
+                if (tickInfo.isConfirmingForward)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
 
                 state |= State.Jumped;
@@ -285,7 +285,7 @@ public class PlayerCharacterMovement : CharacterMovement
                             // Thok
                             velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
-                            if (tickInfo.isRealtime)
+                            if (tickInfo.isConfirmingForward)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
 
                             state |= State.Thokked;
@@ -327,7 +327,7 @@ public class PlayerCharacterMovement : CharacterMovement
         {
             state |= State.Rolling;
 
-            if (tickInfo.isRealtime)
+            if (!tickInfo.isConfirmingForward)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinCharge);
         }
 
@@ -347,7 +347,7 @@ public class PlayerCharacterMovement : CharacterMovement
                 groundVelocity = Vector3.Lerp(groundVelocity, nextDirection * releaseSpeed, factor);
                 spindashChargeLevel = 0f;
 
-                if (factor > 0 && tickInfo.isRealtime)
+                if (factor > 0 && !tickInfo.isConfirmingForward)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
             }
         }

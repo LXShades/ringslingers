@@ -33,7 +33,7 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
 
             movement.SpringUp(springForce, transform.up, springAbsolutely);
 
-            if (tickInfo.isRealtime)
+            if (tickInfo.isConfirmingForward)
             {
                 animator.SetTrigger("DoSpring");
 

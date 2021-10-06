@@ -226,7 +226,7 @@ public class CharacterShooting : NetworkBehaviour
 
         for (int i = 1; i * interval < maxPredictionTime; i++)
         {
-            ticker.Seek(originalTime + i * interval, ticker.realtimePlaybackTime, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.DontConfirm);
+            ticker.Seek(originalTime + i * interval, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.DontConfirm | TickerSeekFlags.TreatAsReplay);
             ringDistance += ringSpeed;
 
             float currentTargetDistance = Vector3.Distance(target.transform.position, startPosition);
@@ -247,7 +247,7 @@ public class CharacterShooting : NetworkBehaviour
             lastTargetPosition = target.transform.position;
         }
 
-        ticker.Seek(originalTime, ticker.realtimePlaybackTime, TickerSeekFlags.IgnoreDeltas);
+        ticker.Seek(originalTime, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.TreatAsReplay);
 
         return succeeded;
     }
