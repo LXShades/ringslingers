@@ -421,7 +421,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     {
         PlayerTeam localTeam = Netplay.singleton.localPlayer ? Netplay.singleton.localPlayer.team : PlayerTeam.None;
 
-        characterModel.material.SetColor("_OutlineColor", localTeam != team ? enemyOutlineColour : allyOutlineColour);
+        characterModel.material.SetColor("_OutlineColor", (localTeam != team || team == PlayerTeam.None) ? enemyOutlineColour : allyOutlineColour);
     }
 
     private void OnColourChanged(Color oldColour, Color newColour)

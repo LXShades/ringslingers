@@ -26,6 +26,7 @@ public class ThrownRing : NetworkBehaviour
 
     private Rigidbody rb;
     private Collider collider;
+    private HopTrails hopTrails;
 
     private int currentNumWallSlides = 0;
 
@@ -37,6 +38,7 @@ public class ThrownRing : NetworkBehaviour
     {
         collider = GetComponentInChildren<Collider>();
         rb = GetComponent<Rigidbody>();
+        hopTrails = GetComponentInChildren<HopTrails>();
 
         if (TryGetComponent(out Predictable predictable))
         {
@@ -94,8 +96,13 @@ public class ThrownRing : NetworkBehaviour
 
         if (!NetworkServer.active && !wasLocallyThrown)
         {
+            Vector3 originalPosition = transform.position;
+
             // shoot further ahead
             Simulate(GameTicker.singleton.predictedServerTime - serverTimeAtSpawn, true);
+
+            if (hopTrails)
+                hopTrails.AddTrail(originalPosition, transform.position);
         }
     }
 

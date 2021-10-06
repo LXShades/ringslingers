@@ -3,10 +3,11 @@ using UnityEngine;
 
 public class HopTrails : MonoBehaviour
 {
-    private Character character;
     public LineRenderer referenceRenderer;
 
-    public int poolSize = 6;
+    public int poolSize = 4;
+    public bool automaticallyHop = true;
+    public Color colour = Color.white;
     public float fadeDuration = 0.3f;
     public float hopCooldown = 0.1f;
     public float trailAlpha = 1f;
@@ -18,21 +19,18 @@ public class HopTrails : MonoBehaviour
     private Vector3 lastPosition;
     private float lastHopTime;
 
-    private void Start()
+    private void Awake()
     {
-        character = GetComponentInParent<Character>();
-
-        Color clr = Color.white;// character.GetCharacterColour();
-        clr.a = 0f;
-        referenceRenderer.startColor = clr;
-        referenceRenderer.endColor = clr;
+        colour.a = 0f;
+        referenceRenderer.startColor = colour;
+        referenceRenderer.endColor = colour;
         rendererPool.Add(referenceRenderer);
 
         for (int i = 1; i < poolSize; i++)
         {
             rendererPool.Add(Instantiate(referenceRenderer));
-            rendererPool[i].startColor = clr;
-            rendererPool[i].endColor = clr;
+            rendererPool[i].startColor = colour;
+            rendererPool[i].endColor = colour;
         }
 
         lastPosition = transform.position;
@@ -41,26 +39,29 @@ public class HopTrails : MonoBehaviour
     private void Update()
     {
         float fadeAmt = Time.deltaTime / Mathf.Max(fadeDuration, 0.0001f) * trailAlpha;
-        Color neutralColour = Color.white;//character.GetCharacterColour();
 
         for (int i = 0; i < poolSize; i++)
         {
             if (rendererPool[i].startColor.a >= 0f)
             {
-                neutralColour.a = Mathf.Max(rendererPool[i].startColor.a - fadeAmt, 0f);
-                rendererPool[i].startColor = neutralColour;
-                rendererPool[i].endColor = neutralColour;
+                colour.a = Mathf.Max(rendererPool[i].startColor.a - fadeAmt, 0f);
+                rendererPool[i].startColor = colour;
+                rendererPool[i].endColor = colour;
             }
         }
 
-        float hopDistance = Vector3.Distance(lastPosition, transform.position);
-        if (hopDistance > hopSpeedThreshold * Time.deltaTime && hopDistance > hopLengthThreshold)
-            AddTrail(lastPosition, transform.position);
+        // some hoptrails are manually requested eg rings
+        if (automaticallyHop)
+        {
+            float hopDistance = Vector3.Distance(lastPosition, transform.position);
+            if (hopDistance > hopSpeedThreshold * Time.deltaTime && hopDistance > hopLengthThreshold)
+                AddTrail(lastPosition, transform.position);
+        }
 
         lastPosition = transform.position;
     }
 
-    private void AddTrail(Vector3 start, Vector3 end)
+    public void AddTrail(Vector3 start, Vector3 end)
     {
         if (Time.time - lastHopTime > hopCooldown)
         {
@@ -68,10 +69,9 @@ public class HopTrails : MonoBehaviour
             {
                 if (rendererPool[i].startColor.a == 0f)
                 {
-                    Color clr = rendererPool[i].startColor;
-                    clr.a = trailAlpha;
-                    rendererPool[i].startColor = clr;
-                    rendererPool[i].endColor = clr;
+                    colour.a = trailAlpha;
+                    rendererPool[i].startColor = colour;
+                    rendererPool[i].endColor = colour;
 
                     rendererPool[i].positionCount = 2;
                     rendererPool[i].SetPosition(0, start);
