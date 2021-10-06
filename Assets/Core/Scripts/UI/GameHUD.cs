@@ -13,7 +13,7 @@ public class GameHUD : MonoBehaviour
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI timeText;
     public RectTransform autoaimCrosshair;
-    public Image shieldOverlay;
+    public GameObject shieldOverlay;
 
     [Header("Status")]
     public Image invincibilityIcon;
