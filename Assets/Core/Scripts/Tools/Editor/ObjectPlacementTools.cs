@@ -4,7 +4,7 @@ using UnityEngine;
 
 public static class ObjectFlipper
 {
-    [MenuItem("Tools/Flip/Global X")]
+    [MenuItem("Tools/Transform Selected Objects/Position: Flip Global X")]
     public static void FlipGlobalX()
     {
         ForSelectedNonChildObjects(go =>
@@ -14,13 +14,25 @@ public static class ObjectFlipper
         });
     }
 
-    [MenuItem("Tools/Flip/Global Z")]
+    [MenuItem("Tools/Transform Selected Objects/Position: Flip Global Z")]
     public static void FlipGlobalZ()
     {
         ForSelectedNonChildObjects(go =>
         {
             Undo.RecordObject(go.transform, "Flip Z");
             go.transform.position = new Vector3(go.transform.position.x, go.transform.position.y, -go.transform.position.z);
+        });
+    }
+
+    [MenuItem("Tools/Transform Selected Objects/Position+Rotation: Global Rotate 180 Y")]
+    public static void GlobalRotate180Y()
+    {
+        Quaternion flipRotation = Quaternion.AngleAxis(180f, Vector3.up);
+        ForSelectedNonChildObjects(go =>
+        {
+            Undo.RecordObject(go.transform, "Rotate 180");
+            go.transform.position = new Vector3(-go.transform.position.x, go.transform.position.y, -go.transform.position.z);
+            go.transform.rotation = flipRotation * go.transform.rotation;
         });
     }
 
