@@ -34,7 +34,7 @@ public class CharacterAnimation : MonoBehaviour
         float forwardSpeedMultiplier = Vector3.Dot(transform.forward.Horizontal(), groundVelocity) <= 0f ? -1 : 1;
         float spinSpeed = 15f;
 
-        if ((movement.state & PlayerCharacterMovement.State.Rolling) != 0f)
+        if ((movement.state & (PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.SpinCharging)) != 0f)
         {
             spinSpeed = Mathf.Max(movement.velocity.magnitude, movement.spindashChargeLevel * movement.spindashMaxSpeed);
         }
@@ -42,7 +42,7 @@ public class CharacterAnimation : MonoBehaviour
         animator.SetFloat("HorizontalSpeed", groundVelocity.magnitude);
         animator.SetFloat("HorizontalForwardSpeed", groundVelocity.magnitude * forwardSpeedMultiplier);
         animator.SetBool("IsOnGround", movement.isOnGround);
-        animator.SetBool("IsRolling", (movement.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0);
+        animator.SetBool("IsRolling", (movement.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.SpinCharging)) != 0);
         animator.SetBool("IsSpringing", !movement.isOnGround && movement.velocity.y > 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
         animator.SetBool("IsFreeFalling", !movement.isOnGround && movement.velocity.y < 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
         animator.SetBool("IsHurt", (movement.state & PlayerCharacterMovement.State.Pained) != 0);

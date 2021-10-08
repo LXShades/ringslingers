@@ -53,6 +53,8 @@ public class PlayerCharacterMovement : CharacterMovement
     public float spindashChargeDuration = 1f;
     public float spindashMaxSpeed = 20f;
     public float spindashMinSpeed = 1f;
+    [Range(0f, 1f)]
+    public float spindashChargeFriction = 0.995f;
 
     [Header("Sounds")]
     public GameSound jumpSound = new GameSound();
@@ -68,11 +70,12 @@ public class PlayerCharacterMovement : CharacterMovement
     {
         Jumped   = 1,
         Rolling  = 2,
-        Thokked  = 4,
-        CanceledJump = 8,
-        Pained = 16,
-        Gliding = 32,
-        Climbing = 64
+        SpinCharging = 4,
+        Thokked  = 8,
+        CanceledJump = 16,
+        Pained = 32,
+        Gliding = 64,
+        Climbing = 128,
     };
     public State state { get; set; }
 
@@ -205,6 +208,8 @@ public class PlayerCharacterMovement : CharacterMovement
 
         if ((state & State.Rolling) != 0)
             currentFriction = rollingFriction;
+        if ((state & State.SpinCharging) != 0)
+            currentFriction = spindashChargeFriction;
 
         if (groundVelocity.magnitude > 0 && isOnGround)
             groundVelocity = velocity * Mathf.Pow(currentFriction, deltaTime * 35f);
@@ -212,7 +217,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void ApplyRunAcceleration(float deltaTime, PlayerInput input)
     {
-        if ((state & (State.Pained | State.Gliding | State.Climbing)) != 0)
+        if ((state & (State.Pained | State.Gliding | State.Climbing | State.SpinCharging)) != 0)
             return; // cannot accelerate in these states
 
         Vector3 aim = input.aimDirection;
@@ -253,7 +258,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
         if (input.btnJumpPressed)
         {
-            // Start  regular jump
+            // Start regular jump
             if ((isOnGround && !state.HasFlag(State.Jumped)) || (state & State.Climbing) != 0)
             {
                 if ((state & State.Climbing) != 0)
@@ -273,6 +278,7 @@ public class PlayerCharacterMovement : CharacterMovement
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
 
                 state |= State.Jumped;
+                state &= ~(State.Rolling | State.SpinCharging);
             }
             // Start jump abilities
             else if (state.HasFlag(State.Jumped) && (player == null || !player.isHoldingFlag))
@@ -323,45 +329,49 @@ public class PlayerCharacterMovement : CharacterMovement
         if ((state & State.Climbing) != 0)
             return;
 
-        if (isOnGround && input.btnSpinPressed)
+        bool isMovingFastEnoughToRoll = groundVelocity.magnitude >= minRollSpeed;
+        if (isMovingFastEnoughToRoll && (state & State.Rolling) == 0 && isOnGround && input.btnSpinPressed)
         {
             state |= State.Rolling;
 
-            if (!tickInfo.isConfirmingForward)
-                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinCharge);
+            if (tickInfo.isConfirmingForward)
+                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRoll);
         }
-
-        if ((state & State.Rolling) != 0 && input.btnSpin)
+        else if (((state & State.Rolling) != 0 || (isOnGround && !isMovingFastEnoughToRoll)) && input.btnSpinPressed)
+        {
+            spindashChargeLevel = 0f;
+            state |= State.SpinCharging;
+        }
+        else if ((state & State.SpinCharging) != 0 && input.btnSpin)
         {
             spindashChargeLevel = Mathf.Min(spindashChargeLevel + deltaTime / spindashChargeDuration, 1f);
+
+            if (TimeTool.IsTick(tickInfo.time, deltaTime, 8) && tickInfo.isConfirmingForward)
+                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinCharge);
         }
-        else if ((state & State.Rolling) != 0 && input.btnSpinReleased)
+        else if ((state & State.SpinCharging) != 0 && input.btnSpinReleased)
         {
             Vector3 nextDirection = input.aimDirection.AlongPlane(groundNormal).normalized;
             float releaseSpeed = (spindashMaxSpeed * spindashChargeLevel);
+            float factor = groundVelocity.magnitude > 0 ? Mathf.Clamp(releaseSpeed / Mathf.Max(groundVelocity.magnitude, 0.001f), 0f, 1f) : 1f;
 
-            if (groundVelocity.AlongAxis(nextDirection) < releaseSpeed)
-            {
-                float factor = groundVelocity.magnitude > 0 ? Mathf.Clamp(releaseSpeed / groundVelocity.magnitude, 0f, 1f) : 1f;
+            groundVelocity = Vector3.Lerp(groundVelocity, nextDirection * releaseSpeed, factor);
 
-                groundVelocity = Vector3.Lerp(groundVelocity, nextDirection * releaseSpeed, factor);
-                spindashChargeLevel = 0f;
+            if (factor > 0 && tickInfo.isConfirmingForward)
+                sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
 
-                if (factor > 0 && !tickInfo.isConfirmingForward)
-                    sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
-            }
+            state &= ~State.SpinCharging;
+            state |= State.Rolling;
+            isMovingFastEnoughToRoll = true;
+            spindashChargeLevel = 0f;
         }
         else if ((state & State.Rolling) == 0f)
         {
             spindashChargeLevel = 0f;
         }
 
-        if ((groundVelocity.magnitude < minRollSpeed && !input.btnSpin)
-            || !isOnGround)
-        {
-            state &= ~State.Rolling;
-            spindashChargeLevel = 0f;
-        }
+        if (!isMovingFastEnoughToRoll)
+            state &= ~(State.Rolling);
     }
 
     private void HandleJumpAbilities_Gliding(PlayerInput input, float deltaTime)

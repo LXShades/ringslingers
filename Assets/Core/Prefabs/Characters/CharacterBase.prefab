@@ -1214,6 +1214,7 @@ MonoBehaviour:
   spindashChargeDuration: 1
   spindashMaxSpeed: 36
   spindashMinSpeed: 1
+  spindashChargeFriction: 0.965
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
     additionalClips: []
@@ -1364,6 +1365,18 @@ MonoBehaviour:
     pitch: 1
     pitchVariance: 0
     looping: 0
+  spinRollSound:
+    clip: {fileID: 8300000, guid: 9d4f6e44dd321824eb6b6ddd507daeca, type: 3}
+    additionalClips: []
+    blend3D: 1
+    rangePreset: 2
+    minRange: 5
+    midRange: 15
+    maxRange: 50
+    volumeDecibels: -2
+    pitch: 1
+    pitchVariance: 0.05
+    looping: 0
   spinChargeSound:
     clip: {fileID: 8300000, guid: 73a8089321f9a934488148fb9fe2d5bc, type: 3}
     additionalClips: []
@@ -1372,9 +1385,9 @@ MonoBehaviour:
     minRange: 5
     midRange: 15
     maxRange: 50
-    volumeDecibels: 0
+    volumeDecibels: -2
     pitch: 1
-    pitchVariance: 0
+    pitchVariance: 0.05
     looping: 0
   spinReleaseSound:
     clip: {fileID: 8300000, guid: b00c7ce7043edc54e8dcd5e4b0b87660, type: 3}
@@ -1384,9 +1397,9 @@ MonoBehaviour:
     minRange: 5
     midRange: 15
     maxRange: 50
-    volumeDecibels: 0
+    volumeDecibels: -2
     pitch: 1
-    pitchVariance: 0
+    pitchVariance: 0.05
     looping: 0
 --- !u!136 &4408426014098253173
 CapsuleCollider:

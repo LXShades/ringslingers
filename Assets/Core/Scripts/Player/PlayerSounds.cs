@@ -10,6 +10,7 @@ public class PlayerSounds : NetworkBehaviour
         RingDrop,
         ShieldGain,
         ShieldLoss,
+        SpinRoll,
         SpinCharge,
         SpinRelease,
         NumLimit = 8
@@ -21,6 +22,7 @@ public class PlayerSounds : NetworkBehaviour
     public GameSound ringDropSound = new GameSound();
     public GameSound shieldGainSound = new GameSound();
     public GameSound shieldLossSound = new GameSound();
+    public GameSound spinRollSound = new GameSound();
     public GameSound spinChargeSound = new GameSound();
     public GameSound spinReleaseSound = new GameSound();
 
@@ -66,6 +68,9 @@ public class PlayerSounds : NetworkBehaviour
                 break;
             case PlayerSoundType.ShieldLoss:
                 GameSounds.PlaySound(gameObject, shieldLossSound);
+                break;
+            case PlayerSoundType.SpinRoll:
+                GameSounds.PlaySound(gameObject, spinRollSound);
                 break;
             case PlayerSoundType.SpinCharge:
                 GameSounds.PlaySound(gameObject, spinChargeSound);
