@@ -17,6 +17,7 @@ Shader "Custom/Water"
     {
         Tags { "Queue"="Transparent" "RenderType"="Transparent" "DisableBatching"="True"}
         LOD 200
+        Cull off
 
         CGPROGRAM
         // Physically based Standard lighting model, and enable shadows on all light types
