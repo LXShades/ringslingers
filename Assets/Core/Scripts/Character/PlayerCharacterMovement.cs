@@ -32,23 +32,22 @@ public class PlayerCharacterMovement : CharacterMovement
 
     public float airAccelerationMultiplier = 0.25f;
 
-    [Header("3D movement")]
+    [Header("[PlayerCharacterMovement] Loopy settings")]
     public float loopySpeedRequirement = 10f;
-    public float wallRunRotationResetSpeed = 180f;
-    public Transform rotateableModel;
 
-    [Header("Abilities")]
+    [Header("[PlayerCharacterMovement] Abilities")]
     public JumpAbility jumpAbility;
     public float actionSpeed = 60 * kFracunitSpeedToMetreSpeed;
 
     public GlideSettings glide;
 
-    [Header("Spindash and Roll")]
+    [Header("[PlayerCharacterMovement] Spindash and Roll")]
     public float minRollSpeed = 1f;
     [Range(0f, 1f)]
     public float rollingAccelerationMultiplier = 0.5f;
     [Range(0f, 1f)]
     public float rollingFriction = 0.999f;
+    public float rollingCapsuleHeight = 0.5f;
 
     public float spindashChargeDuration = 1f;
     public float spindashMaxSpeed = 20f;
@@ -56,13 +55,8 @@ public class PlayerCharacterMovement : CharacterMovement
     [Range(0f, 1f)]
     public float spindashChargeFriction = 0.995f;
 
-    [Header("Sounds")]
-    public GameSound jumpSound = new GameSound();
-    public GameSound thokSound = new GameSound();
-
-    [Header("Debug")]
+    [Header("[PlayerCharacterMovement] Debug")]
     public bool debugDrawMovement = false;
-    public bool debugDrawWallrunSensors = false;
 
     // States
     [Flags]
@@ -118,26 +112,15 @@ public class PlayerCharacterMovement : CharacterMovement
 
     public Vector3 groundNormal { get; private set; }
 
-    /*public Vector3 up
-    {
-        get => _up;
-        set
-        {
-            // change look rotation with wall run rotation motion if wallRunCameraAssist is enabled. Recompressed up to prevent drift when saving/loading quantized state
-            if (wallRunCameraAssist && player != null && Netplay.singleton.localPlayer == player)
-            {
-                GameTicker.singleton.localPlayerInput.aimDirection = Quaternion.FromToRotation(CharacterState.RecompressUp(_up), CharacterState.RecompressUp(value)) * GameTicker.singleton.localPlayerInput.aimDirection;
-            }
-
-            _up = value;
-        }
-    }
-    private Vector3 _up = Vector3.up;*/
+    // to restore collision capsule when rolling
+    private float originalCapsuleHeight;
 
     void Awake()
     {
         player = GetComponent<Character>();
         sounds = GetComponent<PlayerSounds>();
+
+        originalCapsuleHeight = (colliders[0] as CapsuleCollider).height;
     }
 
     public void TickMovement(float deltaTime, PlayerInput input) => TickMovement(deltaTime, input, TickInfo.Default);
@@ -192,6 +175,18 @@ public class PlayerCharacterMovement : CharacterMovement
         //ApplyRotation(deltaTime, input);
         // enable/disable loopy movement based on our speed
         enableLoopy = velocity.AlongPlane(up).magnitude > loopySpeedRequirement;
+
+        // Adjust character hitbox when spindashing/rolling
+        float capsuleHeight = originalCapsuleHeight;
+        CapsuleCollider capsule = colliders[0] as CapsuleCollider;
+        if ((state & (State.Rolling | State.SpinCharging)) != 0)
+            capsuleHeight = rollingCapsuleHeight;
+
+        if (capsule.height != capsuleHeight)
+        {
+            capsule.height = capsuleHeight;
+            capsule.center = new Vector3(capsule.center.x, Mathf.Max(capsuleHeight * 0.5f, capsule.radius), capsule.center.z);
+        }
 
         // Final movement
         ApplyCharacterVelocity(groundInfo, deltaTime, tickInfo);
@@ -445,28 +440,6 @@ public class PlayerCharacterMovement : CharacterMovement
                 state = (state & ~State.Climbing) | State.Jumped;
             }
         }
-    }
-
-    private void ApplyRotation(float deltaTime, PlayerInput input)
-    {
-        Vector3 targetUp = groundNormal;
-
-        if (velocity.magnitude < loopySpeedRequirement)
-            targetUp = Vector3.up;
-
-        // Rotate towards our target
-        if (Vector3.Angle(up, targetUp) > 0f)
-        {
-            float degreesToRotate = wallRunRotationResetSpeed * deltaTime;
-
-            up = Vector3.Slerp(up, targetUp, Mathf.Min(degreesToRotate / Vector3.Angle(up, targetUp), 1.0f)); // todo : might differ for frame rate, might be the reconciliation issue?
-        }
-
-        // Apply final rotation
-        transform.rotation = Quaternion.LookRotation(input.aimDirection.AlongPlane(up), up);
-
-        if ((state & State.Gliding) != 0)
-            transform.rotation = Quaternion.LookRotation(velocity, up);
     }
 
     private void ApplyGroundStates()

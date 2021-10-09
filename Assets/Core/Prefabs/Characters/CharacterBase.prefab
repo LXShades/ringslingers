@@ -1203,44 +1203,18 @@ MonoBehaviour:
   jumpFactor: 1
   airAccelerationMultiplier: 0.25
   loopySpeedRequirement: 7
-  wallRunRotationResetSpeed: 270
-  rotateableModel: {fileID: 1526902982376324854}
   jumpAbility: 0
   actionSpeed: 60
   glide: {fileID: 0}
   minRollSpeed: 1
   rollingAccelerationMultiplier: 0.03
   rollingFriction: 0.988
+  rollingCapsuleHeight: 0.6
   spindashChargeDuration: 1
   spindashMaxSpeed: 36
   spindashMinSpeed: 1
   spindashChargeFriction: 0.965
-  jumpSound:
-    clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
-    additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
-    volumeDecibels: -4.7
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
-  thokSound:
-    clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
-    additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
-    volumeDecibels: 0
-    pitch: 1
-    pitchVariance: 0
-    looping: 0
   debugDrawMovement: 0
-  debugDrawWallrunSensors: 0
   spindashChargeLevel: 0
 --- !u!114 &1227556274159782272
 MonoBehaviour:
