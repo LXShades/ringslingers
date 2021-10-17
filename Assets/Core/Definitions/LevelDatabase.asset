@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: LevelDatabase
   m_EditorClassIdentifier: 
   levels:
-  - path: Assets/Core/Scenes/Zones/M_JadeValley.unity
+  - path: Assets/Core/Scenes/Zones/SRB2 22/M_JadeValley.unity
     configuration:
       friendlyName: Jade Valley
+      credits: SRB2 2.2
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultWeaponAmmoStyle: 1
@@ -25,21 +26,10 @@ MonoBehaviour:
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/M_NoxiousFactory.unity
-    configuration:
-      friendlyName: Noxious Factory
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
-      defaultWeaponAmmoStyle: 1
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/M_ThunderCitadel.unity
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/M_ThunderCitadel.unity
     configuration:
       friendlyName: Thunder Citadel
+      credits: SRB2 1.09.4
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultWeaponAmmoStyle: 0
@@ -49,9 +39,23 @@ MonoBehaviour:
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/M_DesolateTwilight.unity
+  - path: Assets/Core/Scenes/Zones/SRB2 22/M_NoxiousFactory.unity
+    configuration:
+      friendlyName: Noxious Factory
+      credits: SRB2 2.2
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 1
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/M_DesolateTwilight.unity
     configuration:
       friendlyName: Desolate Twilight
+      credits: SRB2 1.09.4
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultWeaponAmmoStyle: 0
@@ -61,9 +65,10 @@ MonoBehaviour:
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/M_AirborneTemple.unity
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/M_AirborneTemple.unity
     configuration:
       friendlyName: Airborne Temple
+      credits: SRB2 1.09.4
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultWeaponAmmoStyle: 0
@@ -73,9 +78,10 @@ MonoBehaviour:
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/M_MeadowMatch.unity
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/M_MeadowMatch.unity
     configuration:
       friendlyName: Meadow Match
+      credits: SRB2 1.09.4
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultWeaponAmmoStyle: 0
@@ -85,69 +91,10 @@ MonoBehaviour:
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_CloudPalace.unity
-    configuration:
-      friendlyName: Cloud Palace
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultWeaponAmmoStyle: 0
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_MetalStar.unity
-    configuration:
-      friendlyName: Metal Star
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultWeaponAmmoStyle: 0
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_IronTurret.unity
-    configuration:
-      friendlyName: Iron Turret
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultWeaponAmmoStyle: 0
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_NimbusRuins.unity
-    configuration:
-      friendlyName: Nimbus Ruins
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultWeaponAmmoStyle: 0
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_IsolatedCanyon.unity
-    configuration:
-      friendlyName: Isolated Canyon
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultWeaponAmmoStyle: 0
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_LimeForest22.unity
+  - path: Assets/Core/Scenes/Zones/SRB2 22/F_LimeForest22.unity
     configuration:
       friendlyName: Lime Forest
+      credits: ???
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
       defaultWeaponAmmoStyle: 1
@@ -157,12 +104,78 @@ MonoBehaviour:
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_SilverCascade22.unity
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/F_CloudPalace.unity
+    configuration:
+      friendlyName: Cloud Palace
+      credits: SRB2 1.09.4
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/SRB2 22/F_SilverCascade22.unity
     configuration:
       friendlyName: Silver Cascade
+      credits: SRB2 2.2
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
       defaultWeaponAmmoStyle: 1
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/F_MetalStar.unity
+    configuration:
+      friendlyName: Metal Star
+      credits: SRB2 1.09.4
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/F_IronTurret.unity
+    configuration:
+      friendlyName: Iron Turret
+      credits: SRB2 1.09.4
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/F_NimbusRuins.unity
+    configuration:
+      friendlyName: Nimbus Ruins
+      credits: SRB2 1.09.4
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/SRB2 1094/F_IsolatedCanyon.unity
+    configuration:
+      friendlyName: Isolated Canyon
+      credits: SRB2 1.09.4
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 0
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
@@ -172,6 +185,7 @@ MonoBehaviour:
   - path: Assets/Core/Scenes/TestScenes/TEST_Gameplay.unity
     configuration:
       friendlyName: Gameplay Test
+      credits: ???
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
       defaultWeaponAmmoStyle: 0
@@ -179,5 +193,18 @@ MonoBehaviour:
       defaultPlayerLimit: 32
       includeInRotation: 0
       includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/TEMPLATE_TESTINGIMPORTS.unity
+    configuration:
+      friendlyName: Nameless
+      credits: ???
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 0
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 0
+      includeInMapSelection: 0
       minRotationPlayers: 0
       maxRotationPlayers: 32

@@ -3,15 +3,19 @@
 [System.Serializable]
 public class LevelConfiguration
 {
+    [Header("Map info")]
     public string friendlyName;
+    public string credits = "???";
 
     public Sprite mapShot;
 
+    [Header("Game mode")]
     [Tooltip("The default game mode to load for this scene")]
     public GameObject defaultGameModePrefab;
     public WeaponAmmoStyle defaultWeaponAmmoStyle = WeaponAmmoStyle.Time;
     public WeaponCombinationStyle defaultWeaponCombinationStyle = WeaponCombinationStyle.Combinable;
 
+    [Header("Level settings")]
     public int defaultPlayerLimit = 12;
 
     [Tooltip("Whether to include the map in the automatic rotation")]

@@ -20,7 +20,7 @@ public class MapSelector : MonoBehaviour
         for (int i = 0; i < db.levels.Count; i++)
         {
             LevelDatabase.Level level = db.levels[i];
-            options.Add(new Dropdown.OptionData(level.configuration.friendlyName));
+            options.Add(new Dropdown.OptionData($"{level.configuration.friendlyName} - {level.configuration.credits}"));
 
             if (level.path.Equals(SceneManager.GetActiveScene().path, System.StringComparison.CurrentCultureIgnoreCase))
                 selectionIndex = i;

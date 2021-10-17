@@ -15,6 +15,10 @@ public class GameHUD : MonoBehaviour
     public RectTransform autoaimCrosshair;
     public GameObject shieldOverlay;
 
+    [Header("Intro")]
+    public TextMeshProUGUI levelNameText;
+    public TextMeshProUGUI levelDescriptionText;
+
     [Header("Status")]
     public Image invincibilityIcon;
     public GameObject gotRedFlagIcon;
@@ -84,6 +88,17 @@ public class GameHUD : MonoBehaviour
             };
             slot.hasWeapon = false;
             weaponSlots.Add(slot);
+        }
+
+        // Setup level intro
+        LevelConfigurationComponent config = FindObjectOfType<LevelConfigurationComponent>();
+        if (config != null)
+        {
+            levelNameText.text = config.configuration.friendlyName;
+            levelDescriptionText.text = 
+                $"By: <color=orange>{config.configuration.credits}</color>\n" +
+                $"Weapon Limit: <color=orange>{(config.configuration.defaultWeaponAmmoStyle == WeaponAmmoStyle.Quantity ? "Ammo" : "Timer")}</color>\n" +
+                $"Combinable weapons: <color=orange>{(config.configuration.defaultWeaponCombinationStyle == WeaponCombinationStyle.Combinable ? "Yes" : "No")}</color>";
         }
     }
 
