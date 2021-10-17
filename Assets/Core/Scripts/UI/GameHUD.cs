@@ -150,8 +150,8 @@ public class GameHUD : MonoBehaviour
         {
             bool isRedFlagStolen = matchFlags.redFlag != null && (matchFlags.redFlag.currentCarrier != -1);
             bool isBlueFlagStolen = matchFlags.blueFlag != null && (matchFlags.blueFlag.currentCarrier != -1);
-            bool hasGotRedFlag = (matchFlags.redFlag.currentCarrier == Netplay.singleton.localPlayerId);
-            bool hasGotBlueFlag = (matchFlags.blueFlag.currentCarrier == Netplay.singleton.localPlayerId);
+            bool hasGotRedFlag = matchFlags.redFlag != null && (matchFlags.redFlag.currentCarrier == Netplay.singleton.localPlayerId);
+            bool hasGotBlueFlag = matchFlags.blueFlag != null && (matchFlags.blueFlag.currentCarrier == Netplay.singleton.localPlayerId);
 
             if (redFlagStolen.activeSelf != isRedFlagStolen)
                 redFlagStolen.SetActive(isRedFlagStolen);
