@@ -13,9 +13,21 @@ MonoBehaviour:
   m_Name: LevelDatabase
   m_EditorClassIdentifier: 
   levels:
-  - path: Assets/Core/Scenes/Zones/M_Jade.unity
+  - path: Assets/Core/Scenes/Zones/M_JadeValley.unity
     configuration:
       friendlyName: Jade Valley
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
+      defaultWeaponAmmoStyle: 1
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/M_NoxiousFactory.unity
+    configuration:
+      friendlyName: Noxious Factory
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultWeaponAmmoStyle: 1
@@ -55,18 +67,6 @@ MonoBehaviour:
       mapShot: {fileID: 0}
       defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
       defaultWeaponAmmoStyle: 0
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/M_NoxiousFactory.unity
-    configuration:
-      friendlyName: Noxious Factory
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
-      defaultWeaponAmmoStyle: 1
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 1
@@ -145,6 +145,18 @@ MonoBehaviour:
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32
+  - path: Assets/Core/Scenes/Zones/F_LimeForest22.unity
+    configuration:
+      friendlyName: Lime Forest
+      mapShot: {fileID: 0}
+      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
+      defaultWeaponAmmoStyle: 1
+      defaultWeaponCombinationStyle: 0
+      defaultPlayerLimit: 32
+      includeInRotation: 1
+      includeInMapSelection: 1
+      minRotationPlayers: 0
+      maxRotationPlayers: 32
   - path: Assets/Core/Scenes/Zones/F_SilverCascade22.unity
     configuration:
       friendlyName: Silver Cascade
@@ -166,18 +178,6 @@ MonoBehaviour:
       defaultWeaponCombinationStyle: 0
       defaultPlayerLimit: 32
       includeInRotation: 0
-      includeInMapSelection: 1
-      minRotationPlayers: 0
-      maxRotationPlayers: 32
-  - path: Assets/Core/Scenes/Zones/F_LimeForest22.unity
-    configuration:
-      friendlyName: Lime Forest
-      mapShot: {fileID: 0}
-      defaultGameModePrefab: {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
-      defaultWeaponAmmoStyle: 1
-      defaultWeaponCombinationStyle: 0
-      defaultPlayerLimit: 32
-      includeInRotation: 1
       includeInMapSelection: 1
       minRotationPlayers: 0
       maxRotationPlayers: 32

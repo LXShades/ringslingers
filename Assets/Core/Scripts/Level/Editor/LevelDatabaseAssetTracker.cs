@@ -15,6 +15,7 @@ public class LevelDatabaseAssetTracker : UnityEditor.AssetModificationProcessor
             LevelConfigurationComponent config = Object.FindObjectOfType<LevelConfigurationComponent>();
             int currentSceneIndex = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().buildIndex;
 
+            // todo: this assumes the scene being saved is the open one but maybe it isn't?
             if (config != null)
             {
                 if (currentSceneIndex != -1)
@@ -24,38 +25,35 @@ public class LevelDatabaseAssetTracker : UnityEditor.AssetModificationProcessor
                     foreach (string dbGuid in levelDbs)
                     {
                         LevelDatabase levelDb = (LevelDatabase)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(dbGuid), typeof(LevelDatabase));
-                        bool wasChangeMade = false;
 
                         if (levelDb != null)
                         {
-                            for (int i = 0; i < levelDb.levels.Length; i++)
+                            int sceneDbIndex = levelDb.levels.FindIndex(a => UnityEngine.SceneManagement.SceneManager.GetSceneByPath(a.path).buildIndex == currentSceneIndex);
+
+                            if (config.configuration.includeInMapSelection || config.configuration.includeInRotation)
                             {
-                                if (UnityEngine.SceneManagement.SceneUtility.GetBuildIndexByScenePath(levelDb.levels[i].path) == currentSceneIndex)
+                                LevelDatabase.Level asLevel = new LevelDatabase.Level()
                                 {
-                                    levelDb.levels[i].configuration = config.configuration;
-                                    wasChangeMade = true;
+                                    configuration = config.configuration,
+                                    path = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path
+                                };
+
+                                if (sceneDbIndex == -1)
+                                {
+                                    // add entry
+                                    levelDb.InsertScene(asLevel);
+                                }
+                                else
+                                {
+                                    // update entry
+                                    levelDb.UpdateScene(sceneDbIndex, asLevel);
                                 }
                             }
-                        }
-
-                        if (!wasChangeMade && (config.configuration.includeInMapSelection || config.configuration.includeInRotation))
-                        {
-                            if (EditorUtility.DisplayDialog("Save to level database?", $"This level's level configuration is marked with Include (in Rotation or Map Selection) but it is not in the level DB \"{levelDb.name}\". Would you like to add it to the level DB?", "Yes", "No"))
+                            else if (sceneDbIndex != -1)
                             {
-                                LevelDatabase.Level[] newLevels = new LevelDatabase.Level[levelDb.levels.Length + 1];
-
-                                levelDb.levels.CopyTo(newLevels, 0);
-                                newLevels[newLevels.Length - 1] = new LevelDatabase.Level() { configuration = config.configuration, path = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path };
-                                levelDb.levels = newLevels;
-
-                                wasChangeMade = true;
+                                // remove entry
+                                levelDb.RemoveScene(sceneDbIndex);
                             }
-                        }
-
-                        if (wasChangeMade)
-                        {
-                            EditorUtility.SetDirty(levelDb);
-                            AssetDatabase.SaveAssets();
                         }
                     }
                 }

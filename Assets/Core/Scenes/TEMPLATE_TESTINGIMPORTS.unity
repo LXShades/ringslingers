@@ -255,6 +255,18 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6367271315515752156, guid: 653cdbe8668720944a5cb053bad4b35a, type: 3}
+      propertyPath: configuration.includeInRotation
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6367271315515752156, guid: 653cdbe8668720944a5cb053bad4b35a, type: 3}
+      propertyPath: configuration.defaultPlayerLimit
+      value: 32
+      objectReference: {fileID: 0}
+    - target: {fileID: 6367271315515752156, guid: 653cdbe8668720944a5cb053bad4b35a, type: 3}
+      propertyPath: configuration.includeInMapSelection
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 653cdbe8668720944a5cb053bad4b35a, type: 3}
 --- !u!1001 &1681739594

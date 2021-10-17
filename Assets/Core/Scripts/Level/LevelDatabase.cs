@@ -2,6 +2,8 @@
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEngine.SceneManagement;
+using UnityEditor.SceneManagement;
 #endif
 
 [CreateAssetMenu(fileName = "New Level Database", menuName = "Level Database")]
@@ -18,14 +20,49 @@ public class LevelDatabase : ScriptableObject
     }
 
     [Header("Levels (please do not edit manually, go to the scene instead)")]
-    public Level[] levels;
+    public List<Level> levels = new List<Level>();
 
 #if UNITY_EDITOR
+    public void InsertScene(Level item, bool doSave = true)
+    {
+        levels.Add(item);
+        SortScenes();
+
+        if (doSave)
+        {
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+        }
+    }
+
+    public void UpdateScene(int sceneIndex, Level item, bool doSave = true)
+    {
+        levels[sceneIndex] = item;
+
+        if (doSave)
+        {
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+        }
+    }
+
+    public void RemoveScene(int sceneIndex, bool doSave = true)
+    {
+        levels.RemoveAt(sceneIndex);
+
+        if (doSave)
+        {
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
+        }
+    }
+
     public void RescanScenes()
     {
         // Scans all scenes for a LevelConfiguration and adds to the list
-        List<Level> levelList = new List<Level>();
-        List<UnityEngine.SceneManagement.Scene> scenesToUnload = new List<UnityEngine.SceneManagement.Scene>();
+        levels.Clear();
+
+        List<Scene> scenesToUnload = new List<Scene>();
 
         foreach (var sceneSetting in EditorBuildSettings.scenes)
         {
@@ -33,24 +70,24 @@ public class LevelDatabase : ScriptableObject
                 continue;
 
             string scenePath = sceneSetting.path;
-            UnityEngine.SceneManagement.Scene loadedScene;
+            Scene loadedScene;
 
-            if (!UnityEditor.SceneManagement.EditorSceneManager.GetSceneByPath(scenePath).IsValid())
+            if (!EditorSceneManager.GetSceneByPath(scenePath).IsValid())
             {
-                UnityEditor.SceneManagement.EditorSceneManager.OpenScene(scenePath, UnityEditor.SceneManagement.OpenSceneMode.Additive);
-                loadedScene = UnityEditor.SceneManagement.EditorSceneManager.GetSceneByPath(scenePath);
+                EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+                loadedScene = EditorSceneManager.GetSceneByPath(scenePath);
                 scenesToUnload.Add(loadedScene);
             }
             else
             {
-                loadedScene = UnityEditor.SceneManagement.EditorSceneManager.GetSceneByPath(scenePath);
+                loadedScene = EditorSceneManager.GetSceneByPath(scenePath);
             }
 
             LevelConfiguration config = FindConfigurationInScene(loadedScene);
 
             if (config != null)
             {
-                levelList.Add(new Level()
+                levels.Add(new Level()
                 {
                     path = scenePath,
                     configuration = config
@@ -58,29 +95,31 @@ public class LevelDatabase : ScriptableObject
             }
         }
 
-        foreach (UnityEngine.SceneManagement.Scene scene in scenesToUnload)
-        {
-            UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene, true);
-        }
+        foreach (Scene scene in scenesToUnload)
+            EditorSceneManager.CloseScene(scene, true);
 
-        levels = levelList.ToArray();
+        SortScenes();
+
         EditorUtility.SetDirty(this);
         AssetDatabase.SaveAssets();
     }
 
-    private LevelConfiguration FindConfigurationInScene(UnityEngine.SceneManagement.Scene scene)
+    private LevelConfiguration FindConfigurationInScene(Scene scene)
     {
         foreach (GameObject gameObject in scene.GetRootGameObjects())
         {
             LevelConfigurationComponent config = gameObject.GetComponentInChildren<LevelConfigurationComponent>();
 
             if (config != null)
-            {
                 return config.configuration;
-            }
         }
 
         return null;
+    }
+
+    public void SortScenes()
+    {
+        levels.Sort((a, b) => SceneManager.GetSceneByPath(a.path).buildIndex - SceneManager.GetSceneByPath(b.path).buildIndex);
     }
 #endif
 }

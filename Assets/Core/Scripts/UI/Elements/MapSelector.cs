@@ -1,8 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MapSelector : MonoBehaviour
 {
@@ -12,13 +11,13 @@ public class MapSelector : MonoBehaviour
     {
         LevelDatabase db = GameManager.singleton.levelDatabase;
 
-        if (db.levels.Length == 0)
+        if (db.levels.Count == 0)
             return;
         dropdown.ClearOptions();
 
         int selectionIndex = -1;
         List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
-        for (int i = 0; i < db.levels.Length; i++)
+        for (int i = 0; i < db.levels.Count; i++)
         {
             LevelDatabase.Level level = db.levels[i];
             options.Add(new Dropdown.OptionData(level.configuration.friendlyName));

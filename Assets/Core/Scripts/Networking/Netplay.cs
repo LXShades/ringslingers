@@ -154,7 +154,7 @@ public class Netplay : MonoBehaviour
 
         LevelDatabase db = GameManager.singleton.levelDatabase;
 
-        if (db == null || db.levels == null || db.levels.Length == 0)
+        if (db == null || db.levels == null || db.levels.Count == 0)
         {
             Log.WriteError("Cannot load levels database: list is empty or null");
             return;
@@ -164,7 +164,7 @@ public class Netplay : MonoBehaviour
         int nextLevelIndex = -1;
         int currentBuildIndex = SceneManager.GetActiveScene().buildIndex;
 
-        for (int i = 0; i < db.levels.Length; i++)
+        for (int i = 0; i < db.levels.Count; i++)
         {
             int buildIndex = SceneUtility.GetBuildIndexByScenePath(db.levels[i].path);
 
@@ -179,7 +179,7 @@ public class Netplay : MonoBehaviour
         }
 
         // Find the next VALID scene
-        for (int i = (currentLevelIndex + 1) % db.levels.Length; i != currentLevelIndex; i = (i + 1) % db.levels.Length)
+        for (int i = (currentLevelIndex + 1) % db.levels.Count; i != currentLevelIndex; i = (i + 1) % db.levels.Count)
         {
             int buildIndex = SceneUtility.GetBuildIndexByScenePath(db.levels[i].path);
 
