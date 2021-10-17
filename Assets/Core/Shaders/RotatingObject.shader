@@ -6,6 +6,7 @@ Shader "Custom/RotatingObject"
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
+        [HDR] _EmissionColor ("Emission", Color) = (0,0,0,0)
 
         _RotationSpeed ("Rotation speed (degrees/sec)", Range(-720, 720)) = 360.0
     }
@@ -30,6 +31,7 @@ Shader "Custom/RotatingObject"
 
         half _Glossiness;
         half _Metallic;
+        fixed4 _EmissionColor;
         fixed4 _Color;
         float _RotationSpeed;
 
@@ -60,6 +62,7 @@ Shader "Custom/RotatingObject"
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;
             o.Alpha = c.a;
+            o.Emission = _EmissionColor;
         }
         ENDCG
     }
