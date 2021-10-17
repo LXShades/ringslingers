@@ -8,7 +8,7 @@ Shader "Custom/SRB2 Style (Cutout)"
     {
         Pass
         {
-            Tags { "RenderType" = "Opaque" "DisableBatching" = "True" }
+            Tags { "LightMode"="ForwardBase" "RenderType" = "Transparent" "DisableBatching" = "True" "Queue"="Transparent" "IgnoreProjector" = "True" "DisableBatching" = "True" }
             Cull Off
             LOD 200
 

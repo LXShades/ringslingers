@@ -16,7 +16,7 @@ struct v2f
 {
     float2 uv : TEXCOORD0;
     SHADOW_COORDS(1) // put shadows data into TEXCOORD1
-        fixed3 diff : COLOR0;
+    fixed3 diff : COLOR0;
     fixed3 ambient : COLOR1;
     float4 pos : SV_POSITION;
     fixed shadowEffect : TEXCOORD2;
@@ -35,10 +35,12 @@ v2f vert(appdata_base v)
     o.shadowEffect = clamp(upness - (1 - buffer) / buffer, 0, 1);
     nl = 1;
 
-    o.diff = nl * _LightColor0.rgb;
+    const float brightnessMultiplier = 0.85f;
+    o.diff = _LightColor0.rgb * nl * brightnessMultiplier;
     o.ambient = ShadeSH9(half4(worldNormal, 1));
+
     TRANSFER_SHADOW(o)
-        return o;
+    return o;
 }
 
 fixed4 frag(v2f i) : SV_Target
