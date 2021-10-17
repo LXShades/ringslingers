@@ -6,7 +6,6 @@ public class NeuralTrainer : MonoBehaviour
     [Header("Spawning")]
     public int populationSize;
     public TrainingBotBase botPrefab;
-    public GameObject checkpointPrefab;
 
     [Header("Local test player")]
     public PlayerCharacterMovement localPlayer;
@@ -19,14 +18,6 @@ public class NeuralTrainer : MonoBehaviour
     [Header("Simulation")]
     public float timeframe;
     [Range(0.1f, 10f)] public float gameSpeed = 1f;
-
-    [Header("Checkpoints")]
-    public int numCheckpoints = 5;
-    public bool doRandomizeCheckpoints = true;
-    public float checkpointSpawnRadius = 5f;
-    public bool spawnCheckpointsOnEdge = false;
-    public float checkpointRadius = 2f;
-    public float checkpointRandomHeightRange = 0f;
 
     [Header("Speed")]
     public float startVerticalSpeed = 15f;
@@ -44,7 +35,7 @@ public class NeuralTrainer : MonoBehaviour
 
     public List<NeuralNetwork> networks { get; private set; }
     private List<TrainingBotBase> bots = new List<TrainingBotBase>();
-    private List<Transform> checkpoints = new List<Transform>();
+    private TrainingEnvironmentBase trainingEnvironment;
 
     private float lastRunTime = -99f;
 
@@ -52,12 +43,6 @@ public class NeuralTrainer : MonoBehaviour
     {
         if (populationSize % 2 != 0)
             populationSize = (populationSize + 1) / 2 * 2;
-
-        for (int i = 0; i < numCheckpoints; i++)
-        {
-            GameObject checkpoint = Instantiate(checkpointPrefab);
-            checkpoints.Add(checkpoint.transform);
-        }
 
         InitNetworks();
     }
@@ -90,6 +75,8 @@ public class NeuralTrainer : MonoBehaviour
 
             networks.Add(net);
         }
+
+        trainingEnvironment = Instantiate(botPrefab.trainingEnvironmentPrefab, transform.position, transform.rotation);
     }
 
     public void StartCycle()
@@ -106,37 +93,20 @@ public class NeuralTrainer : MonoBehaviour
         {
             for (int i = 0; i < populationSize; i++)
                 bots.Add(Instantiate(botPrefab, transform.position, Quaternion.identity));
-
         }
 
         for (int i = 0; i < bots.Count; i++)
         {
             TrainingBotBase bot = bots[i];
 
-            bot.network = networks[i];//deploys network to each learner
-            bot.target = checkpoints.Count > 0 ? checkpoints[0].transform : null;
-            bot.checkpoints = checkpoints;
-            bot.checkpointRadius = checkpointRadius;
+            bot.network = networks[i];
+            bot.trainingEnvironment = trainingEnvironment;
             bot.movement.velocity = startVelocity;
             bot.movement.state = 0;
             bot.localPlayer = localPlayer;
             bot.trainer = this;
 
             bot.Reset();
-        }
-
-        // Setup checkpoints
-        if (!doRandomizeCheckpoints)
-            Random.InitState(0);
-
-        for (int i = 0; i < checkpoints.Count; i++)
-        {
-            Vector2 circle = Random.insideUnitCircle;
-            if (spawnCheckpointsOnEdge)
-                circle.Normalize();
-            checkpoints[i].transform.position = new Vector3(circle.x, Random.Range(0f, checkpointRandomHeightRange) / checkpointSpawnRadius, circle.y) * checkpointSpawnRadius;
-            checkpoints[i].transform.localScale = Vector3.one * (checkpointRadius * 2);
-            checkpoints[i].GetComponent<MeshRenderer>().material.color = i == 0 ? Color.green : Color.red;
         }
 
         // Setup local player to optionally race the bots
@@ -146,6 +116,7 @@ public class NeuralTrainer : MonoBehaviour
             localPlayer.velocity = startVelocity;
         }
 
+        trainingEnvironment?.OnCycle();
         onCycle?.Invoke();
 
         lastRunTime = Time.time;

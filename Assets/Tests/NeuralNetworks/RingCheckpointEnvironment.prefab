@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3694916194146117775
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3694916194146117773}
+  - component: {fileID: 3694916194146117774}
+  m_Layer: 0
+  m_Name: RingCheckpointEnvironment
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3694916194146117773
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3694916194146117775}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1.6339989, y: -0.5, z: -2.0896988}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3694916194146117774
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3694916194146117775}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9385c6f11a7bb4c45a8c944cd72bfb53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  checkpointPrefab: {fileID: 479316498852180686, guid: 01b73e26dc52b91499c94e26e5271b9f, type: 3}
+  numCheckpoints: 14
+  doRandomizeCheckpoints: 1
+  checkpointSpawnRadius: 10.04
+  spawnCheckpointsOnEdge: 0
+  checkpointRadius: 0.5
+  checkpointRandomHeightRange: 0
+  numLines: 1
+  lineNumCheckpoints: 8
+  lineSpacing: 1

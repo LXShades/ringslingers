@@ -1,32 +1,27 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class TrainingBotBase : MonoBehaviour
 {
-    [Header("Save/Load")]
-    public string networkName = "";
-
-    [Header("Neural Network Requirements")]
+    [Header("Requirements")]
     public int[] layers = new int[3] { 5, 3, 2 };
     public NeuralNetwork network;
+    public TrainingEnvironmentBase trainingEnvironmentPrefab;
+
+    [Header("Save/Load")]
+    public string networkName = "";
     public NeuralTrainer trainer { get; set; }
 
     [Header("Simulation")]
     float maxDeltaTime = 0.033f;
 
-    public Transform target;
-    public Transform nextTarget;
     public PlayerCharacterMovement movement { get; private set; }
-    public List<Transform> checkpoints;
-    public PlayerCharacterMovement localPlayer;
+    public PlayerCharacterMovement localPlayer { get; set; }
+    public TrainingEnvironmentBase trainingEnvironment { get; set; }
 
     protected float[] networkInput;
 
     protected Vector3 startPosition;
     protected Quaternion startRotation;
-
-    public float checkpointRadius;
-    public int currentCheckpoint = 0;
 
     private void Awake()
     {
@@ -38,8 +33,6 @@ public class TrainingBotBase : MonoBehaviour
 
     protected virtual void Start()
     {
-        target = checkpoints.Count > 0 ? checkpoints[0] : null;
-        nextTarget = checkpoints.Count > 1 ? checkpoints[1] : null;
     }
 
     protected virtual void Update()
@@ -72,18 +65,4 @@ public class TrainingBotBase : MonoBehaviour
     }
 
     public virtual void OnReset() { }
-
-    private void UpdateAsOnGround(ref PlayerInput charInput)
-    {
-        networkInput[0] = target.position.x - transform.position.x;
-        networkInput[1] = target.position.z - transform.position.z;
-        networkInput[2] = movement.velocity.x;
-        networkInput[3] = movement.velocity.z;
-
-        float[] output = network.FeedForward(networkInput);
-        Vector2 dir = new Vector2(output[0], output[1]).normalized;
-
-        charInput.moveHorizontalAxis = dir.x;
-        charInput.moveVerticalAxis = dir.y;
-    }
 }
