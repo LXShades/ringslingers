@@ -504,7 +504,7 @@ public class Netplay : MonoBehaviour
         // Update netstat
         if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
         {
-            netStat = $"Send/Recv: {numSentBytes/1024f:0.0}KB/{numReceivedBytes / 1024f:0.0}KB\nSend/Recv: {numSentBytes / 128f:0.0}Kbits/{numReceivedBytes / 128f:0.0}Kbits";
+            netStat = $"Send/Recv: {numSentBytes / 1024f:0.0}KB/{numReceivedBytes / 1024f:0.0}KB\nSend/Recv: {numSentBytes / 128f:0.0}Kbits/{numReceivedBytes / 128f:0.0}Kbits";
             numReceivedBytes = 0;
             numSentBytes = 0;
 

@@ -45,6 +45,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   configuration:
     friendlyName: Nameless
+    credits: ???
     mapShot: {fileID: 0}
     defaultGameModePrefab: {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
     defaultWeaponAmmoStyle: 0
@@ -288,6 +289,7 @@ MonoBehaviour:
   maxPlayerVelocityForEyeBob: 8.7
   landEyeBobHeight: 0.5
   maxPlayerLandForEyeBob: 40
+  loopyDampFactor: 0.1
 --- !u!1 &3413194139127699361
 GameObject:
   m_ObjectHideFlags: 0
@@ -438,6 +440,7 @@ MonoBehaviour:
   maxDeltaTime: 0.5
   maxTimeSmoothing: 0.2
   extraSmoothing: 0.0017
+  timeTilLag: 0.75
   maxLocalPrediction: 1
   sendBufferLength: 0.2
   extrapolateLocalInput: 1
@@ -445,10 +448,8 @@ MonoBehaviour:
   maxRemotePrediction: 0.3
   remotePredictionTickRate: 0.08
   localPlayerInput:
-    _moveHorizontalAxis: 0
-    _moveVerticalAxis: 0
-    _horizontalAim: 0
-    _verticalAim: 0
+    _moveAxes: 0
+    _aim: 0
     _buttons: 0
 --- !u!1001 &5855508452200257497
 PrefabInstance:
@@ -979,10 +980,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7380845849382662364, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8315794132201994453, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
-      propertyPath: m_PresetInfoIsWorld
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8383358575031171901, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}

@@ -75,6 +75,8 @@ public class GameManager : MonoBehaviour
 
     private PlayerCamera cachedCamera = null;
 
+    private int menuSceneIndex = -1;
+
     private void Awake()
     {
         transform.SetParent(null, false);
@@ -89,6 +91,8 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         NetMan.singleton.onClientDisconnect += OnClientDisconnected;
+
+        menuSceneIndex = SceneManager.GetSceneByPath(menuScene).buildIndex;
     }
 
     void Update()
@@ -97,7 +101,7 @@ public class GameManager : MonoBehaviour
         bool isWeaponWheelOpen = input.Gameplay.WeaponWheel.ReadValue<float>() > 0.5f;
 
         needsCursor |= isPaused; // pause menu needs mouse
-        needsCursor |= string.Compare(SceneManager.GetActiveScene().path, menuScene, true) == 0; // main menu needs mouse
+        needsCursor |= SceneManager.GetActiveScene().buildIndex == menuSceneIndex; // main menu needs mouse
         needsCursor |= isWeaponWheelOpen; // weapon wheel needs mouse
 
         CursorLockMode lockMode = needsCursor ? CursorLockMode.None : CursorLockMode.Locked;

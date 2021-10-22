@@ -16,6 +16,7 @@ public class GameHUD : MonoBehaviour
     public GameObject shieldOverlay;
 
     [Header("Intro")]
+    public GameObject levelIntroRoot;
     public TextMeshProUGUI levelNameText;
     public TextMeshProUGUI levelDescriptionText;
 
@@ -99,6 +100,8 @@ public class GameHUD : MonoBehaviour
                 $"By: <color=orange>{config.configuration.credits}</color>\n" +
                 $"Weapon Limit: <color=orange>{(config.configuration.defaultWeaponAmmoStyle == WeaponAmmoStyle.Quantity ? "Ammo" : "Timer")}</color>\n" +
                 $"Combinable weapons: <color=orange>{(config.configuration.defaultWeaponCombinationStyle == WeaponCombinationStyle.Combinable ? "Yes" : "No")}</color>";
+
+            levelIntroRoot.SetActive(true);
         }
     }
 

@@ -7,25 +7,25 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
     // Movement
     public float moveHorizontalAxis
     {
-        get => Compressor.BitsToUnitFloat(_moveHorizontalAxis, 8);
-        set => _moveHorizontalAxis = (char)Compressor.UnitFloatToBits(value, 8);
+        get => Compressor.BitsToUnitFloat(_moveAxes & 0x00FF, 8);
+        set => _moveAxes = (ushort)(Compressor.UnitFloatToBits(value, 8) | (_moveAxes & ~0x00FF));
     }
     public float moveVerticalAxis
     {
-        get => Compressor.BitsToUnitFloat(_moveVerticalAxis, 8);
-        set => _moveVerticalAxis = (char)Compressor.UnitFloatToBits(value, 8);
+        get => Compressor.BitsToUnitFloat((_moveAxes & 0xFF00) >> 8, 8);
+        set => _moveAxes = (ushort)((Compressor.UnitFloatToBits(value, 8) << 8) | (_moveAxes & ~0xFF00));
     }
 
     // Looking/camera
     public float horizontalAim
     {
-        get => Compressor.BitsToUnitFloat(_horizontalAim, 16) * 360f;
-        set => _horizontalAim = (short)Compressor.UnitFloatToBits(value / 360f, 16);
+        get => Compressor.BitsToUnitFloat((int)(_aim & 0x0000FFFF), 16) * 360f;
+        set => _aim = (uint)((uint)Compressor.UnitFloatToBits(value / 360f, 16) | (_aim & ~0x0000FFFF));
     }
     public float verticalAim
     {
-        get => Compressor.BitsToUnitFloat(_verticalAim, 16) * 360f;
-        set => _verticalAim = (short)Compressor.UnitFloatToBits(value / 360f, 16);
+        get => Compressor.BitsToUnitFloat((int)((_aim & 0xFFFF0000) >> 16), 16) * 360f;
+        set => _aim = (uint)(Compressor.UnitFloatToBits(value / 360f, 16) << 16) | (_aim & ~0xFFFF0000);
     }
 
     // Buttons
@@ -55,10 +55,8 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
 
     // actual compressed data
     // 7 bytes
-    public char _moveHorizontalAxis;
-    public char _moveVerticalAxis;
-    public short _horizontalAim;
-    public short _verticalAim;
+    public ushort _moveAxes; // HHVV where H= horizontal compressed and V = vertical compressed
+    public uint _aim; // HHHHVVVV where H=horizontal compressed and V = vertical compressed
     public byte _buttons;
 
     public Vector3 aimDirection
