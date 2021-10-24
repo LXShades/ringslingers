@@ -15,8 +15,6 @@ public class BotController : MonoBehaviour
 
     public int followPlayerId;
 
-    private int currentTargetPathPoint = 0;
-
     private Character character;
 
     private PlayerInput input;
@@ -27,18 +25,26 @@ public class BotController : MonoBehaviour
 
     public string airNeuralNetworkString;
     public NeuralNetwork airNeuralNetwork { get; private set; }
+    public string groundRunNeuralNetworkString;
+    public NeuralNetwork groundRunNeuralNetwork { get; private set; }
 
     private void Awake()
     {
         availableStates.Add(new State_FollowPlayer());
         availableStates.Add(new State_MoveTowards());
+        availableStates.Add(new State_GrabRings());
 
         airNeuralNetwork = new NeuralNetwork(new int[] { 6, 4, 2 });
         airNeuralNetwork.LoadAsString(airNeuralNetworkString);
 
-        State_FollowPlayer moveState = GetOrActivateState<State_FollowPlayer>();
+        groundRunNeuralNetwork = new NeuralNetwork(new int[] { 6, 3, 2 });
+        groundRunNeuralNetwork.LoadAsString(groundRunNeuralNetworkString);
+
+        GetOrActivateState<State_GrabRings>();
+        /*State_FollowPlayer moveState = GetOrActivateState<State_FollowPlayer>();
         moveState.followPlayerId = followPlayerId;
-        GetOrActivateState<State_Spin>();
+        GetOrActivateState<State_Spin>();*/
+        
     }
 
     private void Update()
@@ -77,7 +83,11 @@ public class BotController : MonoBehaviour
 
     public class State_MoveTowards : IState
     {
-        public Vector3 targetPosition;
+        public Vector3 targetPosition { get; private set; }
+
+        public Vector3 nextTargetPosition { get; private set; }
+
+        public bool useFastPath { get; private set; }
 
         public bool canTravelToDestination { get; private set; } // false if blocked by something, possibly temporarily
         public bool hasReachedDestination { get; private set; }
@@ -102,6 +112,20 @@ public class BotController : MonoBehaviour
             hasReachedDestination = Vector3.Distance(character.transform.position, targetPosition) <= 0.5f;
 
             botController = controller;
+        }
+
+        public void SetTargetPosition(Vector3 targetPosition)
+        {
+            this.targetPosition = targetPosition;
+            this.nextTargetPosition = targetPosition;
+            this.useFastPath = false;
+        }
+
+        public void SetTargetPosition(Vector3 targetPosition, Vector3 nextTargetPosition)
+        {
+            this.targetPosition = targetPosition;
+            this.nextTargetPosition = nextTargetPosition;
+            this.useFastPath = true;
         }
 
         private Vector3 GetNextPathPoint(Character character, Vector3 target, out Vector3 recommendedAcceleration)
@@ -142,7 +166,7 @@ public class BotController : MonoBehaviour
                     if (i + 1 < path.corners.Length && path.corners[i + 1].y > path.corners[i].y + 0.5f)
                         shouldStopAtTarget = false; // we want speed
 
-                    if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, point, out recommendedAcceleration, shouldStopAtTarget))
+                    if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, point, nextTargetPosition, out recommendedAcceleration, shouldStopAtTarget))
                         return point;
                 }
 
@@ -152,7 +176,7 @@ public class BotController : MonoBehaviour
             else
             {
                 // skip straight to the target if we can
-                if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, target, out recommendedAcceleration, true))
+                if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, target, nextTargetPosition, out recommendedAcceleration, true))
                     return target;
             }
 
@@ -161,7 +185,7 @@ public class BotController : MonoBehaviour
             return character.transform.position;
         }
 
-        private bool CanReachPoint(PlayerCharacterMovement movement, Vector3 position, Vector3 velocity, Vector3 target, out Vector3 recommendedAcceleration, bool shouldStopAtTarget)
+        private bool CanReachPoint(PlayerCharacterMovement movement, Vector3 position, Vector3 velocity, Vector3 target, Vector3 nextTarget, out Vector3 recommendedAcceleration, bool shouldStopAtTarget)
         {
             float deltaTime = 0.05f;
             float brakeFactor = 0.5f;
@@ -214,6 +238,24 @@ public class BotController : MonoBehaviour
                         bestAcceleration = new Vector3(outputs[0], 0f, outputs[1]).normalized;
                     }
                 }
+                if (isOnGround && botController != null && useFastPath)
+                {
+                    if (botController.groundRunNeuralNetwork != null)
+                    {
+                        float[] inputs = new float[]
+                        {
+                            target.x - position.x,
+                            target.z - position.z,
+                            nextTarget.x - position.x,
+                            nextTarget.z - position.z,
+                            velocity.x,
+                            velocity.z
+                        };
+                        float[] outputs = botController.groundRunNeuralNetwork.FeedForward(inputs);
+                        
+                        bestAcceleration = new Vector3(outputs[0], 0f, outputs[1]).normalized;
+                    }
+                }
 
                 // run accelerate
                 float accelMultiplier = 0.5f;
@@ -259,7 +301,7 @@ public class BotController : MonoBehaviour
         {
             if (followPlayerId > 0 && Netplay.singleton.players.Count > followPlayerId && Netplay.singleton.players[followPlayerId])
             {
-                controller.GetOrActivateState<State_MoveTowards>().targetPosition = Netplay.singleton.players[followPlayerId].transform.position;
+                controller.GetOrActivateState<State_MoveTowards>().SetTargetPosition(Netplay.singleton.players[followPlayerId].transform.position);
             }
 
             /*if (path)
@@ -272,6 +314,48 @@ public class BotController : MonoBehaviour
                 moveIntentionDirection = MoveTowardsTarget(path.GetWorldPoint(currentTargetPathPoint));
             }
             else */
+        }
+    }
+
+    public class State_GrabRings : IState
+    {
+        private List<Ring> rings = new List<Ring>();
+
+        public void Update(BotController controller, Character character, ref PlayerInput input)
+        {
+            if (rings.Count == 0)
+                rings.AddRange(FindObjectsOfType<Ring>());
+
+            float closestDist = float.MaxValue;
+            float nextClosestDist = float.MaxValue;
+            Vector3 myPosition = character.transform.position;
+            Vector3 closestPosition = myPosition;
+            Vector3 nextClosestPosition = myPosition;
+
+            foreach (Ring ring in rings)
+            {
+                float dist = Vector3.Distance(myPosition, ring.transform.position);
+                if (ring.respawnableItem.isSpawned && ring.transform.position.y < myPosition.y + 0.8f)
+                {
+                    if (dist < closestDist)
+                    {
+                        nextClosestDist = closestDist;
+                        nextClosestPosition = closestPosition;
+
+                        closestDist = dist;
+                        closestPosition = ring.transform.position;
+                    }
+                    else if (dist < nextClosestDist)
+                    {
+                        nextClosestDist = dist;
+                        nextClosestPosition = ring.transform.position;
+                    }
+                }
+            }
+
+            State_MoveTowards moveState = controller.GetOrActivateState<State_MoveTowards>();
+            
+            moveState.SetTargetPosition(closestPosition, nextClosestPosition);
         }
     }
 

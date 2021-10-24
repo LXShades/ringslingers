@@ -71,8 +71,6 @@ public class GameManager : MonoBehaviour
     private bool areInputsEnabled = false;
     private bool doSuppressGameplayInputs = false;
 
-    private string defaultMenuScenePath;
-
     private PlayerCamera cachedCamera = null;
 
     private int menuSceneIndex = -1;
@@ -92,7 +90,7 @@ public class GameManager : MonoBehaviour
     {
         NetMan.singleton.onClientDisconnect += OnClientDisconnected;
 
-        menuSceneIndex = SceneManager.GetSceneByPath(menuScene).buildIndex;
+        menuSceneIndex = SceneUtility.GetBuildIndexByScenePath(menuScene);
     }
 
     void Update()

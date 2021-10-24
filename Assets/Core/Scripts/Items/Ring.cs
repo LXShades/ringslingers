@@ -20,7 +20,7 @@ public class Ring : NetworkBehaviour, ISpawnCallbacks
     public GameSound pickupSound = new GameSound();
 
     // Components
-    private RespawnableItem respawnableItem;
+    public RespawnableItem respawnableItem { get; private set; }
     private DespawnAfterDuration despawn;
     private SyncMovement syncMovement;
     private Movement movement;
