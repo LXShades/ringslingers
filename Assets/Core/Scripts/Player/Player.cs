@@ -50,7 +50,10 @@ public class Player : NetworkBehaviour
 
         // local player character created, update everyone else's outline statuc
         foreach (Character character in Netplay.singleton.players)
-            character.UpdateOutlineColour();
+        {
+            if (character)
+                character.UpdateOutlineColour();
+        }
 
         CmdSendPersistentData(localPersistent);
     }
