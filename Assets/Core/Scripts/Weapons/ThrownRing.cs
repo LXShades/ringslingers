@@ -140,7 +140,7 @@ public class ThrownRing : NetworkBehaviour
                 if (rb.SweepTest(step.normalized, out RaycastHit collision, step.magnitude, QueryTriggerInteraction.Ignore))
                 {
                     transform.position += step.normalized * (collision.distance - 0.1f);
-                    HandleCollision(collider, collision.collider, collision.normal);
+                    HandleCollision(collider, collision.collider, collision.normal, 0f);
 
                     step = velocity.normalized * (step.magnitude - Mathf.Max(collision.distance - 0.01f, 0f)); // velocity might have changed so factor that in
                 }
@@ -195,11 +195,11 @@ public class ThrownRing : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.contacts[0].separation <= 0f)
-            HandleCollision(collider, collision.collider, collision.contacts[0].normal);
+        if (velocity.sqrMagnitude > 0f) // sometimes something else hits _us_
+            HandleCollision(collider, collision.collider, collision.contacts[0].normal, collision.contacts[0].separation);
     }
 
-    private void HandleCollision(Collider myCollider, Collider otherCollider, Vector3 normal)
+    private void HandleCollision(Collider myCollider, Collider otherCollider, Vector3 normal, float separation)
     {
         if (isDead)
             return; // Unity physics bugs are pain
@@ -232,7 +232,7 @@ public class ThrownRing : NetworkBehaviour
             if (Physics.ComputePenetration(myCollider, myCollider.transform.position, myCollider.transform.rotation,
                 otherCollider, otherCollider.transform.position, otherCollider.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
             {
-                transform.position += depenetrationDir * depenetrationDistance;
+                transform.position += depenetrationDir * (depenetrationDistance + 0.01f);
             }
 
             currentNumWallSlides++;
@@ -246,15 +246,25 @@ public class ThrownRing : NetworkBehaviour
         else if (effectiveSettings.contactAction == RingWeaponSettings.ContactAction.Stop)
         {
             // Don't despawn, just stop
-            rb.velocity = Vector3.zero;
-            velocity = Vector3.zero;
+            velocity = rb.velocity = Vector3.zero;
 
             if (Physics.ComputePenetration(myCollider, myCollider.transform.position, myCollider.transform.rotation,
                 otherCollider, otherCollider.transform.position, otherCollider.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
             {
                 transform.position += depenetrationDir * depenetrationDistance;
             }
+
+            if (isServer)
+                Stop(transform.position);
         }
+    }
+
+    // RPC'd so that grenades always land in the same place
+    [ClientRpc(channel = Channels.Unreliable)]
+    private void Stop(Vector3 restingPosition)
+    {
+        velocity = rb.velocity = Vector3.zero;
+        transform.position = restingPosition;
     }
 
     private void Despawn()
