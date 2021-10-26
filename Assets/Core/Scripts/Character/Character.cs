@@ -95,6 +95,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     public float hurtDefaultHorizontalKnockback = 5;
     public float hurtDefaultVerticalKnockback = 5;
 
+    [Header("Misc")]
+    public float killY = -50f;
+
     [Header("Networking")]
     public TickerSettings tickerSettings = TickerSettings.Default;
 
@@ -189,6 +192,15 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
             characterModel.enabled = false;
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = true;
+
+        if (isServer && transform.position.y < killY)
+        {
+            damageable.TryDamage(gameObject, Vector3.zero, false);
+
+            MessageFeed.Post($"<player>{playerName}</player> fell off the world!");
+
+            Respawn();
+        }
     }
 
     public void Tick(float deltaTime, PlayerInput input, TickInfo tickInfo)

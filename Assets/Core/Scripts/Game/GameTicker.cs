@@ -269,7 +269,7 @@ public class GameTicker : NetworkBehaviour
                     {
                         Player client = player.connectionToClient.identity.GetComponent<Player>();
 
-                        tick.lastClientEarlyness = player.ticker.inputTimeline.LatestTime - predictedServerTime;
+                        tick.lastClientEarlyness = client.serverTimeOfLastReceivedInput - predictedServerTime;
 
                         player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                     }
@@ -368,9 +368,13 @@ public class GameTicker : NetworkBehaviour
             {
                 Netplay.singleton.players[client.playerId].ticker.InsertInputPack(inputMessage.inputPack);
 
-                // This is now set during a server tick and measured based on the latest input available
-                //if (inputMessage.inputPack.times.Length > 0)
-                   // client.lastInputEarlyness = inputMessage.inputPack.times[0] - predictedServerTime;
+                // Trim the history regularly
+                // If we receive an old input from the future (i.e. a message sent on the previous level, or before the timer was reset)
+                // then this will screw up the aheadness history, and the input history in general. Keep it trimmed
+                Netplay.singleton.players[client.playerId].ticker.inputTimeline.Trim(predictedServerTime - 2f, predictedServerTime + 2f);
+
+                if (inputMessage.inputPack.times.Length > 0)
+                   client.serverTimeOfLastReceivedInput = inputMessage.inputPack.times[0];
             }
         }
         else
