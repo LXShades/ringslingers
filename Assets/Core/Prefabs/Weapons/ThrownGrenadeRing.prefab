@@ -7,6 +7,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 670776692163388723, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
+      propertyPath: m_Radius
+      value: 0.1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2575410343450868303, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
+      propertyPath: m_RootOrder
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 3930404116993706217, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: spinAxisType
       value: 0
@@ -69,7 +77,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5444186147366357135, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: m_AssetId
-      value: 
+      value: 52656c092083f7748a00806c01ff391c
       objectReference: {fileID: 0}
     - target: {fileID: 5662536279647863787, guid: 5e4ae4a9177247144a6000f638854c4a, type: 3}
       propertyPath: m_Enabled
@@ -152,15 +160,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edca447976b67ca49887911043aae348, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.92
+      value: 0.5353204
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edca447976b67ca49887911043aae348, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.92
+      value: 0.5353204
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edca447976b67ca49887911043aae348, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.92
+      value: 0.5353204
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: edca447976b67ca49887911043aae348, type: 3}
       propertyPath: m_LocalPosition.x
@@ -228,7 +236,7 @@ PrefabInstance:
       objectReference: {fileID: 5247444900818359899, guid: 0b43408f214aea2418524b6b2d4994f5, type: 3}
     - target: {fileID: 919132149155446097, guid: edca447976b67ca49887911043aae348, type: 3}
       propertyPath: m_Name
-      value: BombRing
+      value: GrenadeRing
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: edca447976b67ca49887911043aae348, type: 3}

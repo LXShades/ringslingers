@@ -3,11 +3,8 @@ using UnityEngine;
 
 public class ThrownRing : NetworkBehaviour
 {
-    private Vector3 spinAxis;
-
     protected RingWeaponSettings effectiveSettings = new RingWeaponSettings();
 
-    [SyncVar]
     private Vector3 velocity;
 
     public GameObject owner
@@ -23,21 +20,19 @@ public class ThrownRing : NetworkBehaviour
     private GameObject _owner;
     [SyncVar]
     private float serverTimeAtSpawn;
+    [SyncVar]
+    private Vector3 initialVelocity;
 
-    private Rigidbody rb;
-    private Collider collider;
+    private Movement movement;
     private HopTrails hopTrails;
 
     private int currentNumWallSlides = 0;
-
-    private bool isDead = false;
 
     private bool wasLocallyThrown = false;
 
     void Awake()
     {
-        collider = GetComponentInChildren<Collider>();
-        rb = GetComponent<Rigidbody>();
+        movement = GetComponent<Movement>();
         hopTrails = GetComponentInChildren<HopTrails>();
 
         if (TryGetComponent(out Predictable predictable))
@@ -48,22 +43,6 @@ public class ThrownRing : NetworkBehaviour
 
     void Start()
     {
-        float axisWobble = 0.5f;
-
-        switch (effectiveSettings.projectileSpinAxisType)
-        {
-            case RingWeaponSettings.SpinAxisType.Wobble:
-                spinAxis = Vector3.up + Vector3.right * Random.Range(-axisWobble, axisWobble) + Vector3.forward * Random.Range(-axisWobble, axisWobble);
-                spinAxis.Normalize();
-                break;
-            case RingWeaponSettings.SpinAxisType.Forward:
-                spinAxis = velocity.normalized;
-                break;
-            case RingWeaponSettings.SpinAxisType.Up:
-                spinAxis = Vector3.up;
-                break;
-        }
-
         // colour the ring
         if (owner.TryGetComponent(out Character owningPlayer))
         {
@@ -87,6 +66,9 @@ public class ThrownRing : NetworkBehaviour
 
         if (ownerEffectiveSettings != null)
             effectiveSettings = ownerEffectiveSettings;
+        
+        movement.gameObjectInstancesToIgnore.Add(owner);
+        velocity = initialVelocity;
 
         foreach (Renderer renderer in GetComponentsInChildren<Renderer>())
         {
@@ -116,50 +98,18 @@ public class ThrownRing : NetworkBehaviour
         Simulate(Time.deltaTime);
     }
 
-    private void FixedUpdate()
-    {
-        if (GameTicker.singleton.predictedServerTime - serverTimeAtSpawn >= Time.fixedDeltaTime) // don't spawn backwards
-        {
-            // ditto, interpolation station
-            transform.position -= velocity * Time.fixedDeltaTime;
-        }
-    }
-
     public virtual void Simulate(float deltaTime, bool isFirstSimulation = false)
     {
-        if (isFirstSimulation)
+        // Move and check collisions
+        bool wasHit = movement.Move(velocity * deltaTime, out Movement.Hit hit);
+
+        if (wasHit)
         {
-            // Simulate wall slides quickly
-            Vector3 step = velocity * deltaTime;
+            HandleCollision(hit.collider, hit.normal);
 
-            for (int i = 0; i < 3 && !isDead; i++)
-            {
-                if (step.magnitude < 0.01f)
-                    break;
-
-                if (rb.SweepTest(step.normalized, out RaycastHit collision, step.magnitude, QueryTriggerInteraction.Ignore))
-                {
-                    transform.position += step.normalized * (collision.distance - 0.1f);
-                    HandleCollision(collider, collision.collider, collision.normal, 0f);
-
-                    step = velocity.normalized * (step.magnitude - Mathf.Max(collision.distance - 0.01f, 0f)); // velocity might have changed so factor that in
-                }
-                else
-                {
-                    // no collisions, yay
-                    transform.position += step;
-                    break;
-                }
-            }
-            Physics.SyncTransforms();
+            if (this == null) // we got destroyed in the process
+                return;
         }
-        else
-        {
-            // using interpolation this shouldn't be needed
-            transform.position += velocity * deltaTime;
-        }
-
-        rb.velocity = velocity;
 
         // Despawn on proximity
         if (effectiveSettings.proximityDespawnTriggerRange > 0f && velocity.sqrMagnitude <= 1f) // kinda hack, grenades
@@ -188,35 +138,14 @@ public class ThrownRing : NetworkBehaviour
         this.wasLocallyThrown = true;
 
         velocity = direction.normalized * effectiveSettings.projectileSpeed;
+        initialVelocity = velocity;
+        movement.gameObjectInstancesToIgnore.Add(owner.gameObject);
 
-        rb.MovePosition(spawnPosition);
         transform.SetPositionAndRotation(spawnPosition, Quaternion.LookRotation(direction));
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void HandleCollision(Collider otherCollider, Vector3 normal)
     {
-        if (velocity.sqrMagnitude > 0f) // sometimes something else hits _us_
-            HandleCollision(collider, collision.collider, collision.contacts[0].normal, collision.contacts[0].separation);
-    }
-
-    private void HandleCollision(Collider myCollider, Collider otherCollider, Vector3 normal, float separation)
-    {
-        if (isDead)
-            return; // Unity physics bugs are pain
-                    //if (Time.time - spawnTime < 0.1f)
-                    //return; // HACK: prevent destroying self before syncvars, etc are ready (this can happen...)
-        if (otherCollider.gameObject == owner)
-            return; // don't collide with the player who threw the ring
-
-        // Hurt any players we collided with
-        if (otherCollider.TryGetComponent(out Damageable damageable) && owner)
-        {
-            if (damageable.gameObject == owner)
-                return; // actually we're fine here
-
-            damageable.TryDamage(owner, velocity.normalized * effectiveSettings.projectileKnockback);
-        }
-
         // Ignore collisions with other rings
         if (otherCollider.TryGetComponent(out ThrownRing thrownRing))
         {
@@ -224,35 +153,31 @@ public class ThrownRing : NetworkBehaviour
                 return; // don't collide with our other rings
         }
 
-        // Do wall slides, if allowed
-        if (currentNumWallSlides < effectiveSettings.numWallSlides)
+        // Hurt any players we collided with
+        if (otherCollider.TryGetComponent(out Damageable damageable) && owner)
+            damageable.TryDamage(owner, velocity.normalized * effectiveSettings.projectileKnockback);
+        // Do wall slides, if allowed - but not against other players
+        else if (currentNumWallSlides < effectiveSettings.numWallSlides)
         {
-            velocity = velocity.AlongPlane(normal).normalized * velocity.magnitude + normal * 0.01f;
+            Debug.Log($"Bounce pre {velocity}");
+            float originalVelocityMagnitude = velocity.magnitude;
+            velocity.SetAlongAxis(normal, 0.01f /* push away slightly */);
+            velocity *= originalVelocityMagnitude / velocity.magnitude;
 
-            if (Physics.ComputePenetration(myCollider, myCollider.transform.position, myCollider.transform.rotation,
-                otherCollider, otherCollider.transform.position, otherCollider.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
-            {
-                transform.position += depenetrationDir * (depenetrationDistance + 0.01f);
-            }
-
+            Debug.Log($"Bounce post {velocity}");
             currentNumWallSlides++;
             return;
         }
 
         if (effectiveSettings.contactAction == RingWeaponSettings.ContactAction.Despawn)
         {
+            Debug.Log($"Death {velocity}");
             Despawn();
         }
         else if (effectiveSettings.contactAction == RingWeaponSettings.ContactAction.Stop)
         {
             // Don't despawn, just stop
-            velocity = rb.velocity = Vector3.zero;
-
-            if (Physics.ComputePenetration(myCollider, myCollider.transform.position, myCollider.transform.rotation,
-                otherCollider, otherCollider.transform.position, otherCollider.transform.rotation, out Vector3 depenetrationDir, out float depenetrationDistance))
-            {
-                transform.position += depenetrationDir * depenetrationDistance;
-            }
+            velocity = Vector3.zero;
 
             if (isServer)
                 Stop(transform.position);
@@ -263,7 +188,7 @@ public class ThrownRing : NetworkBehaviour
     [ClientRpc(channel = Channels.Unreliable)]
     private void Stop(Vector3 restingPosition)
     {
-        velocity = rb.velocity = Vector3.zero;
+        velocity = Vector3.zero;
         transform.position = restingPosition;
     }
 
@@ -271,8 +196,6 @@ public class ThrownRing : NetworkBehaviour
     {
         // Play despawn sound
         GameSounds.PlaySound(gameObject, effectiveSettings.despawnSound);
-
-        isDead = true;
 
         SpawnContactEffect(transform.position);
 
@@ -297,7 +220,14 @@ public class ThrownRing : NetworkBehaviour
     // when prediction is successful, we get teleported back a bit and resimulate forward again
     private void OnPredictionSuccessful()
     {
-        Simulate(GameTicker.singleton.localPlayerPing);
+        float jumpAheadSimulation = GameTicker.singleton.predictedServerTime - serverTimeAtSpawn;
+
+        Debug.Log($"Prediction success {jumpAheadSimulation}s");
+        // We need to reset our state as well
+        currentNumWallSlides = 0;
+
+        if (jumpAheadSimulation > 0f)
+            Simulate(jumpAheadSimulation);
     }
 
     private void OnOwnerChanged(GameObject oldOwner, GameObject newOwner)
