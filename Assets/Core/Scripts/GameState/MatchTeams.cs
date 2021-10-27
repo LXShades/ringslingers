@@ -41,10 +41,7 @@ public class MatchTeams : MatchStateComponent
         else if (numBlues > numReds)
             return PlayerTeam.Red;
         else
-        {
-            // we could go random, but it would be nice for this to be more predictable, so here's a "tag team" strategy
-            return ((numReds / 2) & 1) == 0 ? PlayerTeam.Red : PlayerTeam.Blue;
-        }
+            return UnityEngine.Random.value > 0.5f ? PlayerTeam.Red : PlayerTeam.Blue;
     }
 
     public override string GetWinners()
