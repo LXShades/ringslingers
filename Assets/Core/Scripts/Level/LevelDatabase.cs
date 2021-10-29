@@ -119,7 +119,7 @@ public class LevelDatabase : ScriptableObject
 
     public void SortScenes()
     {
-        levels.Sort((a, b) => SceneManager.GetSceneByPath(a.path).buildIndex - SceneManager.GetSceneByPath(b.path).buildIndex);
+        levels.Sort((a, b) => SceneUtility.GetBuildIndexByScenePath(a.path) - SceneUtility.GetBuildIndexByScenePath(b.path));
     }
 #endif
 }

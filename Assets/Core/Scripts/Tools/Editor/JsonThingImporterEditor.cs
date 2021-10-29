@@ -18,6 +18,10 @@ public class JsonThingImporterEditor : Editor
 
                 if (things != null)
                 {
+                    Transform transform = (target as JsonThingImporter).transform;
+                    for (int i = transform.childCount - 1; i >= 0; i--)
+                        DestroyImmediate(transform.GetChild(i).gameObject);
+
                     (target as JsonThingImporter).ReadThings(things.things);
                 }
                 else

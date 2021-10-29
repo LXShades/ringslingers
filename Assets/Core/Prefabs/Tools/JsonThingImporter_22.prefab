@@ -44,43 +44,98 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   idPrefabPairs:
-  - thingId: 300
+  - idType: 0
+    thingId: 300
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 550
+  - idType: 0
+    thingId: 550
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 8266176094919211856, guid: 2bf8c1d8fcfd84f4a83f1c479d543681, type: 3}
-  - thingId: 551
+  - idType: 0
+    thingId: 551
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 7907021738610142159, guid: 552176c118c313f44975daa1f9c571d5, type: 3}
-  - thingId: 556
+  - idType: 0
+    thingId: 556
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 5178154658920334604, guid: 90c0941747a77f348af86a37d911ff20, type: 3}
-  - thingId: 330
+  - idType: 0
+    thingId: 330
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 1297403141984525710, guid: f0c306dbc1be08e4fb8eaf64b03d6283, type: 3}
-  - thingId: 331
+  - idType: 0
+    thingId: 331
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 6277300037846207836, guid: 7b94f25f5c608c3488d27fd7ff4f2937, type: 3}
-  - thingId: 332
+  - idType: 0
+    thingId: 332
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 7739814440051990028, guid: 204539ea41bf24344a4955a880472e69, type: 3}
-  - thingId: 333
+  - idType: 0
+    thingId: 333
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 1203937048721973902, guid: 71cd869cc1b82c1449b6f30c52353efb, type: 3}
-  - thingId: 334
+  - idType: 0
+    thingId: 334
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 1203937048721973902, guid: 57ca2a69e274d0a4caaa0dd2d91e3cdb, type: 3}
-  - thingId: 335
+  - idType: 0
+    thingId: 335
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 1203937048721973902, guid: b86ff3404074a4e4ba95af8c1498fb08, type: 3}
-  - thingId: 308
+  - idType: 1
+    thingId: 300
+    thingIdEnd: 307
+    requiredFlags: 0
     prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 309
-    prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 302
-    prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 303
-    prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 304
-    prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 305
-    prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 306
-    prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 307
-    prefab: {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
-  - thingId: 310
+  - idType: 0
+    thingId: 310
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 8055353508438605935, guid: 24fbdd17d59a3ae499a6b2d84a148aae, type: 3}
-  - thingId: 311
+  - idType: 0
+    thingId: 311
+    thingIdEnd: 0
+    requiredFlags: 0
     prefab: {fileID: 4905443269852683854, guid: 497ed5ac10ef377488fd995676d02f0c, type: 3}
+  - idType: 0
+    thingId: 33
+    thingIdEnd: 0
+    requiredFlags: 0
+    prefab: {fileID: 694423708090128033, guid: 211848ee3e56f394cadec65d4ebd734a, type: 3}
+  - idType: 0
+    thingId: 34
+    thingIdEnd: 0
+    requiredFlags: 0
+    prefab: {fileID: 7980344215840396146, guid: 49ac1ec5d4f9fa64cadc719c6eb5f936, type: 3}
+  - idType: 0
+    thingId: 35
+    thingIdEnd: 0
+    requiredFlags: 0
+    prefab: {fileID: 5540624207829961788, guid: ff0b4f747714ec646aa1e32295744d97, type: 3}
+  - idType: 1
+    thingId: 400
+    thingIdEnd: 420
+    requiredFlags: 4
+    prefab: {fileID: 3354472749510327343, guid: a10d6b834dfe62040a38afc6b811d65b, type: 3}
+  - idType: 1
+    thingId: 400
+    thingIdEnd: 420
+    requiredFlags: 8
+    prefab: {fileID: 7753525135683431689, guid: a707d2c61e69a23448be9b602be9e2fb, type: 3}
+  - idType: 0
+    thingId: 400
+    thingIdEnd: 0
+    requiredFlags: 0
+    prefab: {fileID: 9067864423546626223, guid: 5f4b08bc9bff14d4cb749324a2531f55, type: 3}

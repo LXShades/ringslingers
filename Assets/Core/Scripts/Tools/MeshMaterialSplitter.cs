@@ -8,6 +8,7 @@ public class MeshMaterialSplitter : MonoBehaviour
     public GameObject sourceMesh;
     public GameObject submeshPrefab;
     public float scale = 1f / 64f;
+    public bool removeDoubleSidedFaces = true;
 
     [System.Serializable]
     public struct SubobjectSettings
@@ -97,6 +98,81 @@ public class MeshMaterialSplitter : MonoBehaviour
                 outIndices[target][outIndices[target].Count - 1][idx] -= inSubmesh.firstVertex;
 
             outMaterials[target].Add(inputMaterials[sub]);
+        }
+
+        // Remove double-sided bits
+        if (removeDoubleSidedFaces)
+        {
+            int[] quad = new int[6];
+            for (int subObj = 0; subObj < outIndices.Length; subObj++)
+            {
+                for (int subMesh = 0; subMesh < outIndices[subObj].Count; subMesh++)
+                {
+                    List<int> indices = outIndices[subObj][subMesh];
+                    int oldNumIndices = indices.Count;
+                    for (int i = 0; i < indices.Count; i += 3)
+                    {
+                        // triangles
+                        for (int j = i + 3; j < indices.Count; j += 3)
+                        {
+                            if (   (indices[j  ] == indices[i] || indices[j  ] == indices[i+1] || indices[j  ] == indices[i+2])
+                                && (indices[j+1] == indices[i] || indices[j+1] == indices[i+1] || indices[j+1] == indices[i+2])
+                                && (indices[j+2] == indices[i] || indices[j+2] == indices[i+1] || indices[j+2] == indices[i+2]))
+                            {
+                                indices.RemoveRange(j, 3); // this is a backface or duplicate face
+                                j -= 3; // for next iteration
+                            }
+                        }
+
+                        // quads
+                        if (i + 6 <= indices.Count)
+                        {
+                            quad[0] = indices[i];
+                            quad[1] = indices[i+1];
+                            quad[2] = indices[i+2];
+
+                            int numUniques = 3;
+                            if (indices[i+3] != indices[i] && indices[i+3] != indices[i+1] && indices[i+3] != indices[i+2])
+                                quad[numUniques++] = indices[i+3];
+                            if (indices[i+4] != indices[i] && indices[i+4] != indices[i+1] && indices[i+4] != indices[i+2])
+                                quad[numUniques++] = indices[i+4];
+                            if (indices[i+5] != indices[i] && indices[i+5] != indices[i+1] && indices[i+5] != indices[i+2])
+                                quad[numUniques++] = indices[i+5];
+
+                            if (numUniques == 4)
+                            {
+                                // it's probably a quad, scan for other quads that overlap this
+                                for (int j = i + 6; j + 6 <= indices.Count; j += 3)
+                                {
+                                    bool isOverlapping = true;
+                                    for (int k = j; k < j + 6; k++)
+                                        isOverlapping &= indices[k] == quad[0] || indices[k] == quad[1] || indices[k] == quad[2] || indices[k] == quad[3];
+
+                                    if (isOverlapping)
+                                    {
+                                        indices.RemoveRange(j, 6); // this is a backface or duplicate face
+                                        j -= 3; // for next iteration
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (oldNumIndices != indices.Count)
+                    {
+                        SubMeshDescriptor dangit = outSubmeshes[subObj][subMesh];
+                        dangit.indexCount = indices.Count;
+                        outSubmeshes[subObj][subMesh] = dangit;
+
+                        for (int next = subMesh + 1; next < outSubmeshes[subObj].Count; next++)
+                        {
+                            SubMeshDescriptor dangitAgain = outSubmeshes[subObj][next];
+                            dangitAgain.indexStart += indices.Count - oldNumIndices;
+                            outSubmeshes[subObj][next] = dangitAgain;
+                        }
+                    }
+                }
+            }
         }
 
         // Assign the meshes

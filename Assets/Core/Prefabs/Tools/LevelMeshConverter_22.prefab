@@ -46,6 +46,7 @@ MonoBehaviour:
   sourceMesh: {fileID: 919132149155446097, guid: f0099687b3739b340a92cd1cc791ecca, type: 3}
   submeshPrefab: {fileID: 1036160266886674826, guid: a07e4421f3e9d1543aa53b6690211ba9, type: 3}
   scale: 0.015625
+  removeDoubleSidedFaces: 1
   baseSettings:
     name: Base
     materials: []
@@ -77,6 +78,9 @@ MonoBehaviour:
     - THRAIL2R
     - WEEDWALL
     - WOODRAIL
+    - HHZGREDG
+    - JNGVIN2S
+    - SNOWALL
     shouldDelete: 0
     shouldHaveCollider: 0
   - name: Liquid

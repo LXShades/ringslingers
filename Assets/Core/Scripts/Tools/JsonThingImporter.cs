@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -30,10 +31,28 @@ public class JsonThingImporter : MonoBehaviour
         public Thing[] things;
     }
 
+    public enum ThingIdType
+    {
+        Single = 0,
+        Range = 1
+    }
+
+    [Flags]
+    public enum ThingFlags
+    {
+        Flag1 = 1,
+        Flag2 = 2,
+        Flag4 = 4,
+        Flag8 = 8
+    }
+
     [System.Serializable]
     public struct IdPrefabPair
     {
+        public ThingIdType idType;
         public int thingId;
+        public int thingIdEnd;
+        public ThingFlags requiredFlags;
         public GameObject prefab;
     }
 
@@ -44,7 +63,10 @@ public class JsonThingImporter : MonoBehaviour
         int thingNum = 0;
         foreach (Thing thing in things)
         {
-            GameObject prefab = idPrefabPairs.Find(a => a.thingId == thing.type).prefab;
+            GameObject prefab = idPrefabPairs.Find(a =>
+                ((a.idType == ThingIdType.Single && a.thingId == thing.type) || (a.idType == ThingIdType.Range && thing.type >= a.thingId && thing.type <= a.thingIdEnd))
+                && (thing.flags & (int)a.requiredFlags) == (int)a.requiredFlags
+            ).prefab;
 
             if (prefab != null)
             {
@@ -58,7 +80,7 @@ public class JsonThingImporter : MonoBehaviour
 
                 obj.name = $"{prefab.name} (thing {thingNum})";
                 obj.transform.position = new Vector3(thing.x / 64f, (thing.floorHeight + thing.height) / 64f, thing.y / 64f);
-                obj.transform.rotation = Quaternion.Euler(0f, thing.angle, 0f);
+                obj.transform.rotation = Quaternion.Euler(0f, 90f - thing.angle, 0f);
                 obj.transform.SetParent(transform, true);
             }
 
