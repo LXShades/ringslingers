@@ -67,7 +67,9 @@ public class ThrownRing : NetworkBehaviour
         if (ownerEffectiveSettings != null)
             effectiveSettings = ownerEffectiveSettings;
         
-        movement.gameObjectInstancesToIgnore.Add(owner);
+        if (movement) // rail rings don't have movement
+            movement.gameObjectInstancesToIgnore.Add(owner);
+
         velocity = initialVelocity;
 
         foreach (Renderer renderer in GetComponentsInChildren<Renderer>())
@@ -100,15 +102,18 @@ public class ThrownRing : NetworkBehaviour
 
     public virtual void Simulate(float deltaTime, bool isFirstSimulation = false)
     {
-        // Move and check collisions
-        bool wasHit = movement.Move(velocity * deltaTime, out Movement.Hit hit);
-
-        if (wasHit)
+        if (movement)
         {
-            HandleCollision(hit.collider, hit.normal);
+            // Move and check collisions
+            bool wasHit = movement.Move(velocity * deltaTime, out Movement.Hit hit);
 
-            if (this == null) // we got destroyed in the process
-                return;
+            if (wasHit)
+            {
+                HandleCollision(hit.collider, hit.normal);
+
+                if (this == null) // we got destroyed in the process
+                    return;
+            }
         }
 
         // Despawn on proximity
@@ -139,7 +144,9 @@ public class ThrownRing : NetworkBehaviour
 
         velocity = direction.normalized * effectiveSettings.projectileSpeed;
         initialVelocity = velocity;
-        movement.gameObjectInstancesToIgnore.Add(owner.gameObject);
+
+        if (movement)
+            movement.gameObjectInstancesToIgnore.Add(owner.gameObject);
 
         transform.SetPositionAndRotation(spawnPosition, Quaternion.LookRotation(direction));
     }
@@ -222,7 +229,6 @@ public class ThrownRing : NetworkBehaviour
     {
         float jumpAheadSimulation = GameTicker.singleton.predictedServerTime - serverTimeAtSpawn;
 
-        Debug.Log($"Prediction success {jumpAheadSimulation}s");
         // We need to reset our state as well
         currentNumWallSlides = 0;
 

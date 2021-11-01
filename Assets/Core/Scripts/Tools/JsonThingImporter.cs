@@ -53,6 +53,7 @@ public class JsonThingImporter : MonoBehaviour
         public int thingId;
         public int thingIdEnd;
         public ThingFlags requiredFlags;
+        public Vector3 worldPositionOffset;
         public GameObject prefab;
     }
 
@@ -63,10 +64,11 @@ public class JsonThingImporter : MonoBehaviour
         int thingNum = 0;
         foreach (Thing thing in things)
         {
-            GameObject prefab = idPrefabPairs.Find(a =>
+            IdPrefabPair def = idPrefabPairs.Find(a =>
                 ((a.idType == ThingIdType.Single && a.thingId == thing.type) || (a.idType == ThingIdType.Range && thing.type >= a.thingId && thing.type <= a.thingIdEnd))
                 && (thing.flags & (int)a.requiredFlags) == (int)a.requiredFlags
-            ).prefab;
+            );
+            GameObject prefab = def.prefab;
 
             if (prefab != null)
             {
@@ -79,8 +81,8 @@ public class JsonThingImporter : MonoBehaviour
 #endif
 
                 obj.name = $"{prefab.name} (thing {thingNum})";
-                obj.transform.position = new Vector3(thing.x / 64f, (thing.floorHeight + thing.height) / 64f, thing.y / 64f);
-                obj.transform.rotation = Quaternion.Euler(0f, 90f - thing.angle, 0f);
+                obj.transform.position = new Vector3(thing.x / 64f, (thing.floorHeight + thing.height) / 64f, thing.y / 64f) + def.worldPositionOffset;
+                obj.transform.rotation = Quaternion.Euler(0f, 90f - thing.angle, 0f) * obj.transform.rotation;
                 obj.transform.SetParent(transform, true);
             }
 
