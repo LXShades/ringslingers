@@ -830,7 +830,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.5176471}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -3285,8 +3285,8 @@ MonoBehaviour:
     rgba: 4294967295
   thickness: 5
   points:
-  - {x: 100.65, y: 17}
-  - {x: 5, y: 0}
+  - {x: 0, y: 0}
+  - {x: 0, y: 0}
 --- !u!1 &3578750305076124578
 GameObject:
   m_ObjectHideFlags: 0
@@ -3833,7 +3833,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &4045079338094576473
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4746,7 +4746,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5632002784725545381}
   - component: {fileID: 3730490157392865631}
-  - component: {fileID: 8429127911244881550}
   - component: {fileID: 5008815522812245661}
   m_Layer: 5
   m_Name: WeaponWheel
@@ -4785,36 +4784,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4630783945528366904}
   m_CullTransparentMesh: 1
---- !u!114 &8429127911244881550
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4630783945528366904}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.49019608}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 6f1332ec165e2ea418a17014c3aabd33, type: 3}
-  m_Type: 0
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
 --- !u!114 &5008815522812245661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4834,15 +4803,17 @@ MonoBehaviour:
   - {fileID: 11400000, guid: fd426ac4c4429d443bf29ba9c880fb1d, type: 2}
   - {fileID: 11400000, guid: 7e46de247a2c11641a827c2545ab70eb, type: 2}
   - {fileID: 11400000, guid: 9de574f57573cff438fc5b12bc838613, type: 2}
+  weaponWheelSlicePrefab: {fileID: 374578447200183534, guid: 6064bc956522dac4abc4eab46509a297, type: 3}
+  sliceFillRatio: 0.9
   weaponSlotPrefab: {fileID: 9185324550274058512, guid: 65bdfd266dfcf4047b5aa16e684ff721, type: 3}
-  selectionLine: {fileID: 111320920832901829}
+  noWeaponBackground: {fileID: 6106949032113228298}
   noWeaponIcon: {fileID: 6601878878137471125}
   noWeaponIconUnselectedOpacity: 0.6
   noWeaponIconSelectedOpacity: 1
   normalizedIconSize: 0.29
   normalizedWeaponOptionRadius: 0.75
-  normalizedMinimumWeaponHighlightRadius: 0.5
-  highlightedWeaponScale: 1.5
+  highlightedSliceColour: {r: 0.9716981, g: 0.9056681, b: 0, a: 0.50980395}
+  highlightedWeaponScale: 1
   weaponSelectionSpriteScale: 1.8
   requireClickToSelect: 1
 --- !u!1 &4754344575159274337
@@ -5163,7 +5134,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -240, y: -240}
+  m_SizeDelta: {x: -260, y: -260}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3424035243280406644
 CanvasRenderer:
@@ -5186,14 +5157,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.49803922}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 21300000, guid: c09297c7730efa54b8b0546609ca07f1, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -9593,14 +9564,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0c8b698de22d5c64287d72dbab490d51, type: 3}
---- !u!224 &4459531720892761535 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 2301597215692575519, guid: 0c8b698de22d5c64287d72dbab490d51, type: 3}
-  m_PrefabInstance: {fileID: 2455475554439403168}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4179465967732795795 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1734985534403002163, guid: 0c8b698de22d5c64287d72dbab490d51, type: 3}
+  m_PrefabInstance: {fileID: 2455475554439403168}
+  m_PrefabAsset: {fileID: 0}
+--- !u!224 &4459531720892761535 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 2301597215692575519, guid: 0c8b698de22d5c64287d72dbab490d51, type: 3}
   m_PrefabInstance: {fileID: 2455475554439403168}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2547550348557399989

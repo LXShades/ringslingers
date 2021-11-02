@@ -34,7 +34,8 @@ public class WeaponSlotUI : MonoBehaviour
 
     private void Start()
     {
-        equipHighlight.color = equipColorWhenAvailable;
+        if (equipHighlight)
+            equipHighlight.color = equipColorWhenAvailable;
     }
 
     private void Update()
@@ -56,7 +57,9 @@ public class WeaponSlotUI : MonoBehaviour
             {
                 icon.color = colorWhenAvailable;
                 ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, colorWhenAvailable.a);
-                equipHighlight.color = equipColorWhenAvailable;
+
+                if (equipHighlight)
+                    equipHighlight.color = equipColorWhenAvailable;
             }
         }
         else
@@ -66,11 +69,16 @@ public class WeaponSlotUI : MonoBehaviour
                 icon.color = colorWhenUnavailable;
                 //ammoRemaining.color = new Color(ammoRemaining.color.r, ammoRemaining.color.g, ammoRemaining.color.b, colorWhenUnavailable.a);
                 ammoRemaining.enabled = false;
-                equipHighlight.color = equipColorWhenUnavailable;
+
+                if (equipHighlight)
+                    equipHighlight.color = equipColorWhenUnavailable;
             }
         }
 
-        if (isEquipped != equipHighlight.enabled)
-            equipHighlight.enabled = isEquipped;
+        if (equipHighlight)
+        {
+            if (isEquipped != equipHighlight.enabled)
+                equipHighlight.enabled = isEquipped;
+        }
     }
 }

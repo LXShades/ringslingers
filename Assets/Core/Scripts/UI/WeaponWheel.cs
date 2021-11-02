@@ -7,24 +7,26 @@ public class WeaponWheel : MonoBehaviour
 {
     public RingWeaponSettingsAsset[] ringWeapons = new RingWeaponSettingsAsset[0];
 
+    public Image weaponWheelSlicePrefab;
+    public float sliceFillRatio = 0.9f;
     public WeaponSlotUI weaponSlotPrefab;
-    public LineGraphic selectionLine;
 
+    public Image noWeaponBackground;
     public Image noWeaponIcon;
     public float noWeaponIconUnselectedOpacity = 0.25f;
     public float noWeaponIconSelectedOpacity = 1f;
 
     public float normalizedIconSize = 0.2f;
     public float normalizedWeaponOptionRadius = 0.9f;
-    public float normalizedMinimumWeaponHighlightRadius = 0.5f;
+    public Color highlightedSliceColour = Color.yellow;
     public float highlightedWeaponScale = 1.5f;
     public float weaponSelectionSpriteScale = 1.5f;
 
     public bool requireClickToSelect = true;
 
     private readonly List<WeaponSlotUI> spawnedWeaponSlots = new List<WeaponSlotUI>();
+    private readonly List<Image> spawnedWeaponWheelSlices = new List<Image>();
     private readonly List<Image> spawnedWeaponIcons = new List<Image>();
-    private readonly List<bool> weaponAvailabilities = new List<bool>();
     private readonly List<bool> weaponCompatibilities = new List<bool>();
 
     private readonly List<RingWeaponSettingsAsset> selectedWeapons = new List<RingWeaponSettingsAsset>();
@@ -37,6 +39,21 @@ public class WeaponWheel : MonoBehaviour
     {
         float radiansPerWeapon = Mathf.PI * 2f / ringWeapons.Length;
 
+        // Spawn circle slice background
+        for (int i = 0; i < ringWeapons.Length; i++)
+        {
+            Image slice = Instantiate(weaponWheelSlicePrefab);
+
+            slice.transform.SetParent(transform, false);
+            slice.fillAmount = 1f / ringWeapons.Length * sliceFillRatio;
+
+            slice.transform.rotation = Quaternion.Euler(0f, 0f, -(i - 0.5f) * 360f / ringWeapons.Length - 360f / ringWeapons.Length * (1f - sliceFillRatio) * 0.5f);
+            slice.transform.SetAsFirstSibling();
+
+            spawnedWeaponWheelSlices.Add(slice);
+        }
+
+        // Spawn weapon slots
         for (int i = 0; i < ringWeapons.Length; i++)
         {
             // Spawn weapon slot and weapon availability
@@ -56,8 +73,6 @@ public class WeaponWheel : MonoBehaviour
             spawnedWeaponSlots.Add(slot);
             spawnedWeaponIcons.Add(slot.icon);
 
-            // and weapon availability
-            weaponAvailabilities.Add(true);
             weaponCompatibilities.Add(true);
         }
     }
@@ -95,23 +110,17 @@ public class WeaponWheel : MonoBehaviour
         {
             for (int j = 0; j < ringWeapons.Length; j++)
             {
-                spawnedWeaponSlots[j].hasWeapon = false;
+                spawnedWeaponSlots[j].hasWeapon = weaponCompatibilities[j] || !Mouse.current.leftButton.isPressed;
                 spawnedWeaponSlots[j].weapon.ammo = 0f;
 
-                if (weaponCompatibilities[j] || !Mouse.current.leftButton.isPressed)
+                for (int i = 0; i < shooting.weapons.Count; i++)
                 {
-                    for (int i = 0; i < shooting.weapons.Count; i++)
+                    if (shooting.weapons[i].weaponType == ringWeapons[j])
                     {
-                        if (shooting.weapons[i].weaponType == ringWeapons[j])
-                        {
-                            spawnedWeaponSlots[j].hasWeapon = true;
-                            spawnedWeaponSlots[j].weapon.ammo = shooting.weapons[i].ammo;
-                            break;
-                        }
+                        spawnedWeaponSlots[j].weapon.ammo = shooting.weapons[i].ammo;
+                        break;
                     }
                 }
-
-                weaponAvailabilities[j] = spawnedWeaponSlots[j].hasWeapon;
             }
         }
     }
@@ -119,12 +128,13 @@ public class WeaponWheel : MonoBehaviour
     private void HandleWeaponMouseSelection()
     {
         Vector2 mousePosition = Input.mousePosition;
-        float normalizedMouseDistanceFromCentre = Vector2.Distance(new Vector2(transform.position.x, transform.position.y), mousePosition) / ((transform as RectTransform).sizeDelta.x * 0.5f);
+        float mouseDistanceFromCentre = Vector2.Distance(new Vector2(transform.position.x, transform.position.y), mousePosition);
+        float noWeaponRadius = (noWeaponBackground.rectTransform.rect.width * noWeaponBackground.rectTransform.lossyScale.x) * 0.5f;
         float closestDistance = float.MaxValue;
         int closestIndex = -1;
         bool isNakedWeaponHighlighted = false;
 
-        if (normalizedMouseDistanceFromCentre > normalizedMinimumWeaponHighlightRadius)
+        if (mouseDistanceFromCentre > noWeaponRadius)
         {
             for (int i = 0; i < spawnedWeaponIcons.Count; i++)
             {
@@ -138,7 +148,7 @@ public class WeaponWheel : MonoBehaviour
             }
         }
         
-        if (normalizedMouseDistanceFromCentre <= normalizedMinimumWeaponHighlightRadius / 2 && !(selectedWeaponIndexes.Count > 0 && hasStartedSelecting))
+        if (mouseDistanceFromCentre <= noWeaponRadius && !(selectedWeaponIndexes.Count > 0 && hasStartedSelecting))
         {
             noWeaponIcon.transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 0f);
             noWeaponIcon.color = new Color(1, 1, 1, noWeaponIconSelectedOpacity);
@@ -190,40 +200,24 @@ public class WeaponWheel : MonoBehaviour
             }
         }
 
-        if (Mouse.current.leftButton.isPressed)
+        if (Mouse.current.leftButton.wasReleasedThisFrame && selectedWeapons.Count == 0)
         {
-            // draw the selection line
-            selectionLine.points.Clear();
-
-            if (selectedWeaponIndexes.Count > 0)
-            {
-                for (int i = 0; i < selectedWeaponIndexes.Count; i++)
-                    selectionLine.points.Add(selectionLine.transform.InverseTransformPoint(spawnedWeaponIcons[selectedWeaponIndexes[i]].transform.position));
-            }
-            else
-            {
-                selectionLine.points.Add(Vector2.zero);
-            }
-
-            selectionLine.points.Add(selectionLine.transform.InverseTransformPoint(mousePosition));
-            selectionLine.Redraw();
-        }
-        else if (Mouse.current.leftButton.wasReleasedThisFrame && selectionLine.points.Count > 0 && selectedWeapons.Count == 0)
-        {
-            // clear the selection line
-            selectionLine.points.Clear();
-            selectionLine.Redraw();
-
             for (int i = 0; i < weaponCompatibilities.Count; i++)
                 weaponCompatibilities[i] = true;
         }
 
         // Highlight selected weapons
         for (int i = 0; i < spawnedWeaponIcons.Count; i++)
+        {
             spawnedWeaponIcons[i].transform.localScale = new Vector3(1f, 1f, 1f);
+            spawnedWeaponWheelSlices[i].color = weaponWheelSlicePrefab.color;
+        }
 
         for (int i = 0; i < selectedWeaponIndexes.Count; i++)
+        {
             spawnedWeaponIcons[selectedWeaponIndexes[i]].transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 1f);
+            spawnedWeaponWheelSlices[selectedWeaponIndexes[i]].color = highlightedSliceColour;
+        }
 
         // Highlight hovered weapon
         if (closestIndex != -1)

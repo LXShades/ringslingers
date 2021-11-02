@@ -166,19 +166,16 @@ public class ThrownRing : NetworkBehaviour
         // Do wall slides, if allowed - but not against other players
         else if (currentNumWallSlides < effectiveSettings.numWallSlides)
         {
-            Debug.Log($"Bounce pre {velocity}");
             float originalVelocityMagnitude = velocity.magnitude;
             velocity.SetAlongAxis(normal, 0.01f /* push away slightly */);
             velocity *= originalVelocityMagnitude / velocity.magnitude;
 
-            Debug.Log($"Bounce post {velocity}");
             currentNumWallSlides++;
             return;
         }
 
         if (effectiveSettings.contactAction == RingWeaponSettings.ContactAction.Despawn)
         {
-            Debug.Log($"Death {velocity}");
             Despawn();
         }
         else if (effectiveSettings.contactAction == RingWeaponSettings.ContactAction.Stop)
