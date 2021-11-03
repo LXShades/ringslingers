@@ -18,9 +18,8 @@ public class WeaponWheel : MonoBehaviour
 
     public float normalizedIconSize = 0.2f;
     public float normalizedWeaponOptionRadius = 0.9f;
-    public Color highlightedSliceColour = Color.yellow;
-    public float highlightedWeaponScale = 1.5f;
-    public float weaponSelectionSpriteScale = 1.5f;
+    public Color highlightedSliceColour = Color.white;
+    public Color selectedSliceColour = Color.yellow;
 
     public bool requireClickToSelect = true;
 
@@ -150,7 +149,6 @@ public class WeaponWheel : MonoBehaviour
         
         if (mouseDistanceFromCentre <= noWeaponRadius && !(selectedWeaponIndexes.Count > 0 && hasStartedSelecting))
         {
-            noWeaponIcon.transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 0f);
             noWeaponIcon.color = new Color(1, 1, 1, noWeaponIconSelectedOpacity);
             isNakedWeaponHighlighted = true;
         }
@@ -206,22 +204,17 @@ public class WeaponWheel : MonoBehaviour
                 weaponCompatibilities[i] = true;
         }
 
-        // Highlight selected weapons
+        // Unhighlight selected weapons
         for (int i = 0; i < spawnedWeaponIcons.Count; i++)
-        {
-            spawnedWeaponIcons[i].transform.localScale = new Vector3(1f, 1f, 1f);
             spawnedWeaponWheelSlices[i].color = weaponWheelSlicePrefab.color;
-        }
-
-        for (int i = 0; i < selectedWeaponIndexes.Count; i++)
-        {
-            spawnedWeaponIcons[selectedWeaponIndexes[i]].transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 1f);
-            spawnedWeaponWheelSlices[selectedWeaponIndexes[i]].color = highlightedSliceColour;
-        }
 
         // Highlight hovered weapon
         if (closestIndex != -1)
-            spawnedWeaponIcons[closestIndex].transform.localScale = new Vector3(highlightedWeaponScale, highlightedWeaponScale, 1f);
+            spawnedWeaponWheelSlices[closestIndex].color = highlightedSliceColour;
+
+        // Highlight selected weapons
+        for (int i = 0; i < selectedWeaponIndexes.Count; i++)
+            spawnedWeaponWheelSlices[selectedWeaponIndexes[i]].color = selectedSliceColour;
     }
 
     private void UpdateSelectionIcons()
