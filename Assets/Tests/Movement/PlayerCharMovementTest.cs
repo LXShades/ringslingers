@@ -58,6 +58,8 @@ namespace Ringslingers.Tests
 
                 lastInput = nextInput;
                 lastInput.aimDirection = forward;
+
+                cam.transform.position = transform.position + up * 0.5f - forward * manualCamDistance;
             }
             else
             {
@@ -83,8 +85,6 @@ namespace Ringslingers.Tests
                 transform.rotation = startRotation;
                 velocity = transform.forward * (startVelocity * topSpeed);
             }
-
-            cam.transform.position = transform.position + up * 0.5f - forward * manualCamDistance;
         }
 
         private void LateUpdate()

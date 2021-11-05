@@ -665,6 +665,7 @@ MonoBehaviour:
     maxNumRings: 16
   hurtDefaultHorizontalKnockback: 7
   hurtDefaultVerticalKnockback: 3.8
+  killY: -50
   tickerSettings:
     maxDeltaTime: 0.034
     maxSeekIterations: 20
@@ -726,6 +727,7 @@ MonoBehaviour:
   loopyGroundTestDistance: 0.5
   loopyPushdownNeutralLimit: 0.2
   enableStepUp: 1
+  enableStepDown: 1
   stepHeight: 0.375
   stepLocalFootOffset: {x: 0, y: 0, z: 0}
   enableCollisionsAffectVelocity: 1
