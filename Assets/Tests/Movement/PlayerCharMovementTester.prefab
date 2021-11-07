@@ -245,7 +245,7 @@ MonoBehaviour:
   groundLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  groundTestRadius: 0.3
+  groundTestRadius: 0.35
   groundTestDistanceThreshold: 0.05
   groundEscapeThreshold: 3
   groundAngleLimit: 40
@@ -259,7 +259,9 @@ MonoBehaviour:
   loopyGroundTestDistance: 0.5
   loopyPushdownNeutralLimit: 0.2
   enableStepUp: 1
+  enableStepDown: 0
   stepHeight: 0.375
+  minStepWidth: 0.1
   stepLocalFootOffset: {x: 0, y: 0, z: 0}
   enableCollisionsAffectVelocity: 1
   enableCollisionsDontAffectDownwardVelocity: 1

@@ -325,7 +325,7 @@ public class PlayerCharacterMovement : CharacterMovement
             return;
 
         bool isMovingFastEnoughToRoll = groundVelocity.magnitude >= minRollSpeed;
-        if (isMovingFastEnoughToRoll && (state & State.Rolling) == 0 && isOnGround && input.btnSpinPressed)
+        if (isMovingFastEnoughToRoll && (state & State.Rolling) == 0 && isOnGround && (state & State.Jumped) == 0 && input.btnSpinPressed) // we check State.Jumped as well because we may have jumped in this frame
         {
             state |= State.Rolling;
 
@@ -444,7 +444,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void ApplyGroundStates()
     {
-        if (isOnGround)
+        if (isOnGround && Vector3.Dot(velocity, groundNormal) <= groundEscapeThreshold)
         {
             state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
         }
@@ -452,7 +452,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     public void SpringUp(float force, Vector3 direction, bool doSpringAbsolutely)
     {
-        state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained);
+        state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained | State.SpinCharging | State.Rolling);
 
         if (doSpringAbsolutely)
             velocity = direction * force;

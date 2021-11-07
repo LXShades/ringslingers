@@ -728,7 +728,8 @@ MonoBehaviour:
   loopyPushdownNeutralLimit: 0.2
   enableStepUp: 1
   enableStepDown: 1
-  stepHeight: 0.375
+  maxStepHeight: 0.375
+  minStepWidth: 0.1
   stepLocalFootOffset: {x: 0, y: 0, z: 0}
   enableCollisionsAffectVelocity: 1
   enableCollisionsDontAffectDownwardVelocity: 1
@@ -1210,12 +1211,12 @@ MonoBehaviour:
   glide: {fileID: 0}
   minRollSpeed: 1
   rollingAccelerationMultiplier: 0.03
-  rollingFriction: 0.988
+  rollingFriction: 0.99
   rollingCapsuleHeight: 0.6
   spindashChargeDuration: 1
   spindashMaxSpeed: 36
   spindashMinSpeed: 1
-  spindashChargeFriction: 0.965
+  spindashChargeFriction: 0.975
   debugDrawMovement: 0
   spindashChargeLevel: 0
 --- !u!114 &1227556274159782272
