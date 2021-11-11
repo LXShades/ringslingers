@@ -189,7 +189,13 @@ public class PlayerCharacterMovement : CharacterMovement
         }
 
         // Final movement
+        bool oldEnableStepUp = enableStepUp;
+        if ((state & State.Climbing) != 0)
+            enableStepUp = false;
+
         ApplyCharacterVelocity(groundInfo, deltaTime, tickInfo);
+
+        enableStepUp = oldEnableStepUp;
 
         // Set final rotation
         Vector3 oldTransformUp = transform.up;
@@ -377,7 +383,12 @@ public class PlayerCharacterMovement : CharacterMovement
         if (!input.btnJump)
         {
             if ((state & State.Gliding) != 0)
-                state &= ~(State.Gliding | State.Jumped); // remove jumping state as well to prevent next glide
+            {
+                if (glide.canMultiGlide)
+                    state &= ~State.Gliding;
+                else
+                    state &= ~(State.Gliding | State.Jumped); // remove jumping state as well to prevent next glide
+            }
         }
 
         // Handle gliding
@@ -385,20 +396,21 @@ public class PlayerCharacterMovement : CharacterMovement
         {
             float horizontalSpeed = velocity.Horizontal().magnitude;
             Vector3 horizontalAim = aim.Horizontal().normalized;
-            Vector3 desiredDirection = (horizontalAim + Vector3.Cross(Vector3.up, horizontalAim) * input.moveHorizontalAxis).normalized;
+            Vector3 groundForward = horizontalAim.normalized, groundRight = Vector3.Cross(up, aim).normalized;
+            Vector3 desiredAcceleration = Vector3.ClampMagnitude(groundForward * input.moveVerticalAxis + groundRight * input.moveHorizontalAxis, 1);
 
             // gravity cancel and fall control
             velocity.y = Math.Max(velocity.y, -glide.fallSpeedBySpeed.Evaluate(horizontalSpeed));
 
             // speed up/slow down
-            float targetSpeed = horizontalSpeed + glide.accelerationBySpeed.Evaluate(horizontalSpeed) * input.moveVerticalAxis * deltaTime;
+            float targetSpeed = horizontalSpeed + glide.accelerationBySpeed.Evaluate(horizontalSpeed) * Vector3.Dot(velocity.Horizontal() / horizontalSpeed, desiredAcceleration) * deltaTime;
 
-            velocity.SetHorizontal(velocity.Horizontal().normalized * targetSpeed);
+            velocity.SetHorizontal(velocity.Horizontal() * targetSpeed / horizontalSpeed);
 
             // turn!
-            float turnSpeed = glide.turnSpeedBySpeed.Evaluate(horizontalSpeed); // in degrees/sec
+            float turnSpeed = glide.turnSpeedBySpeed.Evaluate(horizontalSpeed) * glide.turnSpeedCurve.Evaluate(Vector3.Angle(velocity.Horizontal().normalized, desiredAcceleration.normalized)); // in degrees/sec
 
-            velocity.SetHorizontal(Vector3.RotateTowards(velocity.Horizontal(), desiredDirection, turnSpeed * Mathf.Deg2Rad * deltaTime, 0f));
+            velocity.SetHorizontal(Vector3.RotateTowards(velocity.Horizontal(), desiredAcceleration, turnSpeed * Mathf.Deg2Rad * deltaTime, 0f));
 
             forward = velocity.Horizontal();
 
@@ -431,9 +443,7 @@ public class PlayerCharacterMovement : CharacterMovement
                 }
 
                 if (hit.distance > 0.01f)
-                {
                     velocity -= hit.normal * 5f;
-                }
             }
             else
             {

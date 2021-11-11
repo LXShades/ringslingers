@@ -15,11 +15,15 @@ public class CharacterAnimation : MonoBehaviour
     public float legTurnDegreesPerSecond = 360f;
     public float fallTiltDegreesPerSecond = 50f;
     public float fallTiltMaxDegrees = 20f;
-    [Tooltip("As a dot product. A blend between neutral and turning tilt angle where the full angle is lerped until this dot product between speed and direction is met.")]
-    public float glideTiltSpeedBlend = 0.05f;
+    public float glideTiltWeight = 0.3f;
+    public float glideTiltDamp = 0.1f;
 
     private Quaternion lastRootRotation = Quaternion.identity;
     private Vector3 lastCharacterUp = Vector3.up;
+    private Vector3 lastVelocity;
+
+    private float smoothGlideTilt = 0f;
+    private float smoothGlideTiltVelocity = 0f;
 
     private int propHorizontalSpeed = Animator.StringToHash("HorizontalSpeed");
     private int propHorizontalForwardSpeed = Animator.StringToHash("HorizontalForwardSpeed");
@@ -62,7 +66,9 @@ public class CharacterAnimation : MonoBehaviour
 
     private void LateUpdate()
     {
-        if ((movement.state & (PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.Jumped)) == 0) // spinning animations shouldn't normally be tampered with
+        float glideTilt = 0f;
+
+        if ((movement.state & (PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.Jumped)) == 0 || (movement.state & PlayerCharacterMovement.State.Gliding) != 0) // spinning animations shouldn't normally be tampered with
         {
             Vector3 groundVelocity = movement.groundVelocity;
             Vector3 characterUp = movement.up;
@@ -89,28 +95,28 @@ public class CharacterAnimation : MonoBehaviour
 
             if ((movement.state & PlayerCharacterMovement.State.Gliding) != 0)
             {
-                float tiltAngle = 0f;
-                Vector3 groundSide = Vector3.Cross(groundForward, Vector3.up);
-                float dot = Vector3.Dot(groundVelocity.normalized, groundAimForward.normalized);
-
-                tiltAngle = Mathf.Acos(Mathf.Clamp(dot, 0f, 1f)) * Mathf.Rad2Deg * -Mathf.Sign(Vector3.Dot(groundSide, groundVelocity - groundAimForward));
-                tiltAngle = Mathf.Lerp(0f, tiltAngle, Mathf.Abs(dot / glideTiltSpeedBlend));
-
                 characterUp = Quaternion.Inverse(root.rotation) * characterUp;
-                root.rotation = root.rotation * Quaternion.Euler(0f, tiltAngle, 0f);
+
+                // Glide tilt
+                glideTilt = Vector3.Angle(lastVelocity.Horizontal().normalized, movement.velocity.Horizontal().normalized) * Mathf.Sign(Vector3.Cross(lastVelocity, movement.velocity).y) / Time.deltaTime;
+
+                root.rotation *= Quaternion.AngleAxis(smoothGlideTilt * glideTiltWeight, root.forward);
+
                 characterUp = root.rotation * characterUp;
             }
 
             // think of this as rotation = originalRotation - forwardRotation + newHeadForwardRotation
             // head - (head.forward, charUp) + (aim, up)
-            head.transform.rotation = Quaternion.LookRotation(player.liveInput.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(head.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
+            head.rotation = Quaternion.LookRotation(player.liveInput.aimDirection, characterUp) * Quaternion.Inverse(Quaternion.LookRotation(head.forward.AlongPlane(characterUp), characterUp)) * head.transform.rotation;
         }
+
+        smoothGlideTilt = Mathf.SmoothDamp(smoothGlideTilt, glideTilt, ref smoothGlideTiltVelocity, glideTiltDamp);
 
         // After animation post-processing, handle stuff attached to the player
         TheFlag holdingFlag = player.holdingFlag;
         if (holdingFlag != null)
-        {
             holdingFlag.transform.SetPositionAndRotation(player.flagHoldBone.position - (player.flagHoldBone.rotation * Vector3.up) * 0.4f, player.flagHoldBone.rotation);
-        }
+
+        lastVelocity = movement.velocity;
     }
 }
