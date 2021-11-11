@@ -1,8 +1,18 @@
 ﻿using Mirror;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ThrownRing : NetworkBehaviour
 {
+    /// <summary>
+    /// Used for checking against rewound character states
+    /// </summary>
+    protected struct PastCharacter
+    {
+        public Character character;
+        public CharacterState originalState;
+    }
+
     protected RingWeaponSettings effectiveSettings = new RingWeaponSettings();
 
     private Vector3 velocity;
@@ -131,7 +141,9 @@ public class ThrownRing : NetworkBehaviour
         }
     }
 
-    public virtual void Throw(Character owner, Vector3 spawnPosition, Vector3 direction)
+    private List<PastCharacter> nearbyCharacters = new List<PastCharacter>(32);
+
+    public virtual void Throw(Character owner, Vector3 spawnPosition, Vector3 direction, float serverPredictionAmount)
     {
         foreach (Collider collider in GetComponentsInChildren<Collider>())
         {
@@ -149,6 +161,51 @@ public class ThrownRing : NetworkBehaviour
             movement.gameObjectInstancesToIgnore.Add(owner.gameObject);
 
         transform.SetPositionAndRotation(spawnPosition, Quaternion.LookRotation(direction));
+
+        if (NetworkServer.active && serverPredictionAmount > 0f)
+        {
+            // Run server rewind prediction stuff
+            float testPlayerRadius = velocity.magnitude * 2f * serverPredictionAmount;
+
+            // Rewind nearby players and play them through each simulation. Ideally don't do every single player if we can avoid it
+            nearbyCharacters.Clear();
+            for (int i = 0; i < Netplay.singleton.players.Count; i++)
+            {
+                if (Netplay.singleton.players[i] && Netplay.singleton.players[i] != owner && Vector3.Distance(Netplay.singleton.players[i].transform.position, spawnPosition) < testPlayerRadius)
+                    nearbyCharacters.Add(new PastCharacter() { character = Netplay.singleton.players[i], originalState = Netplay.singleton.players[i].MakeState() });
+
+            }
+
+            if (nearbyCharacters.Count > 0f)
+            {
+                float deltaTime = 0.033f;
+                float serverTime = GameTicker.singleton.predictedServerTime;
+
+                // Basically we're retroactively telling the server that a ring was fired earlier. So we need to push the ring ahead through time as though it had done so in the past, while simulating the past state too
+                // Pretty wild huh, this is some freaky timewarp networking bezazzle
+                for (float t = 0f; t < serverPredictionAmount; t += deltaTime)
+                {
+                    foreach (PastCharacter pastChar in nearbyCharacters)
+                    {
+                        int closestState = pastChar.character.ticker.stateTimeline.ClosestIndexBeforeOrEarliest(serverTime - serverPredictionAmount + t);
+
+                        if (closestState != -1)
+                            pastChar.character.ApplyState(pastChar.character.ticker.stateTimeline[closestState]);
+                    }
+
+                    Simulate(Mathf.Min(deltaTime, serverPredictionAmount - t));
+                }
+
+                // restore character states
+                foreach (PastCharacter pastChar in nearbyCharacters)
+                    pastChar.character.ApplyState(pastChar.originalState);
+            }
+            else
+            {
+                // no players nearby, so we can just skip ahead in one go
+                Simulate(serverPredictionAmount, true);
+            }
+        }
     }
 
     private void HandleCollision(Collider otherCollider, Vector3 normal)
@@ -225,6 +282,9 @@ public class ThrownRing : NetworkBehaviour
     private void OnPredictionSuccessful()
     {
         float jumpAheadSimulation = GameTicker.singleton.predictedServerTime - serverTimeAtSpawn;
+
+        if (wasLocallyThrown) // don't teleport our own rings ahead
+            jumpAheadSimulation = GameTicker.singleton.predictedReplicaServerTime - serverTimeAtSpawn;
 
         // We need to reset our state as well
         currentNumWallSlides = 0;

@@ -80,6 +80,10 @@ public class GameTicker : NetworkBehaviour
     // client predicted server time will be extrapolated based on ping and prediction settings
     public float predictedServerTime { get; private set; }
 
+    // [client] what server time they are predicting other players into. Usually the same as predictedServerTime, but if server rewinding is enabled this may be earlier because the server will accept earlier hits
+    // [server] always the same as predictedServerTime
+    public float predictedReplicaServerTime { get; private set; }
+
     // ==================== LOCAL PLAYER SECTION ===================
     // [client] returns the local player's ping based on their predicted server time
     public float localPlayerPing { get; private set; }
@@ -127,7 +131,7 @@ public class GameTicker : NetworkBehaviour
         // Advance the clock
         // servers simply use Time.time, clients use an offset from Time.time to approximate predictedServerTime based on how late/early the server received their inputs
         if (NetworkServer.active)
-            predictedServerTime = Time.time;
+            predictedServerTime = predictedReplicaServerTime = Time.time;
         else
         {
             RefreshClientServerTimeOffset();
@@ -136,6 +140,9 @@ public class GameTicker : NetworkBehaviour
                 predictedServerTime = Time.time + currentClientServerTimeOffset;
             else
                 predictedServerTime += Time.deltaTime * 0.01f;
+
+            // replica server time should ideally be as much time as we need to reduce player jumpiness, and no more
+            predictedReplicaServerTime = predictedServerTime - ServerState.instance.serverRewindTolerance;
         }
 
         // Receive incoming messages
@@ -241,7 +248,9 @@ public class GameTicker : NetworkBehaviour
             {
                 // most players tick the same
                 // except for remote players on clients - clients do not know these players' input history, so they should not play deltas as they will usually be inaccurate
-                player.ticker.Seek(predictedServerTime, !isServer && player != Netplay.singleton.localPlayer ? TickerSeekFlags.IgnoreDeltas : 0);
+                // they also may have a time offset if we're using the fancy experimental Rewind stuff
+                player.ticker.Seek(!isServer && player != Netplay.singleton.localPlayer ? predictedReplicaServerTime : predictedServerTime, 
+                    !isServer && player != Netplay.singleton.localPlayer ? TickerSeekFlags.IgnoreDeltas : 0);
             }
         }
     }
@@ -265,7 +274,7 @@ public class GameTicker : NetworkBehaviour
                 {
                     Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
 
-                    if (player.netIdentity.connectionToClient != null) // bots don't have a connection
+                    if (player.netIdentity.connectionToClient != null && player.netIdentity.connectionToClient.identity != null) // bots don't have a connection
                     {
                         Player client = player.connectionToClient.identity.GetComponent<Player>();
 

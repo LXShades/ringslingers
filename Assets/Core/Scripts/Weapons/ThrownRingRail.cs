@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class ThrownRingRail : ThrownRing
 {
@@ -30,7 +32,9 @@ public class ThrownRingRail : ThrownRing
         return; // do nothing else
     }
 
-    public override void Throw(Character owner, Vector3 spawnPosition, Vector3 direction)
+    private List<PastCharacter> originalCharacterStates = new List<PastCharacter>();
+
+    public override void Throw(Character owner, Vector3 spawnPosition, Vector3 direction, float serverPredictionAmount)
     {
         this.owner = owner.gameObject;
 
@@ -43,6 +47,35 @@ public class ThrownRingRail : ThrownRing
         endPoint.transform.position = spawnPosition + direction * maxRange;
         endPoint.transform.up = -direction;
 
+        // Run server rewinds
+        originalCharacterStates.Clear();
+        if (NetworkServer.active && serverPredictionAmount > 0f)
+        {
+            float serverTime = GameTicker.singleton.predictedServerTime;
+            float angleWindowPerMetreDistanceRad = 50f * Mathf.Deg2Rad;
+
+            direction.Normalize(); // so that the dot is accurate
+
+            // candidate characters are rewound to the earlier state
+            foreach (Character character in Netplay.singleton.players)
+            {
+                if (character && character != owner)
+                {
+                    int pastStateIndex = character.ticker.stateTimeline.ClosestIndexBeforeOrEarliest(serverTime - serverPredictionAmount);
+
+                    if (pastStateIndex != -1)
+                    {
+                        if (Mathf.Acos(Vector3.Dot(direction, (character.ticker.stateTimeline[pastStateIndex].position - spawnPosition).normalized)) < angleWindowPerMetreDistanceRad / Vector3.Distance(spawnPosition, character.transform.position))
+                        {
+                            originalCharacterStates.Add(new PastCharacter() { character = character, originalState = character.MakeState() });
+                            character.ApplyState(character.ticker.stateTimeline[pastStateIndex]);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Run the hitscan against damageables
         RaycastHit[] hits = new RaycastHit[10];
         int numHits = Physics.RaycastNonAlloc(spawnPosition, direction, hits, maxRange, collisionLayers, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < numHits; i++)
@@ -59,6 +92,10 @@ public class ThrownRingRail : ThrownRing
                 closestDistance = hits[i].distance;
             }
         }
+
+        // If server rewinds were used, restore the characters
+        foreach (PastCharacter pastCharacter in originalCharacterStates)
+            pastCharacter.character.ApplyState(pastCharacter.originalState);
 
         if (closestDamageable)
             closestDamageable.TryDamage(owner.gameObject, direction);

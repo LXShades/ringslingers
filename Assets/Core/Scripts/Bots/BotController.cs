@@ -334,8 +334,8 @@ public class BotController : MonoBehaviour
 
             foreach (Ring ring in rings)
             {
-                float dist = Vector3.Distance(myPosition, ring.transform.position);
-                if (ring.respawnableItem.isSpawned && ring.transform.position.y < myPosition.y + 0.8f)
+                float dist = Vector3.Distance(myPosition, ring.transform.position) + Mathf.Abs(ring.transform.position.y - myPosition.y) * 3f;
+                if (ring.respawnableItem.isSpawned)
                 {
                     if (dist < closestDist)
                     {

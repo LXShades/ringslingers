@@ -62,7 +62,7 @@ public class CharacterShooting : NetworkBehaviour
     private Vector3 autoAimPredictedDirection = Vector3.zero;
 
     // Components
-    private Character player;
+    private Character character;
     private PlayerCharacterMovement movement;
 
     private TimelineList<Action> bufferedThrowEvents = new TimelineList<Action>();
@@ -72,7 +72,7 @@ public class CharacterShooting : NetworkBehaviour
 
     void Awake()
     {
-        player = GetComponent<Character>();
+        character = GetComponent<Character>();
         movement = GetComponent<PlayerCharacterMovement>();
     }
 
@@ -111,7 +111,7 @@ public class CharacterShooting : NetworkBehaviour
         }
 
         // Fire weapons if we can
-        if (hasAuthority && player.liveInput.btnFire && (!hasFiredOnThisClick || effectiveWeaponSettings.isAutomatic))
+        if (hasAuthority && character.liveInput.btnFire && (!hasFiredOnThisClick || effectiveWeaponSettings.isAutomatic))
         {
             Debug.Assert(effectiveWeaponSettings.shotsPerSecond != 0); // division by zero otherwise
 
@@ -135,7 +135,7 @@ public class CharacterShooting : NetworkBehaviour
                 RegenerateEffectiveWeapon();
         }
 
-        hasFiredOnThisClick &= player.liveInput.btnFire;
+        hasFiredOnThisClick &= character.liveInput.btnFire;
     }
 
     void UpdateAutoAim()
@@ -149,7 +149,7 @@ public class CharacterShooting : NetworkBehaviour
             if (potentialAutoAimTarget)
             {
                 Vector3 targetPosAdjusted = potentialAutoAimTarget.transform.position + Vector3.up * 0.5f;
-                Vector3 nearTargetPoint = spawnPosition.position + player.liveInput.aimDirection * Vector3.Dot(player.liveInput.aimDirection, targetPosAdjusted - spawnPosition.position);
+                Vector3 nearTargetPoint = spawnPosition.position + character.liveInput.aimDirection * Vector3.Dot(character.liveInput.aimDirection, targetPosAdjusted - spawnPosition.position);
 
                 if (Vector3.Distance(nearTargetPoint, targetPosAdjusted) <= effectiveWeaponSettings.autoAimHitboxRadius)
                 {
@@ -189,13 +189,13 @@ public class CharacterShooting : NetworkBehaviour
 
     private Character FindClosestTarget(float angleLimit)
     {
-        Vector3 aimDirection = player.liveInput.aimDirection;
+        Vector3 aimDirection = character.liveInput.aimDirection;
         float bestDot = Mathf.Cos(angleLimit * Mathf.Deg2Rad);
         Character bestTarget = null;
 
         foreach (Character player in Netplay.singleton.players)
         {
-            if (player && player != this.player)
+            if (player && player != this.character)
             {
                 float dot = Vector3.Dot((player.transform.position - transform.position).normalized, aimDirection);
 
@@ -308,55 +308,73 @@ public class CharacterShooting : NetworkBehaviour
         RegenerateEffectiveWeapon();
     }
 
-    private bool CanThrowRing(float lenience) => player.numRings > 0 && Time.time - lastFiredRingTime >= 1f / effectiveWeaponSettings.shotsPerSecond - lenience;
+    private bool CanThrowRing(float lenience) => character.numRings > 0 && Time.time - lastFiredRingTime >= 1f / effectiveWeaponSettings.shotsPerSecond - lenience;
 
     private void LocalThrowRing()
     {
         if (CanThrowRing(0f))
         {
-            Vector3 direction = player.liveInput.aimDirection;
+            Vector3 direction = character.liveInput.aimDirection;
 
             if (autoAimTarget)
                 direction = autoAimPredictedDirection;
 
             // Predict ring spawn
             Spawner.SpawnPrediction prediction = Spawner.MakeSpawnPrediction();
-            OnCmdThrowRing(spawnPosition.position, direction, prediction, GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f);
+            float timeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f;
+            float replicaTimeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedReplicaServerTime : 0f;
+
+            OnCmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, replicaTimeOfThrow);
 
             if (!NetworkServer.active)
-                CmdThrowRing(spawnPosition.position, direction, prediction, GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f);
+                CmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, replicaTimeOfThrow);
 
             hasFiredOnThisClick = true;
         }
     }
 
     [Command(channel = Channels.Unreliable)]
-    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime)
+    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime, float predictedReplicaServerTime)
     {
         if (predictedServerTime > GameTicker.singleton.predictedServerTime)
         {
             // the client threw this, in what they predicted ahead of current time... this means we need to delay the shot until roughly the correct time arrives
-            bufferedThrowEvents.Insert(predictedServerTime, () => OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime));
+            bufferedThrowEvents.Insert(predictedServerTime, () => OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime, predictedReplicaServerTime));
         }
         else
         {
             // throw it now then
-            OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime);
+            OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime, predictedReplicaServerTime);
         }
     }
 
-    private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime)
+    private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime, float predictedReplicaServerTime)
     {
-        if (!CanThrowRing(0.01f) || Vector3.Distance(position, spawnPosition.position) > 2f)
+        // Verify the ring throw
+        float characterPositionDisparity = Vector3.Distance(position, spawnPosition.position);
+
+        /*if (ServerState.instance.serverRewindTolerance > 0f)
         {
-            Log.WriteWarning($"Discarding ring throw: dist is {Vector3.Distance(position, spawnPosition.position)} CanThrow: {CanThrowRing(0.01f)}");
+            // ring may have been thrown in the past WHEEEEEEE test it to see if it's good
+            int earlierPositionIndex = character.ticker.stateTimeline.ClosestIndexBefore(Mathf.Max(predictedReplicaServerTime, GameTicker.singleton.predictedServerTime - ServerState.instance.serverRewindTolerance));
+            if (earlierPositionIndex != -1)
+            {
+                CharacterState oldState = character.ticker.stateTimeline[earlierPositionIndex];
+                Matrix4x4 oldCharacterTransform = Matrix4x4.TRS(oldState.position, oldState.rotation, character.transform.localScale);
+                characterPositionDisparity = Vector3.Distance(position, (oldCharacterTransform * character.transform.worldToLocalMatrix).MultiplyPoint(Vector3.zero));
+            }
+        }*/
+
+        if (!CanThrowRing(0.01f) || characterPositionDisparity > 1f)
+        {
+            Log.WriteWarning($"Discarding ring throw: dist is {characterPositionDisparity.ToString("F2")} CanThrow: {CanThrowRing(0.01f)}");
             return; // invalid throw
         }
 
         // spawn the predicted (client) or final (server) ring
         GameObject ring = Spawner.StartSpawn(effectiveWeaponSettings.prefab, position, Quaternion.identity, ref spawnPrediction);
         if (ring != null)
-            FireSpawnedRing(ring, position, direction);
+            FireSpawnedRing(ring, position, direction, predictedServerTime, predictedReplicaServerTime);
         Spawner.FinalizeSpawn(ring);
 
         if (effectiveWeaponSettings.additionalSpawns != null && effectiveWeaponSettings.additionalSpawns.Length > 0)
@@ -370,15 +388,15 @@ public class CharacterShooting : NetworkBehaviour
 
                 GameObject addRing = Spawner.StartSpawn(effectiveWeaponSettings.prefab, position, Quaternion.identity, ref spawnPrediction);
                 if (addRing != null)
-                    FireSpawnedRing(addRing, position + right * spawn.horizontalPositionOffset + up * spawn.verticalPositionOffset, currentDirection);
+                    FireSpawnedRing(addRing, position + right * spawn.horizontalPositionOffset + up * spawn.verticalPositionOffset, currentDirection, predictedServerTime, predictedReplicaServerTime);
                 Spawner.FinalizeSpawn(addRing);
             }
         }
 
-        // Update stats
         if (NetworkServer.active)
         {
-            player.numRings--;
+            // Update stats
+            character.numRings--;
 
             if (MatchState.Get(out MatchConfiguration matchConfig) && matchConfig.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
             {
@@ -396,12 +414,16 @@ public class CharacterShooting : NetworkBehaviour
         }
     }
 
-    private void FireSpawnedRing(GameObject ring, Vector3 position, Vector3 direction)
+    private void FireSpawnedRing(GameObject ring, Vector3 position, Vector3 direction, float predictedServerTime, float predictedReplicaServerTime)
     {
         ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
         Debug.Assert(ringAsThrownRing);
 
-        ringAsThrownRing.Throw(player, position, direction);
+        float serverPredictionAmount = 0f;
+        if (NetworkServer.active)
+            serverPredictionAmount = Mathf.Min(ServerState.instance.serverRewindTolerance, GameTicker.singleton.predictedServerTime - predictedReplicaServerTime); // 0 if serverRewindTolerance is 0
+
+        ringAsThrownRing.Throw(character, position, direction, serverPredictionAmount);
 
         lastFiredRingTime = Time.time;
     }
