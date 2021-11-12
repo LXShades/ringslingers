@@ -133,6 +133,9 @@ public class Netplay : MonoBehaviour
 
     void Update()
     {
+        // Update player scores and crowns
+        RefreshPlayerScores();
+
         // Do debug stuff
         UpdateNetStat();
 
@@ -141,6 +144,22 @@ public class Netplay : MonoBehaviour
         if (NetworkClient.isConnected && msTime - lastPingMsTime > 1000f / pingsPerSecond)
         {
             SendPings();
+        }
+    }
+
+    private void RefreshPlayerScores()
+    {
+        // Update player crowns, because scores etc
+        int bestPlayerScore = -1;
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i] && players[i].score > bestPlayerScore)
+                bestPlayerScore = players[i].score;
+        }
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i])
+                players[i].isFirstPlace = (players[i].score == bestPlayerScore);
         }
     }
 

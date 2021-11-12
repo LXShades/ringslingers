@@ -65,6 +65,21 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     [SyncVar]
     public int score = 0;
 
+    public bool isFirstPlace
+    {
+        set
+        {
+            if (crownModel)
+            {
+                if (value != crownModel.gameObject.activeSelf)
+                    crownModel.gameObject.SetActive(value);
+            }
+            _isFirstPlace = value;
+        }
+        get => _isFirstPlace;
+    }
+    private bool _isFirstPlace = false;
+
     /// <summary>
     /// Number of rings picked up
     /// </summary>
@@ -74,6 +89,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
 
     [Header("Visuals")]
     public Renderer characterModel;
+    public Renderer crownModel;
     public Transform flagHoldBone;
     public Color allyOutlineColour = Color.blue;
     public Color enemyOutlineColour = Color.red;
@@ -189,9 +205,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     void Update()
     {
         if (isInvisible)
-            characterModel.enabled = false;
+            characterModel.enabled = crownModel.enabled = false;
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
-            characterModel.enabled = true;
+            characterModel.enabled = crownModel.enabled = true;
 
         if (isServer && transform.position.y < killY)
         {
@@ -279,7 +295,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
                 {
                     // Give score to the attacker if possible
                     if (attackerAsPlayer)
-                        attackerAsPlayer.score += 50;
+                        attackerAsPlayer.score += isFirstPlace ? 100 : 50; // double points if the person hit has a crown!
 
                     // Add the hit message
                     MessageFeed.Post($"<player>{attackerAsPlayer.playerName}</player> hit <player>{playerName}</player> with a {attackerAsPlayer.GetComponent<CharacterShooting>().effectiveWeaponSettings.name} ring!");
@@ -454,7 +470,6 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
 
         if (Netplay.singleton.localPlayer)
         {
-            PlayerTeam localTeam = Netplay.singleton.localPlayer.team;
             if (this == Netplay.singleton.localPlayer) // we've changed team, now we need to update everyone else's outline
             {
                 foreach (Character character in Netplay.singleton.players)
