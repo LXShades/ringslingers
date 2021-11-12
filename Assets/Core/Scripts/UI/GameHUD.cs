@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,7 +14,8 @@ public class GameHUD : MonoBehaviour
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI timeText;
     public RectTransform autoaimCrosshair;
-    public GameObject shieldOverlay;
+    public Image crownIcon;
+    public Sprite[] crownPerScoreboardPosition = new Sprite[0];
 
     [Header("Intro")]
     public GameObject levelIntroRoot;
@@ -24,6 +26,7 @@ public class GameHUD : MonoBehaviour
     public Image invincibilityIcon;
     public GameObject gotRedFlagIcon;
     public GameObject gotBlueFlagIcon;
+    public GameObject shieldOverlay;
 
     [Header("Weapons")]
     public GameObject weaponWheel;
@@ -251,11 +254,32 @@ public class GameHUD : MonoBehaviour
             if ((player.shield != null) != shieldOverlay.activeSelf)
                 shieldOverlay.SetActive(player.shield != null);
 
-            // Update statoids (status..es? statusopedes?)
+            // Update statoids (status..es? statopedes?)
             if (player.damageable.invincibilityTimeRemaining > 0f)
                 invincibilityIcon.enabled = ((int)(Time.time * 20) & 1) != 0;
             else if (invincibilityIcon.enabled)
                 invincibilityIcon.enabled = false;
+
+            // On-screen crown based on your score
+            int positionInScoreboard = 1, myScore = player.score;
+            for (int i = 0; i < Netplay.singleton.players.Count; i++)
+            {
+                if (Netplay.singleton.players[i] && Netplay.singleton.players[i].score > myScore)
+                    positionInScoreboard++;
+            }
+
+            if (positionInScoreboard <= crownPerScoreboardPosition.Length)
+            {
+                if (crownIcon.sprite != crownPerScoreboardPosition[positionInScoreboard - 1])
+                    crownIcon.sprite = crownPerScoreboardPosition[positionInScoreboard - 1];
+                if (!crownIcon.enabled)
+                    crownIcon.enabled = true;
+            }
+            else
+            {
+                if (crownIcon.enabled)
+                    crownIcon.enabled = false;
+            }
         }
         else
         {
@@ -270,31 +294,39 @@ public class GameHUD : MonoBehaviour
         {
             // Refresh scoreboard info
             Character[] orderedPlayers = Netplay.singleton.players.ToArray();
+            StringBuilder scoreboardNameBuilder = new StringBuilder(512);
+            StringBuilder scoreboardScoreBuilder = new StringBuilder(512);
             bool useTeamColours = matchTeams != null;
+            int playerPosition = 0;
 
             System.Array.Sort(orderedPlayers, (a, b) => (a ? a.score : -1) - (b ? b.score : -1) > 0 ? -1 : 1);
 
-            scoreboardNames.text = "";
-            scoreboardScores.text = "";
-
-            foreach (Character scoreboardPlayer in orderedPlayers)
+            for (int i = 0; i < orderedPlayers.Length; i++)
             {
+                Character scoreboardPlayer = orderedPlayers[i];
                 if (scoreboardPlayer == null)
                     break;
 
+                // allow for ties between top players
+                if (playerPosition < 3 && i > 0 && orderedPlayers[i - 1].score > orderedPlayers[i].score)
+                    playerPosition++;
+
                 if (!useTeamColours)
                 {
-                    scoreboardNames.text += $"{scoreboardPlayer.playerName}\n";
-                    scoreboardScores.text += $"{scoreboardPlayer.score}\n";
+                    scoreboardNameBuilder.Append($"<sprite={playerPosition}>{scoreboardPlayer.playerName}\n");
+                    scoreboardScoreBuilder.Append($"{scoreboardPlayer.score}\n");
                 }
                 else
                 {
                     string teamColour = scoreboardPlayer.team.ToFontColor();
 
-                    scoreboardNames.text += $"{teamColour}{scoreboardPlayer.playerName}</color>\n";
+                    scoreboardNames.text += $"<sprite={playerPosition}>{scoreboardPlayer.playerName}</color>\n";
                     scoreboardScores.text += $"{teamColour}{scoreboardPlayer.score}</color>\n";
                 }
             }
+
+            scoreboardNames.text = scoreboardNameBuilder.ToString();
+            scoreboardScores.text = scoreboardScoreBuilder.ToString();
         }
 
         // Win screen stuff
