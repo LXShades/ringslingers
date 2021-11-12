@@ -70,6 +70,14 @@
                     "interactions": ""
                 },
                 {
+                    "name": "Weapon Wheel",
+                    "type": "Button",
+                    "id": "e291a211-2985-4438-ba1d-c8ba04e44cb3",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
                     "name": "Next Weapon",
                     "type": "Button",
                     "id": "8cb23682-cd6d-4da6-9ebc-2c1aea6a2121",
@@ -86,9 +94,57 @@
                     "interactions": ""
                 },
                 {
-                    "name": "Weapon Wheel",
+                    "name": "WepNone",
                     "type": "Button",
-                    "id": "e291a211-2985-4438-ba1d-c8ba04e44cb3",
+                    "id": "22e558eb-e1c5-4b5f-b3ff-cf32ab07644b",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "WepAuto",
+                    "type": "Button",
+                    "id": "89ee535b-eaec-4617-bb0a-4e12f84a31ea",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "WepBomb",
+                    "type": "Button",
+                    "id": "774802a6-63a2-47a8-9ac0-401f4e23a898",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "WepScatter",
+                    "type": "Button",
+                    "id": "d2578fa1-af87-400c-b5cf-b32aa74e791e",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "WepGrenade",
+                    "type": "Button",
+                    "id": "3e656790-a3d2-466a-9b96-a06b7644925f",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "WepRail",
+                    "type": "Button",
+                    "id": "d3b22e6c-0d32-4166-b69e-31848432c47d",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "WepAim",
+                    "type": "Button",
+                    "id": "80e29e83-5737-4ba9-8561-58ee273ff35b",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": ""
@@ -306,12 +362,89 @@
                 },
                 {
                     "name": "",
+                    "id": "383188c8-82fb-41a2-b2da-ea7375793ec5",
+                    "path": "<Keyboard>/1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "WepNone",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "75883754-9162-4f46-bd75-dffa06aed965",
                     "path": "<Keyboard>/r",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "Weapon Wheel",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7bf4b846-1ac8-47a0-86bf-76b7799ec192",
+                    "path": "<Keyboard>/2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "WepAuto",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "5147712d-bac4-4b4f-96b7-40494a89b85b",
+                    "path": "<Keyboard>/7",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "WepAim",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d63584de-00c3-4299-8e17-c4a89ea4fb0f",
+                    "path": "<Keyboard>/3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "WepBomb",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "106b913e-b414-4a23-8997-c2e20eca88e6",
+                    "path": "<Keyboard>/4",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "WepScatter",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "eaf4a1a8-5608-479e-9aa4-60e200db34ca",
+                    "path": "<Keyboard>/5",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "WepGrenade",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "499f4e21-10d0-43db-8a24-b89cce5a1437",
+                    "path": "<Keyboard>/6",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "WepRail",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

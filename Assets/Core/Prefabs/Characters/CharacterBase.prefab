@@ -164,7 +164,8 @@ MonoBehaviour:
   legTurnDegreesPerSecond: 720
   fallTiltDegreesPerSecond: 50
   fallTiltMaxDegrees: 20
-  glideTiltSpeedBlend: 0.05
+  glideTiltWeight: 0.3
+  glideTiltDamp: 0.1
 --- !u!95 &1801470514470862043
 Animator:
   serializedVersion: 3
@@ -202,7 +203,8 @@ MonoBehaviour:
   legTurnDegreesPerSecond: 720
   fallTiltDegreesPerSecond: 50
   fallTiltMaxDegrees: 20
-  glideTiltSpeedBlend: 0.05
+  glideTiltWeight: 0.3
+  glideTiltDamp: 0.1
 --- !u!1 &3144757497066685934
 GameObject:
   m_ObjectHideFlags: 0
@@ -645,6 +647,7 @@ MonoBehaviour:
   - {r: 0.1321622, g: 0.09251513, b: 0.9339623, a: 0}
   score: 0
   characterModel: {fileID: 2407978492390594985}
+  crownModel: {fileID: 0}
   flagHoldBone: {fileID: 5973140925193253550}
   allyOutlineColour: {r: 0, g: 0, b: 0.5754717, a: 1}
   enemyOutlineColour: {r: 0.46226418, g: 0, b: 0, a: 1}
@@ -1239,6 +1242,13 @@ MonoBehaviour:
     _ammoAsCount: 0
     _ammoAsTimeExpiryTime: 0
   spawnPosition: {fileID: 3310946930297574031}
+  wepKeyNone: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
+  wepKeyAuto: {fileID: 11400000, guid: b3ac2b389097b2d46a9376592fe8d37f, type: 2}
+  wepKeyBomb: {fileID: 11400000, guid: 23540450384143746b56315067dc3483, type: 2}
+  wepKeyScatter: {fileID: 11400000, guid: ffe668499644d9e47865b8485f8d24ce, type: 2}
+  wepKeyGrenade: {fileID: 11400000, guid: fd426ac4c4429d443bf29ba9c880fb1d, type: 2}
+  wepKeyRail: {fileID: 11400000, guid: 7e46de247a2c11641a827c2545ab70eb, type: 2}
+  wepKeyAim: {fileID: 11400000, guid: 9de574f57573cff438fc5b12bc838613, type: 2}
   testAutoAimSmoothDamp: 0.01
 --- !u!114 &933529237501604302
 MonoBehaviour:

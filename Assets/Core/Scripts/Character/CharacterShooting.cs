@@ -58,6 +58,15 @@ public class CharacterShooting : NetworkBehaviour
     /// </summary>
     private bool hasFiredOnThisClick = false;
 
+    [Header("Weapon selection")]
+    public RingWeaponSettingsAsset wepKeyNone;
+    public RingWeaponSettingsAsset wepKeyAuto;
+    public RingWeaponSettingsAsset wepKeyBomb;
+    public RingWeaponSettingsAsset wepKeyScatter;
+    public RingWeaponSettingsAsset wepKeyGrenade;
+    public RingWeaponSettingsAsset wepKeyRail;
+    public RingWeaponSettingsAsset wepKeyAim;
+
     public GameObject autoAimTarget { get;  private set; }
     private Vector3 autoAimPredictedDirection = Vector3.zero;
 
@@ -99,6 +108,8 @@ public class CharacterShooting : NetworkBehaviour
 
     void Update()
     {
+        UpdateWeaponSelectHotkeys();
+
         UpdateAutoAim();
 
         for (int i = bufferedThrowEvents.Count - 1; i >= 0; i--)
@@ -138,7 +149,24 @@ public class CharacterShooting : NetworkBehaviour
         hasFiredOnThisClick &= character.liveInput.btnFire;
     }
 
-    void UpdateAutoAim()
+    private void UpdateWeaponSelectHotkeys()
+    {
+        if (hasAuthority)
+        {
+            PlayerControls inputs = GameManager.singleton.input;
+
+            // pretty much this
+            if (inputs.Gameplay.WepNone.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyNone });
+            if (inputs.Gameplay.WepAuto.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyAuto });
+            if (inputs.Gameplay.WepBomb.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyBomb });
+            if (inputs.Gameplay.WepScatter.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyScatter });
+            if (inputs.Gameplay.WepGrenade.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyGrenade });
+            if (inputs.Gameplay.WepAim.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyAim });
+            if (inputs.Gameplay.WepRail.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyRail });
+        }
+    }
+
+    private void UpdateAutoAim()
     {
         autoAimTarget = null;
 

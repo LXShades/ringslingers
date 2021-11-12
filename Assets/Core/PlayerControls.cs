@@ -83,6 +83,14 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""interactions"": """"
                 },
                 {
+                    ""name"": ""Weapon Wheel"",
+                    ""type"": ""Button"",
+                    ""id"": ""e291a211-2985-4438-ba1d-c8ba04e44cb3"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
                     ""name"": ""Next Weapon"",
                     ""type"": ""Button"",
                     ""id"": ""8cb23682-cd6d-4da6-9ebc-2c1aea6a2121"",
@@ -99,9 +107,57 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""interactions"": """"
                 },
                 {
-                    ""name"": ""Weapon Wheel"",
+                    ""name"": ""WepNone"",
                     ""type"": ""Button"",
-                    ""id"": ""e291a211-2985-4438-ba1d-c8ba04e44cb3"",
+                    ""id"": ""22e558eb-e1c5-4b5f-b3ff-cf32ab07644b"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""WepAuto"",
+                    ""type"": ""Button"",
+                    ""id"": ""89ee535b-eaec-4617-bb0a-4e12f84a31ea"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""WepBomb"",
+                    ""type"": ""Button"",
+                    ""id"": ""774802a6-63a2-47a8-9ac0-401f4e23a898"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""WepScatter"",
+                    ""type"": ""Button"",
+                    ""id"": ""d2578fa1-af87-400c-b5cf-b32aa74e791e"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""WepGrenade"",
+                    ""type"": ""Button"",
+                    ""id"": ""3e656790-a3d2-466a-9b96-a06b7644925f"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""WepRail"",
+                    ""type"": ""Button"",
+                    ""id"": ""d3b22e6c-0d32-4166-b69e-31848432c47d"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
+                },
+                {
+                    ""name"": ""WepAim"",
+                    ""type"": ""Button"",
+                    ""id"": ""80e29e83-5737-4ba9-8561-58ee273ff35b"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """"
@@ -319,12 +375,89 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 },
                 {
                     ""name"": """",
+                    ""id"": ""383188c8-82fb-41a2-b2da-ea7375793ec5"",
+                    ""path"": ""<Keyboard>/1"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""WepNone"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
                     ""id"": ""75883754-9162-4f46-bd75-dffa06aed965"",
                     ""path"": ""<Keyboard>/r"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""Weapon Wheel"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""7bf4b846-1ac8-47a0-86bf-76b7799ec192"",
+                    ""path"": ""<Keyboard>/2"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""WepAuto"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5147712d-bac4-4b4f-96b7-40494a89b85b"",
+                    ""path"": ""<Keyboard>/7"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""WepAim"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d63584de-00c3-4299-8e17-c4a89ea4fb0f"",
+                    ""path"": ""<Keyboard>/3"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""WepBomb"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""106b913e-b414-4a23-8997-c2e20eca88e6"",
+                    ""path"": ""<Keyboard>/4"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""WepScatter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""eaf4a1a8-5608-479e-9aa4-60e200db34ca"",
+                    ""path"": ""<Keyboard>/5"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""WepGrenade"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""499f4e21-10d0-43db-8a24-b89cce5a1437"",
+                    ""path"": ""<Keyboard>/6"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""WepRail"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -343,9 +476,16 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         m_Gameplay_Talk = m_Gameplay.FindAction("Talk", throwIfNotFound: true);
         m_Gameplay_ViewScores = m_Gameplay.FindAction("View Scores", throwIfNotFound: true);
         m_Gameplay_CenterCamera = m_Gameplay.FindAction("Center Camera", throwIfNotFound: true);
+        m_Gameplay_WeaponWheel = m_Gameplay.FindAction("Weapon Wheel", throwIfNotFound: true);
         m_Gameplay_NextWeapon = m_Gameplay.FindAction("Next Weapon", throwIfNotFound: true);
         m_Gameplay_PrevWeapon = m_Gameplay.FindAction("Prev Weapon", throwIfNotFound: true);
-        m_Gameplay_WeaponWheel = m_Gameplay.FindAction("Weapon Wheel", throwIfNotFound: true);
+        m_Gameplay_WepNone = m_Gameplay.FindAction("WepNone", throwIfNotFound: true);
+        m_Gameplay_WepAuto = m_Gameplay.FindAction("WepAuto", throwIfNotFound: true);
+        m_Gameplay_WepBomb = m_Gameplay.FindAction("WepBomb", throwIfNotFound: true);
+        m_Gameplay_WepScatter = m_Gameplay.FindAction("WepScatter", throwIfNotFound: true);
+        m_Gameplay_WepGrenade = m_Gameplay.FindAction("WepGrenade", throwIfNotFound: true);
+        m_Gameplay_WepRail = m_Gameplay.FindAction("WepRail", throwIfNotFound: true);
+        m_Gameplay_WepAim = m_Gameplay.FindAction("WepAim", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -403,9 +543,16 @@ public class @PlayerControls : IInputActionCollection, IDisposable
     private readonly InputAction m_Gameplay_Talk;
     private readonly InputAction m_Gameplay_ViewScores;
     private readonly InputAction m_Gameplay_CenterCamera;
+    private readonly InputAction m_Gameplay_WeaponWheel;
     private readonly InputAction m_Gameplay_NextWeapon;
     private readonly InputAction m_Gameplay_PrevWeapon;
-    private readonly InputAction m_Gameplay_WeaponWheel;
+    private readonly InputAction m_Gameplay_WepNone;
+    private readonly InputAction m_Gameplay_WepAuto;
+    private readonly InputAction m_Gameplay_WepBomb;
+    private readonly InputAction m_Gameplay_WepScatter;
+    private readonly InputAction m_Gameplay_WepGrenade;
+    private readonly InputAction m_Gameplay_WepRail;
+    private readonly InputAction m_Gameplay_WepAim;
     public struct GameplayActions
     {
         private @PlayerControls m_Wrapper;
@@ -418,9 +565,16 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         public InputAction @Talk => m_Wrapper.m_Gameplay_Talk;
         public InputAction @ViewScores => m_Wrapper.m_Gameplay_ViewScores;
         public InputAction @CenterCamera => m_Wrapper.m_Gameplay_CenterCamera;
+        public InputAction @WeaponWheel => m_Wrapper.m_Gameplay_WeaponWheel;
         public InputAction @NextWeapon => m_Wrapper.m_Gameplay_NextWeapon;
         public InputAction @PrevWeapon => m_Wrapper.m_Gameplay_PrevWeapon;
-        public InputAction @WeaponWheel => m_Wrapper.m_Gameplay_WeaponWheel;
+        public InputAction @WepNone => m_Wrapper.m_Gameplay_WepNone;
+        public InputAction @WepAuto => m_Wrapper.m_Gameplay_WepAuto;
+        public InputAction @WepBomb => m_Wrapper.m_Gameplay_WepBomb;
+        public InputAction @WepScatter => m_Wrapper.m_Gameplay_WepScatter;
+        public InputAction @WepGrenade => m_Wrapper.m_Gameplay_WepGrenade;
+        public InputAction @WepRail => m_Wrapper.m_Gameplay_WepRail;
+        public InputAction @WepAim => m_Wrapper.m_Gameplay_WepAim;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -454,15 +608,36 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @CenterCamera.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
                 @CenterCamera.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
                 @CenterCamera.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnCenterCamera;
+                @WeaponWheel.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
+                @WeaponWheel.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
+                @WeaponWheel.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
                 @NextWeapon.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnNextWeapon;
                 @NextWeapon.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnNextWeapon;
                 @NextWeapon.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnNextWeapon;
                 @PrevWeapon.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
                 @PrevWeapon.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
                 @PrevWeapon.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnPrevWeapon;
-                @WeaponWheel.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
-                @WeaponWheel.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
-                @WeaponWheel.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWeaponWheel;
+                @WepNone.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepNone;
+                @WepNone.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepNone;
+                @WepNone.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepNone;
+                @WepAuto.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepAuto;
+                @WepAuto.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepAuto;
+                @WepAuto.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepAuto;
+                @WepBomb.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepBomb;
+                @WepBomb.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepBomb;
+                @WepBomb.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepBomb;
+                @WepScatter.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepScatter;
+                @WepScatter.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepScatter;
+                @WepScatter.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepScatter;
+                @WepGrenade.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepGrenade;
+                @WepGrenade.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepGrenade;
+                @WepGrenade.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepGrenade;
+                @WepRail.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepRail;
+                @WepRail.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepRail;
+                @WepRail.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepRail;
+                @WepAim.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepAim;
+                @WepAim.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepAim;
+                @WepAim.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnWepAim;
             }
             m_Wrapper.m_GameplayActionsCallbackInterface = instance;
             if (instance != null)
@@ -491,15 +666,36 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                 @CenterCamera.started += instance.OnCenterCamera;
                 @CenterCamera.performed += instance.OnCenterCamera;
                 @CenterCamera.canceled += instance.OnCenterCamera;
+                @WeaponWheel.started += instance.OnWeaponWheel;
+                @WeaponWheel.performed += instance.OnWeaponWheel;
+                @WeaponWheel.canceled += instance.OnWeaponWheel;
                 @NextWeapon.started += instance.OnNextWeapon;
                 @NextWeapon.performed += instance.OnNextWeapon;
                 @NextWeapon.canceled += instance.OnNextWeapon;
                 @PrevWeapon.started += instance.OnPrevWeapon;
                 @PrevWeapon.performed += instance.OnPrevWeapon;
                 @PrevWeapon.canceled += instance.OnPrevWeapon;
-                @WeaponWheel.started += instance.OnWeaponWheel;
-                @WeaponWheel.performed += instance.OnWeaponWheel;
-                @WeaponWheel.canceled += instance.OnWeaponWheel;
+                @WepNone.started += instance.OnWepNone;
+                @WepNone.performed += instance.OnWepNone;
+                @WepNone.canceled += instance.OnWepNone;
+                @WepAuto.started += instance.OnWepAuto;
+                @WepAuto.performed += instance.OnWepAuto;
+                @WepAuto.canceled += instance.OnWepAuto;
+                @WepBomb.started += instance.OnWepBomb;
+                @WepBomb.performed += instance.OnWepBomb;
+                @WepBomb.canceled += instance.OnWepBomb;
+                @WepScatter.started += instance.OnWepScatter;
+                @WepScatter.performed += instance.OnWepScatter;
+                @WepScatter.canceled += instance.OnWepScatter;
+                @WepGrenade.started += instance.OnWepGrenade;
+                @WepGrenade.performed += instance.OnWepGrenade;
+                @WepGrenade.canceled += instance.OnWepGrenade;
+                @WepRail.started += instance.OnWepRail;
+                @WepRail.performed += instance.OnWepRail;
+                @WepRail.canceled += instance.OnWepRail;
+                @WepAim.started += instance.OnWepAim;
+                @WepAim.performed += instance.OnWepAim;
+                @WepAim.canceled += instance.OnWepAim;
             }
         }
     }
@@ -514,8 +710,15 @@ public class @PlayerControls : IInputActionCollection, IDisposable
         void OnTalk(InputAction.CallbackContext context);
         void OnViewScores(InputAction.CallbackContext context);
         void OnCenterCamera(InputAction.CallbackContext context);
+        void OnWeaponWheel(InputAction.CallbackContext context);
         void OnNextWeapon(InputAction.CallbackContext context);
         void OnPrevWeapon(InputAction.CallbackContext context);
-        void OnWeaponWheel(InputAction.CallbackContext context);
+        void OnWepNone(InputAction.CallbackContext context);
+        void OnWepAuto(InputAction.CallbackContext context);
+        void OnWepBomb(InputAction.CallbackContext context);
+        void OnWepScatter(InputAction.CallbackContext context);
+        void OnWepGrenade(InputAction.CallbackContext context);
+        void OnWepRail(InputAction.CallbackContext context);
+        void OnWepAim(InputAction.CallbackContext context);
     }
 }
