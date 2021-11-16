@@ -45,7 +45,7 @@ public class CharacterAnimation : MonoBehaviour
     private void Update()
     {
         Vector3 groundVelocity = movement.groundVelocity;
-        float forwardSpeedMultiplier = Vector3.Dot(transform.forward.Horizontal(), groundVelocity) <= 0f ? -1 : 1;
+        float forwardSpeedMultiplier = Vector3.Dot(transform.forward.AlongPlane(movement.gravityDirection), groundVelocity) <= 0f ? -1 : 1;
         float spinSpeed = 15f;
 
         if ((movement.state & (PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.SpinCharging)) != 0f)
@@ -53,12 +53,13 @@ public class CharacterAnimation : MonoBehaviour
             spinSpeed = Mathf.Max(movement.velocity.magnitude, movement.spindashChargeLevel * movement.spindashMaxSpeed);
         }
 
+        float upwardVelocity = -movement.velocity.AlongAxis(movement.gravityDirection);
         animator.SetFloat(propHorizontalSpeed, groundVelocity.magnitude);
         animator.SetFloat(propHorizontalForwardSpeed, groundVelocity.magnitude * forwardSpeedMultiplier);
         animator.SetBool(propIsOnGround, movement.isOnGround);
         animator.SetBool(propIsRolling, (movement.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.SpinCharging)) != 0);
-        animator.SetBool(propIsSpringing, !movement.isOnGround && movement.velocity.y > 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
-        animator.SetBool(propIsFreeFalling, !movement.isOnGround && movement.velocity.y < 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
+        animator.SetBool(propIsSpringing, !movement.isOnGround && upwardVelocity > 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
+        animator.SetBool(propIsFreeFalling, !movement.isOnGround && upwardVelocity < 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
         animator.SetBool(propIsHurt, (movement.state & PlayerCharacterMovement.State.Pained) != 0);
         animator.SetBool(propIsGliding, (movement.state & PlayerCharacterMovement.State.Gliding) != 0);
         animator.SetFloat(propSpinSpeed, spinSpeed);
@@ -98,7 +99,7 @@ public class CharacterAnimation : MonoBehaviour
                 characterUp = Quaternion.Inverse(root.rotation) * characterUp;
 
                 // Glide tilt
-                glideTilt = Vector3.Angle(lastVelocity.Horizontal().normalized, movement.velocity.Horizontal().normalized) * Mathf.Sign(Vector3.Cross(lastVelocity, movement.velocity).y) / Time.deltaTime;
+                glideTilt = Vector3.Angle(lastVelocity.AlongPlane(movement.gravityDirection).normalized, movement.velocity.AlongPlane(movement.gravityDirection).normalized) * Mathf.Sign(Vector3.Cross(lastVelocity, movement.velocity).y) / Time.deltaTime;
 
                 root.rotation *= Quaternion.AngleAxis(smoothGlideTilt * glideTiltWeight, root.forward);
 

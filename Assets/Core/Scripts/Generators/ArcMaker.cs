@@ -28,19 +28,19 @@ public class ArcMaker : ObjectSpawner {
         // Places the object at a percentage derived from the object index
         int numObjects = GetNumObjects();
         float angleInterval = arcDegrees / Mathf.Max(numObjects - 1, 1);
-        float angleStart = -angleInterval * (numObjects - 1) / 2.0f;
         Vector3 toArc = transform.TransformVector(arcTarget);
-        float circumference = Mathf.PI * toArc.magnitude * 2;
+        float circumference = Mathf.PI * toArc.magnitude * 2f;
         float degreePerDistance = 360f / circumference;
 
         angleInterval = degreePerDistance * objectSpacing;
+        float angleStart = -angleInterval * numObjects / 2;
 
-        obj.transform.position = transform.position + (Quaternion.AngleAxis(angleStart + angleInterval * objIndex, Quaternion.AngleAxis(arcRotation, toArc) * Vector3.Cross(toArc, Vector3.up)) * toArc);
+        obj.transform.position = transform.position + (Quaternion.AngleAxis(angleStart + angleInterval * objIndex, Quaternion.AngleAxis(arcRotation, toArc) * Vector3.Cross(toArc, transform.up)) * toArc);
     }
 
     public override int GetNumObjects()
     {
-        return (int)(Mathf.PI * transform.TransformVector(arcTarget).magnitude * 2 * arcDegrees / 360.0f);
+        return Mathf.Min((int)(Mathf.PI * transform.TransformVector(arcTarget).magnitude * 2 * arcDegrees / 360.0f), maxNumObjects);
     }
 }
 

@@ -713,6 +713,7 @@ MonoBehaviour:
   skinThickness: 0.025
   velocity: {x: 0, y: 0, z: 0}
   gravity: 9.57
+  gravityDirection: {x: 0, y: -1, z: 0}
   groundLayers:
     serializedVersion: 2
     m_Bits: 55
@@ -1220,6 +1221,7 @@ MonoBehaviour:
   spindashMaxSpeed: 36
   spindashMinSpeed: 1
   spindashChargeFriction: 0.975
+  gravityAltitudeCorrectionFactor: 0.51
   debugDrawMovement: 0
   spindashChargeLevel: 0
 --- !u!114 &1227556274159782272

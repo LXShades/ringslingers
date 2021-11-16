@@ -45,15 +45,16 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
     {
         if (monitorHead && GameManager.singleton.camera != null)
         {
-            Vector3 targetLookDirection = (GameManager.singleton.camera.transform.position - new Vector3(0, centreHeight, 0) - monitorHead.position).normalized;
+            Vector3 targetLookDirection = (GameManager.singleton.camera.transform.position - (monitorHead.position + transform.up * centreHeight)).normalized;
             float clampY = Mathf.Sin(maxVerticalLookAngle * Mathf.Deg2Rad);
 
-            targetLookDirection.y = Mathf.Clamp(targetLookDirection.y, -clampY, clampY);
-            float horizontalMult = Mathf.Sqrt(1f - Mathf.Abs(targetLookDirection.y)) / targetLookDirection.Horizontal().magnitude;
-            targetLookDirection.x *= horizontalMult;
-            targetLookDirection.z *= horizontalMult;
+            Vector3 lookHorizontalness = targetLookDirection.AlongPlane(transform.up);
+            float lookUpness = Mathf.Clamp(targetLookDirection.AlongAxis(transform.up), -clampY, clampY);
+            float horizontalMult = Mathf.Sqrt(1f - Mathf.Abs(lookUpness)) / lookHorizontalness.magnitude;
+            targetLookDirection.SetAlongPlane(transform.up, lookHorizontalness * horizontalMult);
+            targetLookDirection.SetAlongAxis(transform.up, lookUpness);
 
-            monitorHead.transform.forward = Vector3.SmoothDamp(monitorHead.transform.forward, targetLookDirection, ref lookVelocity, lookSmoothTime);
+            monitorHead.transform.rotation = Quaternion.LookRotation(Vector3.SmoothDamp(monitorHead.transform.forward, targetLookDirection, ref lookVelocity, lookSmoothTime), transform.up);
         }
     }
 
@@ -71,7 +72,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
     public bool ShouldBlockMovement(Movement source, in RaycastHit hit)
     {
         if (source is PlayerCharacterMovement character && (character.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0)
-            return Vector3.Dot(hit.normal, Vector3.up) >= 0.95f; // being jumped on from the top means we should block, otherwise let the character through
+            return Vector3.Dot(hit.normal, transform.up) >= 0.95f; // being jumped on from the top means we should block, otherwise let the character through
 
         return true;
     }
@@ -81,10 +82,9 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
         if (source is PlayerCharacterMovement character && (character.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0)
         {
             // bounce off
-            if (character.velocity.y <= -1.0f)
-            {
-                character.velocity.y = -character.velocity.y;
-            }
+            float upwardVelocity = -character.velocity.AlongAxis(character.gravityDirection);
+            if (upwardVelocity <= -1.0f)
+                character.velocity.SetAlongAxis(character.gravityDirection, upwardVelocity);
 
             // pop
             if (respawnable.isSpawned && tickInfo.isConfirming)

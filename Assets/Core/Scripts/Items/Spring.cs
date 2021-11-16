@@ -15,6 +15,9 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
     [Header("Sounds")]
     public GameSound springSound = new GameSound();
 
+    [Header("Debug")]
+    public float _dbgGravityForce = 9.57f;
+
     private Animator animator;
 
     void Start()
@@ -43,4 +46,43 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
     }
 
     public bool ShouldBlockMovement(Movement source, in RaycastHit hit) => true;
+
+    /// <summary>
+    /// Previews spring forces
+    /// </summary>
+    private void OnDrawGizmosSelected()
+    {
+        float delta = 0.033f;
+        Vector3 position = transform.position + transform.up * absoluteStartHeight;
+        Vector3 velocity = transform.up * springForce;
+        GravityVolume nearestGravVol = null;
+        float nearestGravVolDist = float.MaxValue;
+        Vector3 lastDrawnPoint = transform.position;
+
+        Gizmos.color = Color.blue;
+
+        foreach (GravityVolume gravVol in FindObjectsOfType<GravityVolume>())
+        {
+            float dist = Vector3.Distance(gravVol.transform.position, transform.position);
+            if (dist < nearestGravVolDist)
+            {
+                nearestGravVolDist = dist;
+                nearestGravVol = gravVol;
+            }
+        }
+
+        for (float t = 0; t < 2.25f; t += delta)
+        {
+            position += velocity * delta;
+
+            if (nearestGravVol != null && Vector3.Distance(position, nearestGravVol.transform.position) <= nearestGravVol.maxRadius)
+                velocity += (nearestGravVol.transform.position - position).normalized * (_dbgGravityForce * delta);
+            else
+                velocity += new Vector3(0f, -_dbgGravityForce * delta, 0f);
+
+            Gizmos.DrawLine(lastDrawnPoint, position);
+            lastDrawnPoint = position;
+        }
+
+    }
 }

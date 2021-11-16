@@ -55,6 +55,11 @@ public class PlayerCharacterMovement : CharacterMovement
     [Range(0f, 1f)]
     public float spindashChargeFriction = 0.995f;
 
+    [Header("[PlayerCharacterMovement] Gravity manipulation")]
+    [Tooltip("When in spherical gravity environments, lateral movement can keep you in orbit due to affecting your altitude. Correction works by eliminating altitude change when gravity changes")]
+    [Range(0f, 1f)]
+    public float gravityAltitudeCorrectionFactor = 1f;
+
     [Header("[PlayerCharacterMovement] Debug")]
     public bool debugDrawMovement = false;
 
@@ -130,6 +135,10 @@ public class PlayerCharacterMovement : CharacterMovement
         if (enableCollision)
             Physics.SyncTransforms();
 
+        // Apply gravity volumes first
+        gravityDirection = Vector3.down;
+        GravityVolume.GetInfluences(transform.position, ref gravityDirection);
+
         // Check whether on ground
         CalculateGroundInfo(out GroundInfo groundInfo);
 
@@ -186,6 +195,23 @@ public class PlayerCharacterMovement : CharacterMovement
         {
             capsule.height = capsuleHeight;
             capsule.center = new Vector3(capsule.center.x, Mathf.Max(capsuleHeight * 0.5f, capsule.radius), capsule.center.z);
+        }
+
+        // Altitude correction
+        if (velocity.sqrMagnitude > 0.001f)
+        {
+            Vector3 nextGravity = Vector3.zero;
+
+            if (GravityVolume.GetInfluences(transform.position + velocity * deltaTime, ref nextGravity))
+            {
+                float oldVerticalSpeed = velocity.AlongAxis(gravityDirection);
+                float oldVelocityMagnitude = velocity.magnitude;
+                Vector3 newVelocity = velocity;
+
+                newVelocity.SetAlongAxis(nextGravity, oldVerticalSpeed);
+                newVelocity *= oldVelocityMagnitude / newVelocity.magnitude;
+                velocity = Vector3.Slerp(velocity, newVelocity, gravityAltitudeCorrectionFactor);
+            }
         }
 
         // Final movement
@@ -265,7 +291,7 @@ public class PlayerCharacterMovement : CharacterMovement
                 if ((state & State.Climbing) != 0)
                 {
                     // Climb jump
-                    velocity.SetAlongAxis(forward.Horizontal(), -jumpSpeed);
+                    velocity.SetAlongAxis(forward.AlongPlane(gravityDirection), -jumpSpeed);
                     velocity.SetAlongAxis(up, jumpSpeed);
                     state &= ~State.Climbing;
                 }
@@ -290,7 +316,7 @@ public class PlayerCharacterMovement : CharacterMovement
                         if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped))
                         {
                             // Thok
-                            velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
+                            velocity.SetAlongPlane(gravityDirection, input.aimDirection.AlongPlane(gravityDirection).normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
                             if (tickInfo.isConfirmingForward)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
@@ -317,8 +343,9 @@ public class PlayerCharacterMovement : CharacterMovement
         {
             state |= State.CanceledJump;
 
-            if (velocity.y > 0)
-                velocity.y /= 2f;
+            float verticalSpeed = -velocity.AlongAxis(gravityDirection);
+            if (verticalSpeed > 0f)
+                velocity.SetAlongAxis(gravityDirection, -(verticalSpeed / 2f));
         }
 
         // Run other abilities
@@ -394,43 +421,45 @@ public class PlayerCharacterMovement : CharacterMovement
         // Handle gliding
         if ((state & State.Gliding) != 0)
         {
-            float horizontalSpeed = velocity.Horizontal().magnitude;
-            Vector3 horizontalAim = aim.Horizontal().normalized;
+            Vector3 gravityUp = -gravityDirection;
+            float horizontalSpeed = velocity.AlongPlane(gravityDirection).magnitude;
+            Vector3 horizontalAim = aim.AlongPlane(gravityDirection).normalized;
             Vector3 groundForward = horizontalAim.normalized, groundRight = Vector3.Cross(up, aim).normalized;
             Vector3 desiredAcceleration = Vector3.ClampMagnitude(groundForward * input.moveVerticalAxis + groundRight * input.moveHorizontalAxis, 1);
 
             // gravity cancel and fall control
-            velocity.y = Math.Max(velocity.y, -glide.fallSpeedBySpeed.Evaluate(horizontalSpeed));
+            velocity.SetAlongAxis(gravityUp, Math.Max(velocity.AlongAxis(gravityUp), -glide.fallSpeedBySpeed.Evaluate(horizontalSpeed)));
 
             // speed up/slow down
-            float targetSpeed = horizontalSpeed + glide.accelerationBySpeed.Evaluate(horizontalSpeed) * Vector3.Dot(velocity.Horizontal() / horizontalSpeed, desiredAcceleration) * deltaTime;
+            Vector3 velocityOnGravityPlane = velocity.AlongPlane(gravityUp);
+            float targetSpeed = horizontalSpeed + glide.accelerationBySpeed.Evaluate(horizontalSpeed) * Vector3.Dot(velocity.AlongPlane(gravityUp) / horizontalSpeed, desiredAcceleration) * deltaTime;
 
-            velocity.SetHorizontal(velocity.Horizontal() * targetSpeed / horizontalSpeed);
+            velocity.SetAlongPlane(gravityUp, velocityOnGravityPlane * (targetSpeed / horizontalSpeed));
 
             // turn!
-            float turnSpeed = glide.turnSpeedBySpeed.Evaluate(horizontalSpeed) * glide.turnSpeedCurve.Evaluate(Vector3.Angle(velocity.Horizontal().normalized, desiredAcceleration.normalized)); // in degrees/sec
+            float turnSpeed = glide.turnSpeedBySpeed.Evaluate(horizontalSpeed) * glide.turnSpeedCurve.Evaluate(Vector3.Angle(velocity.AlongPlane(gravityUp).normalized, desiredAcceleration.normalized)); // in degrees/sec
 
-            velocity.SetHorizontal(Vector3.RotateTowards(velocity.Horizontal(), desiredAcceleration, turnSpeed * Mathf.Deg2Rad * deltaTime, 0f));
+            velocity.SetAlongPlane(gravityUp, Vector3.RotateTowards(velocity.AlongPlane(gravityUp), desiredAcceleration, turnSpeed * Mathf.Deg2Rad * deltaTime, 0f));
 
-            forward = velocity.Horizontal();
+            forward = velocity.AlongPlane(gravityUp);
 
             // speed clamps
-            Vector3 clampedHorizontal = velocity.Horizontal();
+            Vector3 clampedHorizontal = velocity.AlongPlane(gravityUp);
             float clampedHorizontalMag = clampedHorizontal.magnitude;
             if (clampedHorizontalMag < glide.minSpeed)
-                velocity.SetHorizontal(clampedHorizontal * (glide.minSpeed / clampedHorizontalMag));
+                velocity.SetAlongPlane(gravityUp, clampedHorizontal * (glide.minSpeed / clampedHorizontalMag));
             else if (clampedHorizontalMag > glide.maxSpeed)
-                velocity.SetHorizontal(clampedHorizontal * (glide.maxSpeed / clampedHorizontalMag));
+                velocity.SetAlongPlane(gravityUp, clampedHorizontal * (glide.maxSpeed / clampedHorizontalMag));
         }
 
         // Handle climbing
         if ((state & State.Gliding) != 0 || (state & State.Climbing) != 0)
         {
-            Vector3 wallDirection = (state & State.Climbing) != 0 ? forward.Horizontal() : input.aimDirection.Horizontal();
+            Vector3 wallDirection = (state & State.Climbing) != 0 ? forward.AlongPlane(gravityDirection) : input.aimDirection.AlongPlane(gravityDirection);
 
             if (Physics.Raycast(transform.position, wallDirection, out RaycastHit hit, 0.5f, blockingCollisionLayers, QueryTriggerInteraction.Ignore))
             {
-                forward = -hit.normal.Horizontal().normalized;
+                forward = -hit.normal.AlongPlane(gravityDirection).normalized;
 
                 if ((state & State.Climbing) == 0)
                 {
