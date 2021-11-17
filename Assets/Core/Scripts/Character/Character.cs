@@ -93,6 +93,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     public Transform flagHoldBone;
     public Color allyOutlineColour = Color.blue;
     public Color enemyOutlineColour = Color.red;
+    public float localPlayerAlpha = 0.4f;
 
     [Header("Ring drop")]
     public GameObject droppedRingPrefab;
@@ -133,6 +134,21 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     public float timeOfLastInputPush { get; set; }
 
     public bool isInvisible { get; set; }
+
+    /// <summary>Note: overridden by isInvisible</summary>
+    public float renderAlpha
+    {
+        get => _renderAlpha;
+        set
+        {
+            if (_renderAlpha != value)
+            {
+                _renderAlpha = value;
+                characterModel.material.SetFloat("_Alpha", _renderAlpha);
+            }
+        }
+    }
+    private float _renderAlpha = 1f;
 
     public bool isHoldingFlag => holdingFlag != null;
 
@@ -208,6 +224,11 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
             characterModel.enabled = crownModel.enabled = false;
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = crownModel.enabled = true;
+
+        if (PlayerCamera.singleton && PlayerCamera.singleton.currentPlayer == this)
+            renderAlpha = localPlayerAlpha;
+        else
+            renderAlpha = 1f;
 
         if (isServer && transform.position.y < killY)
         {

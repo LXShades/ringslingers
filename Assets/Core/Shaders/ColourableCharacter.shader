@@ -11,18 +11,54 @@ Shader "Custom/ColourableCharacter"
         _OutlinePushbask ("Outline pushback", Range(0, 0.2)) = 0.1
         _Color ("Target color", Color) = (1,1,1,1)
         _MainTex ("Albedo (RGB)", 2D) = "white" {}
+        _Alpha ("Alpha", Range(0,1)) = 1
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Metallic ("Metallic", Range(0,1)) = 0.0
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent"}
         LOD 200
 
+        // Render transparent with depth, so that transparent rendering can happen afterwards without overlapping itself
+        Pass
+        {
+            Tags { "RenderType"="Transparent" "Queue"="Opaque" }
+            Blend SrcAlpha OneMinusSrcAlpha
+            Cull Back
+            CGPROGRAM
+
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma target 3.0
+            #include "UnityCG.cginc"
+
+            struct v2f
+            {
+                float4 pos : SV_POSITION;
+            };
+
+            v2f vert(appdata_full v)
+            {
+                v2f o;
+                o.pos = UnityObjectToClipPos(v.vertex);
+                return o;
+            }
+
+            fixed4 frag(v2f i) : SV_Target
+            {
+                fixed4 col = fixed4(0, 0, 0, 0);
+                return col;
+            }
+
+            ENDCG
+        }
+        
+        // Render base colours
         Cull Back
         CGPROGRAM
 
-        #pragma surface surf Standard fullforwardshadows
+        #pragma surface surf Standard fullforwardshadows alpha
         #pragma target 3.0
 
         sampler2D _MainTex;
@@ -37,6 +73,7 @@ Shader "Custom/ColourableCharacter"
         fixed4 _Color;
         fixed4 _SourceColor;
         half _SourceColorRange;
+        half _Alpha;
 
         UNITY_INSTANCING_BUFFER_START(Props)
         UNITY_INSTANCING_BUFFER_END(Props)
@@ -51,14 +88,15 @@ Shader "Custom/ColourableCharacter"
             o.Albedo = c.rgb;
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;
-            o.Alpha = c.a;
+            o.Alpha = _Alpha;
         }
         ENDCG
 
+        // Render outline
         Cull Front
         CGPROGRAM
 
-        #pragma surface surf Standard vertex:vert
+        #pragma surface surf Standard vertex:vert alpha
         #pragma target 3.0
 
         sampler2D _MainTex;
@@ -71,6 +109,7 @@ Shader "Custom/ColourableCharacter"
         fixed4 _OutlineColor;
         half _OutlineThickness;
         half _OutlinePushback;
+        half _Alpha;
 
         UNITY_INSTANCING_BUFFER_START(Props)
         UNITY_INSTANCING_BUFFER_END(Props)
@@ -87,7 +126,7 @@ Shader "Custom/ColourableCharacter"
             o.Emission = _OutlineColor;
             o.Metallic = 0;
             o.Smoothness = 0;
-            o.Alpha = _OutlineColor.a;
+            o.Alpha = _OutlineColor.a * _Alpha;
         }
         ENDCG
     }
