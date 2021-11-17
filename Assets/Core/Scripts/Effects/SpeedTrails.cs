@@ -118,7 +118,7 @@ public class SpeedTrails : MonoBehaviour
         //if (opacity >= 0.05f)
             TryAddTrailPoint(transform.position, opacity);
 
-        Vector3 forward = -Camera.main.transform.forward;
+        Vector3 forward = -GameManager.singleton.camera.transform.forward;
         Color32 colour = character.GetCharacterColour();
 
         float t = Time.time;
