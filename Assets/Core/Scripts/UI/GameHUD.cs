@@ -358,10 +358,14 @@ public class GameHUD : MonoBehaviour
         // FPS
         if ((int)Time.unscaledTime != (int)(Time.unscaledTime - Time.unscaledDeltaTime))
         {
+            int unreliablePingMs = (int)(Netplay.singleton.unreliablePing * 1000);
+            int reliablePingMs = (int)(Netplay.singleton.reliablePing * 1000);
+            int smoothPingMs = (int)(GameTicker.singleton != null ? GameTicker.singleton.smoothLocalPlayerPing * 1000 : 0);
+            int lastLocalPingMs = ((int)(GameTicker.singleton != null ? GameTicker.singleton.lastLocalPlayerPing * 1000 : 0));
+
             lastFps = numFramesThisSecond;
             fpsCounter.text = $"FPS {lastFps.ToString()} / Min {(1f / deltaMax).ToString("F1")} / Max {(1f / deltaMin).ToString("F1")}\n" +
-                $"Ping/Unreliable/Reliable: " +
-                $"{((int)(GameTicker.singleton != null ? GameTicker.singleton.localPlayerPing * 1000 : 0)).ToString()}/{((int)(Netplay.singleton.unreliablePing * 1000)).ToString()}/{((int)(Netplay.singleton.reliablePing * 1000)).ToString()}";
+                $"Ping/Smooth/Unreliable/Reliable: {lastLocalPingMs.ToString()}/{smoothPingMs.ToString()}/{unreliablePingMs.ToString()}/{reliablePingMs.ToString()}";
 
             deltaMin = float.MaxValue;
             deltaMax = float.MinValue;

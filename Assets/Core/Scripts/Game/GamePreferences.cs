@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 public static class GamePreferences
 {
     public const float kDefaultExtraSmoothing = 0.017f;
-    public const float kDefaultServerRewinding = 0f;
+    public const float kDefaultServerRewinding = 0.16f;
 
     // Mouse speed in degrees per pixel (usually <1!)
     public static float mouseSpeed {
@@ -60,7 +60,7 @@ public static class GamePreferences
 
     public static float serverRewindTolerance
     {
-        get => PlayerPrefs.GetFloat("serverRewindTolerance");
+        get => PlayerPrefs.GetFloat("serverRewindTolerance", kDefaultServerRewinding);
         set
         {
             PlayerPrefs.SetFloat("serverRewindTolerance", value);

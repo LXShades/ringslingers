@@ -86,17 +86,21 @@ public class GameTicker : NetworkBehaviour
 
     // ==================== LOCAL PLAYER SECTION ===================
     // [client] returns the local player's ping based on their predicted server time
-    public float localPlayerPing { get; private set; }
+    public float lastLocalPlayerPing { get; private set; }
+
+    // [client] returns the local player's ping smoothed out
+    public float smoothLocalPlayerPing { get; private set; }
 
     // [client] When we send inputs to the server due for our predicted server time, it typically arrives slightly earlier or later than the time the server would like it (to keep inputs in the buffer)
     // At the beginning we're completely out of sync and it will usually arrive at an extremely out-of-sync time - but that's ok, the server will tell us how late (<0) or early (>0) it arrived in seconds
     // We track this with multiple samples in this history and use this to decide what our clock should be, relative to the server.
     // Time is Time.realtimeSinceStartup
     private TimelineList<float> clientInputEarlynessHistory = new TimelineList<float>();
-    private TimelineList<float> serverTimeAheadnessHistory = new TimelineList<float>();
+    private TimelineList<float> clientServerTimeOffsetHistory = new TimelineList<float>(); // Time.time - incomingServerTick.serverTime
 
     private List<float> tempSortedList = new List<float>();
 
+    // How long the clientInputEarlynessHistory can be, ALSO APPLIES TO clientServerTimeOffsetHistory
     private float clientInputEarlynessHistorySamplePeriod = 3f;
 
     private float currentClientServerTimeOffset = 0f;
@@ -141,8 +145,9 @@ public class GameTicker : NetworkBehaviour
             else
                 predictedServerTime += Time.deltaTime * 0.01f;
 
-            // replica server time should ideally be as much time as we need to reduce player jumpiness, and no more
-            predictedReplicaServerTime = predictedServerTime - ServerState.instance.serverRewindTolerance;
+            // replica server time should reduce player jumpiness as much as possible, by reducing how far we need to predict them, which is normally by local ping.
+            // predictedServerTime - smoothLocalPlayerPing is basically no jumpiness, we just need to clamp to the tolerance setting
+            predictedReplicaServerTime = predictedServerTime - Mathf.Min(smoothLocalPlayerPing, ServerState.instance.serverRewindTolerance);
         }
 
         // Receive incoming messages
@@ -186,8 +191,8 @@ public class GameTicker : NetworkBehaviour
             // Update smoothing
             const float measurementPeriod = 0.75f / testRate;
 
+            // Client time smoothing and adjustment
             tempSortedList.Clear();
-
             for (int i = 0; i < clientInputEarlynessHistory.Count && clientInputEarlynessHistory.TimeAt(i) >= Time.realtimeSinceStartup - measurementPeriod; i++)
                 tempSortedList.Add(clientInputEarlynessHistory[i]);
             tempSortedList.Sort();
@@ -197,6 +202,21 @@ public class GameTicker : NetworkBehaviour
                 currentTimeSmoothing = Mathf.Min(extraSmoothing, maxTimeSmoothing);
 
                 nextTimeAdjustment = tempSortedList[(int)(tempSortedList.Count * 0.02f)] - currentTimeSmoothing;
+            }
+
+            // Server ping averaging
+            tempSortedList.Clear();
+            for (int i = 0; i < clientServerTimeOffsetHistory.Count && clientServerTimeOffsetHistory.TimeAt(i) >= Time.realtimeSinceStartup - measurementPeriod; i++)
+                tempSortedList.Add(clientServerTimeOffsetHistory[i]);
+            tempSortedList.Sort();
+
+            if (tempSortedList.Count > 0)
+            {
+                float targetServerPredictedTime = Time.time + currentClientServerTimeOffset - nextTimeAdjustment;
+                float targetServerTimeMedian = Time.time + tempSortedList[tempSortedList.Count / 2];
+
+                smoothLocalPlayerPing = targetServerPredictedTime - targetServerTimeMedian;
+                Debug.Log($"Ping is now {smoothLocalPlayerPing * 1000}");
             }
         }
 
@@ -233,6 +253,9 @@ public class GameTicker : NetworkBehaviour
 
             clientInputEarlynessHistory.Insert(Time.realtimeSinceStartup, incomingServerTick.lastClientEarlyness);
             clientInputEarlynessHistory.TrimBefore(Time.realtimeSinceStartup - clientInputEarlynessHistorySamplePeriod);
+
+            clientServerTimeOffsetHistory.Insert(Time.realtimeSinceStartup, incomingServerTick.serverTime - Time.time);
+            clientServerTimeOffsetHistory.TrimBefore(Time.realtimeSinceStartup - clientInputEarlynessHistorySamplePeriod);
         }
     }
 
@@ -353,11 +376,9 @@ public class GameTicker : NetworkBehaviour
             }
         }
 
-        localPlayerPing = predictedServerTime - tickMessage.serverTime;
+        lastLocalPlayerPing = predictedServerTime - tickMessage.serverTime;
         lastProcessedServerTick = tickMessage;
         realtimeOfLastProcessedServerTick = Time.realtimeSinceStartup;
-
-        serverTimeAheadnessHistory.Insert(Time.realtimeSinceStartup, predictedServerTime - tickMessage.serverTime);
     }
 
     private void OnRecvServerPlayerTick(ServerTickMessage tickMessage)
@@ -405,7 +426,7 @@ public class GameTicker : NetworkBehaviour
 
     public string DebugInfo()
     {
-        return $"Ping: {(int)(localPlayerPing * 1000)}ms\nSmoothing: {(int)(currentTimeSmoothing * 1000f)}ms";
+        return $"Ping: {(int)(lastLocalPlayerPing * 1000)}ms\nSmoothPing: {(int)(smoothLocalPlayerPing * 1000)}ms\nSmoothingDelay: {(int)(currentTimeSmoothing * 1000f)}ms";
     }
 }
 
