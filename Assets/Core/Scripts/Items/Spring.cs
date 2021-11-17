@@ -59,7 +59,7 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
         float nearestGravVolDist = float.MaxValue;
         Vector3 lastDrawnPoint = transform.position;
 
-        Gizmos.color = Color.blue;
+        Gizmos.color = Color.yellow;
 
         foreach (GravityVolume gravVol in FindObjectsOfType<GravityVolume>())
         {
