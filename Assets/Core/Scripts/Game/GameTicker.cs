@@ -174,6 +174,10 @@ public class GameTicker : NetworkBehaviour
         // We have all server inputs and our own inputs, tick the game
         TickGame();
 
+        // and simulate physics
+        if (TimeTool.IsTick(Time.unscaledTime, Time.unscaledDeltaTime, 30))
+            Physics.Simulate(1f / 30f);
+
         // Client/server send messages
         SendFinalOutgoings();
     }
@@ -216,7 +220,6 @@ public class GameTicker : NetworkBehaviour
                 float targetServerTimeMedian = Time.time + tempSortedList[tempSortedList.Count / 2];
 
                 smoothLocalPlayerPing = targetServerPredictedTime - targetServerTimeMedian;
-                Debug.Log($"Ping is now {smoothLocalPlayerPing * 1000}");
             }
         }
 
