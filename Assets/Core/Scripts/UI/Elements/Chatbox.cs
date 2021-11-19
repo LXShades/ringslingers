@@ -38,7 +38,7 @@ public class Chatbox : MonoBehaviour
     {
         if (Keyboard.current.enterKey.wasPressedThisFrame && text != defaultText && !string.IsNullOrEmpty(text))
         {
-            Netplay.singleton.localClient.CmdSendMessage(text);
+            Netplay.singleton.localClient?.CmdSendMessage(text);
         }
 
         chatInput.gameObject.SetActive(false);
