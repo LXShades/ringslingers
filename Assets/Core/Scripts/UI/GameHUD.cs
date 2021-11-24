@@ -320,8 +320,8 @@ public class GameHUD : MonoBehaviour
                 {
                     string teamColour = scoreboardPlayer.team.ToFontColor();
 
-                    scoreboardNames.text += $"<sprite={playerPosition}>{scoreboardPlayer.playerName}</color>\n";
-                    scoreboardScores.text += $"{teamColour}{scoreboardPlayer.score}</color>\n";
+                    scoreboardNameBuilder.Append($"<sprite={playerPosition}>{teamColour}{scoreboardPlayer.playerName}</color>\n");
+                    scoreboardScoreBuilder.Append($"{teamColour}{scoreboardPlayer.score}</color>\n");
                 }
             }
 
