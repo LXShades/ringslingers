@@ -132,10 +132,12 @@ public class GameTicker : NetworkBehaviour
 
     private void Update()
     {
+        float testBigTimeOffset = 5 * 60 * 60;
+
         // Advance the clock
         // servers simply use Time.time, clients use an offset from Time.time to approximate predictedServerTime based on how late/early the server received their inputs
         if (NetworkServer.active)
-            predictedServerTime = predictedReplicaServerTime = Time.time;
+            predictedServerTime = predictedReplicaServerTime = Time.time + testBigTimeOffset;
         else
         {
             RefreshClientServerTimeOffset();
@@ -148,6 +150,11 @@ public class GameTicker : NetworkBehaviour
             // replica server time should reduce player jumpiness as much as possible, by reducing how far we need to predict them, which is normally by local ping.
             // predictedServerTime - smoothLocalPlayerPing is basically no jumpiness, we just need to clamp to the tolerance setting
             predictedReplicaServerTime = predictedServerTime - Mathf.Min(smoothLocalPlayerPing, ServerState.instance.serverRewindTolerance);
+        }
+
+        for (float t = testBigTimeOffset; t < testBigTimeOffset + 1f; t += 1f/60f)
+        {
+            Debug.Log($"{t}: {TimeTool.Quantize(t, 60) == TimeTool.Quantize(TimeTool.Quantize(t, 60), 60)}");
         }
 
         // Receive incoming messages
@@ -164,7 +171,6 @@ public class GameTicker : NetworkBehaviour
             // Receive local player inputs
             Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<PlayerCharacterMovement>().up;
 
-            localPlayerInput.aimDirection = Netplay.singleton.localPlayer.movement.forward.normalized; // adjust the aim to the character's aim (only so that forward adjustments are applied, this might be risky in laggy games...)
             localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
 
             // Send inputs to the local player's ticker

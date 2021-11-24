@@ -13,6 +13,7 @@ public class ServerTimeMonitor : MonoBehaviour
     public Text rightLabel;
 
     private float lastServerTime;
+    private float lastLocalTime;
 
     private GraphGraphic.GraphCurve predictedServerTimeCurve;    // time of self, based on predicted server time
     private GraphGraphic.GraphCurve lastReceivedServerTimeCurve; // time last received from server
@@ -35,7 +36,7 @@ public class ServerTimeMonitor : MonoBehaviour
         if (GameTicker.singleton != null)
         {
             float parentWidth = (balanceLine.transform.parent as RectTransform).sizeDelta.x; // .rect.width maybe? sizeDelta seems to do whatever it wants
-            float gameSpeed = (GameTicker.singleton.predictedServerTime - lastServerTime) / Time.deltaTime;
+            float gameSpeed = (GameTicker.singleton.predictedServerTime - lastServerTime) / (Time.time - lastLocalTime);
 
             balanceLine.anchoredPosition = new Vector2((gameSpeed - 1f) * parentWidth / 2f / range, 0f);
 
@@ -55,10 +56,13 @@ public class ServerTimeMonitor : MonoBehaviour
                 timeGraphs.ClearTimeAfter(Time.realtimeSinceStartup + 2f);
 
                 lastAddedServerTickRealtime = GameTicker.singleton.realtimeOfLastProcessedServerTick;
+
+                timeGraphs.Redraw();
             }
-            timeGraphs.Redraw();
+
 
             lastServerTime = GameTicker.singleton.predictedServerTime;
+            lastLocalTime = Time.time;
         }
     }
 }
