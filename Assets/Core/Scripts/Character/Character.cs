@@ -225,7 +225,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
             characterModel.enabled = crownModel.enabled = true;
 
-        if (PlayerCamera.singleton && PlayerCamera.singleton.currentPlayer == this)
+        if (PlayerCamera.singleton && PlayerCamera.singleton.currentPlayer == this && !GameManager.singleton.isPaused /* allow character customisation */)
             renderAlpha = localPlayerAlpha;
         else
             renderAlpha = 1f;
