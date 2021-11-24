@@ -29,7 +29,7 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
     {
         PlayerCharacterMovement movement = source as PlayerCharacterMovement;
 
-        if (movement && Vector3.Dot(movement.velocity, transform.up) < maxSpeedDotForSpring * springForce)
+        if (movement && ((!springAbsolutely && Vector3.Dot(movement.velocity, transform.up) < maxSpeedDotForSpring * springForce) || (springAbsolutely && Vector3.Dot(movement.velocity.normalized, transform.up) < maxSpeedDotForSpring)))
         {
             if (springAbsolutely)
                 movement.transform.position = transform.position + transform.up * absoluteStartHeight; // line up player with spring centre
