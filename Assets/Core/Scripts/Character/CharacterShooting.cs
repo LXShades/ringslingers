@@ -223,7 +223,7 @@ public class CharacterShooting : NetworkBehaviour
 
         foreach (Character player in Netplay.singleton.players)
         {
-            if (player && player != this.character)
+            if (player && player != this.character && player.damageable.CanBeDamagedBy(this.character.damageable.damageTeam))
             {
                 float dot = Vector3.Dot((player.transform.position - transform.position).normalized, aimDirection);
 
