@@ -274,7 +274,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     public void ApplyHitKnockback(Vector3 force)
     {
-        state |= State.Pained;
+        state = State.Pained;
         velocity = force;
     }
 
