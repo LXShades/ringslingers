@@ -156,13 +156,13 @@ public class CharacterShooting : NetworkBehaviour
             PlayerControls inputs = GameManager.singleton.input;
 
             // pretty much this
-            if (inputs.Gameplay.WepNone.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyNone });
-            if (inputs.Gameplay.WepAuto.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyAuto });
-            if (inputs.Gameplay.WepBomb.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyBomb });
-            if (inputs.Gameplay.WepScatter.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyScatter });
-            if (inputs.Gameplay.WepGrenade.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyGrenade });
-            if (inputs.Gameplay.WepAim.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyAim });
-            if (inputs.Gameplay.WepRail.ReadValue<float>() > 0.5f) CmdSelectWeapon(new[] { wepKeyRail });
+            if (inputs.Gameplay.WepNone.ReadValue<float>() > 0.5f) LocalSetSelectedWeapons(new[] { wepKeyNone });
+            if (inputs.Gameplay.WepAuto.ReadValue<float>() > 0.5f) LocalSetSelectedWeapons(new[] { wepKeyAuto });
+            if (inputs.Gameplay.WepBomb.ReadValue<float>() > 0.5f) LocalSetSelectedWeapons(new[] { wepKeyBomb });
+            if (inputs.Gameplay.WepScatter.ReadValue<float>() > 0.5f) LocalSetSelectedWeapons(new[] { wepKeyScatter });
+            if (inputs.Gameplay.WepGrenade.ReadValue<float>() > 0.5f) LocalSetSelectedWeapons(new[] { wepKeyGrenade });
+            if (inputs.Gameplay.WepAim.ReadValue<float>() > 0.5f) LocalSetSelectedWeapons(new[] { wepKeyAim });
+            if (inputs.Gameplay.WepRail.ReadValue<float>() > 0.5f) LocalSetSelectedWeapons(new[] { wepKeyRail });
         }
     }
 

@@ -92,31 +92,32 @@ public class CommandLineProcessor : MonoBehaviour
     private static void PreInitWindowPosition()
     {
         Debug.Log("Trying to reposition game window");
-        //Display.onDisplaysUpdated += RepositionWindow;
-        //Application.focusChanged += (bool _) => RepositionWindow();
 
         RepositionWindow();
     }
 
     private static void RepositionWindow()
     {
-        const uint SWP_NOACTIVATE = 0x0010;
-        const uint SWP_NOOWNERZORDER = 0x0200;
-        const uint SWP_NOREDRAW = 0x0008;
-        const uint SWP_NOSIZE = 0x0001;
-        const uint SWP_NOZORDER = 0x0004;
-        const uint SWP_ASYNCWINDOWPOS = 0x4000;
-
-        int windowX = 0, windowY = 0;
-
-        if (CommandLine.GetCommand("-pos", 2, out string[] posParams))
+        if (Application.isEditor)
         {
-            System.Int32.TryParse(posParams[0], out windowX);
-            System.Int32.TryParse(posParams[1], out windowY);
-        }
+            const uint SWP_NOACTIVATE = 0x0010;
+            const uint SWP_NOOWNERZORDER = 0x0200;
+            const uint SWP_NOREDRAW = 0x0008;
+            const uint SWP_NOSIZE = 0x0001;
+            const uint SWP_NOZORDER = 0x0004;
+            const uint SWP_ASYNCWINDOWPOS = 0x4000;
 
-        SetForegroundWindow(GetActiveWindow());
-        SetWindowPos(GetActiveWindow(), System.IntPtr.Zero, windowX, windowY, 1280, 720, SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_NOSIZE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS);
+            int windowX = 0, windowY = 0;
+
+            if (CommandLine.GetCommand("-pos", 2, out string[] posParams))
+            {
+                System.Int32.TryParse(posParams[0], out windowX);
+                System.Int32.TryParse(posParams[1], out windowY);
+            }
+
+            SetForegroundWindow(GetActiveWindow());
+            SetWindowPos(GetActiveWindow(), System.IntPtr.Zero, windowX, windowY, 1280, 720, SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_NOSIZE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS);
+        }
     }
 
     /*
