@@ -399,7 +399,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 185.7}
+  m_SizeDelta: {x: 0, y: 153}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &229202716519489129
 CanvasRenderer:
@@ -436,19 +436,19 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 4
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Smoothing can improve your gameplay by adding an artificial delay in ping, 
-    sending your inputs to the server slightly earlier.
+  m_Text: 'Smoothing can improve gameplay by adding an artificial delay and sending
+    your inputs to the server earlier.
 
 
-    This can reduce jitter,
-    but increases the jumpiness of other players due to increased ping, so avoid
-    setting it too high! Note it can improve jitter but not improve FPS.'
+    This can reduce jitter, but increases
+    the jumpiness of other players due to increased prediction, so avoid setting
+    it too high! It will not improve your FPS.'
 --- !u!1 &2394844795174801565
 GameObject:
   m_ObjectHideFlags: 0
@@ -1536,7 +1536,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5858540144404251183}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -1936,7 +1936,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 71.6}
+  m_SizeDelta: {x: 0, y: 103.7}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3961398530111145174
 CanvasRenderer:
@@ -1973,14 +1973,14 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 4
+    m_Alignment: 1
     m_AlignByGeometry: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Server rewinding reduces player jumpiness but causes them to throw rings
-    with bigger gaps.
+  m_Text: 'Server rewinding improves player jumpiness for your clients, but will
+    make them throw rings with bigger gaps.
 
     Only applies if you''re the server.'
 --- !u!1 &7666186874894149804
