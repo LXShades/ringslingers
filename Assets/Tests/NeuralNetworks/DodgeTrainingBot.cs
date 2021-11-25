@@ -4,8 +4,6 @@ public class DodgeTrainingBot : TrainingBotBase
 {
     TrainingRingSpawner spawner;
 
-    private float closestRingDistanceTotal = float.MaxValue;
-
     private double avgDist = 0f;
     private double avgSamples = 0f;
 
@@ -19,7 +17,6 @@ public class DodgeTrainingBot : TrainingBotBase
     public override void OnReset()
     {
         base.OnReset();
-        closestRingDistanceTotal = float.MaxValue;
         avgDist = 0;
         avgSamples = 0;
     }

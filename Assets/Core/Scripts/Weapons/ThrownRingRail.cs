@@ -51,7 +51,7 @@ public class ThrownRingRail : ThrownRing
         originalCharacterStates.Clear();
         if (NetworkServer.active && serverPredictionAmount > 0f)
         {
-            float serverTime = GameTicker.singleton.predictedServerTime;
+            double serverTime = GameTicker.singleton.predictedServerTime;
             float angleWindowPerMetreDistanceRad = 50f * Mathf.Deg2Rad;
 
             direction.Normalize(); // so that the dot is accurate

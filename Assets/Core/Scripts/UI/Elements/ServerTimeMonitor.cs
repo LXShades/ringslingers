@@ -12,14 +12,14 @@ public class ServerTimeMonitor : MonoBehaviour
     public Text leftLabel;
     public Text rightLabel;
 
-    private float lastServerTime;
-    private float lastLocalTime;
+    private double lastServerTime;
+    private double lastLocalTime;
 
     private GraphGraphic.GraphCurve predictedServerTimeCurve;    // time of self, based on predicted server time
     private GraphGraphic.GraphCurve lastReceivedServerTimeCurve; // time last received from server
     private GraphGraphic.GraphCurve serverLocalTimeCurve;        // time of self on server, as last recieved from server
 
-    private float lastAddedServerTickRealtime;
+    private double lastAddedServerTickRealtime;
 
     private void Awake()
     {
@@ -36,7 +36,7 @@ public class ServerTimeMonitor : MonoBehaviour
         if (GameTicker.singleton != null)
         {
             float parentWidth = (balanceLine.transform.parent as RectTransform).sizeDelta.x; // .rect.width maybe? sizeDelta seems to do whatever it wants
-            float gameSpeed = (GameTicker.singleton.predictedServerTime - lastServerTime) / (Time.time - lastLocalTime);
+            float gameSpeed = (float)((GameTicker.singleton.predictedServerTime - lastServerTime) / (Time.time - lastLocalTime));
 
             balanceLine.anchoredPosition = new Vector2((gameSpeed - 1f) * parentWidth / 2f / range, 0f);
 
@@ -46,12 +46,12 @@ public class ServerTimeMonitor : MonoBehaviour
             if (GameTicker.singleton.realtimeOfLastProcessedServerTick > lastAddedServerTickRealtime)
             {
                 // Our local predicted time
-                predictedServerTimeCurve.data.Insert(Time.realtimeSinceStartup, GameTicker.singleton.predictedServerTime - Time.realtimeSinceStartup);
+                predictedServerTimeCurve.data.Insert(Time.realtimeSinceStartup, (float)(GameTicker.singleton.predictedServerTime - Time.realtimeSinceStartup));
 
                 // Times on server: server time, and our local time from the server's perspective
-                float serverTimeOnGraph = Time.realtimeSinceStartup - (GameTicker.singleton.predictedServerTime - GameTicker.singleton.lastProcessedServerTick.serverTime);
-                lastReceivedServerTimeCurve.data.Insert(serverTimeOnGraph, GameTicker.singleton.lastProcessedServerTick.serverTime - Time.realtimeSinceStartup);
-                serverLocalTimeCurve.data.Insert(serverTimeOnGraph, GameTicker.singleton.lastProcessedServerTick.serverTime + GameTicker.singleton.lastProcessedServerTick.lastClientEarlyness - Time.realtimeSinceStartup);
+                double serverTimeOnGraph = Time.realtimeSinceStartup - (GameTicker.singleton.predictedServerTime - GameTicker.singleton.lastProcessedServerTick.serverTime);
+                lastReceivedServerTimeCurve.data.Insert(serverTimeOnGraph, (float)(GameTicker.singleton.lastProcessedServerTick.serverTime - Time.realtimeSinceStartupAsDouble));
+                serverLocalTimeCurve.data.Insert(serverTimeOnGraph, (float)(GameTicker.singleton.lastProcessedServerTick.serverTime + GameTicker.singleton.lastProcessedServerTick.lastClientEarlyness - Time.realtimeSinceStartupAsDouble));
 
                 timeGraphs.ClearTimeAfter(Time.realtimeSinceStartup + 2f);
 
@@ -62,7 +62,7 @@ public class ServerTimeMonitor : MonoBehaviour
 
 
             lastServerTime = GameTicker.singleton.predictedServerTime;
-            lastLocalTime = Time.time;
+            lastLocalTime = Time.timeAsDouble;
         }
     }
 }

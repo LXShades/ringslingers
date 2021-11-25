@@ -27,7 +27,7 @@ public class Player : NetworkBehaviour
     private static LocalPersistentPlayer _localPersistent;
 
     // [server] predicted servertime of the last input we received from the client, recorded here because history is trimmed but we need to inform the client of how far ahead it was
-    public float serverTimeOfLastReceivedInput { get; set; }
+    public double serverTimeOfLastReceivedInput { get; set; }
 
     public override void OnStartServer()
     {

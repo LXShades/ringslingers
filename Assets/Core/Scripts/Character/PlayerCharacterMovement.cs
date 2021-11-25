@@ -499,8 +499,11 @@ public class PlayerCharacterMovement : CharacterMovement
             velocity.SetAlongAxis(direction, force);
     }
 
-    private void OnValidate()
+#if UNITY_EDITOR
+    protected override void OnValidate()
     {
+        base.OnValidate();
+
         accelCurve = new AnimationCurve();
         inverseAccelCurve = new AnimationCurve();
 
@@ -517,6 +520,7 @@ public class PlayerCharacterMovement : CharacterMovement
                 break;
         }
     }
+#endif
 }
 
 public static class RaycastExtensions
