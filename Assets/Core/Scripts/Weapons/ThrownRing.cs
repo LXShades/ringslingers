@@ -29,7 +29,7 @@ public class ThrownRing : NetworkBehaviour
     [SyncVar(hook = nameof(OnOwnerChanged))]
     private GameObject _owner;
     [SyncVar]
-    private float serverTimeAtSpawn;
+    private double serverTimeAtSpawn;
     [SyncVar]
     private Vector3 initialVelocity;
 
@@ -93,7 +93,7 @@ public class ThrownRing : NetworkBehaviour
             Vector3 originalPosition = transform.position;
 
             // shoot further ahead
-            Simulate(GameTicker.singleton.predictedServerTime - serverTimeAtSpawn, true);
+            Simulate((float)(GameTicker.singleton.predictedServerTime - serverTimeAtSpawn), true);
 
             if (hopTrails)
                 hopTrails.AddTrail(originalPosition, transform.position);
@@ -179,7 +179,7 @@ public class ThrownRing : NetworkBehaviour
             if (nearbyCharacters.Count > 0f)
             {
                 float deltaTime = 0.033f;
-                float serverTime = GameTicker.singleton.predictedServerTime;
+                double serverTime = GameTicker.singleton.predictedServerTime;
 
                 // Basically we're retroactively telling the server that a ring was fired earlier. So we need to push the ring ahead through time as though it had done so in the past, while simulating the past state too
                 // Pretty wild huh, this is some freaky timewarp networking bezazzle
@@ -281,10 +281,10 @@ public class ThrownRing : NetworkBehaviour
     // when prediction is successful, we get teleported back a bit and resimulate forward again
     private void OnPredictionSuccessful()
     {
-        float jumpAheadSimulation = GameTicker.singleton.predictedServerTime - serverTimeAtSpawn;
+        float jumpAheadSimulation = (float)(GameTicker.singleton.predictedServerTime - serverTimeAtSpawn);
 
         if (wasLocallyThrown) // don't teleport our own rings ahead
-            jumpAheadSimulation = GameTicker.singleton.predictedReplicaServerTime - serverTimeAtSpawn;
+            jumpAheadSimulation = (float)(GameTicker.singleton.predictedReplicaServerTime - serverTimeAtSpawn);
 
         // We need to reset our state as well
         currentNumWallSlides = 0;

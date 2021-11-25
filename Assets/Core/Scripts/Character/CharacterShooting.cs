@@ -247,7 +247,7 @@ public class CharacterShooting : NetworkBehaviour
         float ringSpeed = effectiveWeaponSettings.projectileSpeed * interval;
         float lastTargetDistance = Vector3.Distance(target.transform.position, startPosition);
         Vector3 lastTargetPosition = target.transform.position;
-        float originalTime = ticker.playbackTime;
+        double originalTime = ticker.playbackTime;
         bool succeeded = false;
 
         predictedPosition = target.transform.position;
@@ -349,34 +349,34 @@ public class CharacterShooting : NetworkBehaviour
 
             // Predict ring spawn
             Spawner.SpawnPrediction prediction = Spawner.MakeSpawnPrediction();
-            float timeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f;
-            float replicaTimeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedReplicaServerTime : 0f;
+            double timeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f;
+            double replicaTimeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedReplicaServerTime : 0f;
 
-            OnCmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, replicaTimeOfThrow);
+            OnCmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, (float)(replicaTimeOfThrow - timeOfThrow));
 
             if (!NetworkServer.active)
-                CmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, replicaTimeOfThrow);
+                CmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, (float)(replicaTimeOfThrow - timeOfThrow));
 
             hasFiredOnThisClick = true;
         }
     }
 
     [Command(channel = Channels.Unreliable)]
-    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime, float predictedReplicaServerTime)
+    private void CmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, double predictedServerTime, float predictedReplicaServerTimeOffset)
     {
         if (predictedServerTime > GameTicker.singleton.predictedServerTime)
         {
             // the client threw this, in what they predicted ahead of current time... this means we need to delay the shot until roughly the correct time arrives
-            bufferedThrowEvents.Insert(predictedServerTime, () => OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime, predictedReplicaServerTime));
+            bufferedThrowEvents.Insert(predictedServerTime, () => OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime, predictedServerTime + predictedReplicaServerTimeOffset));
         }
         else
         {
             // throw it now then
-            OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime, predictedReplicaServerTime);
+            OnCmdThrowRing(position, direction, spawnPrediction, predictedServerTime, predictedServerTime + predictedReplicaServerTimeOffset);
         }
     }
 
-    private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, float predictedServerTime, float predictedReplicaServerTime)
+    private void OnCmdThrowRing(Vector3 position, Vector3 direction, Spawner.SpawnPrediction spawnPrediction, double predictedServerTime, double predictedReplicaServerTime)
     {
         // Verify the ring throw
         float characterPositionDisparity = Vector3.Distance(position, spawnPosition.position);
@@ -442,14 +442,14 @@ public class CharacterShooting : NetworkBehaviour
         }
     }
 
-    private void FireSpawnedRing(GameObject ring, Vector3 position, Vector3 direction, float predictedServerTime, float predictedReplicaServerTime)
+    private void FireSpawnedRing(GameObject ring, Vector3 position, Vector3 direction, double predictedServerTime, double predictedReplicaServerTime)
     {
         ThrownRing ringAsThrownRing = ring.GetComponent<ThrownRing>();
         Debug.Assert(ringAsThrownRing);
 
         float serverPredictionAmount = 0f;
         if (NetworkServer.active)
-            serverPredictionAmount = Mathf.Min(ServerState.instance.serverRewindTolerance, GameTicker.singleton.predictedServerTime - predictedReplicaServerTime); // 0 if serverRewindTolerance is 0
+            serverPredictionAmount = Mathf.Min(ServerState.instance.serverRewindTolerance, (float)(GameTicker.singleton.predictedServerTime - predictedReplicaServerTime)); // 0 if serverRewindTolerance is 0
 
         ringAsThrownRing.Throw(character, position, direction, serverPredictionAmount);
 

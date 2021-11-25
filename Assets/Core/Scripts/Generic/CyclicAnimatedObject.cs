@@ -10,6 +10,6 @@ public class CyclicAnimatedObject : MonoBehaviour
     void Update()
     {
         if (GameTicker.singleton)
-            animationToCycle.SampleAnimation(gameObject, GameTicker.singleton.predictedServerTime % animationToCycle.length);
+            animationToCycle.SampleAnimation(gameObject, (float)(GameTicker.singleton.predictedServerTime % animationToCycle.length));
     }
 }

@@ -48,7 +48,7 @@ public class GraphGraphic : ExtendedGraphic
         float timeMax = float.MinValue;
 
         foreach (GraphCurve curve in curves)
-            timeMax = curve.data.LatestTime > timeMax ? curve.data.LatestTime : timeMax;
+            timeMax = curve.data.LatestTime > timeMax ? (float)curve.data.LatestTime : timeMax;
 
 
         float currentMinY = float.MaxValue;
@@ -85,7 +85,7 @@ public class GraphGraphic : ExtendedGraphic
 
             lineBuffer.Clear();
             for (int i = 0, e = curve.data.Count; i < e; i++)
-                lineBuffer.Add(new Vector2(curve.data.TimeAt(i), curve.data[i]) * scale + origin);
+                lineBuffer.Add(new Vector2((float)curve.data.TimeAt(i), curve.data[i]) * scale + origin);
 
             DrawLines(vh, lineBuffer, curve.colour, curveThickness);
         }

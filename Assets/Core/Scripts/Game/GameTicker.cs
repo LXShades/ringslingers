@@ -12,7 +12,7 @@ public class GameTicker : NetworkBehaviour
     /// </summary>
     public struct ServerTickMessage : NetworkMessage
     {
-        public float serverTime; // time of the server
+        public double serverTime; // time of the server
         public float lastClientEarlyness; // lateness of last input received from this client
         public ArraySegment<ServerPlayerState> ticks;
     }
@@ -72,17 +72,17 @@ public class GameTicker : NetworkBehaviour
     private bool hasIncomingServerTick = false;
 
     public ServerTickMessage lastProcessedServerTick { get; private set; }
-    public float realtimeOfLastProcessedServerTick { get; private set; }
+    public double realtimeOfLastProcessedServerTick { get; private set; }
 
     // ================== TIMING SECTION ================
     // [client] what server time they are predicting into
     // [server] actual server time
     // client predicted server time will be extrapolated based on ping and prediction settings
-    public float predictedServerTime { get; private set; }
+    public double predictedServerTime { get; private set; }
 
     // [client] what server time they are predicting other players into. Usually the same as predictedServerTime, but if server rewinding is enabled this may be earlier because the server will accept earlier hits
     // [server] always the same as predictedServerTime
-    public float predictedReplicaServerTime { get; private set; }
+    public double predictedReplicaServerTime { get; private set; }
 
     // ==================== LOCAL PLAYER SECTION ===================
     // [client] returns the local player's ping based on their predicted server time
@@ -96,14 +96,14 @@ public class GameTicker : NetworkBehaviour
     // We track this with multiple samples in this history and use this to decide what our clock should be, relative to the server.
     // Time is Time.realtimeSinceStartup
     private TimelineList<float> clientInputEarlynessHistory = new TimelineList<float>();
-    private TimelineList<float> clientServerTimeOffsetHistory = new TimelineList<float>(); // Time.time - incomingServerTick.serverTime
+    private TimelineList<double> clientServerTimeOffsetHistory = new TimelineList<double>(); // Time.time - incomingServerTick.serverTime
 
-    private List<float> tempSortedList = new List<float>();
+    private List<double> tempSortedList = new List<double>();
 
     // How long the clientInputEarlynessHistory can be, ALSO APPLIES TO clientServerTimeOffsetHistory
     private float clientInputEarlynessHistorySamplePeriod = 3f;
 
-    private float currentClientServerTimeOffset = 0f;
+    private double currentClientServerTimeOffset = 0f;
 
     private float currentTimeSmoothing;
 
@@ -135,13 +135,13 @@ public class GameTicker : NetworkBehaviour
         // Advance the clock
         // servers simply use Time.time, clients use an offset from Time.time to approximate predictedServerTime based on how late/early the server received their inputs
         if (NetworkServer.active)
-            predictedServerTime = predictedReplicaServerTime = Time.time;
+            predictedServerTime = predictedReplicaServerTime = Time.timeAsDouble;
         else
         {
             RefreshClientServerTimeOffset();
 
-            if (Time.realtimeSinceStartup - realtimeOfLastProcessedServerTick < timeTilLag + 1f / Netplay.singleton.playerTickrate) // add tickrate because we _should_ expect to wait that long
-                predictedServerTime = Time.time + currentClientServerTimeOffset;
+            if (Time.realtimeSinceStartupAsDouble - realtimeOfLastProcessedServerTick < timeTilLag + 1f / Netplay.singleton.playerTickrate) // add tickrate because we _should_ expect to wait that long
+                predictedServerTime = Time.timeAsDouble + currentClientServerTimeOffset;
             else
                 predictedServerTime += Time.deltaTime * 0.01f;
 
@@ -158,13 +158,12 @@ public class GameTicker : NetworkBehaviour
             GameManager.singleton.camera.UpdateAim();
 
         // Run our own inputs
-        float quantizedTime = TimeTool.Quantize(predictedServerTime, 60);
+        double quantizedTime = TimeTool.Quantize(predictedServerTime, 60);
         if (Netplay.singleton.localPlayer && quantizedTime != Netplay.singleton.localPlayer.ticker.inputTimeline.LatestTime)
         {
             // Receive local player inputs
             Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<PlayerCharacterMovement>().up;
 
-            localPlayerInput.aimDirection = Netplay.singleton.localPlayer.movement.forward.normalized; // adjust the aim to the character's aim (only so that forward adjustments are applied, this might be risky in laggy games...)
             localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
 
             // Send inputs to the local player's ticker
@@ -175,14 +174,14 @@ public class GameTicker : NetworkBehaviour
         TickGame();
 
         // and simulate physics
-        if (TimeTool.IsTick(Time.unscaledTime, Time.unscaledDeltaTime, 30))
+        if (TimeTool.IsTick(Time.unscaledTimeAsDouble, Time.unscaledDeltaTime, 30))
             Physics.Simulate(1f / 30f);
 
         // Client/server send messages
         SendFinalOutgoings();
     }
 
-    private float nextTimeAdjustment;
+    private double nextTimeAdjustment;
 
     private void RefreshClientServerTimeOffset()
     {
@@ -190,14 +189,14 @@ public class GameTicker : NetworkBehaviour
         float timeAdjustmentSpeed = 0.07f; // in seconds per second... per second (if 0.1, it takes a second to accelerate or slow down time by 0.1)
         float maxTimeAdjustmentDuration = 0.5f; // never spend more than this long adjusting time
 
-        if (TimeTool.IsTick(Time.unscaledTime, Time.unscaledDeltaTime, testRate))
+        if (TimeTool.IsTick(Time.unscaledTimeAsDouble, Time.unscaledDeltaTime, testRate))
         {
             // Update smoothing
             const float measurementPeriod = 0.75f / testRate;
 
             // Client time smoothing and adjustment
             tempSortedList.Clear();
-            for (int i = 0; i < clientInputEarlynessHistory.Count && clientInputEarlynessHistory.TimeAt(i) >= Time.realtimeSinceStartup - measurementPeriod; i++)
+            for (int i = 0; i < clientInputEarlynessHistory.Count && clientInputEarlynessHistory.TimeAt(i) >= Time.realtimeSinceStartupAsDouble - measurementPeriod; i++)
                 tempSortedList.Add(clientInputEarlynessHistory[i]);
             tempSortedList.Sort();
 
@@ -210,36 +209,36 @@ public class GameTicker : NetworkBehaviour
 
             // Server ping averaging
             tempSortedList.Clear();
-            for (int i = 0; i < clientServerTimeOffsetHistory.Count && clientServerTimeOffsetHistory.TimeAt(i) >= Time.realtimeSinceStartup - measurementPeriod; i++)
+            for (int i = 0; i < clientServerTimeOffsetHistory.Count && clientServerTimeOffsetHistory.TimeAt(i) >= Time.realtimeSinceStartupAsDouble - measurementPeriod; i++)
                 tempSortedList.Add(clientServerTimeOffsetHistory[i]);
             tempSortedList.Sort();
 
             if (tempSortedList.Count > 0)
             {
-                float targetServerPredictedTime = Time.time + currentClientServerTimeOffset - nextTimeAdjustment;
-                float targetServerTimeMedian = Time.time + tempSortedList[tempSortedList.Count / 2];
+                double targetServerPredictedTime = Time.timeAsDouble + currentClientServerTimeOffset - nextTimeAdjustment;
+                double targetServerTimeMedian = Time.timeAsDouble + tempSortedList[tempSortedList.Count / 2];
 
-                smoothLocalPlayerPing = targetServerPredictedTime - targetServerTimeMedian;
+                smoothLocalPlayerPing = (float)(targetServerPredictedTime - targetServerTimeMedian);
             }
         }
 
-        if (nextTimeAdjustment != 0f)
+        if (nextTimeAdjustment != 0d)
         {
-            if (Mathf.Abs(nextTimeAdjustment) / timeAdjustmentSpeed < maxTimeAdjustmentDuration)
+            if (Math.Abs(nextTimeAdjustment) / timeAdjustmentSpeed < maxTimeAdjustmentDuration)
             {
-                float smoothed = Mathf.Clamp(nextTimeAdjustment, -timeAdjustmentSpeed * Time.deltaTime, timeAdjustmentSpeed * Time.deltaTime);
+                float smoothed = Mathf.Clamp((float)nextTimeAdjustment, -timeAdjustmentSpeed * Time.deltaTime, timeAdjustmentSpeed * Time.deltaTime);
                 currentClientServerTimeOffset -= smoothed;
                 nextTimeAdjustment -= smoothed;
             }
             else
             {
                 currentClientServerTimeOffset -= nextTimeAdjustment;
-                nextTimeAdjustment = 0f;
+                nextTimeAdjustment = 0d;
             }
 
             // todo: won't this oppose the server's inputs?
             if (Netplay.singleton.localPlayer) // if time has been shifted backwards, this clears future inputs so they don't conflict with our upcoming real inputs.
-                Netplay.singleton.localPlayer.ticker.inputTimeline.TrimAfter(Time.time + currentClientServerTimeOffset);
+                Netplay.singleton.localPlayer.ticker.inputTimeline.TrimAfter(Time.timeAsDouble + currentClientServerTimeOffset);
         }
     }
 
@@ -254,11 +253,11 @@ public class GameTicker : NetworkBehaviour
             ApplyServerTick(incomingServerTick);
             hasIncomingServerTick = false;
 
-            clientInputEarlynessHistory.Insert(Time.realtimeSinceStartup, incomingServerTick.lastClientEarlyness);
-            clientInputEarlynessHistory.TrimBefore(Time.realtimeSinceStartup - clientInputEarlynessHistorySamplePeriod);
+            clientInputEarlynessHistory.Insert(Time.realtimeSinceStartupAsDouble, incomingServerTick.lastClientEarlyness);
+            clientInputEarlynessHistory.TrimBefore(Time.realtimeSinceStartupAsDouble - clientInputEarlynessHistorySamplePeriod);
 
-            clientServerTimeOffsetHistory.Insert(Time.realtimeSinceStartup, incomingServerTick.serverTime - Time.time);
-            clientServerTimeOffsetHistory.TrimBefore(Time.realtimeSinceStartup - clientInputEarlynessHistorySamplePeriod);
+            clientServerTimeOffsetHistory.Insert(Time.realtimeSinceStartupAsDouble, incomingServerTick.serverTime - Time.timeAsDouble);
+            clientServerTimeOffsetHistory.TrimBefore(Time.realtimeSinceStartupAsDouble - clientInputEarlynessHistorySamplePeriod);
         }
     }
 
@@ -304,7 +303,7 @@ public class GameTicker : NetworkBehaviour
                     {
                         Player client = player.connectionToClient.identity.GetComponent<Player>();
 
-                        tick.lastClientEarlyness = client.serverTimeOfLastReceivedInput - predictedServerTime;
+                        tick.lastClientEarlyness = (float)(client.serverTimeOfLastReceivedInput - predictedServerTime);
 
                         player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                     }
@@ -379,9 +378,9 @@ public class GameTicker : NetworkBehaviour
             }
         }
 
-        lastLocalPlayerPing = predictedServerTime - tickMessage.serverTime;
+        lastLocalPlayerPing = (float)(predictedServerTime - tickMessage.serverTime);
         lastProcessedServerTick = tickMessage;
-        realtimeOfLastProcessedServerTick = Time.realtimeSinceStartup;
+        realtimeOfLastProcessedServerTick = Time.realtimeSinceStartupAsDouble;
     }
 
     private void OnRecvServerPlayerTick(ServerTickMessage tickMessage)
@@ -438,7 +437,7 @@ public static class ClientPlayerInputReaderWriter
     public static void WritePlayerInputMessage(this NetworkWriter writer, GameTicker.ClientPlayerInput playerInput)
     {
         writer.WriteArray<PlayerInput>(playerInput.inputPack.inputs);
-        writer.WriteArray<float>(playerInput.inputPack.times);
+        writer.WriteArray<double>(playerInput.inputPack.times);
     }
 
     public static GameTicker.ClientPlayerInput ReadPlayerInputMessage(this NetworkReader reader)
@@ -446,7 +445,7 @@ public static class ClientPlayerInputReaderWriter
         GameTicker.ClientPlayerInput playerInput;
 
         playerInput.inputPack.inputs = reader.ReadArray<PlayerInput>();
-        playerInput.inputPack.times = reader.ReadArray<float>();
+        playerInput.inputPack.times = reader.ReadArray<double>();
 
         return playerInput;
     }

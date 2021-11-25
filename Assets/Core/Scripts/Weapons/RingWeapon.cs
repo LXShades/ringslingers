@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿using System;
 
 [System.Serializable]
 public struct RingWeapon
@@ -14,13 +14,13 @@ public struct RingWeapon
     public float ammo
     {
         get => MatchState.Get(out MatchConfiguration config)
-            && config.weaponAmmoStyle == WeaponAmmoStyle.Time ? Mathf.Max(_ammoAsTimeExpiryTime - GameTicker.singleton.predictedServerTime, 0) : _ammoAsCount;
+            && config.weaponAmmoStyle == WeaponAmmoStyle.Time ? (float)Math.Max(_ammoInternal - GameTicker.singleton.predictedServerTime, 0) : (float)_ammoInternal;
         set
         {
             if (MatchState.Get(out MatchConfiguration config) && config.weaponAmmoStyle == WeaponAmmoStyle.Time)
-                _ammoAsTimeExpiryTime = GameTicker.singleton.predictedServerTime + value;
+                _ammoInternal = GameTicker.singleton.predictedServerTime + value;
             else
-                _ammoAsCount = value;
+                _ammoInternal = value;
         }
     }
 
@@ -29,14 +29,8 @@ public struct RingWeapon
     /// </summary>
     public bool isInfinite;
 
-
-
     /// <summary>
     /// only public for serialization; use ammo instead
     /// </summary>
-    public float _ammoAsCount;
-    /// <summary>
-    /// only public for serialization; use ammo instead
-    /// </summary>
-    public float _ammoAsTimeExpiryTime;
+    public double _ammoInternal;
 }
