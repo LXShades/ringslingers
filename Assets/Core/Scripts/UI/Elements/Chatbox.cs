@@ -30,8 +30,10 @@ public class Chatbox : MonoBehaviour
             chatInput.Select();
         }
 
-        if (chatInput.gameObject.activeInHierarchy)
-            GameManager.singleton.SuppressGameplayInputs();
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+            chatInput.gameObject.SetActive(false);
+
+        GameManager.singleton.SetInputBlockFlag(GameManager.InputBlockFlags.Chatbox, chatInput.gameObject.activeSelf);
     }
 
     public void OnChatBoxSubmitted(string text)

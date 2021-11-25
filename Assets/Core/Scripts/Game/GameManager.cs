@@ -22,6 +22,12 @@ public class GameManager : MonoBehaviour
     }
     private static GameManager _singleton;
 
+    [System.Flags]
+    public enum InputBlockFlags
+    {
+        Chatbox = 1,
+    }
+
     [Header("Player settings")]
     public CharacterNamePair[] playerCharacters;
 
@@ -69,7 +75,8 @@ public class GameManager : MonoBehaviour
     public bool canPlayWeaponFire { get; private set; } = true;
 
     private bool areInputsEnabled = false;
-    private bool doSuppressGameplayInputs = false;
+    public InputBlockFlags inputBlockFlags { get; private set; } = 0;
+    private InputBlockFlags deferredInputBlockFlags = 0; // deferred because update order can cause multiple conflicting things to happen in one frame, often undesirable
 
     private PlayerCamera cachedCamera = null;
 
@@ -116,11 +123,12 @@ public class GameManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (doSuppressGameplayInputs)
+        if (inputBlockFlags != 0)
             DisableInputs();
         else
             EnableInputs();
-        doSuppressGameplayInputs = false;
+
+        inputBlockFlags = deferredInputBlockFlags;
     }
 
     private void EnableInputs()
@@ -147,9 +155,12 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadSceneAsync(menuScene);
     }
 
-    public void SuppressGameplayInputs()
+    public void SetInputBlockFlag(InputBlockFlags flag, bool isBlocking)
     {
-        doSuppressGameplayInputs = true;
+        if (isBlocking)
+            deferredInputBlockFlags |= flag;
+        else
+            deferredInputBlockFlags &= ~flag;
     }
 
 #if UNITY_EDITOR

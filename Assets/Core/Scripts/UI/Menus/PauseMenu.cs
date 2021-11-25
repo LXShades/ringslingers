@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -6,7 +7,7 @@ public class PauseMenu : MonoBehaviour
 
     private void Update()
     {
-        if (UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (GameManager.singleton.inputBlockFlags == 0 && Keyboard.current.escapeKey.wasPressedThisFrame)
             GameManager.singleton.isPaused = !GameManager.singleton.isPaused;
 
         if (GameManager.singleton.isPaused != menu.isOpen)
