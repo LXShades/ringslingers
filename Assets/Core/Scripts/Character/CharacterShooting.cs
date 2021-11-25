@@ -352,7 +352,7 @@ public class CharacterShooting : NetworkBehaviour
             double timeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedServerTime : 0f;
             double replicaTimeOfThrow = GameTicker.singleton ? GameTicker.singleton.predictedReplicaServerTime : 0f;
 
-            OnCmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, (float)(replicaTimeOfThrow - timeOfThrow));
+            OnCmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, replicaTimeOfThrow);
 
             if (!NetworkServer.active)
                 CmdThrowRing(spawnPosition.position, direction, prediction, timeOfThrow, (float)(replicaTimeOfThrow - timeOfThrow));
