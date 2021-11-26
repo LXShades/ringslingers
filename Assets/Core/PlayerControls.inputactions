@@ -17,7 +17,7 @@
                     "name": "Jump",
                     "type": "Value",
                     "id": "9517d14c-3c13-420a-adad-8ab72d527007",
-                    "expectedControlType": "Button",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": ""
                 },
@@ -38,10 +38,18 @@
                     "interactions": ""
                 },
                 {
-                    "name": "Zoom",
+                    "name": "Zoom In",
                     "type": "Value",
                     "id": "b7bf93e1-7dd4-492e-a989-822eddf7acd7",
-                    "expectedControlType": "Axis",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": ""
+                },
+                {
+                    "name": "Zoom Out",
+                    "type": "Value",
+                    "id": "12c410e8-f131-42f3-835e-34319ec0bbf4",
+                    "expectedControlType": "",
                     "processors": "",
                     "interactions": ""
                 },
@@ -224,42 +232,20 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Zoom",
+                    "action": "Zoom In",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
-                    "name": "1D Axis",
-                    "id": "889a3e11-c76e-4901-8463-cd3296a89fd3",
-                    "path": "1DAxis",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Zoom",
-                    "isComposite": true,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "negative",
-                    "id": "466e9760-27f8-4e83-902e-475b719d39e1",
-                    "path": "<Keyboard>/leftBracket",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Zoom",
-                    "isComposite": false,
-                    "isPartOfComposite": true
-                },
-                {
-                    "name": "positive",
-                    "id": "e218c489-fad7-4e0c-8b6c-60dd927926d5",
+                    "name": "",
+                    "id": "48b44c84-e1fc-47e2-9778-d50edf21fcac",
                     "path": "<Keyboard>/rightBracket",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Zoom",
+                    "action": "Zoom In",
                     "isComposite": false,
-                    "isPartOfComposite": true
+                    "isPartOfComposite": false
                 },
                 {
                     "name": "",
@@ -445,6 +431,28 @@
                     "processors": "",
                     "groups": "",
                     "action": "WepRail",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9ca38d6f-d1a2-43fb-b3bb-e8d819941125",
+                    "path": "<Mouse>/scroll/y",
+                    "interactions": "",
+                    "processors": "Invert",
+                    "groups": "",
+                    "action": "Zoom Out",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "58a2e80f-5006-461c-88ce-46a3ad189d13",
+                    "path": "<Keyboard>/leftBracket",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Zoom Out",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

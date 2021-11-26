@@ -162,9 +162,7 @@ public class GameTicker : NetworkBehaviour
         if (Netplay.singleton.localPlayer && quantizedTime != Netplay.singleton.localPlayer.ticker.inputTimeline.LatestTime)
         {
             // Receive local player inputs
-            Vector3 localPlayerUp = Netplay.singleton.localPlayer.GetComponent<PlayerCharacterMovement>().up;
-
-            localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput, localPlayerUp);
+            localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput);
 
             // Send inputs to the local player's ticker
             Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, quantizedTime);

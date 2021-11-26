@@ -173,23 +173,19 @@ public class PlayerCamera : MonoBehaviour
                 transform.rotation = Quaternion.Euler(0, 180, 0) * transform.rotation; // look towards the character when paused/potentially character config
 
             // Apply zoom in/out
-            float zoom = GameManager.singleton.input.Gameplay.Zoom.ReadValue<float>() * zoomSpeed;
-            if (zoom != 0f)
+            if (GameManager.singleton.input.Gameplay.ZoomOut.ReadValue<float>() > 0f)
             {
-                if (zoom < 0)
-                {
-                    if (thirdPersonDistance == 0f)
-                        thirdPersonDistance = minThirdPersonDistance;
-                    else
-                        thirdPersonDistance = Mathf.Min(thirdPersonDistance - zoom, maxThirdPersonDistance);
-                }
+                if (thirdPersonDistance == 0f)
+                    thirdPersonDistance = minThirdPersonDistance;
                 else
-                {
-                    if (thirdPersonDistance - zoom < minThirdPersonDistance)
-                        thirdPersonDistance = 0f;
-                    else
-                        thirdPersonDistance = Mathf.Max(thirdPersonDistance - zoom, minThirdPersonDistance);
-                }
+                    thirdPersonDistance = Mathf.Min(thirdPersonDistance + zoomSpeed, maxThirdPersonDistance);
+            }
+            else if (GameManager.singleton.input.Gameplay.ZoomIn.ReadValue<float>() > 0f)
+            {
+                if (thirdPersonDistance - zoomSpeed < minThirdPersonDistance)
+                    thirdPersonDistance = 0f;
+                else
+                    thirdPersonDistance = Mathf.Max(thirdPersonDistance - zoomSpeed, minThirdPersonDistance);
             }
 
             float currentThirdPersonDistance = thirdPersonDistance;

@@ -75,6 +75,13 @@ public class GameManager : MonoBehaviour
     public bool canPlayWeaponFire { get; private set; } = true;
 
     private bool areInputsEnabled = false;
+
+    // buffered inputs, true if down
+    // buffer is kept until PlayerInput.MakeLocalInput() clears them
+    public bool bufferedLocalBtnFire;
+    public bool bufferedLocalBtnSpin;
+    public bool bufferedLocalBtnJump;
+
     public InputBlockFlags inputBlockFlags { get; private set; } = 0;
     private InputBlockFlags deferredInputBlockFlags = 0; // deferred because update order can cause multiple conflicting things to happen in one frame, often undesirable
 
@@ -89,6 +96,10 @@ public class GameManager : MonoBehaviour
 
         input = new PlayerControls();
         EnableInputs();
+
+        input.Gameplay.Fire.performed += (InputAction.CallbackContext context) => bufferedLocalBtnFire = context.ReadValue<float>() > 0f;
+        input.Gameplay.Jump.performed += (InputAction.CallbackContext context) => bufferedLocalBtnJump = context.ReadValue<float>() > 0f;
+        input.Gameplay.Spindash.performed += (InputAction.CallbackContext context) => bufferedLocalBtnSpin = context.ReadValue<float>() > 0f;
 
         GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
     }
@@ -147,6 +158,13 @@ public class GameManager : MonoBehaviour
             input.Disable();
             areInputsEnabled = false;
         }
+    }
+
+    public void ClearBufferedInputs()
+    {
+        bufferedLocalBtnFire = false;
+        bufferedLocalBtnJump = false;
+        bufferedLocalBtnSpin = false;
     }
 
     private void OnClientDisconnected(Mirror.NetworkConnection conn)

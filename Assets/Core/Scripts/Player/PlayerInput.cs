@@ -76,29 +76,34 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
     /// <summary>
     /// Generates input commands from the current input
     /// </summary>
-    /// <param name="lastInput"></param>
     /// <returns></returns>
-    public static PlayerInput MakeLocalInput(PlayerInput lastInput, Vector3 up)
+    public static PlayerInput MakeLocalInput(PlayerInput lastInput)
     {
-        if (!GameManager.singleton.canPlayInputs)
+        GameManager gm = GameManager.singleton;
+        if (!gm.canPlayInputs)
+        {
+            gm.ClearBufferedInputs();
             return lastInput; // no new inputs are being accepted
+        }
 
-        PlayerControls controls = GameManager.singleton.input;
+        PlayerControls controls = gm.input;
         PlayerInput localInput = default;
 
         localInput.moveHorizontalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().x;
         localInput.moveVerticalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().y;
 
         // mouselook
-        if (GameManager.singleton.camera && Netplay.singleton && GameManager.singleton.camera.currentPlayer == Netplay.singleton.localPlayer)
-            localInput.aimDirection = GameManager.singleton.camera.aimDirection;
+        if (gm.camera && Netplay.singleton && gm.camera.currentPlayer == Netplay.singleton.localPlayer)
+            localInput.aimDirection = gm.camera.aimDirection;
         else
             localInput.aimDirection = lastInput.aimDirection;
 
-        localInput.btnFire = GameManager.singleton.canPlayWeaponFire && controls.Gameplay.Fire.ReadValue<float>() > 0.5f; // seriously unity what the f***
-        localInput.btnJump = controls.Gameplay.Jump.ReadValue<float>() > 0.5f; // this is apparently the way to read digital buttons, look it up
-        localInput.btnSpin = controls.Gameplay.Spindash.ReadValue<float>() > 0.5f; // yeah these are all floating points I mean duh
+        // we use buffered inputs because some inputs could run in-between fixed ticks, and therefore never happen. this is particularly true for mouse wheel events which only last one frame
+        localInput.btnFire = gm.canPlayWeaponFire && (controls.Gameplay.Fire.ReadValue<float>() > 0f || gm.bufferedLocalBtnFire);
+        localInput.btnJump = gm.bufferedLocalBtnJump || controls.Gameplay.Jump.ReadValue<float>() > 0f;
+        localInput.btnSpin = gm.bufferedLocalBtnSpin || controls.Gameplay.Spindash.ReadValue<float>() > 0f;
 
+        gm.ClearBufferedInputs();
         return localInput;
     }
 

@@ -88,18 +88,33 @@ public static class GamePreferences
                 action.Disable();
                 if (bindingsAsString != "")
                 {
-                    string[] bindings = bindingsAsString.Split(';');
+                    string[] bindings = bindingsAsString.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
                     for (int i = 0; i < bindings.Length; i++)
                     {
-                        if (bindings[i] == "")
-                            continue;
+                        bool isInverted = bindings[i].StartsWith("-");
+                        string actualPath = isInverted ? bindings[i].Substring(1) : bindings[i];
 
                         if (i < action.bindings.Count)
-                            action.ChangeBinding(i).WithPath(bindings[i]);
+                            action.ChangeBinding(i).WithPath(actualPath);
                         else
-                            action.AddBinding(bindings[i]);
+                            action.AddBinding(actualPath);
+
+                        InputBinding binding = action.bindings[i];
+                        if (isInverted)
+                        {
+                            binding.processors = "Invert";
+                            action.ChangeBinding(i).To(binding);
+                        }
+                        else
+                        {
+                            binding.processors = "";
+                            action.ChangeBinding(i).To(binding);
+                        }
                     }
+
+                    for (int i = bindings.Length; i < action.bindings.Count; i++)
+                        action.ChangeBinding(i).Erase();
                 }
                 action.Enable();
             }
@@ -122,7 +137,12 @@ public static class GamePreferences
                 string bindings = "";
 
                 for (int i = 0; i < action.bindings.Count; i++)
-                    bindings += $"{action.bindings[i].effectivePath};";
+                {
+                    if ((action.bindings[i].effectiveProcessors ?? "").Contains("Invert"))
+                        bindings += $"-{action.bindings[i].effectivePath};";
+                    else
+                        bindings += $"{action.bindings[i].effectivePath};";
+                }
 
                 PlayerPrefs.SetString($"Control_{action.name}", bindings);
             }

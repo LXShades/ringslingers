@@ -51,7 +51,7 @@ namespace Ringslingers.Tests
             forward = cam.forward;
             if (enableManualControl)
             {
-                PlayerInput nextInput = PlayerInput.MakeLocalInput(lastInput, up);
+                PlayerInput nextInput = PlayerInput.MakeLocalInput(lastInput);
                 nextInput.aimDirection = cam.forward;
 
                 TickMovement(Time.deltaTime, nextInput.WithDeltas(lastInput), new TickInfo() { isReplaying = true, isConfirming = true });
