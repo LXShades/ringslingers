@@ -6,7 +6,7 @@ Shader "Custom/ColourableCharacter"
     {
         _SourceColorRange ("Source color range", Range(0,1.73)) = 0.1
         _SourceColor ("Source color", Color) = (0,0,1,1)
-        _OutlineThickness("Outline thickness", Range(0, 0.005)) = 0.002
+        _OutlineThickness("Outline thickness", Range(0, 1.005)) = 0.002
         _OutlineColor ("Outline color", Color) = (0, 0, 0, 1)
         _OutlinePushbask ("Outline pushback", Range(0, 0.2)) = 0.1
         _Color ("Target color", Color) = (1,1,1,1)
@@ -116,8 +116,10 @@ Shader "Custom/ColourableCharacter"
 
         void vert(inout appdata_full v)
         {
-            v.vertex.xyz += v.normal * _OutlineThickness;
-            v.vertex.xyz += normalize(v.vertex.xyz - mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1))) * _OutlinePushback;
+            float3 LocalCameraPos = mul(unity_WorldToObject, float4(_WorldSpaceCameraPos, 1));
+            half distanceToCamera = distance(v.vertex.xyz, LocalCameraPos);
+            v.vertex.xyz += v.normal * (_OutlineThickness * distanceToCamera / _ScreenParams.y);
+            v.vertex.xyz += (v.vertex.xyz - LocalCameraPos) * (_OutlinePushback / distanceToCamera);
         }
 
         void surf(Input IN, inout SurfaceOutputStandard o)
