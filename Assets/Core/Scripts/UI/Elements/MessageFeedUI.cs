@@ -1,6 +1,9 @@
 ﻿using TMPro;
 using UnityEngine;
 
+/// <summary>
+/// Shows the message feed as a transient pop-up text on top of the screen
+/// </summary>
 public class MessageFeedUI : MonoBehaviour
 {
     public TextMeshProUGUI messageLog;
@@ -10,10 +13,6 @@ public class MessageFeedUI : MonoBehaviour
     private float lastExpiredMessageTime = -1;
 
     private bool hasRegisteredCallback = false;
-
-    private void Start()
-    {
-    }
 
     private void Update()
     {

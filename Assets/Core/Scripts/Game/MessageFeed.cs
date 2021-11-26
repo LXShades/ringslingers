@@ -16,7 +16,7 @@ public class MessageFeed : NetworkBehaviour
 
     public List<LogMessage> messages { private set; get; } = new List<LogMessage>();
 
-    public int messageHistoryLength = 10;
+    public int messageHistoryLength = 50;
 
     public float lastPostedMessageTime;
 
