@@ -26,8 +26,6 @@ public class GameSounds : MonoBehaviour
 
     private GameObject[] sourceAttachments;
 
-    private int currentChannel = -1;
-
     private AudioListener listener
     {
         get
@@ -109,11 +107,12 @@ public class GameSounds : MonoBehaviour
 
     AnimationCurve currentRolloffCurve = new AnimationCurve();
 
-    private void InternalPlaySound(GameObject sourceObject, GameSound sound, in SoundOverrides overrides, bool rawPosition = false, Vector3 position = default)
+    private void InternalPlaySound(GameObject sourceObject, GameSound sound, in SoundOverrides overrides, bool hasRawPosition = false, Vector3 rawPosition = default)
     {
         if (sound == null || sound.clip == null || sound.volumeDecibels <= -60f || listener == null || !enableSounds)
             return;
 
+        // Pick a clip to play
         int indexToPlay = 0;
         AudioClip clipToPlay;
 
@@ -129,57 +128,77 @@ public class GameSounds : MonoBehaviour
             indexToPlay = Mathf.Clamp(overrides.randomSoundIndex, 0, sound.additionalClips.Length + 1);
         }
 
-        if (indexToPlay == 0)
-            clipToPlay = sound.clip;
-        else
-            clipToPlay = sound.additionalClips[indexToPlay - 1];
+        clipToPlay = indexToPlay == 0 ? sound.clip : sound.additionalClips[indexToPlay - 1];
 
-        currentChannel = (currentChannel + 1) % sources.Length;
-
+        // Find the best channel
+        int bestChannel = -1;
+        float bestChannelExistingVolume = 0f;
         for (int i = 0; i < sources.Length; i++)
         {
-            if (!sources[currentChannel].isPlaying)
+            if (!sources[i].isPlaying)
             {
+                bestChannel = i;
                 break;
-            }
-            else
-            {
-                currentChannel = (currentChannel + 1) % sources.Length;
             }
         }
 
-        AudioSource player = sources[currentChannel];
+        if (bestChannel == -1)
+        {
+            Vector3 listenerPosition = listener.transform.position;
 
-        player.clip = clipToPlay;
-        player.volume = DbToAmplitude(sound.volumeDecibels + overrides.volumeModifier);
-        player.pitch = sound.pitch + Random.Range(-sound.pitchVariance, sound.pitchVariance);
+            bestChannelExistingVolume = float.MaxValue;
+
+            for (int i = 0; i < sources.Length; i++)
+            {
+                float vol = sources[i].spatialBlend > 0.5f ? 
+                    sources[i].GetCustomCurve(AudioSourceCurveType.CustomRolloff).Evaluate(Vector3.Distance(listenerPosition, sources[i].transform.position)) :
+                    1f;
+                if (vol < bestChannelExistingVolume)
+                {
+                    bestChannelExistingVolume = vol;
+                    bestChannel = i;
+                }
+            }
+        }
+
+        AudioSource player = sources[bestChannel];
+        GameSoundEnvironmentSettings environment = sound.environment != null ? sound.environment.value : GameSoundEnvironmentSettings.Default;
+        Vector3 effectivePosition = sourceObject ? sourceObject.transform.position : rawPosition;
+        float spatialBlend = environment.maxRange > 0f && (sourceObject || hasRawPosition) ? 1f : 0f;
 
         for (int i = currentRolloffCurve.length - 1; i >= 0; i--)
             currentRolloffCurve.RemoveKey(i);
 
-        currentRolloffCurve.AddKey(new Keyframe(sound.minRange, 1f));
-        currentRolloffCurve.AddKey(new Keyframe(sound.midRange, 0.3162f));
-        currentRolloffCurve.AddKey(new Keyframe(sound.maxRange, 0f));
+        currentRolloffCurve.AddKey(new Keyframe(environment.minRange, 1f));
+        currentRolloffCurve.AddKey(new Keyframe(environment.midRange, 0.3162f));
+        currentRolloffCurve.AddKey(new Keyframe(environment.maxRange, 0f));
         currentRolloffCurve.SmoothTangents(0, 0f);
         currentRolloffCurve.SmoothTangents(1, 0f);
         currentRolloffCurve.SmoothTangents(2, 1f);
-        
-        player.minDistance = sound.minRange;
-        player.maxDistance = sound.maxRange;
+
+        if (sources[bestChannel].isPlaying) // if we're replacing another sound, make sure we're more important (in this case just louder)
+        {
+            float totalVolume = DbToAmplitude(sound.volumeDecibels + overrides.volumeModifier);
+            if (spatialBlend > 0.5f)
+                totalVolume *= currentRolloffCurve.Evaluate(Vector3.Distance(effectivePosition, listener.transform.position));
+
+            if (totalVolume < bestChannelExistingVolume)
+                return; // don't go ahead, this sound is too quiet / not worth it
+        }
+
+        player.transform.position = effectivePosition;
+        player.clip = clipToPlay;
+        player.volume = DbToAmplitude(sound.volumeDecibels + overrides.volumeModifier);
+        player.pitch = sound.pitch + Random.Range(-sound.pitchVariance, sound.pitchVariance);
+        player.spatialBlend = spatialBlend;
+
+        player.minDistance = environment.minRange;
+        player.maxDistance = environment.maxRange;
 
         player.rolloffMode = AudioRolloffMode.Custom;
         player.SetCustomCurve(AudioSourceCurveType.CustomRolloff, currentRolloffCurve);
 
-        player.spatialBlend = sound.blend3D;
-        
-        if (sourceObject)
-            player.transform.position = sourceObject.transform.position;
-        else if (!rawPosition)
-            player.spatialBlend = 0f;
-        else if (rawPosition)
-            player.transform.position = position;
-
-        sourceAttachments[currentChannel] = sourceObject;
+        sourceAttachments[bestChannel] = sourceObject;
         player.Play();
     }
 
@@ -211,36 +230,17 @@ public class GameSounds : MonoBehaviour
 [System.Serializable]
 public class GameSound
 {
-    public enum RangePreset
-    {
-        Custom = 0,
-        EnemyImportant,
-        EnemyNormal
-    }
-
     [Tooltip("The clip to play")]
     public AudioClip clip = null;
 
     [Tooltip("Alternative clips to play if applicable")]
     public AudioClip[] additionalClips = null;
 
-    [Tooltip("How 3D is the sound?")]
-    public float blend3D = 1f;
-
-    [Tooltip("A range preset. When changed, the sound is bound to the preset setting and all sounds will change their values to match")]
-    public RangePreset rangePreset = RangePreset.Custom;
-
-    [Tooltip("The range at which the sound is at the loudest")]
-    public float minRange = 1f;
-
-    [Tooltip("The range at which the sound is half as loud")]
-    public float midRange = 10f;
-
-    [Tooltip("The range at which the sound falls silent")]
-    public float maxRange = 20f;
+    [Tooltip("When 3D, how the sound is affected by environmental effects. Does not apply to sounds played directly on the listener.")]
+    public GameSoundEnvironmentSettingsAsset environment;
 
     [Tooltip("Default volume to play the clip at, in dB, where -60 is silence"), Range(-60f, 0f)]
-    public float volumeDecibels = 0;
+    public float volumeDecibels = 0f;
 
     [Tooltip("Default pitch to play the clip at")]
     public float pitch = 1;
@@ -248,7 +248,7 @@ public class GameSound
     [Tooltip("Random higher and lower pitch variance when playing the sound")]
     public float pitchVariance = 0;
 
-    [HideInInspector] public bool looping; // not implemented, just protection from future errors (trust me, me.)
+    [HideInInspector] public bool looping; // not implemented, just protection from future errors (trust me, me.) UPDATE: it's now Nov 2021, it's me, and ngl, I have no idea what I did and why I should trust it
 
     public GameSound Clone() => (GameSound)MemberwiseClone();
 }

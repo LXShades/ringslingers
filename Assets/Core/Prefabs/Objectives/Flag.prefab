@@ -241,11 +241,7 @@ MonoBehaviour:
   pickupSound:
     clip: {fileID: 8300000, guid: 69cb9934c6c92854799e63ef3b526815, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    environment: {fileID: 11400000, guid: 25158bc369c78164ea0b740c3a83b579, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -253,11 +249,7 @@ MonoBehaviour:
   returnedSound:
     clip: {fileID: 8300000, guid: f28b5dea36272c84b9df2a07239d3b53, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    environment: {fileID: 11400000, guid: 5088c831148c2c94caae8aafb08d23f9, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -265,11 +257,7 @@ MonoBehaviour:
   capturedByEnemySound:
     clip: {fileID: 8300000, guid: 59317df1bf9ddb748b3cb44b64f94f68, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    environment: {fileID: 11400000, guid: 5088c831148c2c94caae8aafb08d23f9, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -277,11 +265,7 @@ MonoBehaviour:
   capturedByAllySound:
     clip: {fileID: 8300000, guid: 30de750b237176542bb110a9149322f3, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    environment: {fileID: 11400000, guid: 5088c831148c2c94caae8aafb08d23f9, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -289,6 +273,7 @@ MonoBehaviour:
   dropHorizontalVelocity: 5
   dropVerticalVelocity: 4
   dropRespawnCountdownDuration: 15
+  dropMovementSyncRate: 3
 --- !u!136 &6683689043032468155
 CapsuleCollider:
   m_ObjectHideFlags: 0

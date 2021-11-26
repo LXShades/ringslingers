@@ -675,6 +675,7 @@ MonoBehaviour:
     maxDeltaTime: 0.034
     maxSeekIterations: 30
     maxInputRate: 60
+    maxInputRateConstraint: 0
     alwaysReconcile: 0
     historyLength: 1
     debugLogReconciles: 0
@@ -1243,8 +1244,7 @@ MonoBehaviour:
   defaultWeapon:
     weaponType: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
     isInfinite: 1
-    _ammoAsCount: 0
-    _ammoAsTimeExpiryTime: 0
+    _ammoInternal: 0
   spawnPosition: {fileID: 3310946930297574031}
   wepKeyNone: {fileID: 11400000, guid: 9701fe3270554804bb81a7c549fcfe61, type: 2}
   wepKeyAuto: {fileID: 11400000, guid: b3ac2b389097b2d46a9376592fe8d37f, type: 2}
@@ -1299,11 +1299,7 @@ MonoBehaviour:
   jumpSound:
     clip: {fileID: 8300000, guid: b784f29f66434b24d938992bcdf4f413, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 2
-    minRange: 5
-    midRange: 10.5
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -1311,11 +1307,7 @@ MonoBehaviour:
   thokSound:
     clip: {fileID: 8300000, guid: c1005bf3f973f394ea93019ead185021, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 2
-    minRange: 5
-    midRange: 10.5
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -1323,11 +1315,7 @@ MonoBehaviour:
   ringDropSound:
     clip: {fileID: 8300000, guid: eb3b92045251f434fab489da0cf93319, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 1
-    minRange: 5
-    midRange: 22.5
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -1335,11 +1323,7 @@ MonoBehaviour:
   shieldGainSound:
     clip: {fileID: 8300000, guid: ce27139bf62280846af7603eda165518, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 5
-    midRange: 10
-    maxRange: 25
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -1347,11 +1331,7 @@ MonoBehaviour:
   shieldLossSound:
     clip: {fileID: 8300000, guid: 5bbbae009eac7a44ea7f8a801adfa884, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 1
-    minRange: 5
-    midRange: 22.5
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
@@ -1359,11 +1339,7 @@ MonoBehaviour:
   spinRollSound:
     clip: {fileID: 8300000, guid: 9d4f6e44dd321824eb6b6ddd507daeca, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 2
-    minRange: 5
-    midRange: 15
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: -2
     pitch: 1
     pitchVariance: 0.05
@@ -1371,11 +1347,7 @@ MonoBehaviour:
   spinChargeSound:
     clip: {fileID: 8300000, guid: 73a8089321f9a934488148fb9fe2d5bc, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 2
-    minRange: 5
-    midRange: 15
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: -2
     pitch: 1
     pitchVariance: 0.05
@@ -1383,11 +1355,7 @@ MonoBehaviour:
   spinReleaseSound:
     clip: {fileID: 8300000, guid: b00c7ce7043edc54e8dcd5e4b0b87660, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 2
-    minRange: 5
-    midRange: 15
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: -2
     pitch: 1
     pitchVariance: 0.05

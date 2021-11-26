@@ -95,11 +95,7 @@ MonoBehaviour:
   pickupSound:
     clip: {fileID: 8300000, guid: 26b5bb7b0bb5a734d90ea01389666505, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 2
-    minRange: 5
-    midRange: 15
-    maxRange: 50
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: -14
     pitch: 1
     pitchVariance: 0
@@ -245,11 +241,7 @@ MonoBehaviour:
   despawnSound:
     clip: {fileID: 0}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    environment: {fileID: 0}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
