@@ -366,15 +366,12 @@ MonoBehaviour:
   springSound:
     clip: {fileID: 8300000, guid: bea3bd06b69d6574687ef74c64f82e9e, type: 3}
     additionalClips: []
-    blend3D: 1
-    rangePreset: 0
-    minRange: 1
-    midRange: 10
-    maxRange: 20
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
     volumeDecibels: 0
     pitch: 1
     pitchVariance: 0
     looping: 0
+  _dbgGravityForce: 9.57
 --- !u!65 &7027600786395430903
 BoxCollider:
   m_ObjectHideFlags: 0
