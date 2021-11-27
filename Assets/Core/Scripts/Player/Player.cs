@@ -32,7 +32,7 @@ public class Player : NetworkBehaviour
     public override void OnStartServer()
     {
         // spawn the player
-        Character newPlayer = Netplay.singleton.AddPlayer(0);
+        Character newPlayer = Netplay.singleton.AddCharacter(0, this);
         
         if (netIdentity.connectionToClient != null)
             newPlayer.netIdentity.AssignClientAuthority(netIdentity.connectionToClient);

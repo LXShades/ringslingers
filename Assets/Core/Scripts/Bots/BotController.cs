@@ -19,8 +19,6 @@ public class BotController : MonoBehaviour
 
     private PlayerInput input;
 
-    public List<IState> availableStates = new List<IState>();
-
     public List<IState> activeStates = new List<IState>();
 
     public string airNeuralNetworkString;
@@ -30,24 +28,17 @@ public class BotController : MonoBehaviour
 
     private void Awake()
     {
-        availableStates.Add(new State_FollowPlayer());
-        availableStates.Add(new State_MoveTowards());
-        availableStates.Add(new State_GrabRings());
-
         airNeuralNetwork = new NeuralNetwork(new int[] { 6, 4, 2 });
         airNeuralNetwork.LoadAsString(airNeuralNetworkString);
 
         groundRunNeuralNetwork = new NeuralNetwork(new int[] { 6, 3, 2 });
         groundRunNeuralNetwork.LoadAsString(groundRunNeuralNetworkString);
 
-        GetOrActivateState<State_GrabRings>();
-        /*State_FollowPlayer moveState = GetOrActivateState<State_FollowPlayer>();
-        moveState.followPlayerId = followPlayerId;
-        GetOrActivateState<State_Spin>();*/
+        GetOrActivateState<State_CopyPlayer>().playerIndex = followPlayerId;
         
     }
 
-    private void Update()
+    public void OnInputTick()
     {
         if (character == null)
         {
@@ -356,6 +347,35 @@ public class BotController : MonoBehaviour
             State_MoveTowards moveState = controller.GetOrActivateState<State_MoveTowards>();
             
             moveState.SetTargetPosition(closestPosition, nextClosestPosition);
+        }
+    }
+
+    public class State_CopyPlayer : IState
+    {
+        public int playerIndex;
+
+        private TimelineList<PlayerInput> targetInputs = new TimelineList<PlayerInput>();
+
+        public void Update(BotController controller, Character character, ref PlayerInput input)
+        {
+            if (Netplay.singleton.players[playerIndex])
+            {
+                State_MoveTowards moveState = controller.GetOrActivateState<State_MoveTowards>();
+                Vector3 targetPosition = Netplay.singleton.players[playerIndex].transform.position;
+                PlayerInput playerInput = Netplay.singleton.players[playerIndex].liveInput;
+
+                targetInputs.Insert(Time.timeAsDouble, playerInput);
+                targetInputs.TrimBefore(Time.timeAsDouble - 1f);
+
+                targetPosition.z = -targetPosition.z;
+
+                playerInput = targetInputs[targetInputs.Count - 1];
+                input.btnFire = playerInput.btnFire;
+                input.btnJump = playerInput.btnJump;
+                input.btnSpin = playerInput.btnSpin;
+
+                moveState.SetTargetPosition(targetPosition);
+            }
         }
     }
 

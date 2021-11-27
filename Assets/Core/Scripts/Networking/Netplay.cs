@@ -366,7 +366,7 @@ public class Netplay : MonoBehaviour
     #endregion
 
     #region Characters
-    public Character AddPlayer(int characterIndex)
+    public Character AddCharacter(int characterIndex, Player owner)
     {
         if (!NetworkServer.active)
         {
@@ -375,14 +375,15 @@ public class Netplay : MonoBehaviour
         }
 
         // Spawn the player
-        Character player = Spawner.Spawn(GameManager.singleton.playerCharacters[characterIndex].prefab).GetComponent<Character>();
+        Character character = Spawner.Spawn(GameManager.singleton.playerCharacters[characterIndex].prefab).GetComponent<Character>();
 
-        player.characterIndex = characterIndex;
-        player.Rename($"Player {player.playerId}");
-        Log.Write($"{player.playerName} ({player.playerId}) has entered the game");
-        MessageFeed.Post($"<player>{player.playerName}</player> has joined the game!");
+        character.serverOwningPlayer = owner;
+        character.characterIndex = characterIndex;
+        character.Rename($"Player {character.playerId}");
+        Log.Write($"{character.playerName} ({character.playerId}) has entered the game");
+        MessageFeed.Post($"<player>{character.playerName}</player> has joined the game!");
 
-        return player;
+        return character;
     }
 
     public Character ChangePlayerCharacter(int playerId, int characterIndex)

@@ -23,6 +23,11 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     /// </summary>
     [SyncVar(hook=nameof(OnPlayerIdChanged))] public int playerId;
 
+    /// <summary>
+    /// Owning player. Server-only
+    /// </summary>
+    public Player serverOwningPlayer;
+
     [SyncVar]
     public GameObject shield;
 

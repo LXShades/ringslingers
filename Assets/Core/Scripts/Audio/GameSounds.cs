@@ -161,10 +161,12 @@ public class GameSounds : MonoBehaviour
             }
         }
 
+        // Setup the sound for play
         AudioSource player = sources[bestChannel];
         GameSoundEnvironmentSettings environment = sound.environment != null ? sound.environment.value : GameSoundEnvironmentSettings.Default;
         Vector3 effectivePosition = sourceObject ? sourceObject.transform.position : rawPosition;
         float spatialBlend = environment.maxRange > 0f && (sourceObject || hasRawPosition) ? 1f : 0f;
+        float baseVolume = DbToAmplitude(sound.volumeDecibels + overrides.volumeModifier);
 
         for (int i = currentRolloffCurve.length - 1; i >= 0; i--)
             currentRolloffCurve.RemoveKey(i);
@@ -176,11 +178,10 @@ public class GameSounds : MonoBehaviour
         currentRolloffCurve.SmoothTangents(1, 0f);
         currentRolloffCurve.SmoothTangents(2, 1f);
 
-        if (sources[bestChannel].isPlaying) // if we're replacing another sound, make sure we're more important (in this case just louder)
+        if (sources[bestChannel].isPlaying) // if we're replacing another sound, make sure we're more important (for now just louder)
         {
-            float totalVolume = DbToAmplitude(sound.volumeDecibels + overrides.volumeModifier);
-            if (spatialBlend > 0.5f)
-                totalVolume *= currentRolloffCurve.Evaluate(Vector3.Distance(effectivePosition, listener.transform.position));
+            float totalVolume = baseVolume;
+            totalVolume *= Mathf.Lerp(1f, currentRolloffCurve.Evaluate(Vector3.Distance(effectivePosition, listener.transform.position)), spatialBlend);
 
             if (totalVolume < bestChannelExistingVolume)
                 return; // don't go ahead, this sound is too quiet / not worth it
@@ -188,7 +189,7 @@ public class GameSounds : MonoBehaviour
 
         player.transform.position = effectivePosition;
         player.clip = clipToPlay;
-        player.volume = DbToAmplitude(sound.volumeDecibels + overrides.volumeModifier);
+        player.volume = baseVolume;
         player.pitch = sound.pitch + Random.Range(-sound.pitchVariance, sound.pitchVariance);
         player.spatialBlend = spatialBlend;
 

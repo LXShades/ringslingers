@@ -46,6 +46,8 @@ public class GameTicker : NetworkBehaviour
     public float extraSmoothing = 0.0017f;
     [Tooltip("Time, in seconds, that we can go without receiving server info before lag occurs")]
     public float timeTilLag = 0.75f;
+    public int fixedInputRate = 60;
+    public int fixedPhysicsRate = 30;
 
     [Header("Prediction")]
     [Range(0.1f, 1f), Tooltip("[client] How far ahead the player can predict")]
@@ -158,22 +160,36 @@ public class GameTicker : NetworkBehaviour
             GameManager.singleton.camera.UpdateAim();
 
         // Run our own inputs
-        double quantizedTime = TimeTool.Quantize(predictedServerTime, 60);
-        if (Netplay.singleton.localPlayer && quantizedTime != Netplay.singleton.localPlayer.ticker.inputTimeline.LatestTime)
+        double quantizedTime = TimeTool.Quantize(predictedServerTime, fixedInputRate);
+        if (quantizedTime != Netplay.singleton.localPlayer.ticker.inputTimeline.LatestTime)
         {
-            // Receive local player inputs
-            localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput);
+            if (Netplay.singleton.localPlayer)
+            {
+                // Receive local player inputs
+                localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput);
 
-            // Send inputs to the local player's ticker
-            Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, quantizedTime);
+                // Send inputs to the local player's ticker
+                Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, quantizedTime);
+            }
+
+            if (isServer)
+            {
+                foreach (Character character in Netplay.singleton.players)
+                {
+                    if (character && character.serverOwningPlayer.TryGetComponent(out BotController bot))
+                    {
+                        bot.OnInputTick();
+                    }
+                }
+            }
         }
 
         // We have all server inputs and our own inputs, tick the game
         TickGame();
 
         // and simulate physics
-        if (TimeTool.IsTick(Time.unscaledTimeAsDouble, Time.unscaledDeltaTime, 30))
-            Physics.Simulate(1f / 30f);
+        if (TimeTool.IsTick(Time.unscaledTimeAsDouble, Time.unscaledDeltaTime, fixedPhysicsRate))
+            Physics.Simulate(1f / fixedPhysicsRate);
 
         // Client/server send messages
         SendFinalOutgoings();
@@ -272,8 +288,10 @@ public class GameTicker : NetworkBehaviour
                 // most players tick the same
                 // except for remote players on clients - clients do not know these players' input history, so they should not play deltas as they will usually be inaccurate
                 // they also may have a time offset if we're using the fancy experimental Rewind stuff
-                player.ticker.Seek(!isServer && player != Netplay.singleton.localPlayer ? predictedReplicaServerTime : predictedServerTime, 
-                    !isServer && player != Netplay.singleton.localPlayer ? TickerSeekFlags.IgnoreDeltas : 0);
+                bool isALocalPlayer = player == Netplay.singleton.localPlayer || (isServer && player.connectionToClient == null);
+
+                player.ticker.Seek(!isServer && !isALocalPlayer ? predictedReplicaServerTime : predictedServerTime, 
+                    !isServer && !isALocalPlayer ? TickerSeekFlags.IgnoreDeltas : 0);
             }
         }
     }
@@ -295,15 +313,13 @@ public class GameTicker : NetworkBehaviour
                 // we need to send it to each of them individually due to differing client times
                 for (int i = 0; i < tick.ticks.Count; i++)
                 {
-                    Character player = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
+                    Character character = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
 
-                    if (player.netIdentity.connectionToClient != null && player.netIdentity.connectionToClient.identity != null) // bots don't have a connection
+                    if (character.netIdentity.connectionToClient != null && character.netIdentity.connectionToClient.identity != null) // bots don't have a connection
                     {
-                        Player client = player.connectionToClient.identity.GetComponent<Player>();
+                        tick.lastClientEarlyness = (float)(character.serverOwningPlayer.serverTimeOfLastReceivedInput - predictedServerTime);
 
-                        tick.lastClientEarlyness = (float)(client.serverTimeOfLastReceivedInput - predictedServerTime);
-
-                        player.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
+                        character.netIdentity.connectionToClient.Send(tick, Channels.Unreliable);
                     }
                 }
             }
