@@ -238,9 +238,9 @@ public class CharacterShooting : NetworkBehaviour
         return bestTarget;
     }
 
-    private bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
+    public bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
     {
-        float interval = 0.07f;
+        float interval = 0.06f;
         Ticker<PlayerInput, CharacterState> ticker = target.ticker;
         Vector3 startPosition = spawnPosition.position;
         float ringDistance = 0f; // theoretical thrown ring distance
@@ -336,9 +336,9 @@ public class CharacterShooting : NetworkBehaviour
         RegenerateEffectiveWeapon();
     }
 
-    private bool CanThrowRing(float lenience) => character.numRings > 0 && Time.time - lastFiredRingTime >= 1f / effectiveWeaponSettings.shotsPerSecond - lenience;
+    public bool CanThrowRing(float lenience) => character.numRings > 0 && Time.time - lastFiredRingTime >= 1f / effectiveWeaponSettings.shotsPerSecond - lenience;
 
-    private void LocalThrowRing()
+    public void LocalThrowRing()
     {
         if (CanThrowRing(0f))
         {

@@ -34,7 +34,9 @@ public class ThrownRing : NetworkBehaviour
     private Vector3 initialVelocity;
 
     private Movement movement;
-    private HopTrails hopTrails;
+    private MeshTrails hopTrails;
+
+    private bool doDisablePlayerCollisions = false;
 
     private int currentNumWallSlides = 0;
 
@@ -43,7 +45,7 @@ public class ThrownRing : NetworkBehaviour
     void Awake()
     {
         movement = GetComponent<Movement>();
-        hopTrails = GetComponentInChildren<HopTrails>();
+        hopTrails = GetComponentInChildren<MeshTrails>();
 
         if (TryGetComponent(out Predictable predictable))
         {
@@ -90,13 +92,20 @@ public class ThrownRing : NetworkBehaviour
 
         if (!NetworkServer.active && !wasLocallyThrown)
         {
-            Vector3 originalPosition = transform.position;
+            Vector3 startPosition = transform.position;
+
+            doDisablePlayerCollisions = true; // todo: accurately simulate the ring against our past position rather than our current position (inaccurate)
 
             // shoot further ahead
             Simulate((float)(GameTicker.singleton.predictedServerTime - serverTimeAtSpawn), true);
 
+            doDisablePlayerCollisions = false;
+
             if (hopTrails)
-                hopTrails.AddTrail(originalPosition, transform.position);
+            {
+                hopTrails.trailStart = startPosition;
+                hopTrails.trailEnd = transform.position;
+            }
         }
     }
 
@@ -219,7 +228,10 @@ public class ThrownRing : NetworkBehaviour
 
         // Hurt any players we collided with
         if (otherCollider.TryGetComponent(out Damageable damageable) && owner)
-            damageable.TryDamage(owner, velocity.normalized * effectiveSettings.projectileKnockback);
+        {
+            if (!doDisablePlayerCollisions)
+                damageable.TryDamage(owner, velocity.normalized * effectiveSettings.projectileKnockback);
+        }
         // Do wall slides, if allowed - but not against other players
         else if (currentNumWallSlides < effectiveSettings.numWallSlides)
         {

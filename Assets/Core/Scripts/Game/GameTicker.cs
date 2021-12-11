@@ -41,7 +41,6 @@ public class GameTicker : NetworkBehaviour
     public float maxDeltaTime = 1f / 30f;
 
     [Header("Time")]
-    public float maxTimeSmoothing = 0.2f;
     [Tooltip("WARNING: Set by GamePreferences.extraSmoothing and its defaults")]
     public float extraSmoothing = 0.0017f;
     [Tooltip("Time, in seconds, that we can go without receiving server info before lag occurs")]
@@ -216,7 +215,7 @@ public class GameTicker : NetworkBehaviour
 
             if (tempSortedList.Count > 0)
             {
-                currentTimeSmoothing = Mathf.Min(extraSmoothing, maxTimeSmoothing);
+                currentTimeSmoothing = extraSmoothing;
 
                 nextTimeAdjustment = tempSortedList[(int)(tempSortedList.Count * 0.02f)] - currentTimeSmoothing;
             }

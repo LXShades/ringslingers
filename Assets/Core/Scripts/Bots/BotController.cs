@@ -34,7 +34,7 @@ public class BotController : MonoBehaviour
         groundRunNeuralNetwork = new NeuralNetwork(new int[] { 6, 3, 2 });
         groundRunNeuralNetwork.LoadAsString(groundRunNeuralNetworkString);
 
-        GetOrActivateState<State_CopyPlayer>().playerIndex = followPlayerId;
+        GetOrActivateState<State_CollectAndShoot>();
         
     }
 
@@ -70,6 +70,143 @@ public class BotController : MonoBehaviour
             activeStates.Add(state = new TState());
 
         return state;
+    }
+
+    public void DeactivateState<TState>() where TState : IState
+    {
+        activeStates.RemoveAll(a => a.GetType() == typeof(TState));
+    }
+
+    public class State_CollectAndShoot : IState
+    {
+        private bool isCollecting = true;
+
+        private int numRingsToStartShooting = 10;
+        private int numRingsToStartCollecting = 1;
+
+        private float maxRangeForNonRails = 25f;
+        private float maxRangeForRails = 50f;
+
+        public void Update(BotController controller, Character character, ref PlayerInput input)
+        {
+            if (!isCollecting)
+            {
+                Character target = SelectTarget(character, out bool targetIsVisible);
+
+                controller.DeactivateState<State_CollectRings>();
+
+                if (target)
+                {
+                    CharacterShooting shooting = character.GetComponent<CharacterShooting>();
+
+                    bool isRail = shooting.equippedWeapons.Contains(shooting.wepKeyRail);
+                    bool targetIsInRange = isRail && Vector3.Distance(character.transform.position, target.transform.position) < maxRangeForRails
+                        || !isRail && Vector3.Distance(character.transform.position, target.transform.position) < maxRangeForNonRails;
+
+                    if (!targetIsVisible || !targetIsInRange)
+                    {
+                        controller.GetOrActivateState<State_FollowPlayer>().followPlayerId = target.playerId;
+                    }
+                    else if (targetIsVisible)
+                    {
+                        controller.DeactivateState<State_FollowPlayer>();
+                        TryShootTarget(character, target, ref input);
+                    }
+                }
+                else
+                {
+                    isCollecting = true;
+                }
+
+                if (character.numRings <= numRingsToStartCollecting)
+                    isCollecting = true;
+            }
+
+            if (isCollecting)
+            {
+                controller.DeactivateState<State_FollowPlayer>();
+
+                controller.GetOrActivateState<State_CollectRings>();
+
+                if (character.numRings >= numRingsToStartShooting)
+                    isCollecting = false;
+            }
+        }
+
+        private Character SelectTarget(Character myCharacter, out bool targetIsVisible)
+        {
+            float closestVisibleCharDistance = float.MaxValue;
+            Character closestVisibleChar = null;
+            float closestCharDistance = float.MaxValue;
+            Character closestChar = null;
+
+            foreach (Character character in Netplay.singleton.players)
+            {
+                if (character && character != myCharacter && character.damageable.CanBeDamagedBy(myCharacter.damageable.damageTeam))
+                {
+                    float distance = Vector3.Distance(character.transform.position, myCharacter.transform.position);
+                    
+                    if (distance < closestCharDistance)
+                    {
+                        closestChar = character;
+                        closestCharDistance = distance;
+                    }
+
+                    PhysicsExtensions.Parameters parameters;
+                    parameters.ignoreObject = myCharacter.gameObject;
+                    if (!PhysicsExtensions.Raycast(myCharacter.transform.position, character.transform.position - myCharacter.transform.position, out RaycastHit hit, distance, ~0, QueryTriggerInteraction.Ignore, parameters)
+                        || hit.collider.gameObject == character.gameObject)
+                    {
+                        if (distance < closestVisibleCharDistance)
+                        {
+                            closestVisibleChar = character;
+                            closestVisibleCharDistance = distance;
+                        }
+                    }
+                }
+            }
+
+            if (closestVisibleChar)
+            {
+                targetIsVisible = true;
+                return closestVisibleChar;
+            }
+            else
+            {
+                targetIsVisible = false;
+                return closestChar;
+            }
+        }
+
+        private void TryShootTarget(Character myCharacter, Character target, ref PlayerInput playerInput)
+        {
+            CharacterShooting shooting = myCharacter.GetComponent<CharacterShooting>();
+            bool isRail = shooting.equippedWeapons.Contains(shooting.wepKeyRail);
+            bool tryThrowRing = false;
+
+            if (isRail)
+            {
+                playerInput.aimDirection = (target.transform.position - myCharacter.transform.position).normalized;
+                tryThrowRing = true;
+            }
+            else
+            {
+                if (shooting.PredictTargetPosition(target, out Vector3 predictedPosition, 2f))
+                {
+                    playerInput.aimDirection = (predictedPosition - myCharacter.transform.position).normalized;
+                    tryThrowRing = true;
+                }
+                else
+                {
+                    playerInput.aimDirection = (target.transform.position - myCharacter.transform.position).normalized;
+                }
+            }
+
+            if (shooting.CanThrowRing(0f) && tryThrowRing)
+            {
+                shooting.LocalThrowRing();
+            }
+        }
     }
 
     public class State_MoveTowards : IState
@@ -308,9 +445,11 @@ public class BotController : MonoBehaviour
         }
     }
 
-    public class State_GrabRings : IState
+    public class State_CollectRings : IState
     {
         private List<Ring> rings = new List<Ring>();
+
+        public bool doExcludeWeapons = true;
 
         public void Update(BotController controller, Character character, ref PlayerInput input)
         {
@@ -322,29 +461,31 @@ public class BotController : MonoBehaviour
             Vector3 myPosition = character.transform.position;
             Vector3 closestPosition = myPosition;
             Vector3 nextClosestPosition = myPosition;
+            State_MoveTowards moveState = controller.GetOrActivateState<State_MoveTowards>();
 
             foreach (Ring ring in rings)
             {
-                float dist = Vector3.Distance(myPosition, ring.transform.position) + Mathf.Abs(ring.transform.position.y - myPosition.y) * 3f;
-                if (ring.respawnableItem.isSpawned)
+                if (ring && (!doExcludeWeapons || !ring.GetComponent<RingWeaponPickup>()))
                 {
-                    if (dist < closestDist)
+                    float dist = Vector3.Distance(myPosition, ring.transform.position) + Mathf.Abs(ring.transform.position.y - myPosition.y) * 3f;
+                    if (ring.respawnableItem.isSpawned)
                     {
-                        nextClosestDist = closestDist;
-                        nextClosestPosition = closestPosition;
+                        if (dist < closestDist)
+                        {
+                            nextClosestDist = closestDist;
+                            nextClosestPosition = closestPosition;
 
-                        closestDist = dist;
-                        closestPosition = ring.transform.position;
-                    }
-                    else if (dist < nextClosestDist)
-                    {
-                        nextClosestDist = dist;
-                        nextClosestPosition = ring.transform.position;
+                            closestDist = dist;
+                            closestPosition = ring.transform.position;
+                        }
+                        else if (dist < nextClosestDist)
+                        {
+                            nextClosestDist = dist;
+                            nextClosestPosition = ring.transform.position;
+                        }
                     }
                 }
             }
-
-            State_MoveTowards moveState = controller.GetOrActivateState<State_MoveTowards>();
             
             moveState.SetTargetPosition(closestPosition, nextClosestPosition);
         }

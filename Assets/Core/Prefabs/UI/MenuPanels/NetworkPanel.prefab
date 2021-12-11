@@ -442,13 +442,13 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Smoothing can improve gameplay by adding an artificial delay and sending
-    your inputs to the server earlier.
+  m_Text: 'Smoothing can improve gameplay by sending your inputs to the server earlier
+    than usual.
 
 
-    This can reduce jitter, but increases
-    the jumpiness of other players due to increased prediction, so avoid setting
-    it too high! It will not improve your FPS.'
+    ONLY use if your own movement is jittering on this server,
+    and avoid high values if possible. It will increase your ping, and will not improve
+    your FPS.'
 --- !u!1 &2394844795174801565
 GameObject:
   m_ObjectHideFlags: 0
@@ -1979,10 +1979,11 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'Server rewinding improves player jumpiness for your clients, but will
-    make them throw rings with bigger gaps.
+  m_Text: 'Server rewinding makes other players appear smoother to each other, but
+    will make them throw rings with bigger gaps. At least 100ms is recommended.
 
-    Only applies if you''re the server.'
+    Only
+    applies if you''re the server.'
 --- !u!1 &7666186874894149804
 GameObject:
   m_ObjectHideFlags: 0
@@ -2074,7 +2075,7 @@ MonoBehaviour:
   slider: {fileID: 3216066304710722001}
   number: {fileID: 5806148771575147539}
   minValue: 5
-  maxValue: 100
+  maxValue: 250
   onValueChanged:
     m_PersistentCalls:
       m_Calls: []
