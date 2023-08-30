@@ -120,7 +120,7 @@ public class PlayerCharacterMovement : CharacterMovement
     // to restore collision capsule when rolling
     private float originalCapsuleHeight;
 
-    void Awake()
+    protected virtual void Awake()
     {
         player = GetComponent<Character>();
         sounds = GetComponent<PlayerSounds>();

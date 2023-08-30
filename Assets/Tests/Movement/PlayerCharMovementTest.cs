@@ -40,14 +40,19 @@ namespace Ringslingers.Tests
 
         PlayerInput lastInput;
 
-        private void Awake()
+        protected override void Awake()
         {
+            base.Awake();
+
             cam = FindObjectOfType<FreeCam>();
             meshFilter = GetComponentInChildren<MeshFilter>();
         }
 
         private void Update()
         {
+            CapsuleCollider capsule = (colliders[0] as CapsuleCollider);
+            DebugDraw.DrawCapsule(transform.position + Vector3.up * (capsule.center.y - capsule.height * 0.5f), transform.position + Vector3.up * (capsule.center.y + capsule.height * 0.5f), capsule.radius, Color.red);
+
             forward = cam.forward;
             if (enableManualControl)
             {
