@@ -160,7 +160,9 @@ public class GameTicker : NetworkBehaviour
 
         // Run our own inputs
         double quantizedTime = TimeTool.Quantize(predictedServerTime, fixedInputRate);
-        if (quantizedTime != Netplay.singleton.localPlayer.ticker.inputTimeline.LatestTime)
+
+        if ((NetworkServer.active && quantizedTime > TimeTool.Quantize(predictedServerTime - Time.deltaTime, fixedInputRate))
+            || (Netplay.singleton.localPlayer && quantizedTime > Netplay.singleton.localPlayer.ticker.inputTimeline.LatestTime))
         {
             if (Netplay.singleton.localPlayer)
             {
@@ -168,7 +170,7 @@ public class GameTicker : NetworkBehaviour
                 localPlayerInput = PlayerInput.MakeLocalInput(localPlayerInput);
 
                 // Send inputs to the local player's ticker
-                Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, quantizedTime);
+                Netplay.singleton.localPlayer.ticker.InsertInput(localPlayerInput, quantizedTime); ;
             }
 
             if (isServer)
