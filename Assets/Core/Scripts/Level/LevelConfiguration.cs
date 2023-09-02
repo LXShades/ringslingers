@@ -5,9 +5,10 @@ public class LevelConfiguration
 {
     [Header("Map info")]
     public string friendlyName;
-    public string credits = "???";
+    public string credits = "<credits missing>";
 
-    public Sprite mapShot;
+    [Header("TODO (not used yet)")]
+    public Sprite screenshot;
 
     [Header("Game mode")]
     [Tooltip("The default game mode to load for this scene")]
@@ -28,6 +29,9 @@ public class LevelConfiguration
 
     [Tooltip("Maximum amount of players in the server fort his to be considered in the rotation")]
     public int maxRotationPlayers;
+
+    [Header("Internal")]
+    public string path = "";
 
     public void OnValidate()
     {

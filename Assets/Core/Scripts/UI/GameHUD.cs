@@ -95,14 +95,14 @@ public class GameHUD : MonoBehaviour
         }
 
         // Setup level intro
-        LevelConfigurationComponent config = FindObjectOfType<LevelConfigurationComponent>();
+        LevelConfiguration config = GameManager.singleton.activeLevel;
         if (config != null)
         {
-            levelNameText.text = config.configuration.friendlyName;
+            levelNameText.text = config.friendlyName;
             levelDescriptionText.text = 
-                $"By: <color=orange>{config.configuration.credits}</color>\n" +
-                $"Weapon Limit: <color=orange>{(config.configuration.defaultWeaponAmmoStyle == WeaponAmmoStyle.Quantity ? "Ammo" : "Timer")}</color>\n" +
-                $"Combinable weapons: <color=orange>{(config.configuration.defaultWeaponCombinationStyle == WeaponCombinationStyle.Combinable ? "Yes" : "No")}</color>";
+                $"By: <color=orange>{config.credits}</color>\n" +
+                $"Weapon ammo type: <color=orange>{(config.defaultWeaponAmmoStyle == WeaponAmmoStyle.Quantity ? "Ammo" : "Timed")}</color>\n" +
+                $"Combinable weapons: <color=orange>{(config.defaultWeaponCombinationStyle == WeaponCombinationStyle.Combinable ? "Yes" : "No")}</color>";
 
             levelIntroRoot.SetActive(true);
         }

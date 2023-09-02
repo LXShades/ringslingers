@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -68,6 +69,24 @@ public class CommandLineProcessor : MonoBehaviour
         bool isInt = int.TryParse(scene, out sceneIndex);
 
         Debug.Log($"Loading scene {scene}");
+
+        string scenePath = isInt ? (EditorBuildSettings.scenes.Length > sceneIndex ? EditorBuildSettings.scenes[sceneIndex].path : "") : scene;
+
+        if (!string.IsNullOrEmpty(scenePath))
+        {
+            // Try find the first level config for this scene and use that to set the active level/gamemode stuff/etc
+            foreach (LevelRotation mapRotation in RingslingersContent.loaded.mapRotations)
+            {
+                LevelConfiguration levelConfig = mapRotation.levels.Find(x => x.path == scenePath);
+
+                if (levelConfig != null)
+                {
+                    GameManager.singleton.activeLevel = levelConfig;
+                    Debug.Log($"Picked map from rotation: {mapRotation.name}. TODO: if it appears in multiple rotations, add the ability to choose which one; this is not yet a feature.");
+                    break;
+                }
+            }
+        }
 
         if (isInt)
         {

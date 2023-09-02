@@ -163,6 +163,11 @@ public class Netplay : MonoBehaviour
         }
     }
 
+    public void ServerLoadLevel(LevelConfiguration level)
+    {
+        NetMan.singleton.ServerChangeScene(level.path, true);
+    }
+
     public void ServerNextMap()
     {
         if (!NetworkServer.active)
@@ -171,7 +176,7 @@ public class Netplay : MonoBehaviour
             return;
         }
 
-        List<RingslingersContent.Level> levels = RingslingersContent.loaded.levels;
+        List<LevelConfiguration> levels = RingslingersContent.loaded.levels;
 
         if (levels == null || levels.Count == 0)
         {
@@ -182,33 +187,18 @@ public class Netplay : MonoBehaviour
         if (levels.Count == 1)
         {
             // reload the current map, it's all we have
-            NetMan.singleton.ServerChangeScene(levels[0].path, true);
+            ServerLoadLevel(levels[0]);
         }
 
-        int currentLevelIndex = -1;
+        int currentLevelIndex = Mathf.Max(levels.IndexOf(GameManager.singleton.activeLevel), 0);
         int nextLevelIndex = -1;
-        int currentBuildIndex = SceneManager.GetActiveScene().buildIndex;
-
-        for (int i = 0; i < levels.Count; i++)
-        {
-            int buildIndex = SceneUtility.GetBuildIndexByScenePath(levels[i].path);
-
-            if (buildIndex != -1)
-            {
-                if (buildIndex == currentBuildIndex)
-                {
-                    currentLevelIndex = i;
-                    break;
-                }
-            }
-        }
 
         // Find the next VALID scene
         for (int i = (currentLevelIndex + 1) % levels.Count; i != currentLevelIndex; i = (i + 1) % levels.Count)
         {
             int buildIndex = SceneUtility.GetBuildIndexByScenePath(levels[i].path);
 
-            if (buildIndex != -1 && levels[i].configuration.includeInRotation)
+            if (buildIndex != -1 && levels[i].includeInRotation)
             {
                 nextLevelIndex = i;
                 break;
@@ -216,7 +206,7 @@ public class Netplay : MonoBehaviour
         }
 
         if (nextLevelIndex != -1)
-            NetMan.singleton.ServerChangeScene(levels[nextLevelIndex].path, true);
+            ServerLoadLevel(levels[nextLevelIndex]);
     }
 
     #region Game
@@ -232,12 +222,10 @@ public class Netplay : MonoBehaviour
     {
         if (NetworkServer.active)
         {
-            LevelConfigurationComponent config = FindObjectOfType<LevelConfigurationComponent>();
-
-            if (config != null)
-                MatchState.SetNetGameState(config.configuration.defaultGameModePrefab);
+            if (GameManager.singleton.activeLevel != null)
+                MatchState.SetNetGameState(GameManager.singleton.activeLevel.defaultGameModePrefab);
             else
-                Debug.LogError("We can't play this map. There's no game mode setup!");
+                Debug.LogError("We can't play this map properly, for some reason activeLevel is null so we can't find the game mode!");
         }
     }
     #endregion

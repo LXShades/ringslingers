@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
@@ -30,7 +31,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Content")]
     [Tooltip("All the content that comes with this build of the game")]
-    public RingslingersContent defaultContent;
+    public RingslingersContentDatabase defaultContent;
 
     [Header("Level Settings")]
     [Mirror.Scene]
@@ -45,6 +46,9 @@ public class GameManager : MonoBehaviour
     public float fracunitsPerM = 64;
 
     public GameObject localObjects;
+
+    [NonSerialized]
+    public LevelConfiguration activeLevel = null;
 
     /// <summary>
     /// The currently active in-game camera
@@ -100,7 +104,7 @@ public class GameManager : MonoBehaviour
         input.Gameplay.Jump.performed += (InputAction.CallbackContext context) => bufferedLocalBtnJump = context.ReadValue<float>() > 0f;
         input.Gameplay.Spindash.performed += (InputAction.CallbackContext context) => bufferedLocalBtnSpin = context.ReadValue<float>() > 0f;
 
-        
+        RingslingersContent.LoadContent(defaultContent.content);
 
         GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
     }

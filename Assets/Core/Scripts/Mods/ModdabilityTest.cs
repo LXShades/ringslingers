@@ -6,7 +6,6 @@ using UnityEngine.SceneManagement;
 
 public class ModdabilityTest : MonoBehaviour
 {
-
     public string modNameToLoad;
 
     private void Awake()
@@ -22,7 +21,7 @@ public class ModdabilityTest : MonoBehaviour
         if (NetworkServer.active)
         {
             // todo: add into the map rotation
-            NetMan.singleton.ServerChangeScene(loadedMod.GetAllScenePaths()[0], true);
+            //Netplay.singleton.ServerLoadLevel(loadedMod.GetAllScenePaths()[0]);
         }
     }
 }

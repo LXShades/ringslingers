@@ -9,7 +9,7 @@ public class MapSelector : MonoBehaviour
 
     private void OnEnable()
     {
-        List<RingslingersContent.Level> levels = RingslingersContent.loaded.levels;
+        List<LevelConfiguration> levels = RingslingersContent.loaded.levels;
 
         if (levels.Count == 0)
             return;
@@ -19,8 +19,8 @@ public class MapSelector : MonoBehaviour
         List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
         for (int i = 0; i < levels.Count; i++)
         {
-            RingslingersContent.Level level = levels[i];
-            options.Add(new Dropdown.OptionData($"{level.configuration.friendlyName} - {level.configuration.credits}"));
+            LevelConfiguration level = levels[i];
+            options.Add(new Dropdown.OptionData($"{level.friendlyName} - {level.credits}"));
 
             if (level.path.Equals(SceneManager.GetActiveScene().path, System.StringComparison.CurrentCultureIgnoreCase))
                 selectionIndex = i;
@@ -34,7 +34,7 @@ public class MapSelector : MonoBehaviour
     {
         Debug.Assert(NetMan.singleton.mode != Mirror.NetworkManagerMode.ClientOnly);
 
-        NetMan.singleton.ServerChangeScene(RingslingersContent.loaded.levels[dropdown.value].path, true);
+        Netplay.singleton.ServerLoadLevel(RingslingersContent.loaded.levels[dropdown.value]);
     }
 
     private void OnValidate()
