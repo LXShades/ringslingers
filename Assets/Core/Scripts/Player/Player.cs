@@ -81,7 +81,7 @@ public class Player : NetworkBehaviour
             MessageFeed.Post($"{oldName} was renamed to <player>{character.playerName}</player>");
 
         // Character
-        if (persistentData.characterIndex >= 0 && persistentData.characterIndex < GameManager.singleton.playerCharacters.Length && character != null && character.characterIndex != persistentData.characterIndex)
+        if (persistentData.characterIndex >= 0 && persistentData.characterIndex < RingslingersContent.loaded.characters.Count && character != null && character.characterIndex != persistentData.characterIndex)
         {
             Character player = Netplay.singleton.ChangePlayerCharacter(playerId, persistentData.characterIndex);
 

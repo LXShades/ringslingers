@@ -1,8 +1,8 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(LevelDatabase))]
-public class LevelManagerEditor : Editor
+[CustomEditor(typeof(RingslingersContentDatabase))]
+public class RingslingersContentEditor : Editor
 {
     public override void OnInspectorGUI()
     {
@@ -10,7 +10,7 @@ public class LevelManagerEditor : Editor
 
         if (GUILayout.Button("Rescan Scenes from BuildSettings"))
         {
-            (target as LevelDatabase).RescanScenes();
+            (target as RingslingersContentDatabase).RescanContent();
         }
     }
 }

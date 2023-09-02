@@ -35,7 +35,7 @@ public class MainMenu : MonoBehaviour
     {
         SetMenuEnabled(false);
 
-        AsyncOperation op = SceneManager.LoadSceneAsync(GameManager.singleton.levelDatabase.levels[0].path);
+        AsyncOperation op = SceneManager.LoadSceneAsync(RingslingersContent.loaded.levels[0].path);
 
         op.completed += (AsyncOperation) =>
         {

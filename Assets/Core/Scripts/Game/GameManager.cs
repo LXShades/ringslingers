@@ -28,14 +28,13 @@ public class GameManager : MonoBehaviour
         Chatbox = 1,
     }
 
-    [Header("Player settings")]
-    public CharacterNamePair[] playerCharacters;
+    [Header("Content")]
+    [Tooltip("All the content that comes with this build of the game")]
+    public RingslingersContent defaultContent;
 
     [Header("Level Settings")]
     [Mirror.Scene]
     public string menuScene;
-
-    public LevelDatabase levelDatabase;
 
     [Tooltip("How long until items respawn, in seconds")]
     public float itemRespawnTime = 20;
@@ -100,6 +99,8 @@ public class GameManager : MonoBehaviour
         input.Gameplay.Fire.performed += (InputAction.CallbackContext context) => bufferedLocalBtnFire = context.ReadValue<float>() > 0f;
         input.Gameplay.Jump.performed += (InputAction.CallbackContext context) => bufferedLocalBtnJump = context.ReadValue<float>() > 0f;
         input.Gameplay.Spindash.performed += (InputAction.CallbackContext context) => bufferedLocalBtnSpin = context.ReadValue<float>() > 0f;
+
+        
 
         GamePreferences.Load(input.asset.FindActionMap("Gameplay").actions.ToArray());
     }

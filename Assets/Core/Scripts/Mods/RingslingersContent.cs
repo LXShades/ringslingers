@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEngine.SceneManagement;
 using UnityEditor.SceneManagement;
 #endif
 
-[CreateAssetMenu(fileName = "New Level Database", menuName = "Level Database")]
-public class LevelDatabase : ScriptableObject
+[System.Serializable]
+public class RingslingersContent
 {
     [System.Serializable]
     public struct Level
@@ -19,13 +20,38 @@ public class LevelDatabase : ScriptableObject
         public LevelConfiguration configuration;
     }
 
+    [System.Serializable]
+    public struct Character
+    {
+        public GameObject prefab;
+
+        public CharacterConfiguration configuration;
+    }
+
+    /// <summary>
+    /// All currently loaded Ringslingers Content
+    /// </summary>
+    public static RingslingersContent loaded = new RingslingersContent();
+
     [Header("Levels (please do not edit manually, go to the scene instead)")]
     public List<Level> levels = new List<Level>();
 
+    [Header("Characters")]
+    public List<Character> characters = new List<Character>();
+
+    /// <summary>The mod containing this content, if applicable (null for built-in content)</summary>
+    public RingslingersMod sourceMod;
+}
+
+[CreateAssetMenu(fileName = "New Ringslingers Content Database", menuName = "Ringslingers Content Database")]
+public class RingslingersContentDatabase : ScriptableObject
+{
+    public RingslingersContent content = new RingslingersContent();
+
 #if UNITY_EDITOR
-    public void InsertScene(Level item, bool doSave = true)
+    public void InsertScene(RingslingersContent.Level item, bool doSave = true)
     {
-        levels.Add(item);
+        content.levels.Add(item);
         SortScenes();
 
         if (doSave)
@@ -35,9 +61,9 @@ public class LevelDatabase : ScriptableObject
         }
     }
 
-    public void UpdateScene(int sceneIndex, Level item, bool doSave = true)
+    public void UpdateScene(int sceneIndex, RingslingersContent.Level item, bool doSave = true)
     {
-        levels[sceneIndex] = item;
+        content.levels[sceneIndex] = item;
 
         if (doSave)
         {
@@ -48,7 +74,7 @@ public class LevelDatabase : ScriptableObject
 
     public void RemoveScene(int sceneIndex, bool doSave = true)
     {
-        levels.RemoveAt(sceneIndex);
+        content.levels.RemoveAt(sceneIndex);
 
         if (doSave)
         {
@@ -57,10 +83,10 @@ public class LevelDatabase : ScriptableObject
         }
     }
 
-    public void RescanScenes()
+    public void RescanContent()
     {
         // Scans all scenes for a LevelConfiguration and adds to the list
-        levels.Clear();
+        content.levels.Clear();
 
         List<Scene> scenesToUnload = new List<Scene>();
 
@@ -87,7 +113,7 @@ public class LevelDatabase : ScriptableObject
 
             if (config != null)
             {
-                levels.Add(new Level()
+                content.levels.Add(new RingslingersContent.Level()
                 {
                     path = scenePath,
                     configuration = config
@@ -119,7 +145,7 @@ public class LevelDatabase : ScriptableObject
 
     public void SortScenes()
     {
-        levels.Sort((a, b) => SceneUtility.GetBuildIndexByScenePath(a.path) - SceneUtility.GetBuildIndexByScenePath(b.path));
+        content.levels.Sort((a, b) => SceneUtility.GetBuildIndexByScenePath(a.path) - SceneUtility.GetBuildIndexByScenePath(b.path));
     }
 #endif
 }

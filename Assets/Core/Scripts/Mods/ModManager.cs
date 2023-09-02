@@ -9,6 +9,7 @@ public class RingslingersMod
     public string filename;
     public uint crc;
     public string url; // todo
+    public string buildDate;
 
     // don't serialize the following
     public AssetBundle loadedAssetBundle { get; set; }

@@ -8,6 +8,7 @@ public class LevelDatabaseAssetTracker : UnityEditor.AssetModificationProcessor
 {
     public static string[] OnWillSaveAssets(string[] paths)
     {
+        // todo check that it's the scene we're editing?
         if (paths.Length == 1 && paths[0].EndsWith(".unity"))
         {
             UnityEngine.Debug.Log($"Updating level database with {paths[0]}");
@@ -20,19 +21,19 @@ public class LevelDatabaseAssetTracker : UnityEditor.AssetModificationProcessor
             {
                 if (currentSceneIndex != -1)
                 {
-                    string[] levelDbs = AssetDatabase.FindAssets("t:LevelDatabase");
+                    string[] contentDbs = AssetDatabase.FindAssets($"t:{nameof(RingslingersContentDatabase)}");
 
-                    foreach (string dbGuid in levelDbs)
+                    foreach (string dbGuid in contentDbs)
                     {
-                        LevelDatabase levelDb = (LevelDatabase)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(dbGuid), typeof(LevelDatabase));
+                        RingslingersContentDatabase contentDb = (RingslingersContentDatabase)AssetDatabase.LoadAssetAtPath(AssetDatabase.GUIDToAssetPath(dbGuid), typeof(RingslingersContentDatabase));
 
-                        if (levelDb != null)
+                        if (contentDb != null)
                         {
-                            int sceneDbIndex = levelDb.levels.FindIndex(a => UnityEngine.SceneManagement.SceneManager.GetSceneByPath(a.path).buildIndex == currentSceneIndex);
+                            int sceneDbIndex = contentDb.content.levels.FindIndex(a => UnityEngine.SceneManagement.SceneManager.GetSceneByPath(a.path).buildIndex == currentSceneIndex);
 
                             if (config.configuration.includeInMapSelection || config.configuration.includeInRotation)
                             {
-                                LevelDatabase.Level asLevel = new LevelDatabase.Level()
+                                RingslingersContent.Level asLevel = new RingslingersContent.Level()
                                 {
                                     configuration = config.configuration,
                                     path = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().path
@@ -41,18 +42,18 @@ public class LevelDatabaseAssetTracker : UnityEditor.AssetModificationProcessor
                                 if (sceneDbIndex == -1)
                                 {
                                     // add entry
-                                    levelDb.InsertScene(asLevel);
+                                    contentDb.InsertScene(asLevel);
                                 }
                                 else
                                 {
                                     // update entry
-                                    levelDb.UpdateScene(sceneDbIndex, asLevel);
+                                    contentDb.UpdateScene(sceneDbIndex, asLevel);
                                 }
                             }
                             else if (sceneDbIndex != -1)
                             {
                                 // remove entry
-                                levelDb.RemoveScene(sceneDbIndex);
+                                contentDb.RemoveScene(sceneDbIndex);
                             }
                         }
                     }

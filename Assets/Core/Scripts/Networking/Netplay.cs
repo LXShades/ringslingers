@@ -171,21 +171,27 @@ public class Netplay : MonoBehaviour
             return;
         }
 
-        LevelDatabase db = GameManager.singleton.levelDatabase;
+        List<RingslingersContent.Level> levels = RingslingersContent.loaded.levels;
 
-        if (db == null || db.levels == null || db.levels.Count == 0)
+        if (levels == null || levels.Count == 0)
         {
             Log.WriteError("Cannot load levels database: list is empty or null");
             return;
+        }
+
+        if (levels.Count == 1)
+        {
+            // reload the current map, it's all we have
+            NetMan.singleton.ServerChangeScene(levels[0].path, true);
         }
 
         int currentLevelIndex = -1;
         int nextLevelIndex = -1;
         int currentBuildIndex = SceneManager.GetActiveScene().buildIndex;
 
-        for (int i = 0; i < db.levels.Count; i++)
+        for (int i = 0; i < levels.Count; i++)
         {
-            int buildIndex = SceneUtility.GetBuildIndexByScenePath(db.levels[i].path);
+            int buildIndex = SceneUtility.GetBuildIndexByScenePath(levels[i].path);
 
             if (buildIndex != -1)
             {
@@ -198,11 +204,11 @@ public class Netplay : MonoBehaviour
         }
 
         // Find the next VALID scene
-        for (int i = (currentLevelIndex + 1) % db.levels.Count; i != currentLevelIndex; i = (i + 1) % db.levels.Count)
+        for (int i = (currentLevelIndex + 1) % levels.Count; i != currentLevelIndex; i = (i + 1) % levels.Count)
         {
-            int buildIndex = SceneUtility.GetBuildIndexByScenePath(db.levels[i].path);
+            int buildIndex = SceneUtility.GetBuildIndexByScenePath(levels[i].path);
 
-            if (buildIndex != -1 && db.levels[i].configuration.includeInRotation)
+            if (buildIndex != -1 && levels[i].configuration.includeInRotation)
             {
                 nextLevelIndex = i;
                 break;
@@ -210,7 +216,7 @@ public class Netplay : MonoBehaviour
         }
 
         if (nextLevelIndex != -1)
-            NetMan.singleton.ServerChangeScene(db.levels[nextLevelIndex].path, true);
+            NetMan.singleton.ServerChangeScene(levels[nextLevelIndex].path, true);
     }
 
     #region Game
@@ -375,7 +381,7 @@ public class Netplay : MonoBehaviour
         }
 
         // Spawn the player
-        Character character = Spawner.Spawn(GameManager.singleton.playerCharacters[characterIndex].prefab).GetComponent<Character>();
+        Character character = Spawner.Spawn(RingslingersContent.loaded.characters[characterIndex].prefab).GetComponent<Character>();
 
         character.serverOwningPlayer = owner;
         character.characterIndex = characterIndex;
@@ -388,9 +394,9 @@ public class Netplay : MonoBehaviour
 
     public Character ChangePlayerCharacter(int playerId, int characterIndex)
     {
-        if (characterIndex < 0 || characterIndex >= GameManager.singleton.playerCharacters.Length)
+        if (characterIndex < 0 || characterIndex >= RingslingersContent.loaded.characters.Count)
         {
-            Debug.Log("Cannot change to character {characterIndex}: character does not exist");
+            Debug.Log($"Cannot change to character {characterIndex}: character does not exist");
             return null;
         }
 
@@ -404,7 +410,7 @@ public class Netplay : MonoBehaviour
             players[playerId] = null;
         }
 
-        Character player = Spawner.Spawn(GameManager.singleton.playerCharacters[characterIndex].prefab).GetComponent<Character>();
+        Character player = Spawner.Spawn(RingslingersContent.loaded.characters[characterIndex].prefab).GetComponent<Character>();
 
         player.characterIndex = characterIndex;
         player.Rename(playerName);

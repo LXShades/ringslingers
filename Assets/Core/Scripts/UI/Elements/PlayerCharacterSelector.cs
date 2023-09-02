@@ -24,8 +24,8 @@ public class PlayerCharacterSelector : MonoBehaviour
 
         List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
 
-        foreach (CharacterNamePair characterChoice in GameManager.singleton.playerCharacters)
-            options.Add(new Dropdown.OptionData() { text = characterChoice.name });
+        foreach (RingslingersContent.Character characterChoice in RingslingersContent.loaded.characters)
+            options.Add(new Dropdown.OptionData() { text = characterChoice.configuration.name });
 
         dropdown.AddOptions(options);
     }
