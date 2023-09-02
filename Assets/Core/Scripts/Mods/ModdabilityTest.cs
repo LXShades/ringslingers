@@ -10,18 +10,15 @@ public class ModdabilityTest : MonoBehaviour
 
     private void Awake()
     {
-        RingslingersMod[] mods = new RingslingersMod[] { new RingslingersMod { filename = modNameToLoad } };
-        ModManager.LoadMods(mods, (wasSuccessful, message) => OnFinishedBundleLoad(wasSuccessful, mods[0].loadedAssetBundle));
+        RingslingersMod[] mods = new RingslingersMod[] { 
+            new RingslingersMod { filename = $"{modNameToLoad}.Assets" },
+            new RingslingersMod { filename = $"{modNameToLoad}.Scenes" },
+        };
+        ModManager.LoadMods(mods, (wasSuccessful, message) => OnFinishedBundleLoad(wasSuccessful, message));
     }
 
-    private void OnFinishedBundleLoad(bool wasSuccessful, AssetBundle loadedMod)
+    private void OnFinishedBundleLoad(bool wasSuccessful, string message)
     {
-        Debug.Log($"Mod loader success? {wasSuccessful}");
-
-        if (NetworkServer.active)
-        {
-            // todo: add into the map rotation
-            //Netplay.singleton.ServerLoadLevel(loadedMod.GetAllScenePaths()[0]);
-        }
+        Debug.Log($"Mod loader: Success={wasSuccessful}, Message={message}");
     }
 }

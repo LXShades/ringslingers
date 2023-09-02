@@ -12,5 +12,18 @@ public class RingslingersContentEditor : Editor
         {
             (target as RingslingersContentDatabase).RescanContent();
         }
+
+        if (GUILayout.Button("Check for Errors"))
+        {
+            int numErrors = (target as RingslingersContentDatabase).ScanForErrors(out string errors);
+            if (numErrors > 0)
+            {
+                EditorUtility.DisplayDialog($"{numErrors} errors found", errors, "OK");
+            }
+            else
+            {
+                EditorUtility.DisplayDialog("No errors found", "No errors found.", "OK");
+            }
+        }
     }
 }

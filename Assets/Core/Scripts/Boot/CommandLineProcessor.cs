@@ -1,5 +1,4 @@
 ﻿using System.Runtime.InteropServices;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -66,11 +65,11 @@ public class CommandLineProcessor : MonoBehaviour
     private AsyncOperation SetScene(string scene)
     {
         int sceneIndex;
-        bool isInt = int.TryParse(scene, out sceneIndex);
+        bool isIndex = int.TryParse(scene, out sceneIndex);
 
         Debug.Log($"Loading scene {scene}");
 
-        string scenePath = isInt ? (EditorBuildSettings.scenes.Length > sceneIndex ? EditorBuildSettings.scenes[sceneIndex].path : "") : scene;
+        string scenePath = isIndex ? SceneUtility.GetScenePathByBuildIndex(sceneIndex) : scene;
 
         if (!string.IsNullOrEmpty(scenePath))
         {
@@ -88,7 +87,7 @@ public class CommandLineProcessor : MonoBehaviour
             }
         }
 
-        if (isInt)
+        if (isIndex)
         {
             return SceneManager.LoadSceneAsync(sceneIndex);
         }

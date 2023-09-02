@@ -17,16 +17,27 @@ public class RingslingersMod
 
 public class ModManager
 {
+    public class ModLoadProcess
+    {
+        public List<RingslingersMod> modsToLoad = new List<RingslingersMod>();
+        public RingslingersMod modBeingLoaded = null;
+        public List<RingslingersMod> modsLoaded = new List<RingslingersMod>();
+        public LoadedModsDelegate onLoadProcessFinished;
+
+        public ModLoadProcess(IEnumerable<RingslingersMod> inModsToLoad)
+        {
+            modsToLoad.AddRange(inModsToLoad);
+        }
+    }
+
     public delegate void LoadedModsDelegate(bool wasSuccessful, string message);
     public static string modPath => System.IO.Path.Combine(Application.dataPath, "Mods");
 
     public static List<RingslingersMod> loadedMods = new List<RingslingersMod>();
 
-    public static List<RingslingersMod> loadingMods = new List<RingslingersMod>();
+    public static List<ModLoadProcess> modLoadProcesses = new List<ModLoadProcess>();
 
     private static AssetBundleCreateRequest modLoadOperation = null;
-
-    private static LoadedModsDelegate onAllModsLoadedDelegate;
 
     /// <summary>
     /// Loads a set of mods. Note that some properties may be changed (filename)
@@ -59,43 +70,99 @@ public class ModManager
         }
 
         // Try loading them all
-        loadingMods.AddRange(mods);
-
-        onAllModsLoadedDelegate += onFinished;
+        modLoadProcesses.Add(new ModLoadProcess(mods)
+        {
+            onLoadProcessFinished = onFinished
+        });
         LoadNextModIfNotAlready();
     }
 
     private static void LoadNextModIfNotAlready()
     {
-        if (loadingMods.Count == 0)
-            return;
+        if (modLoadProcesses.Count == 0)
+            return; // nothing left to load
 
         if (modLoadOperation == null)
         {
-            modLoadOperation = AssetBundle.LoadFromFileAsync(System.IO.Path.Combine(modPath, loadingMods[0].filename));
-            modLoadOperation.completed += op =>
+            ModLoadProcess modLoadProcess = modLoadProcesses[0];
+            RingslingersMod nextModToLoad = null;
+
+            if (modLoadProcess.modsToLoad.Count > 0)
             {
-                if (modLoadOperation.assetBundle == null)
-                {
-                    Debug.LogError($"ERROR loading mod {loadingMods[0].filename}");
-                }
+                nextModToLoad = modLoadProcess.modBeingLoaded = modLoadProcess.modsToLoad[0];
+                modLoadProcess.modsToLoad.RemoveAt(0);
 
-                loadingMods[0].loadedAssetBundle = modLoadOperation.assetBundle;
-                loadedMods.Add(loadingMods[0]);
-                loadingMods.RemoveAt(0);
-
-                // Continue or end the load process
-                if (loadingMods.Count == 0)
-                    OnModLoadCompleted();
-                else
-                    LoadNextModIfNotAlready();
-            };
+                modLoadOperation = AssetBundle.LoadFromFileAsync(System.IO.Path.Combine(modPath, nextModToLoad.filename));
+                modLoadOperation.completed += op => OnSingleModOperationFinished();
+            }
+            else
+            {
+                modLoadProcesses.RemoveAt(0); // this shouldn't really happen, it should be cleaned up in OnSingleModLoaded. But remove it just in case
+            }
         }
     }
 
-    private static void OnModLoadCompleted()
+    private static void OnSingleModOperationFinished()
     {
-        onAllModsLoadedDelegate?.Invoke(true, "ersertjerlkj - TODO");
-        onAllModsLoadedDelegate -= onAllModsLoadedDelegate;
+        if (modLoadProcesses.Count == 0)
+        {
+            Debug.LogError("Mod load operation finished but there was allegedly nothing loading - this shouldn't happen - programmer error.");
+            return;
+        }
+
+        ModLoadProcess modLoadProcess = modLoadProcesses[0];
+
+        if (modLoadOperation.assetBundle != null)
+        {
+            modLoadProcess.modBeingLoaded.loadedAssetBundle = modLoadOperation.assetBundle;
+            modLoadProcess.modsLoaded.Add(modLoadProcess.modBeingLoaded);
+            modLoadProcess.modsToLoad.Remove(modLoadProcess.modBeingLoaded);
+            
+            if (modLoadProcess.modsToLoad.Count == 0)
+            {
+                // The mod load is finished!
+                // If this isn't the scenes bundle it should have the content database, so load that here
+                foreach (RingslingersMod mod in modLoadProcess.modsLoaded)
+                {
+                    if (mod.loadedAssetBundle.GetAllAssetNames().Length > 0)
+                    {
+                        UnityEngine.Object mainAsset = mod.loadedAssetBundle.LoadAsset(mod.loadedAssetBundle.GetAllAssetNames()[0]);
+
+                        if (mainAsset is RingslingersContentDatabase contentDatabase)
+                        {
+                            RingslingersContent.LoadContent(contentDatabase.content);
+                        }
+                    }
+                }
+
+                // Then notify that it's loaded and move to next if applicable
+                try
+                {
+                    modLoadProcess.onLoadProcessFinished?.Invoke(true, "Mod load successful");
+                }
+                finally
+                {
+                    modLoadProcesses.RemoveAt(0);
+                }
+            }
+        }
+        else
+        {
+            // Error loading a mod, welp time to undo everything we did.
+            foreach (RingslingersMod loadedMod in modLoadProcess.modsLoaded)
+                loadedMod.loadedAssetBundle.Unload(true);
+
+            try // we use try finally blocks just in case something goes wrong in the error handler, we don't want to softlock the mod process if we can avoid it.
+            {
+                modLoadProcesses[0].onLoadProcessFinished?.Invoke(false, $"Unknown error loading mod '{modLoadProcess.modBeingLoaded.filename}'");
+            }
+            finally
+            {
+                modLoadProcesses.RemoveAt(0);
+            }
+        }
+
+        modLoadOperation = null;
+        LoadNextModIfNotAlready();
     }
 }

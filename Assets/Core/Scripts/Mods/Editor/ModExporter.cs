@@ -6,17 +6,6 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 
-public class ModExporter
-{
-    public static string editorModFolder => System.IO.Path.Combine(Application.dataPath, "Mods");
-
-    [MenuItem("Ringslingers/Mod Exporter...")]
-    public static void OpenModExporter()
-    {
-        ModExporterEditorWindow.Open();
-    }
-}
-
 [System.Serializable]
 public class ModExporterEditorWindow : EditorWindow
 {
@@ -32,6 +21,12 @@ public class ModExporterEditorWindow : EditorWindow
     private const string statePrefKey = "ModExporterState";
 
     private Vector2 scrollPosition;
+
+    [MenuItem("Ringslingers/Mod Exporter...")]
+    public static void OpenModExporter()
+    {
+        ModExporterEditorWindow.Open();
+    }
 
     public void Awake()
     {
@@ -147,7 +142,7 @@ public class ModExporterEditorWindow : EditorWindow
             {
                 if (contentDatabase.ScanForErrors(out string errors) == 0)
                 {
-                    // Add a bundle build for the levels
+                    // Add a bundle build for the levels if there are any
                     if (contentDatabase.content.levels.Count > 0 || contentDatabase.content.mapRotations.Count > 0)
                     {
                         HashSet<string> scenesToAdd = new HashSet<string>();
@@ -167,19 +162,18 @@ public class ModExporterEditorWindow : EditorWindow
                         });
                     }
 
-                    // Add a bundle build for the other assets (for some rather frustrating reason, we can't put them in the same bundle)
-                    if (contentDatabase.content.characters.Count > 0)
-                    {
-                        HashSet<string> assetsToAdd = new HashSet<string>();
-                        foreach (var character in contentDatabase.content.characters)
-                            assetsToAdd.Add(AssetDatabase.GetAssetPath(character.prefab));
+                    // Add a bundle build for the other assets and the content database itself
+                    // For some rather frustrating reason, we can't put them in the same bundle with the scenes
+                    HashSet<string> assetsToAdd = new HashSet<string>();
+                    assetsToAdd.Add(AssetDatabase.GetAssetPath(contentDatabase)); // The content database should be the first asset added so we can find it upon load
+                    foreach (var character in contentDatabase.content.characters)
+                        assetsToAdd.Add(AssetDatabase.GetAssetPath(character.prefab));
 
-                        bundleBuilds.Add(new AssetBundleBuild()
-                        {
-                            assetNames = assetsToAdd.ToArray(),
-                            assetBundleName = $"{contentDatabase.name}.Assets"
-                        });
-                    }
+                    bundleBuilds.Add(new AssetBundleBuild()
+                    {
+                        assetNames = assetsToAdd.ToArray(),
+                        assetBundleName = $"{contentDatabase.name}.Assets"
+                    });
                 }
                 else
                 {
