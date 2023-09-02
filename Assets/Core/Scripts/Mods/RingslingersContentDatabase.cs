@@ -126,12 +126,16 @@ public class RingslingersContentDatabase : ScriptableObject
         AssetDatabase.SaveAssets();
     }
 
-    private int ScanForErrors(out string errorDescription)
+    public int ScanForErrors(out string errorDescription)
     {
         StringBuilder sb = new StringBuilder();
         int numErrors = 0;
 
-        foreach (LevelConfiguration level in content.levels)
+        List<LevelConfiguration> allLevels = new List<LevelConfiguration>(content.levels);
+        foreach (LevelRotation rotation in content.mapRotations)
+            allLevels.AddRange(rotation.levels);
+
+        foreach (LevelConfiguration level in allLevels)
         {
             if (!AssetDatabase.AssetPathExists(level.path))
             {
@@ -154,6 +158,15 @@ public class RingslingersContentDatabase : ScriptableObject
             if (level.maxRotationPlayers - level.minRotationPlayers <= 0)
             {
                 sb.AppendLine($"{level.friendlyName} has an invalid range of max/min players to appear in the rotation. (Max={level.maxRotationPlayers} Min={level.minRotationPlayers}");
+                numErrors++;
+            }
+        }
+
+        foreach (CharacterConfiguration character in content.characters)
+        {
+            if (character.prefab == null)
+            {
+                sb.AppendLine($"Character {character.name} has an invalid prefab");
                 numErrors++;
             }
         }
