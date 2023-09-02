@@ -8,7 +8,7 @@ public class RingslingersContentEditor : Editor
     {
         base.OnInspectorGUI();
 
-        if (GUILayout.Button("Rescan Scenes from BuildSettings"))
+        if (GUILayout.Button("Rescan Content"))
         {
             (target as RingslingersContentDatabase).RescanContent();
         }
