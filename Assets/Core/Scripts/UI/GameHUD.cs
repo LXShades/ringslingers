@@ -95,7 +95,7 @@ public class GameHUD : MonoBehaviour
         }
 
         // Setup level intro
-        LevelConfiguration config = GameManager.singleton.activeLevel;
+        MapConfiguration config = GameManager.singleton.activeLevel;
         if (config != null)
         {
             levelNameText.text = config.friendlyName;

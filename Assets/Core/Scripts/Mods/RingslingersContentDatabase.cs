@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
 using System.Text;
+using UnityEngine.Serialization;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -21,17 +22,18 @@ public class RingslingersContent
     public List<CharacterConfiguration> characters = new List<CharacterConfiguration>();
 
     [Header("Levels")]
-    public List<LevelConfiguration> levels = new List<LevelConfiguration>();
+    [FormerlySerializedAs("levels")]
+    public List<MapConfiguration> maps = new List<MapConfiguration>();
 
     [Header("Map Rotations")]
-    public List<LevelRotation> mapRotations = new List<LevelRotation>();
+    public List<MapRotation> mapRotations = new List<MapRotation>();
 
     /// <summary>The mod containing this content, if applicable (null for built-in content)</summary>
     public RingslingersMod sourceMod;
 
     public static void LoadContent(RingslingersContent content)
     {
-        loaded.levels.AddRange(content.levels);
+        loaded.maps.AddRange(content.maps);
         loaded.characters.AddRange(content.characters);
         loaded.mapRotations.AddRange(content.mapRotations);
     }
@@ -43,9 +45,9 @@ public class RingslingersContentDatabase : ScriptableObject
     public RingslingersContent content = new RingslingersContent();
 
 #if UNITY_EDITOR
-    public void InsertScene(LevelConfiguration item, bool doSave = true)
+    public void InsertScene(MapConfiguration item, bool doSave = true)
     {
-        content.levels.Add(item);
+        content.maps.Add(item);
 
         if (doSave)
         {
@@ -54,9 +56,9 @@ public class RingslingersContentDatabase : ScriptableObject
         }
     }
 
-    public void UpdateScene(int sceneIndex, LevelConfiguration item, bool doSave = true)
+    public void UpdateScene(int sceneIndex, MapConfiguration item, bool doSave = true)
     {
-        content.levels[sceneIndex] = item;
+        content.maps[sceneIndex] = item;
 
         if (doSave)
         {
@@ -67,7 +69,7 @@ public class RingslingersContentDatabase : ScriptableObject
 
     public void RemoveScene(int sceneIndex, bool doSave = true)
     {
-        content.levels.RemoveAt(sceneIndex);
+        content.maps.RemoveAt(sceneIndex);
 
         if (doSave)
         {
@@ -85,9 +87,9 @@ public class RingslingersContentDatabase : ScriptableObject
         {
             string scenePath = AssetDatabase.GUIDToAssetPath(sceneCandidateGuid);
 
-            if (!content.levels.Exists(x => x.path == scenePath))
+            if (!content.maps.Exists(x => x.path == scenePath))
             {
-                content.levels.Add(new LevelConfiguration()
+                content.maps.Add(new MapConfiguration()
                 {
                     friendlyName = TryMakeFriendlyNameForScene(scenePath),
                     path = scenePath
@@ -131,11 +133,11 @@ public class RingslingersContentDatabase : ScriptableObject
         StringBuilder sb = new StringBuilder();
         int numErrors = 0;
 
-        List<LevelConfiguration> allLevels = new List<LevelConfiguration>(content.levels);
-        foreach (LevelRotation rotation in content.mapRotations)
+        List<MapConfiguration> allLevels = new List<MapConfiguration>(content.maps);
+        foreach (MapRotation rotation in content.mapRotations)
             allLevels.AddRange(rotation.levels);
 
-        foreach (LevelConfiguration level in allLevels)
+        foreach (MapConfiguration level in allLevels)
         {
             if (!AssetDatabase.AssetPathExists(level.path))
             {

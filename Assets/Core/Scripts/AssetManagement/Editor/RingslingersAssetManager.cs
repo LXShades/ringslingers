@@ -13,7 +13,7 @@ public class RingslingersAssetManager
         set => EditorPrefs.SetBool("shouldUseEditorAssetsInPlaymode", true);
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
     private static void OnInitPlaymode()
     {
         RingslingersCoreLoader.useEditorAssetsIfAvailable = shouldUseEditorAssetsInPlaymode;
@@ -50,10 +50,10 @@ public class RingslingersAssetManager
             EditorUtility.DisplayDialog("In Unity, everything has a sacrifice", "When this is disabled, you can load mods in play mode. However, if you are editing core game content, you need to Build Core AssetBundles for the changes to take effect.", "I understand");
     }
 
-    [MenuItem("Ringslingers/Use Editor Assets in Playmode", validate = true)]
+    [MenuItem("Ringslingers/Use Editor Assets in Playmode (instead of AssetBundles)", validate = true)]
     private static bool UseEditorAssetsInPlaymode_Validate()
     {
-        Menu.SetChecked("Ringslingers/Use Editor Assets in Playmode", shouldUseEditorAssetsInPlaymode);
+        Menu.SetChecked("Ringslingers/Use Editor Assets in Playmode (instead of AssetBundles)", shouldUseEditorAssetsInPlaymode);
         return true;
     }
 
@@ -80,13 +80,13 @@ public class RingslingersAssetManager
                     if (contentDatabase.ScanForErrors(out string errors) == 0)
                     {
                         // Add a bundle build for the levels if there are any
-                        if (contentDatabase.content.levels.Count > 0 || contentDatabase.content.mapRotations.Count > 0)
+                        if (contentDatabase.content.maps.Count > 0 || contentDatabase.content.mapRotations.Count > 0)
                         {
                             HashSet<string> scenesToAdd = new HashSet<string>();
-                            foreach (var level in contentDatabase.content.levels)
+                            foreach (var level in contentDatabase.content.maps)
                                 scenesToAdd.Add(level.path);
 
-                            foreach (LevelRotation rotation in contentDatabase.content.mapRotations)
+                            foreach (MapRotation rotation in contentDatabase.content.mapRotations)
                             {
                                 foreach (var level in rotation.levels)
                                     scenesToAdd.Add(level.path);

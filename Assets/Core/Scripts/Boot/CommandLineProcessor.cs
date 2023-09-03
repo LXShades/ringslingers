@@ -74,9 +74,9 @@ public class CommandLineProcessor : MonoBehaviour
         if (!string.IsNullOrEmpty(scenePath))
         {
             // Try find the first level config for this scene and use that to set the active level/gamemode stuff/etc
-            foreach (LevelRotation mapRotation in RingslingersContent.loaded.mapRotations)
+            foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
             {
-                LevelConfiguration levelConfig = mapRotation.levels.Find(x => x.path == scenePath);
+                MapConfiguration levelConfig = mapRotation.levels.Find(x => x.path == scenePath);
 
                 if (levelConfig != null)
                 {

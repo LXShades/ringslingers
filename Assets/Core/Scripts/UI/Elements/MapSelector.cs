@@ -5,41 +5,74 @@ using UnityEngine.UI;
 
 public class MapSelector : MonoBehaviour
 {
-    public Dropdown dropdown;
+    public Dropdown mapRotationsDropdown;
+    public Transform mapSelector;
+
+    public MapButton mapButtonPrefab;
+
+    private List<MapButton> mapButtons = new List<MapButton>();
+
+    private MapConfiguration selectedMap = null;
 
     private void OnEnable()
     {
-        List<LevelConfiguration> levels = RingslingersContent.loaded.levels;
+        // Refill the map rotations dropdown
+        mapRotationsDropdown.ClearOptions();
 
-        if (levels.Count == 0)
-            return;
-        dropdown.ClearOptions();
+        List<string> options = new List<string>();
+        int currentMapRotationIndex = RingslingersContent.loaded.mapRotations.IndexOf(GameManager.singleton.activeMapRotation);
+        foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
+            options.Add(mapRotation.name);
+        
+        mapRotationsDropdown.AddOptions(options);
+        mapRotationsDropdown.SetValueWithoutNotify(currentMapRotationIndex);
 
-        int selectionIndex = -1;
-        List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
-        for (int i = 0; i < levels.Count; i++)
+        mapRotationsDropdown.onValueChanged.AddListener(OnMapRotationSelected);
+
+        // Refresh the map selector
+        RefreshMapSelector(mapRotationsDropdown.value);
+    }
+
+    private void OnDisable()
+    {
+        mapRotationsDropdown.onValueChanged.RemoveListener(OnMapRotationSelected);
+    }
+
+    private void RefreshMapSelector(int mapRotationIndex)
+    {
+        selectedMap = null;
+
+        // Cleanup original buttons
+        foreach (var mapButton in mapButtons)
         {
-            LevelConfiguration level = levels[i];
-            options.Add(new Dropdown.OptionData($"{level.friendlyName} - {level.credits}"));
-
-            if (level.path.Equals(SceneManager.GetActiveScene().path, System.StringComparison.CurrentCultureIgnoreCase))
-                selectionIndex = i;
+            if (mapButton != null)
+                Destroy(mapButton.gameObject);
         }
+        mapButtons.Clear();
 
-        dropdown.AddOptions(options);
-        dropdown.value = selectionIndex;
+        // Instantiate new buttons
+        if (mapRotationIndex >= 0 && mapRotationIndex < RingslingersContent.loaded.mapRotations.Count)
+        {
+            foreach (MapConfiguration map in RingslingersContent.loaded.maps)
+            {
+                MapButton mapButtonInstance = Instantiate(mapButtonPrefab, mapSelector);
+                mapButtons.Add(mapButtonInstance);
+                mapButtonInstance.SetInfo($"{map.friendlyName}\n{map.defaultGameModePrefab.name}", map.screenshot);
+                mapButtonInstance.GetComponent<Button>().onClick.AddListener(() => OnLevelButtonPressed(map));
+            }
+        }
     }
 
-    public void GoToSelectedMap()
-    {
-        Debug.Assert(NetMan.singleton.mode != Mirror.NetworkManagerMode.ClientOnly);
+    private void OnLevelButtonPressed(MapConfiguration map) => selectedMap = map;
 
-        Netplay.singleton.ServerLoadLevel(RingslingersContent.loaded.levels[dropdown.value]);
+    public void OnGoButtonPressed()
+    {
+        if (selectedMap != null)
+            Netplay.singleton.ServerLoadLevel(selectedMap);
     }
 
-    private void OnValidate()
+    private void OnMapRotationSelected(int selectedIndex)
     {
-        if (dropdown == null)
-            dropdown = GetComponent<Dropdown>();
+        RefreshMapSelector(selectedIndex);
     }
 }

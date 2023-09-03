@@ -23,7 +23,7 @@ public class MatchConfiguration : MatchStateComponent
 
     public override void OnStart()
     {
-        LevelConfiguration config = GameManager.singleton.activeLevel;
+        MapConfiguration config = GameManager.singleton.activeLevel;
 
         if (config != null)
         {

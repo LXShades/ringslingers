@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 [System.Serializable]
-public class LevelConfiguration
+public class MapConfiguration
 {
     [Header("Map info")]
     public string friendlyName;

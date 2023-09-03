@@ -163,7 +163,7 @@ public class Netplay : MonoBehaviour
         }
     }
 
-    public void ServerLoadLevel(LevelConfiguration level)
+    public void ServerLoadLevel(MapConfiguration level)
     {
         GameManager.singleton.activeLevel = level;
         NetMan.singleton.ServerChangeScene(level.path, true);
@@ -177,7 +177,7 @@ public class Netplay : MonoBehaviour
             return;
         }
 
-        List<LevelConfiguration> levels = RingslingersContent.loaded.levels;
+        List<MapConfiguration> levels = RingslingersContent.loaded.maps;
 
         if (levels == null || levels.Count == 0)
         {
@@ -308,7 +308,7 @@ public class Netplay : MonoBehaviour
         }
     }
 
-    public void HostServer(LevelConfiguration level)
+    public void HostServer(MapConfiguration level)
     {
         if (level != null)
             ServerLoadLevel(level);

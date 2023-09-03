@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class LevelRotation
+public class MapRotation
 {
     public string name = "Some Random Maps";
-    public List<LevelConfiguration> levels = new List<LevelConfiguration>();
+    public List<MapConfiguration> levels = new List<MapConfiguration>();
 }

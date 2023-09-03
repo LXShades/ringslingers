@@ -47,8 +47,23 @@ public class GameManager : MonoBehaviour
 
     public GameObject localObjects;
 
-    [NonSerialized]
-    public LevelConfiguration activeLevel = null;
+    public MapConfiguration activeLevel
+    {
+        get => _activeLevel;
+        set
+        {
+            _activeLevel = value;
+
+            // try keep the map rotation in sync (we should probably put this somewhere else)
+            foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
+            {
+                if (mapRotation.levels.Contains(_activeLevel))
+                    activeMapRotation = mapRotation;
+            }
+        }
+    }
+    private MapConfiguration _activeLevel;
+    public MapRotation activeMapRotation { get; private set; }
 
     /// <summary>
     /// The currently active in-game camera

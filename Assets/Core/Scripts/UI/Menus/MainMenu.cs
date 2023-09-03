@@ -35,18 +35,18 @@ public class MainMenu : MonoBehaviour
     {
         SetMenuEnabled(false);
 
-        AsyncOperation op = SceneManager.LoadSceneAsync(RingslingersContent.loaded.levels[0].path);
+        AsyncOperation op = SceneManager.LoadSceneAsync(RingslingersContent.loaded.maps[0].path);
 
         if (op != null)
         {
             op.completed += (AsyncOperation) =>
             {
-                Netplay.singleton.HostServer(RingslingersContent.loaded.levels[0]);
+                Netplay.singleton.HostServer(RingslingersContent.loaded.maps[0]);
             };
         }
         else
         {
-            Debug.LogError($"Could not load scene {RingslingersContent.loaded.levels[0].path}: it does not exist");
+            Debug.LogError($"Could not load scene {RingslingersContent.loaded.maps[0].path}: it does not exist");
         }
     }
 
