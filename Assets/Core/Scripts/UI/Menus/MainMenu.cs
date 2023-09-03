@@ -37,10 +37,17 @@ public class MainMenu : MonoBehaviour
 
         AsyncOperation op = SceneManager.LoadSceneAsync(RingslingersContent.loaded.levels[0].path);
 
-        op.completed += (AsyncOperation) =>
+        if (op != null)
         {
-            Netplay.singleton.HostServer();
-        };
+            op.completed += (AsyncOperation) =>
+            {
+                Netplay.singleton.HostServer();
+            };
+        }
+        else
+        {
+            Debug.LogError($"Could not load scene {RingslingersContent.loaded.levels[0].path}: it does not exist");
+        }
     }
 
     private void OnQuitClicked()

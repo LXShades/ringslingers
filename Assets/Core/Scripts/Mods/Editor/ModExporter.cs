@@ -22,6 +22,42 @@ public class ModExporterEditorWindow : EditorWindow
 
     private Vector2 scrollPosition;
 
+    [MenuItem("Ringslingers/Build Core AssetBundles")]
+    public static void BuildCoreAssetBundles()
+    {
+        if (!System.IO.Directory.Exists(RingslingersCoreLoader.coreAssetsBuildPath))
+            System.IO.Directory.CreateDirectory(RingslingersCoreLoader.coreAssetsBuildPath);
+
+        AssetBundleBuild[] bundles = new[]
+        {
+            new AssetBundleBuild()
+            {
+                assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(RingslingersCoreLoader.coreAssetBundleName),
+                assetBundleName = RingslingersCoreLoader.coreAssetBundleName
+            },
+            new AssetBundleBuild()
+            {
+                assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(RingslingersCoreLoader.coreSceneBundleName),
+                assetBundleName = RingslingersCoreLoader.coreSceneBundleName
+            }
+        };
+
+        BuildAssetBundlesParameters buildParams = new BuildAssetBundlesParameters()
+        {
+            bundleDefinitions = bundles,
+            targetPlatform = EditorUserBuildSettings.activeBuildTarget,
+            options = BuildAssetBundleOptions.None,
+            outputPath = RingslingersCoreLoader.coreAssetsBuildPath
+        };
+
+        AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(buildParams);
+
+        if (manifest != null)
+            EditorUtility.DisplayDialog("Success", "Core assets built successfully", "OK");
+        else
+            EditorUtility.DisplayDialog("Failure", "Core asset build failed", "OK");
+    }
+
     [MenuItem("Ringslingers/Mod Exporter...")]
     public static void OpenModExporter()
     {
@@ -192,12 +228,19 @@ public class ModExporterEditorWindow : EditorWindow
             return;
         }
 
+        // We also need to add the core assets for proper referencing by the mod (do we need this?... yea probably)
+        bundleBuilds.Add(new AssetBundleBuild()
+        {
+           assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(RingslingersCoreLoader.coreAssetBundleName),
+           assetBundleName = RingslingersCoreLoader.coreAssetBundleName
+        });
+
+        // Prepare to build
         BuildAssetBundlesParameters buildParams = new BuildAssetBundlesParameters()
         {
             bundleDefinitions = bundleBuilds.ToArray(),
             targetPlatform = EditorUserBuildSettings.activeBuildTarget,
             options = BuildAssetBundleOptions.None,
-            subtarget = 0, // what is this?
             outputPath = exportPath
         };
 
