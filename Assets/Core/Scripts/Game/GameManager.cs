@@ -90,10 +90,12 @@ public class GameManager : MonoBehaviour
 
     private PlayerCamera cachedCamera = null;
 
-    private int menuSceneIndex = -1;
+    private string menuSceneName = "";
 
     private void Awake()
     {
+        menuSceneName = System.IO.Path.GetFileNameWithoutExtension(menuScene);
+
         transform.SetParent(null, false);
         DontDestroyOnLoad(gameObject);
 
@@ -112,8 +114,6 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         NetMan.singleton.onClientDisconnect += OnClientDisconnected;
-
-        menuSceneIndex = SceneUtility.GetBuildIndexByScenePath(menuScene);
     }
 
     void Update()
@@ -122,7 +122,7 @@ public class GameManager : MonoBehaviour
         bool isWeaponWheelOpen = input.Gameplay.WeaponWheel.ReadValue<float>() > 0.5f;
 
         needsCursor |= isPaused; // pause menu needs mouse
-        needsCursor |= SceneManager.GetActiveScene().buildIndex == menuSceneIndex; // main menu needs mouse
+        needsCursor |= SceneManager.GetActiveScene().name == menuSceneName; // main menu needs mouse
         needsCursor |= isWeaponWheelOpen; // weapon wheel needs mouse
 
         CursorLockMode lockMode = needsCursor ? CursorLockMode.None : CursorLockMode.Locked;

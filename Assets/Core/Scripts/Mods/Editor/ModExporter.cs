@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using UnityEditor;
@@ -22,43 +21,7 @@ public class ModExporterEditorWindow : EditorWindow
 
     private Vector2 scrollPosition;
 
-    [MenuItem("Ringslingers/Build Core AssetBundles")]
-    public static void BuildCoreAssetBundles()
-    {
-        if (!System.IO.Directory.Exists(RingslingersCoreLoader.coreAssetsBuildPath))
-            System.IO.Directory.CreateDirectory(RingslingersCoreLoader.coreAssetsBuildPath);
-
-        AssetBundleBuild[] bundles = new[]
-        {
-            new AssetBundleBuild()
-            {
-                assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(RingslingersCoreLoader.coreAssetBundleName),
-                assetBundleName = RingslingersCoreLoader.coreAssetBundleName
-            },
-            new AssetBundleBuild()
-            {
-                assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(RingslingersCoreLoader.coreSceneBundleName),
-                assetBundleName = RingslingersCoreLoader.coreSceneBundleName
-            }
-        };
-
-        BuildAssetBundlesParameters buildParams = new BuildAssetBundlesParameters()
-        {
-            bundleDefinitions = bundles,
-            targetPlatform = EditorUserBuildSettings.activeBuildTarget,
-            options = BuildAssetBundleOptions.None,
-            outputPath = RingslingersCoreLoader.coreAssetsBuildPath
-        };
-
-        AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(buildParams);
-
-        if (manifest != null)
-            EditorUtility.DisplayDialog("Success", "Core assets built successfully", "OK");
-        else
-            EditorUtility.DisplayDialog("Failure", "Core asset build failed", "OK");
-    }
-
-    [MenuItem("Ringslingers/Mod Exporter...")]
+    [MenuItem("Ringslingers/Mod Exporter...", priority = 60)]
     public static void OpenModExporter()
     {
         ModExporterEditorWindow.Open();
@@ -163,108 +126,22 @@ public class ModExporterEditorWindow : EditorWindow
 
         if (string.IsNullOrEmpty(exportPath))
             return;
+        if (settings.modsPathsToExport.Count == 0)
+        {
+            EditorUtility.DisplayDialog("No mods selected", "No mods were selected to export. Tick them in the list.", "OK");
+            return;
+        }
 
         settings.lastExportPath = exportPath;
 
-        // todo: character prefabs as well
-        StringBuilder sb = new StringBuilder();
-        List<AssetBundleBuild> bundleBuilds = new List<AssetBundleBuild>();
-
-        foreach (var contentDatabasePath in settings.modsPathsToExport)
-        {
-            RingslingersContentDatabase contentDatabase = AssetDatabase.LoadAssetAtPath<RingslingersContentDatabase>(contentDatabasePath);
-
-            if (contentDatabase != null)
-            {
-                if (contentDatabase.ScanForErrors(out string errors) == 0)
-                {
-                    // Add a bundle build for the levels if there are any
-                    if (contentDatabase.content.levels.Count > 0 || contentDatabase.content.mapRotations.Count > 0)
-                    {
-                        HashSet<string> scenesToAdd = new HashSet<string>();
-                        foreach (var level in contentDatabase.content.levels)
-                            scenesToAdd.Add(level.path);
-
-                        foreach (LevelRotation rotation in contentDatabase.content.mapRotations)
-                        {
-                            foreach (var level in rotation.levels)
-                                scenesToAdd.Add(level.path);
-                        }
-
-                        bundleBuilds.Add(new AssetBundleBuild()
-                        {
-                            assetNames = scenesToAdd.ToArray(),
-                            assetBundleName = $"{contentDatabase.name}.Scenes"
-                        });
-                    }
-
-                    // Add a bundle build for the other assets and the content database itself
-                    // For some rather frustrating reason, we can't put them in the same bundle with the scenes
-                    HashSet<string> assetsToAdd = new HashSet<string>();
-                    assetsToAdd.Add(AssetDatabase.GetAssetPath(contentDatabase)); // The content database should be the first asset added so we can find it upon load
-                    foreach (var character in contentDatabase.content.characters)
-                        assetsToAdd.Add(AssetDatabase.GetAssetPath(character.prefab));
-
-                    bundleBuilds.Add(new AssetBundleBuild()
-                    {
-                        assetNames = assetsToAdd.ToArray(),
-                        assetBundleName = $"{contentDatabase.name}.Assets"
-                    });
-                }
-                else
-                {
-                    sb.AppendLine($"{contentDatabase.name} could not be exported due to errors:\n\n{errors}");
-                }
-            }
-            else
-            {
-                sb.AppendLine($"{contentDatabasePath} could not be found");
-            }
-        }
-
-        if (bundleBuilds.Count == 0)
-        {
-            EditorUtility.DisplayDialog("No mods found", "There were no valid mods to export", "OK :(");
-            return;
-        }
-
-        // We also need to add the core assets for proper referencing by the mod (do we need this?... yea probably)
-        bundleBuilds.Add(new AssetBundleBuild()
-        {
-           assetNames = AssetDatabase.GetAssetPathsFromAssetBundle(RingslingersCoreLoader.coreAssetBundleName),
-           assetBundleName = RingslingersCoreLoader.coreAssetBundleName
-        });
-
-        // Prepare to build
-        BuildAssetBundlesParameters buildParams = new BuildAssetBundlesParameters()
-        {
-            bundleDefinitions = bundleBuilds.ToArray(),
-            targetPlatform = EditorUserBuildSettings.activeBuildTarget,
-            options = BuildAssetBundleOptions.None,
-            outputPath = exportPath
-        };
-
-        if (sb.Length > 0)
-        {
-            EditorUtility.DisplayDialog("Errors during export", $"Some exports failed with the following errors:\n\n{sb.ToString()}", "OK");
-        }
-
-        AssetBundleManifest manifest;
-        try
-        {
-            manifest = BuildPipeline.BuildAssetBundles(buildParams);
-        }
-        catch (System.Exception e)
-        {
-            EditorUtility.DisplayDialog("Errors during export", $"There was an error while building the asset bundle:\n\n{e.Message}", "OK :( :(");
-            return;
-        }
+        AssetBundleManifest manifest = RingslingersAssetManager.BuildAssetBundles(true, false, exportPath, settings.modsPathsToExport.ToArray());
 
         if (manifest != null)
         {
 #if UNITY_EDITOR_WIN
-            Process.Start(exportPath);
+            System.Diagnostics.Process.Start(exportPath);
 #endif
+
             EditorUtility.DisplayDialog("Export complete!", $"Mods successfully exported!", "OK");
         }
         else

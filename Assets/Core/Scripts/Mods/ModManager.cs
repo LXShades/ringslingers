@@ -44,6 +44,13 @@ public class ModManager
     /// </summary>
     public static void LoadMods(RingslingersMod[] mods, LoadedModsDelegate onFinished)
     {
+#if UNITY_EDITOR
+        if (RingslingersCoreLoader.useEditorAssetsIfAvailable)
+        {
+            Debug.LogError("Tried to load mods but Use Editor Assets in Playmode is enabled. We cannot currently load mods in that mode, unfortunately.");
+        }
+#endif
+
         StringBuilder errors = new StringBuilder();
 
         // Check if we can first

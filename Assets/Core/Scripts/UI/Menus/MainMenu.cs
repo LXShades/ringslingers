@@ -41,7 +41,7 @@ public class MainMenu : MonoBehaviour
         {
             op.completed += (AsyncOperation) =>
             {
-                Netplay.singleton.HostServer();
+                Netplay.singleton.HostServer(RingslingersContent.loaded.levels[0]);
             };
         }
         else

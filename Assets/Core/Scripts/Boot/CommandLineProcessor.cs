@@ -16,7 +16,7 @@ public class CommandLineProcessor : MonoBehaviour
         }
         else if (SceneManager.GetActiveScene().buildIndex == 0)
         {
-            op = SetScene("1");
+            op = SetScene(GameManager.singleton.menuScene);
         }
 
         if (op != null)
@@ -51,7 +51,7 @@ public class CommandLineProcessor : MonoBehaviour
         {
             Debug.Log("Hosting!");
 
-            Netplay.singleton.HostServer();
+            Netplay.singleton.HostServer(null);
         }
 
         if (CommandLine.GetCommand("-connect", 1, out string[] connectParams))

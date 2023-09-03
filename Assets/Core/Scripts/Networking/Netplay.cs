@@ -165,6 +165,7 @@ public class Netplay : MonoBehaviour
 
     public void ServerLoadLevel(LevelConfiguration level)
     {
+        GameManager.singleton.activeLevel = level;
         NetMan.singleton.ServerChangeScene(level.path, true);
     }
 
@@ -307,8 +308,11 @@ public class Netplay : MonoBehaviour
         }
     }
 
-    public void HostServer()
+    public void HostServer(LevelConfiguration level)
     {
+        if (level != null)
+            ServerLoadLevel(level);
+
         if (net || InitNet())
         {
             net.Host(true);
