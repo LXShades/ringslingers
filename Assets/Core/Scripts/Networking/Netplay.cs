@@ -192,7 +192,16 @@ public class Netplay : MonoBehaviour
         }
 
         // Move to the next map
-        ServerLoadLevel(maps[(maps.IndexOf(GameManager.singleton.activeMap) + 1) % maps.Count]);
+        int initialMapIndex = maps.IndexOf(GameManager.singleton.activeMap);
+        int nextMapIndex;
+        for (nextMapIndex = initialMapIndex + 1 % maps.Count; nextMapIndex != initialMapIndex; nextMapIndex = (nextMapIndex + 1) % maps.Count)
+        {
+            // todo: check player count
+            if (!maps[nextMapIndex].isDevOnly || Application.isEditor)
+                break;
+        }
+
+        ServerLoadLevel(maps[( + 1) % maps.Count]);
     }
 
     #region Game

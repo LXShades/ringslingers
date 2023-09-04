@@ -1,3 +1,4 @@
+using Mirror;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -55,6 +56,9 @@ public class MapSelector : MonoBehaviour
         {
             foreach (MapConfiguration map in RingslingersContent.loaded.mapRotations[mapRotationIndex].maps)
             {
+                if (map.isDevOnly && !Application.isEditor)
+                    continue;
+
                 MapButton mapButtonInstance = Instantiate(mapButtonPrefab, mapSelector);
                 mapButtons.Add(mapButtonInstance);
                 mapButtonInstance.SetInfo($"{map.friendlyName}\n{map.defaultGameModePrefab.name}", map.screenshot);
@@ -68,7 +72,14 @@ public class MapSelector : MonoBehaviour
     public void OnGoButtonPressed()
     {
         if (selectedMap != null)
-            Netplay.singleton.ServerLoadLevel(selectedMap);
+        {
+            if (NetworkServer.active)
+                Netplay.singleton.ServerLoadLevel(selectedMap);
+            else if (!NetworkServer.active && !NetworkClient.active) // this might have been called from the main menu?
+                Netplay.singleton.HostServer(selectedMap);
+            else
+                Debug.LogError("Clients can not change the game map!");
+        }
     }
 
     private void OnMapRotationSelected(int selectedIndex)

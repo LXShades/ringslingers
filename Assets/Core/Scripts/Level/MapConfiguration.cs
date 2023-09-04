@@ -17,14 +17,16 @@ public class MapConfiguration
     [Header("Level settings")]
     public int defaultPlayerLimit = 12;
 
-    [Tooltip("Whether the map should be included in map selection dropdowns")]
-    public bool includeInMapSelection = true;
-
+    [Header("TODO - not implemented yet")]
     [Tooltip("Minimum amount of players in the server for this to be considered in the rotation")]
     public int minRotationPlayers = 0;
 
     [Tooltip("Maximum amount of players in the server for this to be considered in the rotation")]
     public int maxRotationPlayers = 32;
+
+    [Header("Dev")]
+    [Tooltip("Whether the map should be hidden from the normal game outside of editor")]
+    public bool isDevOnly = false;
 
     [Header("Internal")]
     public string path = "";

@@ -16,7 +16,6 @@ public class MainMenu : MonoBehaviour
     void Start()
     {
         joinButton.onClick.AddListener(OnJoinClicked);
-        hostButton.onClick.AddListener(OnHostClicked);
         quitButton.onClick.AddListener(OnQuitClicked);
         playerName.onValueChanged.AddListener(OnNameChanged);
 
@@ -30,14 +29,6 @@ public class MainMenu : MonoBehaviour
         NetMan.singleton.onClientDisconnect -= OnConnectionFailed;
         NetMan.singleton.onClientDisconnect += OnConnectionFailed;
         Netplay.singleton.ConnectToServer(ipAddress.text);
-    }
-
-    private void OnHostClicked()
-    {
-        SetMenuEnabled(false);
-
-        MapConfiguration firstMap = RingslingersContent.loaded.GetAllMaps().First();
-        Netplay.singleton.HostServer(firstMap);
     }
 
     private void OnQuitClicked()
