@@ -47,7 +47,7 @@ public class GameManager : MonoBehaviour
 
     public GameObject localObjects;
 
-    public MapConfiguration activeLevel
+    public MapConfiguration activeMap
     {
         get => _activeLevel;
         set
@@ -57,7 +57,7 @@ public class GameManager : MonoBehaviour
             // try keep the map rotation in sync (we should probably put this somewhere else)
             foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
             {
-                if (mapRotation.levels.Contains(_activeLevel))
+                if (mapRotation.maps.Contains(_activeLevel))
                     activeMapRotation = mapRotation;
             }
         }

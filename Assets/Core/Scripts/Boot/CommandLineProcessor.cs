@@ -69,24 +69,6 @@ public class CommandLineProcessor : MonoBehaviour
 
         Debug.Log($"Loading scene {scene}");
 
-        string scenePath = isIndex ? SceneUtility.GetScenePathByBuildIndex(sceneIndex) : scene;
-
-        if (!string.IsNullOrEmpty(scenePath))
-        {
-            // Try find the first level config for this scene and use that to set the active level/gamemode stuff/etc
-            foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
-            {
-                MapConfiguration levelConfig = mapRotation.levels.Find(x => x.path == scenePath);
-
-                if (levelConfig != null)
-                {
-                    GameManager.singleton.activeLevel = levelConfig;
-                    Debug.Log($"Picked map from rotation: {mapRotation.name}. TODO: if it appears in multiple rotations, add the ability to choose which one; this is not yet a feature.");
-                    break;
-                }
-            }
-        }
-
         if (isIndex)
         {
             return SceneManager.LoadSceneAsync(sceneIndex);

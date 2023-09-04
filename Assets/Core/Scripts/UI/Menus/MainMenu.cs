@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
@@ -35,19 +36,8 @@ public class MainMenu : MonoBehaviour
     {
         SetMenuEnabled(false);
 
-        AsyncOperation op = SceneManager.LoadSceneAsync(RingslingersContent.loaded.maps[0].path);
-
-        if (op != null)
-        {
-            op.completed += (AsyncOperation) =>
-            {
-                Netplay.singleton.HostServer(RingslingersContent.loaded.maps[0]);
-            };
-        }
-        else
-        {
-            Debug.LogError($"Could not load scene {RingslingersContent.loaded.maps[0].path}: it does not exist");
-        }
+        MapConfiguration firstMap = RingslingersContent.loaded.GetAllMaps().First();
+        Netplay.singleton.HostServer(firstMap);
     }
 
     private void OnQuitClicked()

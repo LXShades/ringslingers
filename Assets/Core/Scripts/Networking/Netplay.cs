@@ -74,14 +74,14 @@ public class Netplay : MonoBehaviour
     /// <summary>
     /// Whether this is the server player
     /// </summary>
-    public bool isServer => net.mode != Mirror.NetworkManagerMode.ClientOnly;
+    public bool isServer => netMan.mode != Mirror.NetworkManagerMode.ClientOnly;
 
     /// <summary>
     /// Whether this is not a server or host player
     /// </summary>
-    public bool isClient => net.mode == Mirror.NetworkManagerMode.ClientOnly;
+    public bool isClient => netMan.mode == Mirror.NetworkManagerMode.ClientOnly;
 
-    private NetMan net;
+    private NetMan netMan;
 
     public float unreliablePing { get; private set; }
     public float reliablePing { get; private set; }
@@ -96,23 +96,23 @@ public class Netplay : MonoBehaviour
 
     private bool InitNet()
     {
-        if (net)
+        if (netMan)
             return true;
 
-        net = NetMan.singleton;
+        netMan = NetMan.singleton;
 
-        if (net == null)
+        if (netMan == null)
         {
             Log.WriteWarning("No network manager found");
             return false;
         }
 
         // Register network callbacks
-        net.onClientConnect += OnClientConnected;
-        net.onClientDisconnect += OnClientDisconnected;
+        netMan.onClientConnect += OnClientConnected;
+        netMan.onClientDisconnect += OnClientDisconnected;
 
-        net.onServerConnect += OnServerConnected;
-        net.onServerDisconnect += OnServerDisconnected;
+        netMan.onServerConnect += OnServerConnected;
+        netMan.onServerDisconnect += OnServerDisconnected;
 
         NetworkDiagnostics.InMessageEvent += NetworkDiagnostics_InMessageEvent;
         NetworkDiagnostics.OutMessageEvent += NetworkDiagnostics_OutMessageEvent;
@@ -121,7 +121,7 @@ public class Netplay : MonoBehaviour
         NetworkServer.RegisterHandler<PingMessage>(OnServerPingMessageReceived);
 
         SceneManager.activeSceneChanged += OnSceneChanged;
-        net.onServerStarted += StartMatch;
+        netMan.onServerStarted += StartMatch;
 
         GamePreferences.onPreferencesChanged += ApplyNetPreferences;
         ApplyNetPreferences(); // update net settings now
@@ -165,7 +165,7 @@ public class Netplay : MonoBehaviour
 
     public void ServerLoadLevel(MapConfiguration level)
     {
-        GameManager.singleton.activeLevel = level;
+        GameManager.singleton.activeMap = level;
         NetMan.singleton.ServerChangeScene(level.path, true);
     }
 
@@ -173,41 +173,26 @@ public class Netplay : MonoBehaviour
     {
         if (!NetworkServer.active)
         {
-            Log.WriteWarning("Only the server can change the map");
+            Log.WriteWarning("[ServerNextMap()] Only the server can change the map");
             return;
         }
 
-        List<MapConfiguration> levels = RingslingersContent.loaded.maps;
+        if (RingslingersContent.loaded.mapRotations.Count == 0)
+        {
+            Log.WriteWarning("[ServerNextMap()] There are no map rotations loaded");
+            return;
+        }
 
-        if (levels == null || levels.Count == 0)
+        List<MapConfiguration> maps = GameManager.singleton.activeMapRotation?.maps ?? RingslingersContent.loaded.mapRotations[0].maps;
+
+        if (maps == null || maps.Count == 0)
         {
             Log.WriteError("Cannot load levels database: list is empty or null");
             return;
         }
 
-        if (levels.Count == 1)
-        {
-            // reload the current map, it's all we have
-            ServerLoadLevel(levels[0]);
-        }
-
-        int currentLevelIndex = Mathf.Max(levels.IndexOf(GameManager.singleton.activeLevel), 0);
-        int nextLevelIndex = -1;
-
-        // Find the next VALID scene
-        for (int i = (currentLevelIndex + 1) % levels.Count; i != currentLevelIndex; i = (i + 1) % levels.Count)
-        {
-            int buildIndex = SceneUtility.GetBuildIndexByScenePath(levels[i].path);
-
-            if (buildIndex != -1 && levels[i].includeInRotation)
-            {
-                nextLevelIndex = i;
-                break;
-            }
-        }
-
-        if (nextLevelIndex != -1)
-            ServerLoadLevel(levels[nextLevelIndex]);
+        // Move to the next map
+        ServerLoadLevel(maps[(maps.IndexOf(GameManager.singleton.activeMap) + 1) % maps.Count]);
     }
 
     #region Game
@@ -223,8 +208,8 @@ public class Netplay : MonoBehaviour
     {
         if (NetworkServer.active)
         {
-            if (GameManager.singleton.activeLevel != null)
-                MatchState.SetNetGameState(GameManager.singleton.activeLevel.defaultGameModePrefab);
+            if (GameManager.singleton.activeMap != null)
+                MatchState.SetNetGameState(GameManager.singleton.activeMap.defaultGameModePrefab);
             else
                 Debug.LogError("We can't play this map properly, for some reason activeLevel is null so we can't find the game mode!");
         }
@@ -298,9 +283,9 @@ public class Netplay : MonoBehaviour
     #region Connection
     public void ConnectToServer(string ipString)
     {
-        if (net || InitNet())
+        if (netMan || InitNet())
         {
-            net.Connect(ipString);
+            netMan.Connect(ipString);
         }
         else
         {
@@ -311,11 +296,43 @@ public class Netplay : MonoBehaviour
     public void HostServer(MapConfiguration level)
     {
         if (level != null)
-            ServerLoadLevel(level);
-
-        if (net || InitNet())
         {
-            net.Host(true);
+            GameManager.singleton.activeMap = level;
+
+            // HACK: we need to load the scene before kicking off the server I don't know why it be this way
+            AsyncOperation op = SceneManager.LoadSceneAsync(level.path);
+            op.completed += op => FinishHost();
+        }
+        else
+        {
+            // ANOTHER HACK: assume we're already in the level, so we must try and find the rotation from the scene we're already in
+            string scenePath = SceneManager.GetActiveScene().path;
+            if (!string.IsNullOrEmpty(scenePath))
+            {
+                // Try find the first level config for this scene and use that to set the active level/gamemode stuff/etc
+                foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
+                {
+                    MapConfiguration levelConfig = mapRotation.maps.Find(x => x.path == scenePath);
+
+                    if (levelConfig != null)
+                    {
+                        GameManager.singleton.activeMap = levelConfig;
+                        Debug.Log($"Assumed map from rotation: {mapRotation.name}");
+                        break;
+                    }
+                }
+            }
+
+            // finish up
+            FinishHost();
+        }
+    }
+
+    private void FinishHost()
+    {
+        if (netMan || InitNet())
+        {
+            netMan.Host(true);
 
             connectionStatus = ConnectionStatus.Ready;
             ApplyNetPreferences();
@@ -338,7 +355,7 @@ public class Netplay : MonoBehaviour
     {
         Log.Write("Disconnected from server");
 
-        net.StopClient();
+        netMan.StopClient();
         connectionStatus = ConnectionStatus.Disconnected;
     }
 

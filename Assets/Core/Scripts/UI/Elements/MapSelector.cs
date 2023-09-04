@@ -53,7 +53,7 @@ public class MapSelector : MonoBehaviour
         // Instantiate new buttons
         if (mapRotationIndex >= 0 && mapRotationIndex < RingslingersContent.loaded.mapRotations.Count)
         {
-            foreach (MapConfiguration map in RingslingersContent.loaded.maps)
+            foreach (MapConfiguration map in RingslingersContent.loaded.mapRotations[mapRotationIndex].maps)
             {
                 MapButton mapButtonInstance = Instantiate(mapButtonPrefab, mapSelector);
                 mapButtons.Add(mapButtonInstance);

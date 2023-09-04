@@ -10,7 +10,7 @@ public class RingslingersAssetManager
     public static bool shouldUseEditorAssetsInPlaymode
     {
         get => EditorPrefs.GetBool("shouldUseEditorAssetsInPlaymode", true);
-        set => EditorPrefs.SetBool("shouldUseEditorAssetsInPlaymode", true);
+        set => EditorPrefs.SetBool("shouldUseEditorAssetsInPlaymode", value);
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -26,6 +26,20 @@ public class RingslingersAssetManager
             System.IO.Directory.CreateDirectory(RingslingersCoreLoader.coreAssetsBuildPath);
 
         AssetBundleManifest manifest = BuildAssetBundles(true, true, RingslingersCoreLoader.coreAssetsBuildPath, null);
+
+        if (manifest != null)
+            EditorUtility.DisplayDialog("Success", "Core assets built successfully", "OK");
+        else
+            EditorUtility.DisplayDialog("Failure", "Core asset build failed", "OK");
+    }
+
+    [MenuItem("Ringslingers/Build Core AssetBundles (exclude scenes)", priority = 1)]
+    public static void BuildCoreAssetBundles_ExcludeScenes()
+    {
+        if (!System.IO.Directory.Exists(RingslingersCoreLoader.coreAssetsBuildPath))
+            System.IO.Directory.CreateDirectory(RingslingersCoreLoader.coreAssetsBuildPath);
+
+        AssetBundleManifest manifest = BuildAssetBundles(true, false, RingslingersCoreLoader.coreAssetsBuildPath, null);
 
         if (manifest != null)
             EditorUtility.DisplayDialog("Success", "Core assets built successfully", "OK");
@@ -80,17 +94,9 @@ public class RingslingersAssetManager
                     if (contentDatabase.ScanForErrors(out string errors) == 0)
                     {
                         // Add a bundle build for the levels if there are any
-                        if (contentDatabase.content.maps.Count > 0 || contentDatabase.content.mapRotations.Count > 0)
+                        if (contentDatabase.content.GetNumMaps() > 0)
                         {
-                            HashSet<string> scenesToAdd = new HashSet<string>();
-                            foreach (var level in contentDatabase.content.maps)
-                                scenesToAdd.Add(level.path);
-
-                            foreach (MapRotation rotation in contentDatabase.content.mapRotations)
-                            {
-                                foreach (var level in rotation.levels)
-                                    scenesToAdd.Add(level.path);
-                            }
+                            HashSet<string> scenesToAdd = new HashSet<string>(contentDatabase.content.GetAllMaps().Select(x => x.path));
 
                             bundleBuilds.Add(new AssetBundleBuild()
                             {

@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using System.Text.RegularExpressions;
 using System.Text;
 using UnityEngine.Serialization;
+using System.Linq;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -21,10 +22,6 @@ public class RingslingersContent
     [Header("Characters")]
     public List<CharacterConfiguration> characters = new List<CharacterConfiguration>();
 
-    [Header("Levels")]
-    [FormerlySerializedAs("levels")]
-    public List<MapConfiguration> maps = new List<MapConfiguration>();
-
     [Header("Map Rotations")]
     public List<MapRotation> mapRotations = new List<MapRotation>();
 
@@ -33,68 +30,65 @@ public class RingslingersContent
 
     public static void LoadContent(RingslingersContent content)
     {
-        loaded.maps.AddRange(content.maps);
         loaded.characters.AddRange(content.characters);
         loaded.mapRotations.AddRange(content.mapRotations);
+    }
+
+    public IEnumerable<MapConfiguration> GetAllMaps()
+    {
+        foreach (MapRotation rotation in mapRotations)
+        {
+            foreach (MapConfiguration level in rotation.maps)
+                yield return level;
+        }
+    }
+
+    public int GetNumMaps()
+    {
+        int numMaps = 0;
+        foreach (MapRotation rotation in mapRotations)
+            numMaps += rotation.maps.Count;
+        return numMaps;
     }
 }
 
 [CreateAssetMenu(fileName = "New Ringslingers Content Database", menuName = "Ringslingers Content Database")]
 public class RingslingersContentDatabase : ScriptableObject
 {
+    public string defaultMapRotationName = "Default Rotation";
+
     public RingslingersContent content = new RingslingersContent();
 
 #if UNITY_EDITOR
-    public void InsertScene(MapConfiguration item, bool doSave = true)
-    {
-        content.maps.Add(item);
-
-        if (doSave)
-        {
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
-        }
-    }
-
-    public void UpdateScene(int sceneIndex, MapConfiguration item, bool doSave = true)
-    {
-        content.maps[sceneIndex] = item;
-
-        if (doSave)
-        {
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
-        }
-    }
-
-    public void RemoveScene(int sceneIndex, bool doSave = true)
-    {
-        content.maps.RemoveAt(sceneIndex);
-
-        if (doSave)
-        {
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
-        }
-    }
-
     public void RescanContent()
     {
         string[] searchFolders = new string[] { System.IO.Path.GetDirectoryName(AssetDatabase.GetAssetPath(this)) };
 
-        // Scan and add scenes that aren't already in the list
+        // Scan and add scenes that aren't already in the database and add them to the Default map rotation
+        HashSet<string> existingScenePaths = new HashSet<string>(content.GetAllMaps().Select(x => x.path));
+        List<MapConfiguration> newFoundMaps = new List<MapConfiguration>();
+
         foreach (string sceneCandidateGuid in AssetDatabase.FindAssets("t:scene", searchFolders))
         {
             string scenePath = AssetDatabase.GUIDToAssetPath(sceneCandidateGuid);
 
-            if (!content.maps.Exists(x => x.path == scenePath))
+            if (!existingScenePaths.Contains(scenePath))
             {
-                content.maps.Add(new MapConfiguration()
+                newFoundMaps.Add(new MapConfiguration()
                 {
                     friendlyName = TryMakeFriendlyNameForScene(scenePath),
                     path = scenePath
                 });
             }
+        }
+
+        if (newFoundMaps.Count > 0)
+        {
+            MapRotation defaultRotation = content.mapRotations.Find(x => x.name == defaultMapRotationName);
+            if (defaultRotation == null)
+                content.mapRotations.Add(defaultRotation = new MapRotation() { name = defaultMapRotationName });
+
+            defaultRotation.maps.AddRange(newFoundMaps);
         }
 
         // Then characters
@@ -119,9 +113,7 @@ public class RingslingersContentDatabase : ScriptableObject
         // Run the validator to notify the user of issues
         int numErrors = ScanForErrors(out string errors);
         if (numErrors > 0)
-        {
             EditorUtility.DisplayDialog($"{numErrors} errors found", $"{errors}\n\nYou should correct these for your mod to run correctly.", "OK");
-        }
 
         // Apply changes
         EditorUtility.SetDirty(this);
@@ -133,11 +125,7 @@ public class RingslingersContentDatabase : ScriptableObject
         StringBuilder sb = new StringBuilder();
         int numErrors = 0;
 
-        List<MapConfiguration> allLevels = new List<MapConfiguration>(content.maps);
-        foreach (MapRotation rotation in content.mapRotations)
-            allLevels.AddRange(rotation.levels);
-
-        foreach (MapConfiguration level in allLevels)
+        foreach (MapConfiguration level in content.GetAllMaps())
         {
             if (!AssetDatabase.AssetPathExists(level.path))
             {
@@ -181,9 +169,9 @@ public class RingslingersContentDatabase : ScriptableObject
     {
         string sceneName = System.IO.Path.GetFileNameWithoutExtension(path);
 
-        sceneName = Regex.Replace(sceneName, "[^_]+_(.*)", "$0");
+        sceneName = Regex.Replace(sceneName, "[^_]+_(.*)", "$1");
         sceneName = Regex.Replace(sceneName, "_", " ");
-        sceneName = Regex.Replace(sceneName, "([a-z])([A-Z])", "$0 $1");
+        sceneName = Regex.Replace(sceneName, "([a-z])([A-Z]|[0-9])", "$1 $2");
         return sceneName;
     }
 

@@ -1,10 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [System.Serializable]
 public class MapRotation
 {
     public string name = "Some Random Maps";
-    public List<MapConfiguration> levels = new List<MapConfiguration>();
+    [FormerlySerializedAs("levels")]
+    public List<MapConfiguration> maps = new List<MapConfiguration>();
 }
