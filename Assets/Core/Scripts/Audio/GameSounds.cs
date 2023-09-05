@@ -174,9 +174,13 @@ public class GameSounds : MonoBehaviour
         currentRolloffCurve.AddKey(new Keyframe(environment.minRange, 1f));
         currentRolloffCurve.AddKey(new Keyframe(environment.midRange, 0.3162f));
         currentRolloffCurve.AddKey(new Keyframe(environment.maxRange, 0f));
-        currentRolloffCurve.SmoothTangents(0, 0f);
-        currentRolloffCurve.SmoothTangents(1, 0f);
-        currentRolloffCurve.SmoothTangents(2, 1f);
+
+        if (environment.minRange != environment.midRange && environment.midRange != environment.maxRange)
+        {
+            currentRolloffCurve.SmoothTangents(0, 0f);
+            currentRolloffCurve.SmoothTangents(1, 0f);
+            currentRolloffCurve.SmoothTangents(2, 1f);
+        }
 
         if (sources[bestChannel].isPlaying) // if we're replacing another sound, make sure we're more important (for now just louder)
         {
