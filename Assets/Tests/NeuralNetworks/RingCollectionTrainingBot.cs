@@ -17,7 +17,7 @@ public class RingCollectionTrainingBot : TrainingBotBase
         currentCheckpoint = 0;
     }
 
-    public override bool OnTick(float deltaTime, float substepBase, ref PlayerInput charInput)
+    public override bool OnTick(float deltaTime, float substepBase, ref CharacterInput charInput)
     {
         if (target == null)
             return true;

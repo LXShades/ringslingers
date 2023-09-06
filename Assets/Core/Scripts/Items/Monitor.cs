@@ -87,7 +87,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
                 character.velocity.SetAlongAxis(character.gravityDirection, upwardVelocity);
 
             // pop
-            if (respawnable.isSpawned && tickInfo.isConfirming)
+            if (respawnable.isSpawned && tickInfo.isFullTick)
             {
                 onLocalPopped?.Invoke(source.GetComponent<Character>());
 

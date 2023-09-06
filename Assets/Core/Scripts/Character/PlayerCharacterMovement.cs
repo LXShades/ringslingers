@@ -128,9 +128,9 @@ public class PlayerCharacterMovement : CharacterMovement
         originalCapsuleHeight = (colliders[0] as CapsuleCollider).height;
     }
 
-    public void TickMovement(float deltaTime, PlayerInput input) => TickMovement(deltaTime, input, TickInfo.Default);
+    public void TickMovement(float deltaTime, CharacterInput input) => TickMovement(deltaTime, input, TickInfo.Default);
 
-    public void TickMovement(float deltaTime, PlayerInput input, TickInfo tickInfo)
+    public void TickMovement(float deltaTime, CharacterInput input, TickInfo tickInfo)
     {
         if (enableCollision)
             Physics.SyncTransforms();
@@ -242,7 +242,7 @@ public class PlayerCharacterMovement : CharacterMovement
             groundVelocity = velocity * Mathf.Pow(currentFriction, deltaTime * 35f);
     }
 
-    private void ApplyRunAcceleration(float deltaTime, PlayerInput input)
+    private void ApplyRunAcceleration(float deltaTime, CharacterInput input)
     {
         if ((state & (State.Pained | State.Gliding | State.Climbing | State.SpinCharging)) != 0)
             return; // cannot accelerate in these states
@@ -278,7 +278,7 @@ public class PlayerCharacterMovement : CharacterMovement
         velocity = force;
     }
 
-    private void HandleJumpAbilities(PlayerInput input, float deltaTime, TickInfo tickInfo)
+    private void HandleJumpAbilities(CharacterInput input, float deltaTime, TickInfo tickInfo)
     {
         if (state.HasFlag(State.Pained))
             return;
@@ -301,7 +301,7 @@ public class PlayerCharacterMovement : CharacterMovement
                     velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor);
                 }
 
-                if (tickInfo.isConfirmingForward)
+                if (tickInfo.isFullForwardTick)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
 
                 state |= State.Jumped;
@@ -318,7 +318,7 @@ public class PlayerCharacterMovement : CharacterMovement
                             // Thok
                             velocity.SetAlongPlane(gravityDirection, input.aimDirection.AlongPlane(gravityDirection).normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
-                            if (tickInfo.isConfirmingForward)
+                            if (tickInfo.isFullForwardTick)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
 
                             state |= State.Thokked;
@@ -352,7 +352,7 @@ public class PlayerCharacterMovement : CharacterMovement
         HandleJumpAbilities_Gliding(input, deltaTime);
     }
 
-    private void HandleSpinAbilities(PlayerInput input, float deltaTime, TickInfo tickInfo)
+    private void HandleSpinAbilities(CharacterInput input, float deltaTime, TickInfo tickInfo)
     {
         if ((state & State.Climbing) != 0)
             return;
@@ -362,7 +362,7 @@ public class PlayerCharacterMovement : CharacterMovement
         {
             state |= State.Rolling;
 
-            if (tickInfo.isConfirmingForward)
+            if (tickInfo.isFullForwardTick)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRoll);
         }
         else if (((state & State.Rolling) != 0 || (isOnGround && !isMovingFastEnoughToRoll)) && input.btnSpinPressed)
@@ -374,7 +374,7 @@ public class PlayerCharacterMovement : CharacterMovement
         {
             spindashChargeLevel = Mathf.Min(spindashChargeLevel + deltaTime / spindashChargeDuration, 1f);
 
-            if (TimeTool.IsTick(tickInfo.time, deltaTime, 8) && tickInfo.isConfirmingForward)
+            if (TimeTool.IsTick(tickInfo.time, deltaTime, 8) && tickInfo.isFullForwardTick)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinCharge);
         }
         else if ((state & State.SpinCharging) != 0 && input.btnSpinReleased)
@@ -385,7 +385,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
             groundVelocity = Vector3.Lerp(groundVelocity, nextDirection * releaseSpeed, factor);
 
-            if (factor > 0 && tickInfo.isConfirmingForward)
+            if (factor > 0 && tickInfo.isFullForwardTick)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
 
             state &= ~State.SpinCharging;
@@ -402,7 +402,7 @@ public class PlayerCharacterMovement : CharacterMovement
             state &= ~(State.Rolling);
     }
 
-    private void HandleJumpAbilities_Gliding(PlayerInput input, float deltaTime)
+    private void HandleJumpAbilities_Gliding(CharacterInput input, float deltaTime)
     {
         Vector3 aim = input.aimDirection;
 

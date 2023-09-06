@@ -37,8 +37,6 @@ public class Netplay : MonoBehaviour
     [Header("Connection")]
     public ConnectionStatus connectionStatus = ConnectionStatus.Offline;
 
-    public FlowControlSettings defaultFlowControlSettings = FlowControlSettings.Default;
-
     [Range(0.5f, 20f)]
     public float pingsPerSecond = 2f;
 

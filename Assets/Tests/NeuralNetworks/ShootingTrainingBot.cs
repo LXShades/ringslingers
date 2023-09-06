@@ -26,7 +26,7 @@ public class ShootingTrainingBot : TrainingBotBase
         }
     }
 
-    public override bool OnTick(float deltaTime, float substepBase, ref PlayerInput charInput)
+    public override bool OnTick(float deltaTime, float substepBase, ref CharacterInput charInput)
     {
         if (Vector3.Distance(firePosition, transform.position) > Vector3.Distance(transform.position, localPlayer.transform.position))
         {

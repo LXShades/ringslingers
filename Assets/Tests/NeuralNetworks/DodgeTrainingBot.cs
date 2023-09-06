@@ -21,7 +21,7 @@ public class DodgeTrainingBot : TrainingBotBase
         avgSamples = 0;
     }
 
-    public override bool OnTick(float deltaTime, float substepBase, ref PlayerInput charInput)
+    public override bool OnTick(float deltaTime, float substepBase, ref CharacterInput charInput)
     {
         float closest = float.MaxValue;
         TrainingRingSpawner.Ring closestRing = default;

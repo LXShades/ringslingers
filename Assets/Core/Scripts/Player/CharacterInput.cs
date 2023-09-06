@@ -2,7 +2,7 @@
 using UnityEngine;
 
 [System.Serializable]
-public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
+public struct CharacterInput : IEquatable<CharacterInput>, ITickerInput<CharacterInput>
 {
     // Movement
     public float moveHorizontalAxis
@@ -77,7 +77,7 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
     /// Generates input commands from the current input
     /// </summary>
     /// <returns></returns>
-    public static PlayerInput MakeLocalInput(PlayerInput lastInput)
+    public static CharacterInput MakeLocalInput(CharacterInput lastInput)
     {
         GameManager gm = GameManager.singleton;
         if (!gm.canPlayInputs)
@@ -87,7 +87,7 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
         }
 
         PlayerControls controls = gm.input;
-        PlayerInput localInput = default;
+        CharacterInput localInput = default;
 
         localInput.moveHorizontalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().x;
         localInput.moveVerticalAxis = controls.Gameplay.Movement.ReadValue<Vector2>().y;
@@ -110,9 +110,9 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
     /// <summary>
     /// Returns a copy with delta inputs (firePressed, fireReleased, etc) relative to lastInput
     /// </summary>
-    public PlayerInput WithDeltas(PlayerInput lastInput)
+    public CharacterInput WithDeltas(CharacterInput lastInput)
     {
-        PlayerInput output = this;
+        CharacterInput output = this;
 
         output.btnJumpPressed = !lastInput.btnJump && btnJump;
         output.btnFirePressed = !lastInput.btnFire && btnFire;
@@ -125,7 +125,7 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
         return output;
     }
 
-    public bool Equals(PlayerInput other)
+    public bool Equals(CharacterInput other)
     {
         return moveHorizontalAxis == other.moveHorizontalAxis && moveVerticalAxis == other.moveVerticalAxis
             && horizontalAim == other.horizontalAim && verticalAim == other.verticalAim
@@ -140,8 +140,8 @@ public struct PlayerInput : IEquatable<PlayerInput>, ITickerInput<PlayerInput>
             $"Spin {btnSpin}/P{btnSpinPressed}/R{btnFireReleased}";
     }
 
-    public PlayerInput GenerateLocal()
+    public CharacterInput GenerateLocal()
     {
-        return new PlayerInput(); // hmm...
+        return new CharacterInput(); // hmm...
     }
 }

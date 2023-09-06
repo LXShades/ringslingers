@@ -196,10 +196,10 @@ public class ThrownRing : NetworkBehaviour
                 {
                     foreach (PastCharacter pastChar in nearbyCharacters)
                     {
-                        int closestState = pastChar.character.ticker.stateTimeline.ClosestIndexBeforeOrEarliest(serverTime - serverPredictionAmount + t);
+                        int closestState = pastChar.character.entity.stateTrack.ClosestIndexBeforeOrEarliest(serverTime - serverPredictionAmount + t);
 
                         if (closestState != -1)
-                            pastChar.character.ApplyState(pastChar.character.ticker.stateTimeline[closestState]);
+                            pastChar.character.ApplyState(pastChar.character.entity.stateTrack[closestState]);
                     }
 
                     Simulate(Mathf.Min(deltaTime, serverPredictionAmount - t));

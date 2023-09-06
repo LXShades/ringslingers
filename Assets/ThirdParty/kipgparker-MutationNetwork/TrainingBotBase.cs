@@ -39,17 +39,17 @@ public class TrainingBotBase : MonoBehaviour
     {
         for (float t = 0; t < Time.deltaTime; t += maxDeltaTime)
         {
-            PlayerInput charInput = default;
+            CharacterInput charInput = default;
             float dt = Mathf.Min(Time.deltaTime - t, maxDeltaTime);
 
             if (OnTick(dt, t, ref charInput))
-                movement.TickMovement(dt, charInput, new TickInfo() { isReplaying = true, isConfirming = true });
+                movement.TickMovement(dt, charInput, new TickInfo() { isFullTick = true, isForwardTick = false });
             else
                 break;
         }
     }
 
-    public virtual bool OnTick(float deltaTime, float substepBase, ref PlayerInput charInput)
+    public virtual bool OnTick(float deltaTime, float substepBase, ref CharacterInput charInput)
     {
         charInput = default;
         return true;

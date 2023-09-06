@@ -7,8 +7,6 @@ public class Player : NetworkBehaviour
     /// </summary>
     [SyncVar(hook = nameof(OnPlayerIdChanged))] public int playerId;
 
-    private TimelineList<int> testList = new TimelineList<int>();
-
     private Character character => playerId != -1 ? Netplay.singleton.players[playerId] : null;
 
     public static LocalPersistentPlayer localPersistent

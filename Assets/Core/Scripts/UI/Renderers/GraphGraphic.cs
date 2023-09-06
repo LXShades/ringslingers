@@ -7,7 +7,7 @@ public class GraphGraphic : ExtendedGraphic
     public class GraphCurve
     {
         public Color32 colour = new Color32(255, 255, 255, 255);
-        public TimelineList<float> data = new TimelineList<float>();
+        public TimelineTrack<float> data = new TimelineTrack<float>();
     }
 
     public float graphWidth = 2f;

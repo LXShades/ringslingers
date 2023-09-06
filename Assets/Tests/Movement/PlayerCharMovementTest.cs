@@ -27,9 +27,9 @@ namespace Ringslingers.Tests
             public bool isJumpDown;
             public float verticalMovement;
 
-            public PlayerInput ToPlayerInput(Vector3 cameraForward)
+            public CharacterInput ToPlayerInput(Vector3 cameraForward)
             {
-                return new PlayerInput()
+                return new CharacterInput()
                 {
                     aimDirection = cameraForward,
                     btnJump = isJumpDown,
@@ -38,7 +38,7 @@ namespace Ringslingers.Tests
             }
         }
 
-        PlayerInput lastInput;
+        CharacterInput lastInput;
 
         protected override void Awake()
         {
@@ -56,10 +56,10 @@ namespace Ringslingers.Tests
             forward = cam.forward;
             if (enableManualControl)
             {
-                PlayerInput nextInput = PlayerInput.MakeLocalInput(lastInput);
+                CharacterInput nextInput = CharacterInput.MakeLocalInput(lastInput);
                 nextInput.aimDirection = cam.forward;
 
-                TickMovement(Time.deltaTime, nextInput.WithDeltas(lastInput), new TickInfo() { isReplaying = true, isConfirming = true });
+                TickMovement(Time.deltaTime, nextInput.WithDeltas(lastInput), new TickInfo() { isForwardTick = false, isFullTick = true });
 
                 lastInput = nextInput;
                 lastInput.aimDirection = forward;
@@ -70,11 +70,11 @@ namespace Ringslingers.Tests
             {
                 Vector3 startPosition = transform.position;
                 Quaternion startRotation = transform.rotation;
-                PlayerInput lastInput = controlsOverTime[0].ToPlayerInput(transform.forward);
+                CharacterInput lastInput = controlsOverTime[0].ToPlayerInput(transform.forward);
 
                 for (int i = 0; i < numSteps; i++)
                 {
-                    PlayerInput nextInput = default;
+                    CharacterInput nextInput = default;
 
                     for (int j = 0; j < controlsOverTime.Count; j++)
                     {
@@ -82,7 +82,7 @@ namespace Ringslingers.Tests
                             nextInput = controlsOverTime[j].ToPlayerInput(transform.forward);
                     }
 
-                    TickMovement(stepSize, nextInput.WithDeltas(lastInput), new TickInfo() { isReplaying = true, isConfirming = true });
+                    TickMovement(stepSize, nextInput.WithDeltas(lastInput), new TickInfo() { isForwardTick = false, isFullTick = true });
                     Graphics.DrawMesh(meshFilter.sharedMesh, meshFilter.transform.localToWorldMatrix, debugMaterial, gameObject.layer, null, 0, null, false, false, false);
                 }
 

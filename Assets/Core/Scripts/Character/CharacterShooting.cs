@@ -74,7 +74,7 @@ public class CharacterShooting : NetworkBehaviour
     private Character character;
     private PlayerCharacterMovement movement;
 
-    private TimelineList<Action> bufferedThrowEvents = new TimelineList<Action>();
+    private TimelineTrack<Action> bufferedThrowEvents = new TimelineTrack<Action>();
 
     public float testAutoAimSmoothDamp = 0.1f;
     private Vector3 autoAimDampVelocity;
@@ -240,8 +240,13 @@ public class CharacterShooting : NetworkBehaviour
 
     public bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
     {
+        // TODO: new Timeline stuff does not  currently let you move things individually like this. To do.
+        predictedPosition = target.transform.position;
+        return false;
+        
+        /*
         float interval = 0.06f;
-        Ticker<PlayerInput, CharacterState> ticker = target.ticker;
+        Timeline.Entity<CharacterState, CharacterInput> ticker = target.entity;
         Vector3 startPosition = spawnPosition.position;
         float ringDistance = 0f; // theoretical thrown ring distance
         float ringSpeed = effectiveWeaponSettings.projectileSpeed * interval;
@@ -254,7 +259,7 @@ public class CharacterShooting : NetworkBehaviour
 
         for (int i = 1; i * interval < maxPredictionTime; i++)
         {
-            ticker.Seek(originalTime + i * interval, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.DontConfirm | TickerSeekFlags.TreatAsReplay);
+            entity.Seek(originalTime + i * interval, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.DontConfirm | TickerSeekFlags.TreatAsReplay);
             ringDistance += ringSpeed;
 
             float currentTargetDistance = Vector3.Distance(target.transform.position, startPosition);
@@ -277,7 +282,7 @@ public class CharacterShooting : NetworkBehaviour
 
         ticker.Seek(originalTime, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.TreatAsReplay);
 
-        return succeeded;
+        return succeeded;*/
     }
 
     public void AddWeaponAmmo(RingWeaponSettingsAsset weaponType, bool doOverrideAmmo, float ammoOverride)
@@ -448,8 +453,8 @@ public class CharacterShooting : NetworkBehaviour
         Debug.Assert(ringAsThrownRing);
 
         float serverPredictionAmount = 0f;
-        if (NetworkServer.active)
-            serverPredictionAmount = Mathf.Min(ServerState.instance.serverRewindTolerance, (float)(GameTicker.singleton.predictedServerTime - predictedReplicaServerTime)); // 0 if serverRewindTolerance is 0
+        if (NetworkServer.active && GameState.Get(out GameState_ServerSettings gsServerSettings))
+            serverPredictionAmount = Mathf.Min(gsServerSettings.settings.hitLagCompensation, (float)(GameTicker.singleton.predictedServerTime - predictedReplicaServerTime)); // 0 if serverRewindTolerance is 0
 
         ringAsThrownRing.Throw(character, position, direction, serverPredictionAmount);
 

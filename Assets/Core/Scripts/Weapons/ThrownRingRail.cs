@@ -61,14 +61,14 @@ public class ThrownRingRail : ThrownRing
             {
                 if (character && character != owner)
                 {
-                    int pastStateIndex = character.ticker.stateTimeline.ClosestIndexBeforeOrEarliest(serverTime - serverPredictionAmount);
+                    int pastStateIndex = character.entity.stateTrack.ClosestIndexBeforeOrEarliest(serverTime - serverPredictionAmount);
 
                     if (pastStateIndex != -1)
                     {
-                        if (Mathf.Acos(Vector3.Dot(direction, (character.ticker.stateTimeline[pastStateIndex].position - spawnPosition).normalized)) < angleWindowPerMetreDistanceRad / Vector3.Distance(spawnPosition, character.transform.position))
+                        if (Mathf.Acos(Vector3.Dot(direction, (character.entity.stateTrack[pastStateIndex].position - spawnPosition).normalized)) < angleWindowPerMetreDistanceRad / Vector3.Distance(spawnPosition, character.transform.position))
                         {
                             originalCharacterStates.Add(new PastCharacter() { character = character, originalState = character.MakeState() });
-                            character.ApplyState(character.ticker.stateTimeline[pastStateIndex]);
+                            character.ApplyState(character.entity.stateTrack[pastStateIndex]);
                         }
                     }
                 }

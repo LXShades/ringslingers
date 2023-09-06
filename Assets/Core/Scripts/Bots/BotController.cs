@@ -7,7 +7,7 @@ public class BotController : MonoBehaviour
 {
     public interface IState
     {
-        public void Update(BotController controller, Character character, ref PlayerInput input);
+        public void Update(BotController controller, Character character, ref CharacterInput input);
     }
 
     public Path path;
@@ -17,7 +17,7 @@ public class BotController : MonoBehaviour
 
     private Character character;
 
-    private PlayerInput input;
+    private CharacterInput input;
 
     public List<IState> activeStates = new List<IState>();
 
@@ -87,7 +87,7 @@ public class BotController : MonoBehaviour
         private float maxRangeForNonRails = 25f;
         private float maxRangeForRails = 50f;
 
-        public void Update(BotController controller, Character character, ref PlayerInput input)
+        public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             if (!isCollecting)
             {
@@ -152,7 +152,7 @@ public class BotController : MonoBehaviour
                         closestCharDistance = distance;
                     }
 
-                    PhysicsExtensions.Parameters parameters;
+                    PhysicsExtensions.Parameters parameters = default;
                     parameters.ignoreObject = myCharacter.gameObject;
                     if (!PhysicsExtensions.Raycast(myCharacter.transform.position, character.transform.position - myCharacter.transform.position, out RaycastHit hit, distance, ~0, QueryTriggerInteraction.Ignore, parameters)
                         || hit.collider.gameObject == character.gameObject)
@@ -178,7 +178,7 @@ public class BotController : MonoBehaviour
             }
         }
 
-        private void TryShootTarget(Character myCharacter, Character target, ref PlayerInput playerInput)
+        private void TryShootTarget(Character myCharacter, Character target, ref CharacterInput playerInput)
         {
             CharacterShooting shooting = myCharacter.GetComponent<CharacterShooting>();
             bool isRail = shooting.equippedWeapons.Contains(shooting.wepKeyRail);
@@ -224,7 +224,7 @@ public class BotController : MonoBehaviour
 
         private BotController botController;
 
-        public void Update(BotController controller, Character character, ref PlayerInput input)
+        public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             Vector3 nextPathPoint = GetNextPathPoint(character, targetPosition, out Vector3 recommendedAcceleration);
             Vector3 moveIntentionDirection = recommendedAcceleration == Vector3.zero ? (nextPathPoint - character.transform.position).Horizontal().normalized : recommendedAcceleration;
@@ -425,7 +425,7 @@ public class BotController : MonoBehaviour
     {
         public int followPlayerId { get; set; }
 
-        public void Update(BotController controller, Character character, ref PlayerInput input)
+        public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             if (followPlayerId > 0 && Netplay.singleton.players.Count > followPlayerId && Netplay.singleton.players[followPlayerId])
             {
@@ -451,7 +451,7 @@ public class BotController : MonoBehaviour
 
         public bool doExcludeWeapons = true;
 
-        public void Update(BotController controller, Character character, ref PlayerInput input)
+        public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             if (rings.Count == 0)
                 rings.AddRange(FindObjectsOfType<Ring>());
@@ -495,15 +495,15 @@ public class BotController : MonoBehaviour
     {
         public int playerIndex;
 
-        private TimelineList<PlayerInput> targetInputs = new TimelineList<PlayerInput>();
+        private TimelineTrack<CharacterInput> targetInputs = new TimelineTrack<CharacterInput>();
 
-        public void Update(BotController controller, Character character, ref PlayerInput input)
+        public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             if (Netplay.singleton.players[playerIndex])
             {
                 State_MoveTowards moveState = controller.GetOrActivateState<State_MoveTowards>();
                 Vector3 targetPosition = Netplay.singleton.players[playerIndex].transform.position;
-                PlayerInput playerInput = Netplay.singleton.players[playerIndex].liveInput;
+                CharacterInput playerInput = Netplay.singleton.players[playerIndex].liveInput;
 
                 targetInputs.Insert(Time.timeAsDouble, playerInput);
                 targetInputs.TrimBefore(Time.timeAsDouble - 1f);
@@ -522,7 +522,7 @@ public class BotController : MonoBehaviour
 
     public class State_Spin : IState
     {
-        public void Update(BotController controller, Character character, ref PlayerInput input)
+        public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             input.horizontalAim = (input.horizontalAim + Time.deltaTime * 360f) % 360f;
         }

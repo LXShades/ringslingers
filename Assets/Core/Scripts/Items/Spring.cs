@@ -36,7 +36,7 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
 
             movement.SpringUp(springForce, transform.up, springAbsolutely);
 
-            if (tickInfo.isConfirmingForward)
+            if (tickInfo.isFullForwardTick)
             {
                 animator.SetTrigger("DoSpring");
 

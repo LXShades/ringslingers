@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState>
+public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterInput>
 {
     [System.Serializable]
     public struct RingDropLayer
@@ -39,7 +39,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     /// <summary>
     /// Current inputs of this player. If this is the local player, inputs may be slightly later inputs than the player last processed.
     /// </summary>
-    public PlayerInput liveInput => isLocal ? (GameTicker.singleton != null ? GameTicker.singleton.localPlayerInput : default) : (ticker != null ? ticker.inputTimeline.Latest : default);
+    public CharacterInput liveInput => isLocal ? (GameTicker.singleton != null ? GameTicker.singleton.localPlayerInput : default) : (entity != null ? entity.inputTrack.Latest : default);
 
     /// <summary>
     /// Time of this player
@@ -120,21 +120,14 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     [Header("Misc")]
     public float killY = -50f;
 
-    [Header("Networking")]
-    public TickerSettings tickerSettings = TickerSettings.Default;
-
-    [Header("Debug")]
-    //public bool logLocalPlayerReconciles = true;
-
     // Components
-    /// <summary>
-    /// Player movement component
-    /// </summary>
     [HideInInspector] public PlayerCharacterMovement movement;
     [HideInInspector] public Damageable damageable;
     private PlayerSounds sounds;
 
-    public Ticker<PlayerInput, CharacterState> ticker { get; private set; }
+    // Timeline entity - handles ticking the player
+    [HideInInspector]
+    public Timeline.Entity<CharacterState, CharacterInput> entity;
 
     public float timeOfLastInputPush { get; set; }
 
@@ -183,8 +176,6 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         movement = GetComponent<PlayerCharacterMovement>();
         damageable = GetComponent<Damageable>();
         sounds = GetComponent<PlayerSounds>();
-        ticker = new Ticker<PlayerInput, CharacterState>(this);
-        ticker.settings = tickerSettings;
     }
 
     void Start()
@@ -201,6 +192,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         base.OnStartServer();
 
         Netplay.singleton.RegisterPlayer(this);
+        WhenReady<GameTicker>.Execute(this, ticker => this.entity = ticker.RegisterEntity(this, this));
 
         if (MatchState.Get(out MatchTeams matchTeams))
             ChangeTeam(matchTeams.FindBestTeamToJoin());
@@ -213,6 +205,8 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         base.OnStartClient();
 
         Netplay.singleton.RegisterPlayer(this, playerId);
+        if (!NetworkServer.active) // don't call twice on host
+            WhenReady<GameTicker>.Execute(this, ticker => this.entity = ticker.RegisterEntity(this, this));
 
         if (!hasAuthority)
             UpdateOutlineColour();
@@ -221,6 +215,17 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     public override void OnStartAuthority()
     {
         base.OnStartAuthority();
+    }
+
+    private void OnDestroy()
+    {
+        if (NetworkServer.active)
+        {
+            if (holdingFlag != null)
+                holdingFlag.ReturnToBase(true);
+        }
+
+        WhenReady<GameTicker>.Execute(this, ticker => ticker.UnregisterEntity(this));
     }
 
     void Update()
@@ -247,14 +252,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         DebugDraw.DrawSphere(transform.position + new Vector3(0, 2, 0), 1f, Color.red, 4, 16);
     }
 
-    public void Tick(float deltaTime, PlayerInput input, TickInfo tickInfo)
+    public void Tick(float deltaTime, CharacterInput input, TickInfo tickInfo)
     {
         movement.TickMovement(deltaTime, input, tickInfo);
-    }
-
-    public ITickerBase CreateTicker()
-    {
-        return new Ticker<PlayerInput, CharacterState>(this);
     }
 
     public void Respawn()
@@ -275,7 +275,8 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
                 movement.velocity = Vector3.zero;
                 movement.state = 0;
 
-                ticker?.ConfirmCurrentState();
+                if (entity != null)
+                    entity.StoreCurrentState(entity.latestStateTime);
 
                 TargetRespawn(spawnPoint.transform.forward);
             }
@@ -299,9 +300,9 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
     {
         if (instaKill)
         {
-            ticker.CallEvent((TickInfo tickInfo) => 
+            entity.owner.CallEvent((TickInfo tickInfo) => 
             {
-                if (tickInfo.isConfirming)
+                if (tickInfo.isFullForwardTick)
                     Respawn();
             });
         }
@@ -314,7 +315,7 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
             force += movement.up * hurtDefaultVerticalKnockback;
 
             // predict our hit
-            ticker.CallEvent((_) => movement.ApplyHitKnockback(force));
+            entity.owner.CallEvent((_) => movement.ApplyHitKnockback(force));
 
             // only the server can do the rest (ring drop, score, etc)
             if (NetworkServer.active)
@@ -546,17 +547,6 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
         }
     }
 
-    void OnDestroy()
-    {
-        if (NetworkServer.active)
-        {
-            if (holdingFlag != null)
-            {
-                holdingFlag.ReturnToBase(true);
-            }
-        }
-    }
-
     /// <summary>
     /// Makes a state package
     /// </summary>
@@ -588,8 +578,6 @@ public class Character : NetworkBehaviour, ITickable<PlayerInput, CharacterState
 
         Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
     }
-
-    public ITickerBase GetTicker() => ticker;
 }
 
 public enum PlayerTeam
