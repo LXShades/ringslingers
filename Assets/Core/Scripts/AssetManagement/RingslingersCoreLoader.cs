@@ -18,7 +18,7 @@ public class RingslingersCoreLoader : MonoBehaviour
     public GameObject bootAssetIfDisabledAssetBundles;
 #endif
 
-    public static bool areAssetBundlesDisabled = false;
+    public static bool areAssetBundlesEnabled = true;
 
     // Of course, you gotta keep this up to date!
     public const string bootAssetPath = "Assets/Core/RingslingersCore.Assets/Prefabs/Boot.prefab";
@@ -30,7 +30,6 @@ public class RingslingersCoreLoader : MonoBehaviour
     public const string coreSceneBundleName = "ringslingerscore.scenes";
 
     public static bool useEditorAssetsIfAvailable = true;
-    private static bool isUsingEditorAssets = false;
 
     private static AssetBundle commonAssets = null;
     private static AssetBundle commonScenes = null;
@@ -39,9 +38,11 @@ public class RingslingersCoreLoader : MonoBehaviour
     private static void OnGameStarted()
     {
 #if DISABLE_ASSETBUNDLES
-        areAssetBundlesDisabled = true;
+        areAssetBundlesEnabled = false;
 #endif
-        areAssetBundlesDisabled |= isUsingEditorAssets;
+
+        if (useEditorAssetsIfAvailable)
+            areAssetBundlesEnabled = false;
 
         // Start loading the core game content as early as possible
         LoadCoreContent();
@@ -49,18 +50,24 @@ public class RingslingersCoreLoader : MonoBehaviour
 
     private void Awake()
     {
-        if (commonAssets != null || areAssetBundlesDisabled)
+        if (commonAssets != null || !areAssetBundlesEnabled)
         {
+            GameObject bootAsset = null;
+            if (areAssetBundlesEnabled)
+            {
+                Debug.Log("[RingslingersCoreLoader] Using ASSETBUNDLES to load the game. These are different to the assets used in moddable builds, and mods are disabled.");
+                bootAsset = commonAssets.LoadAsset<GameObject>(bootAssetPath);
+            }
+            else
+            {
 #if UNITY_EDITOR
-            Debug.Log("[RingslingersCoreLoader] Using EDITOR ASSETS to load the game. These are different to the assets used in builds and do not support mods.");
-            GameObject bootAsset = isUsingEditorAssets ? UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(bootAssetPath) : commonAssets.LoadAsset<GameObject>(bootAssetPath);
-#elif DISABLE_ASSETBUNDLES
-            Debug.Log("[RingslingersCoreLoader] Using BUILD SCENES to load the game. These are different to the assets used in moddable builds, and mods are disabled.");
-            GameObject bootAsset = bootAssetIfDisabledAssetBundles;
+                Debug.Log("[RingslingersCoreLoader] Using EDITOR ASSETS to load the game. These are different to the assets used in builds and do not support mods.");
+                bootAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(bootAssetPath);
 #else
-            Debug.Log("[RingslingersCoreLoader] Using ASSETBUNDLES to load the game. These are different to the assets used in moddable builds, and mods are disabled.");
-            GameObject bootAsset = commonAssets.LoadAsset<GameObject>(bootAssetPath);
+                Debug.Log("[RingslingersCoreLoader] Using BUILD SCENES to load the game. These are different to the assets used in moddable builds, and mods are disabled.");
+                bootAsset = bootAssetIfDisabledAssetBundles;
 #endif
+            }
 
             if (bootAsset != null)
             {
@@ -81,19 +88,16 @@ public class RingslingersCoreLoader : MonoBehaviour
     {
         Debug.Log("[RingslingersCoreLoader] Loading Ringslingers Core content...");
 
+        if (!areAssetBundlesEnabled)
+        {
 #if UNITY_EDITOR
-        if (useEditorAssetsIfAvailable)
-        {
-            isUsingEditorAssets = true;
-        }
-        else
-        {
+            // Load them from the editor build folder for the latest versions
             commonAssets = AssetBundle.LoadFromFile($"{coreAssetsBuildPath}/{coreAssetBundleName}");
             commonScenes = AssetBundle.LoadFromFile($"{coreAssetsBuildPath}/{coreSceneBundleName}");
-        }
-#elif !DISABLE_ASSETBUNDLES
-        commonAssets = AssetBundle.LoadFromFile(coreAssetBundleName);
-        commonScenes = AssetBundle.LoadFromFile(coreSceneBundleName);
+#else
+            commonAssets = AssetBundle.LoadFromFile(coreAssetBundleName);
+            commonScenes = AssetBundle.LoadFromFile(coreSceneBundleName);
 #endif
+        }
     }
 }

@@ -4,6 +4,9 @@ using UnityEngine.SceneManagement;
 
 public class CommandLineProcessor : MonoBehaviour
 {
+    public const string kPortParam = "-port";
+    public const string kWindowPositionParam = "-pos";
+    public const string kOpenConsoleParam = "-console";
 
     // Start is called before the first frame update
     void Start()
@@ -79,26 +82,24 @@ public class CommandLineProcessor : MonoBehaviour
         }
     }
 
-    // Window management functions
-    [DllImport("user32.dll")]
-    private static extern System.IntPtr GetActiveWindow();
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR // why does !UNITY_EDITOR need to be here, shouldn't standalone be standalone? Oh well, doesn't seem to work that way
+        // Window management functions
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern System.IntPtr GetActiveWindow();
 
-    [DllImport("user32.dll")]
-    private static extern bool SetForegroundWindow(System.IntPtr hwnd);
-    [DllImport("user32.dll")]
-    private static extern bool SetWindowPos(System.IntPtr hwnd, System.IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(System.IntPtr hwnd);
+        [System.Runtime.InteropServices.DllImport("user32.dll")]
+        private static extern bool SetWindowPos(System.IntPtr hwnd, System.IntPtr hwndInsertAfter, int x, int y, int cx, int cy, uint flags);
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
-    private static void PreInitWindowPosition()
-    {
-        Debug.Log("Trying to reposition game window");
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSplashScreen)]
+        private static void PreInit()
+        {
+            RepositionWindow();
+            OpenConsoleIfDedicated();
+        }
 
-        RepositionWindow();
-    }
-
-    private static void RepositionWindow()
-    {
-        if (Application.isEditor)
+        private static void RepositionWindow()
         {
             const uint SWP_NOACTIVATE = 0x0010;
             const uint SWP_NOOWNERZORDER = 0x0200;
@@ -109,25 +110,27 @@ public class CommandLineProcessor : MonoBehaviour
 
             int windowX = 0, windowY = 0;
 
-            if (CommandLine.GetCommand("-pos", 2, out string[] posParams))
+            if (CommandLine.GetCommand(kWindowPositionParam, 2, out string[] posParams))
             {
-                System.Int32.TryParse(posParams[0], out windowX);
-                System.Int32.TryParse(posParams[1], out windowY);
+                int.TryParse(posParams[0], out windowX);
+                int.TryParse(posParams[1], out windowY);
             }
 
             SetForegroundWindow(GetActiveWindow());
             SetWindowPos(GetActiveWindow(), System.IntPtr.Zero, windowX, windowY, 1280, 720, SWP_NOACTIVATE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_NOSIZE | SWP_NOZORDER | SWP_ASYNCWINDOWPOS);
         }
-    }
 
-    /*
-    [DllImport("user32.dll")]
-    private static extern System.IntPtr GetWindowThreadProcessId(System.IntPtr hwnd, out uint pid);
-        System.Diagnostics.Process proc = System.Diagnostics.Process.GetCurrentProcess();
+        [System.Runtime.InteropServices.DllImport("Kernel32.dll")]
+        private static extern bool AllocConsole();
 
-        GetWindowThreadProcessId(GetActiveWindow(), out uint activeProcId);
-
-        if (activeProcId == proc.Id)
-            Display_onDisplaysUpdated();
-     * */
+        private static void OpenConsoleIfDedicated()
+        {
+            if (CommandLine.HasCommand(kOpenConsoleParam))
+            {
+                AllocConsole();
+                System.Console.SetOut(new System.IO.StreamWriter(System.Console.OpenStandardOutput()) { AutoFlush = true });
+                Application.logMessageReceivedThreaded += (logString, stackTrace, type) => System.Console.WriteLine(logString);
+            }
+        }
+#endif
 }

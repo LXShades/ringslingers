@@ -248,8 +248,6 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
 
             Respawn();
         }
-
-        DebugDraw.DrawSphere(transform.position + new Vector3(0, 2, 0), 1f, Color.red, 4, 16);
     }
 
     public void Tick(float deltaTime, CharacterInput input, TickInfo tickInfo)

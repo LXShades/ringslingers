@@ -64,7 +64,7 @@ public class RingslingersAssetManager
         System.Diagnostics.Process.Start(RingslingersCoreLoader.coreAssetsBuildPath);
     }
 
-    [MenuItem("Ringslingers/Use Editor Assets in Playmode (instead of AssetBundles)", priority = 30)]
+    [MenuItem("Ringslingers/Disable AssetBundles in Playmode (disables mods in editor)", priority = 30)]
     public static void UseEditorAssetsInPlaymode()
     {
         shouldUseEditorAssetsInPlaymode = !shouldUseEditorAssetsInPlaymode;
@@ -75,14 +75,14 @@ public class RingslingersAssetManager
             EditorUtility.DisplayDialog("In Unity, everything has a sacrifice", "When this is disabled, you can load mods in play mode. However, if you are editing core game content, you need to Build Core AssetBundles for the changes to take effect.", "I understand");
     }
 
-    [MenuItem("Ringslingers/Use Editor Assets in Playmode (instead of AssetBundles)", validate = true)]
+    [MenuItem("Ringslingers/Disable AssetBundles in Playmode (disables mods in editor)", validate = true)]
     private static bool UseEditorAssetsInPlaymode_Validate()
     {
-        Menu.SetChecked("Ringslingers/Use Editor Assets in Playmode (instead of AssetBundles)", shouldUseEditorAssetsInPlaymode);
+        Menu.SetChecked("Ringslingers/Disable AssetBundles in Playmode (disables mods in editor)", shouldUseEditorAssetsInPlaymode);
         return true;
     }
 
-    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)")]
+    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)", priority = 31)]
     private static void BuildModlessVersionForPlaytests()
     {
         shouldBuildModlessVersionForPlaytests = !shouldBuildModlessVersionForPlaytests;

@@ -111,6 +111,12 @@ MonoBehaviour:
   - {fileID: 3784785161027906916, guid: 14287757445895a409a4724e6a7a44b3, type: 3}
   - {fileID: 8645287420545827495, guid: b2236b49afcde0b44887e98c437157b7, type: 3}
   - {fileID: 6503358966875659586, guid: b4d88983bb06c394fbbcd622a1f6fa42, type: 3}
+  autoSearchPrefabsOnValidate: 0
+  warnIfSlowSearch: 1
+  prefabSearchFolders:
+  - Assets/Prefabs
+  prefabExcludeFolders:
+  - 
 --- !u!1 &6795168564576558651
 GameObject:
   m_ObjectHideFlags: 0
@@ -159,14 +165,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   connectionStatus: 0
-  defaultFlowControlSettings:
-    jitterSampleSize: 3
-    upperPercentile: 5
-    addToDelay: 0
-    maxDelay: 0.1
-    minDelay: 0
-    maxMessageAge: -1
-    earlyReleaseTolerance: 0.01
   pingsPerSecond: 2
   playerTickrate: 30
   _localPlayerId: -1
@@ -183,24 +181,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dontDestroyOnLoad: 1
-  PersistNetworkManagerToOfflineScene: 0
   runInBackground: 1
   autoStartServerBuild: 0
-  serverTickRate: 60
+  serverTickRate: 120
   offlineScene: 
   onlineScene: 
   transport: {fileID: 6795168564576558628}
   networkAddress: localhost
   maxConnections: 32
-  disconnectInactiveConnections: 0
-  disconnectInactiveTimeout: 60
   authenticator: {fileID: 3464946379994486294}
   playerPrefab: {fileID: 1790104548480656412, guid: bb9dfd51c90b05943b69d3e8498fbcf8, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs:
   - {fileID: 0}
-  serverStatePrefab: {fileID: 286134612921565095, guid: af640a52bf45dbb4fab403327ae75bc0, type: 3}
+  gameStatePrefab: {fileID: 0}
+  enableVerboseLogging: 0
 --- !u!114 &6795168564576558628
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -214,15 +210,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   port: 5029
-  LogType: 1
   DebugDisplay: 0
+  LogType: 1
   serverBindsAll: 1
   serverBindAddress: 
   serverMaxPeerCapacity: 50
   serverMaxNativeWaitTime: 1
+  serverStatusUpdateInterval: 0
   clientMaxNativeWaitTime: 3
   clientStatusUpdateInterval: -1
   Channels: 0100000002000000
+  ClientDataBufferSize: 1000
+  ClientConnEventBufferSize: 10
+  ServerDataBufferSize: 5000
+  ServerConnEventBufferSize: 100
   PacketBufferCapacity: 4096
   MaxAllowedPacketSize: 33554432
 --- !u!114 &3464946379994486294
