@@ -299,9 +299,20 @@ public class GameTicker : NetworkBehaviour
     /// </summary>
     private void TickGame()
     {
-        // most players tick the same
-        // except for remote players on clients - clients do not know these players' input history, so they should not play deltas as they will usually be inaccurate
-        // they also may have a time offset if we're using the fancy experimental Rewind stuff
+        // Most players tick the same
+        // Except for remote players on clients - clients do not accurately know these players' input history, so they should not play deltas as they will usually be incorrect
+        // -> This is most noticeable when a player jumps and appears to thok and correct itself. We received the jump input after the moment of jump but not at the moment, and the delta gets applied too late, resulting in the double-jump.
+        // They also may have a time offset if we're using the fancy experimental Rewind stuff
+        if (!NetworkServer.active)
+        {
+            foreach (Character player in Netplay.singleton.players)
+            {
+                if (player != Netplay.singleton.localPlayer)
+                    player.entity.seekFlags = EntitySeekFlags.NoInputDeltas;
+                else
+                    player.entity.seekFlags = EntitySeekFlags.None;
+            }
+        }
 
         // Tick all players
         timeline.Seek(predictedServerTime);
@@ -359,13 +370,15 @@ public class GameTicker : NetworkBehaviour
             if (character)
             {
                 PlayerSounds sounds = character.GetComponent<PlayerSounds>();
+                int stateForTime = character.entity.stateTrack.ClosestIndexBeforeInclusive(predictedServerTime);
+                int inputForTime = character.entity.inputTrack.ClosestIndexBeforeOrEarliest(predictedServerTime); // We might have received later inputs so make sure we send the right one that accompanies the state
 
                 ticksOut.Add(new ServerPlayerState()
                 {
                     id = (byte)i,
                     sounds = sounds.soundHistory,
-                    state = character.entity.latestState,
-                    lastInput = character.entity.inputTrack.Latest
+                    state = stateForTime != -1 ? character.entity.stateTrack[character.entity.stateTrack.ClosestIndexBeforeInclusive(predictedServerTime)] : character.entity.latestState,
+                    lastInput = inputForTime != -1 ? character.entity.inputTrack[inputForTime] : default
                 });
             }
         }
@@ -384,6 +397,8 @@ public class GameTicker : NetworkBehaviour
     /// </summary>
     private void ApplyServerTick(ServerTickMessage tickMessage)
     {
+        double effectiveStateTime = TimeTool.Quantize(tickMessage.serverTime, fixedInputRate);
+
         foreach (var tick in tickMessage.ticks)
         {
             Character character = Netplay.singleton.players[tick.id];
@@ -397,9 +412,9 @@ public class GameTicker : NetworkBehaviour
                 sounds.ReceiveSoundHistory(tick.sounds);
 
                 if (character != Netplay.singleton.localPlayer) // local player's inputs are more accurate timing-wise, don't interweave them with poorly estimated inputs (serverTime is NOT the exact time the inputs went in!)
-                    entity.InsertInput(tick.lastInput, tickMessage.serverTime);
+                    entity.InsertInput(tick.lastInput, effectiveStateTime);
 
-                entity.StoreStateAt(tick.state, TimeTool.Quantize(tickMessage.serverTime, 60));
+                entity.StoreStateAt(tick.state, effectiveStateTime);
             }
         }
 

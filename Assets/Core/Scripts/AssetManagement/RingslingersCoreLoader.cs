@@ -88,7 +88,7 @@ public class RingslingersCoreLoader : MonoBehaviour
     {
         Debug.Log("[RingslingersCoreLoader] Loading Ringslingers Core content...");
 
-        if (!areAssetBundlesEnabled)
+        if (areAssetBundlesEnabled)
         {
 #if UNITY_EDITOR
             // Load them from the editor build folder for the latest versions

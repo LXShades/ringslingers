@@ -385,6 +385,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9140da33747a40f448771cc0d5997c0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  prefabInstances: []
+  prefabGuidsById: []
+  prefabReferencesById: []
 --- !u!1 &7846594913999636320
 GameObject:
   m_ObjectHideFlags: 0
@@ -450,7 +453,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  maxDeltaTime: 0.5
+  tickerSettings:
+    maxDeltaTime: 0.033333335
+    maxSeekIterations: 15
+    maxTickRate: 60
+    maxTickRateConstraint: 0
+    fixedTickRate: 60
+    alwaysReconcile: 0
+    historyLength: 1
+    debugLogReconciles: 0
+    debugLogSeekWarnings: 0
+    debugSelfReconcileDelay: 0.3
+    debugSelfReconcile: 0
+    debugDrawReconciles: 0
   extraSmoothing: 0.0017
   timeTilLag: 0.75
   fixedInputRate: 60
@@ -1117,6 +1132,14 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7101375951383043849, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7101375951383043849, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7102438552591446615, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -1522,6 +1545,18 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8383358577114744272, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_AnchorMin.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468061297989101055, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468061297989101055, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8468061297989101055, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchorMin.x
       value: 0
       objectReference: {fileID: 0}
