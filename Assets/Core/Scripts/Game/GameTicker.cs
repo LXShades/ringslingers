@@ -125,7 +125,7 @@ public class GameTicker : NetworkBehaviour
         NetworkClient.RegisterHandler<ServerTickMessage>(OnRecvServerPlayerTick);
         NetworkServer.RegisterHandler<ClientPlayerInput>(OnRecvClientInput);
 
-        extraSmoothing = GamePreferences.extraSmoothing;
+        extraSmoothing = GamePreferences.inputSmoothing;
     }
 
     private void Update()
@@ -272,6 +272,12 @@ public class GameTicker : NetworkBehaviour
         // Client receive server ticks if available
         if (hasIncomingServerTick)
         {
+            foreach (Character character in Netplay.singleton.players)
+            {
+                if (character && character.TryGetComponent(out TimelineEntityInterpolator interpolator))
+                    interpolator.OnAboutToRecalculateLatestState();
+            }
+
             ApplyServerTick(incomingServerTick);
             hasIncomingServerTick = false;
 
@@ -296,10 +302,13 @@ public class GameTicker : NetworkBehaviour
         {
             foreach (Character player in Netplay.singleton.players)
             {
-                if (player != Netplay.singleton.localPlayer)
-                    player.entity.seekFlags = EntitySeekFlags.NoInputDeltas;
-                else
-                    player.entity.seekFlags = EntitySeekFlags.None;
+                if (player)
+                {
+                    if (player != Netplay.singleton.localPlayer)
+                        player.entity.seekFlags = EntitySeekFlags.NoInputDeltas;
+                    else
+                        player.entity.seekFlags = EntitySeekFlags.None;
+                }
             }
         }
 
@@ -456,7 +465,7 @@ public class GameTicker : NetworkBehaviour
 
     private void OnPreferencesChanged()
     {
-        extraSmoothing = GamePreferences.extraSmoothing;
+        extraSmoothing = GamePreferences.inputSmoothing;
     }
 
     public string DebugInfo()

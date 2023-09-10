@@ -185,6 +185,10 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         damageable.onLocalDamaged.AddListener(OnDamaged);
 
         OnColourChanged(colour, colour); // HACK: we need to update visuals
+
+        GamePreferences.onPreferencesChanged += OnPreferencesChanged;
+        if (TryGetComponent(out TimelineEntityInterpolator interpolator))
+            interpolator.mispredictionInterpolationSmoothing = GamePreferences.opponentSmoothing;
     }
 
     public override void OnStartServer()
@@ -192,7 +196,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         base.OnStartServer();
 
         Netplay.singleton.RegisterPlayer(this);
-        WhenReady<GameTicker>.Execute(this, ticker => this.entity = ticker.RegisterEntity(this, this));
+        WhenReady<GameTicker>.Execute(this, ticker => RegisterEntity(ticker));
 
         if (MatchState.Get(out MatchTeams matchTeams))
             ChangeTeam(matchTeams.FindBestTeamToJoin());
@@ -206,7 +210,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
 
         Netplay.singleton.RegisterPlayer(this, playerId);
         if (!NetworkServer.active) // don't call twice on host
-            WhenReady<GameTicker>.Execute(this, ticker => this.entity = ticker.RegisterEntity(this, this));
+            WhenReady<GameTicker>.Execute(this, ticker => RegisterEntity(ticker));
 
         if (!hasAuthority)
             UpdateOutlineColour();
@@ -219,6 +223,8 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
 
     private void OnDestroy()
     {
+        GamePreferences.onPreferencesChanged -= OnPreferencesChanged;
+
         if (NetworkServer.active)
         {
             if (holdingFlag != null)
@@ -253,6 +259,13 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     public void Tick(float deltaTime, CharacterInput input, TickInfo tickInfo)
     {
         movement.TickMovement(deltaTime, input, tickInfo);
+    }
+
+    private void RegisterEntity(GameTicker ticker)
+    {
+        entity = ticker.RegisterEntity(this, this);
+        if (TryGetComponent(out TimelineEntityInterpolator interpolator))
+            interpolator.SetOwningEntity(entity, x => x.position);
     }
 
     public void Respawn()
@@ -543,6 +556,12 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
 
             sounds.PlayNetworked(PlayerSounds.PlayerSoundType.ShieldLoss);
         }
+    }
+
+    private void OnPreferencesChanged()
+    {
+        if (TryGetComponent(out TimelineEntityInterpolator interpolator))
+            interpolator.mispredictionInterpolationSmoothing = GamePreferences.opponentSmoothing;
     }
 
     /// <summary>

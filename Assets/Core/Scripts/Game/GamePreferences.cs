@@ -4,8 +4,9 @@ using UnityEngine.InputSystem;
 
 public static class GamePreferences
 {
-    public const float kDefaultExtraSmoothing = 0.017f;
+    public const float kDefaultInputSmoothing = 0.017f;
     public const float kDefaultServerRewinding = 0.16f;
+    public const float kDefaultOpponentSmoothing = 0.08f;
 
     // Mouse speed in degrees per pixel (usually <1!)
     public static float mouseSpeed {
@@ -48,12 +49,12 @@ public static class GamePreferences
         }
     }
 
-    public static float extraSmoothing
+    public static float inputSmoothing
     {
-        get => PlayerPrefs.GetFloat("extraSmoothing", kDefaultExtraSmoothing);
+        get => PlayerPrefs.GetFloat("inputSmoothing", kDefaultInputSmoothing);
         set
         {
-            PlayerPrefs.SetFloat("extraSmoothing", value);
+            PlayerPrefs.SetFloat("inputSmoothing", value);
             OnPreferencesChanged();
         }
     }
@@ -64,6 +65,16 @@ public static class GamePreferences
         set
         {
             PlayerPrefs.SetFloat("serverRewindTolerance", value);
+            OnPreferencesChanged();
+        }
+    }
+
+    public static float opponentSmoothing
+    {
+        get => PlayerPrefs.GetFloat("opponentSmoothing", kDefaultOpponentSmoothing);
+        set
+        {
+            PlayerPrefs.SetFloat("opponentSmoothing", value);
             OnPreferencesChanged();
         }
     }

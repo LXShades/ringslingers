@@ -4,6 +4,7 @@ public class NetworkMenuPanel : MonoBehaviour
 {
     public SliderNumberPair extraSmoothing;
     public SliderNumberPair serverRewinding;
+    public SliderNumberPair playerSmoothing;
 
     bool hasRegisteredCallbacks = false;
 
@@ -11,18 +12,21 @@ public class NetworkMenuPanel : MonoBehaviour
     {
         if (!hasRegisteredCallbacks)
         {
-            extraSmoothing.onValueChanged.AddListener((float value) => GamePreferences.extraSmoothing = value * 0.001f);
-            serverRewinding.onValueChanged.AddListener((float value) => GamePreferences.serverRewindTolerance = value * 0.001f);
+            extraSmoothing.onValueChanged.AddListener(value => GamePreferences.inputSmoothing = value * 0.001f);
+            serverRewinding.onValueChanged.AddListener(value => GamePreferences.serverRewindTolerance = value * 0.001f);
+            playerSmoothing.onValueChanged.AddListener(value => GamePreferences.opponentSmoothing = value);
             hasRegisteredCallbacks = true;
         }
 
-        extraSmoothing.value = GamePreferences.extraSmoothing * 1000f;
+        extraSmoothing.value = GamePreferences.inputSmoothing * 1000f;
         serverRewinding.value = GamePreferences.serverRewindTolerance * 1000f;
+        playerSmoothing.value = GamePreferences.kDefaultOpponentSmoothing;
     }
 
     public void ResetToDefault()
     {
-        extraSmoothing.value = GamePreferences.kDefaultExtraSmoothing * 1000f;
+        extraSmoothing.value = GamePreferences.kDefaultInputSmoothing * 1000f;
         serverRewinding.value = GamePreferences.kDefaultServerRewinding * 1000f;
+        playerSmoothing.value = GamePreferences.kDefaultOpponentSmoothing;
     }
 }
