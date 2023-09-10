@@ -226,7 +226,7 @@ public class Netplay : MonoBehaviour
     #region Ping
     private void SendPings()
     {
-        if (NetworkClient.isConnected)
+        if (NetworkClient.isConnectedAndAuthenticated)
         {
             NetworkClient.Send(new PingMessage()
             {
