@@ -240,37 +240,36 @@ public class CharacterShooting : NetworkBehaviour
 
     public bool PredictTargetPosition(Character target, out Vector3 predictedPosition, float maxPredictionTime)
     {
-        // TODO: new Timeline stuff does not  currently let you move things individually like this. To do.
-        predictedPosition = target.transform.position;
-        return false;
-        
-        /*
-        float interval = 0.06f;
-        Timeline.Entity<CharacterState, CharacterInput> ticker = target.entity;
+        Timeline.Entity<CharacterState, CharacterInput> targetEntity = target.entity;
         Vector3 startPosition = spawnPosition.position;
-        float ringDistance = 0f; // theoretical thrown ring distance
-        float ringSpeed = effectiveWeaponSettings.projectileSpeed * interval;
-        float lastTargetDistance = Vector3.Distance(target.transform.position, startPosition);
         Vector3 lastTargetPosition = target.transform.position;
-        double originalTime = ticker.playbackTime;
         bool succeeded = false;
+        const float interval = 0.1f;
+        CharacterState targetEntityOriginalState = targetEntity.target.MakeState();
 
         predictedPosition = target.transform.position;
 
+        // Throw an imaginary ring and find where it'll intersect with the target entity
+        float ringDistance = 0f;
+        float ringStep = effectiveWeaponSettings.projectileSpeed * interval;
+        float lastTargetDistance = Vector3.Distance(target.transform.position, startPosition);
         for (int i = 1; i * interval < maxPredictionTime; i++)
         {
-            entity.Seek(originalTime + i * interval, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.DontConfirm | TickerSeekFlags.TreatAsReplay);
-            ringDistance += ringSpeed;
+            // Tick the player
+            targetEntity.GenericTick(interval, 0, 0, new TickInfo() { isForwardTick = false, isFullTick = false });
+
+            // Tick the imaginary ring we'll fire
+            ringDistance += ringStep;
 
             float currentTargetDistance = Vector3.Distance(target.transform.position, startPosition);
 
-            if (currentTargetDistance >= lastTargetDistance + ringSpeed) // target is moving away faster than our ring would, so if they continue along this path we probably can't hit them
+            if (currentTargetDistance >= lastTargetDistance + ringStep) // target is moving away faster than our ring would, so if they continue along this path we probably can't hit them
                 break;
 
             if (ringDistance >= currentTargetDistance)
             {
                 // the ring is normally a bit ahead, estimate a position between the last and current position using the typical gap per interval as a point of reference
-                float blend = 1f - (ringDistance - currentTargetDistance) / ringSpeed;
+                float blend = 1f - (ringDistance - currentTargetDistance) / ringStep;
                 predictedPosition = Vector3.LerpUnclamped(lastTargetPosition, target.transform.position, blend);
                 succeeded = true;
                 break;
@@ -280,9 +279,10 @@ public class CharacterShooting : NetworkBehaviour
             lastTargetPosition = target.transform.position;
         }
 
-        ticker.Seek(originalTime, TickerSeekFlags.IgnoreDeltas | TickerSeekFlags.TreatAsReplay);
+        // Restore the entity's old state
+        targetEntity.target.ApplyState(targetEntityOriginalState);
 
-        return succeeded;*/
+        return succeeded;
     }
 
     public void AddWeaponAmmo(RingWeaponSettingsAsset weaponType, bool doOverrideAmmo, float ammoOverride)
