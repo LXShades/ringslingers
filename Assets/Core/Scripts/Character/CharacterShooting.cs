@@ -69,6 +69,7 @@ public class CharacterShooting : NetworkBehaviour
 
     public GameObject autoAimTarget { get;  private set; }
     private Vector3 autoAimPredictedDirection = Vector3.zero;
+    public List<Vector3> autoaimPredictedBlips = new List<Vector3>(30);
 
     // Components
     private Character character;
@@ -184,34 +185,11 @@ public class CharacterShooting : NetworkBehaviour
                     if (PredictTargetPosition(potentialAutoAimTarget.GetComponent<Character>(), out Vector3 predictedPosition, 2))
                     {
                         // we can autoaim, and we can predict! set the target
-                        autoAimPredictedDirection = predictedPosition + Vector3.up * 0.5f - spawnPosition.position;
+                        autoAimPredictedDirection = (predictedPosition + Vector3.up * 0.5f) - spawnPosition.position;
                         autoAimTarget = potentialAutoAimTarget.gameObject;
                     }
                 }
             }
-
-            /*Player target = FindClosestTarget(10.0f);
-            if (target)
-            {
-                if (PredictTargetPosition(target, out Vector3 predictedPosition))
-                {
-                    if (!testAutoAimObject.activeInHierarchy)
-                    {
-                        testAutoAimObject.transform.position = predictedPosition;
-                        testAutoAimObject.transform.rotation = target.transform.rotation;
-                        autoAimDampVelocity = Vector3.zero;
-                        //testAutoAimObject.SetActive(true);
-                    }
-                    else
-                    {
-                        testAutoAimObject.transform.position = Vector3.SmoothDamp(testAutoAimObject.transform.position, predictedPosition, ref autoAimDampVelocity, testAutoAimSmoothDamp);
-                    }
-                }
-                else
-                    testAutoAimObject.SetActive(false);
-            }
-            else
-                testAutoAimObject.SetActive(false);*/
         }
     }
 
@@ -249,6 +227,9 @@ public class CharacterShooting : NetworkBehaviour
 
         predictedPosition = target.transform.position;
 
+        autoaimPredictedBlips.Add(predictedPosition);
+        autoaimPredictedBlips.Clear();
+
         // Throw an imaginary ring and find where it'll intersect with the target entity
         float ringDistance = 0f;
         float ringStep = effectiveWeaponSettings.projectileSpeed * interval;
@@ -257,11 +238,13 @@ public class CharacterShooting : NetworkBehaviour
         {
             // Tick the player
             targetEntity.GenericTick(interval, 0, 0, new TickInfo() { isForwardTick = false, isFullTick = false });
-
             // Tick the imaginary ring we'll fire
             ringDistance += ringStep;
 
-            float currentTargetDistance = Vector3.Distance(target.transform.position, startPosition);
+            Vector3 currentTargetPosition = target.transform.position;
+            float currentTargetDistance = Vector3.Distance(currentTargetPosition, startPosition);
+
+            autoaimPredictedBlips.Add(currentTargetPosition + new Vector3(0, 0.5f, 0));
 
             if (currentTargetDistance >= lastTargetDistance + ringStep) // target is moving away faster than our ring would, so if they continue along this path we probably can't hit them
                 break;
@@ -270,13 +253,13 @@ public class CharacterShooting : NetworkBehaviour
             {
                 // the ring is normally a bit ahead, estimate a position between the last and current position using the typical gap per interval as a point of reference
                 float blend = 1f - (ringDistance - currentTargetDistance) / ringStep;
-                predictedPosition = Vector3.LerpUnclamped(lastTargetPosition, target.transform.position, blend);
+                predictedPosition = Vector3.LerpUnclamped(lastTargetPosition, currentTargetPosition, blend);
                 succeeded = true;
                 break;
             }
 
             lastTargetDistance = currentTargetDistance;
-            lastTargetPosition = target.transform.position;
+            lastTargetPosition = currentTargetPosition;
         }
 
         // Restore the entity's old state

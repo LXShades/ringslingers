@@ -62,6 +62,8 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     public float loopyDampFactor = 0.1f;
 
+    public Camera unityCamera { get; private set; }
+
     /// <summary>
     /// Current aim direction of the camera
     /// </summary>
@@ -85,6 +87,7 @@ public class PlayerCamera : MonoBehaviour
     private void Awake()
     {
         singleton = this;
+        unityCamera = GetComponent<Camera>();
     }
 
     public void UpdateAim()

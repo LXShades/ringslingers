@@ -14,6 +14,7 @@ public class GameHUD : MonoBehaviour
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI timeText;
     public RectTransform autoaimCrosshair;
+    public RectTransform[] autoaimBlips = new RectTransform[0];
     public Image crownIcon;
     public Sprite[] crownPerScoreboardPosition = new Sprite[0];
 
@@ -243,12 +244,34 @@ public class GameHUD : MonoBehaviour
             if (ringShooting.autoAimTarget)
             {
                 if (!autoaimCrosshair.gameObject.activeSelf)
+                {
                     autoaimCrosshair.gameObject.SetActive(true);
+                    foreach (RectTransform blip in autoaimBlips)
+                        blip.gameObject.SetActive(true);
+                }
 
-                autoaimCrosshair.position = RectTransformUtility.WorldToScreenPoint(Camera.main, ringShooting.autoAimTarget.transform.position + Vector3.up * 0.5f);
+                Camera camera = GameManager.singleton.camera.unityCamera;
+                autoaimCrosshair.position = RectTransformUtility.WorldToScreenPoint(camera, ringShooting.autoAimTarget.transform.position + Vector3.up * 0.5f);
+
+                if (ringShooting.autoaimPredictedBlips.Count > 0)
+                {
+                    for (int i = 0; i < autoaimBlips.Length; i++)
+                    {
+                        float transformedBlipIndex = (float)(i + 1) / autoaimBlips.Length * (ringShooting.autoaimPredictedBlips.Count - 1);
+                        Vector3 interpolatedPosition = transformedBlipIndex < ringShooting.autoaimPredictedBlips.Count - 1 ?
+                            Vector3.Lerp(ringShooting.autoaimPredictedBlips[(int)transformedBlipIndex], ringShooting.autoaimPredictedBlips[(int)transformedBlipIndex + 1], transformedBlipIndex - (int)transformedBlipIndex)
+                            : ringShooting.autoaimPredictedBlips[(int)transformedBlipIndex];
+
+                        autoaimBlips[i].position = RectTransformUtility.WorldToScreenPoint(camera, interpolatedPosition);
+                    }
+                }
             }
             else if (autoaimCrosshair.gameObject.activeSelf)
+            {
                 autoaimCrosshair.gameObject.SetActive(false);
+                foreach (RectTransform blip in autoaimBlips)
+                    blip.gameObject.SetActive(false);
+            }
 
             // Update shield overlay
             if ((player.shield != null) != shieldOverlay.activeSelf)
