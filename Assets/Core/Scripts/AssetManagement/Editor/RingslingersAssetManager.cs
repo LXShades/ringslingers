@@ -12,6 +12,17 @@ public class RingslingersAssetManager
         get => EditorPrefs.GetBool("shouldUseEditorAssetsInPlaymode", true);
         set => EditorPrefs.SetBool("shouldUseEditorAssetsInPlaymode", value);
     }
+    public static bool shouldBuildModlessVersionForPlaytests
+    {
+        get => EditorPrefs.GetBool("shouldBuildModlessVersionForPlaytests", true);
+        set => EditorPrefs.SetBool("shouldBuildModlessVersionForPlaytests", value);
+    }
+
+    [InitializeOnLoadMethod()]
+    private static void OnInitEditMode()
+    {
+        PlaytestTools.onPreBuild += OnPreBuild;
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
     private static void OnInitPlaymode()
@@ -68,6 +79,24 @@ public class RingslingersAssetManager
     private static bool UseEditorAssetsInPlaymode_Validate()
     {
         Menu.SetChecked("Ringslingers/Use Editor Assets in Playmode (instead of AssetBundles)", shouldUseEditorAssetsInPlaymode);
+        return true;
+    }
+
+    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)")]
+    private static void BuildModlessVersionForPlaytests()
+    {
+        shouldBuildModlessVersionForPlaytests = !shouldBuildModlessVersionForPlaytests;
+
+        if (shouldBuildModlessVersionForPlaytests)
+            EditorUtility.DisplayDialog("In Unity, everything has a sacrifice", "When this is enabled, playtest builds are faster because they don't require AssetBundles to be up-to-date. However, mods are disabled in these builds.", "I understand");
+        else
+            EditorUtility.DisplayDialog("In Unity, everything has a sacrifice", "When this is disabled, mods are enabled in builds. However, you must Build Core AssetBundles as necessary for scene and prefab changes to take place.", "I understand");
+    }
+
+    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)", validate = true)]
+    private static bool BuildModlessVersionForPlaytests_Validate()
+    {
+        Menu.SetChecked("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)", shouldUseEditorAssetsInPlaymode);
         return true;
     }
 
@@ -203,5 +232,22 @@ public class RingslingersAssetManager
         }
 
         return manifest;
+    }
+
+    private static void OnPreBuild(ref BuildPlayerOptions buildPlayerOptions)
+    {
+        Debug.Log("Running prebuild");
+
+        if (shouldBuildModlessVersionForPlaytests)
+        {
+            string[] extraScriptingDefines = buildPlayerOptions.extraScriptingDefines;
+            if (extraScriptingDefines != null)
+                System.Array.Resize(ref extraScriptingDefines, extraScriptingDefines.Length + 1);
+            else
+                extraScriptingDefines = new string[1];
+            extraScriptingDefines[extraScriptingDefines.Length - 1] = "DISABLE_ASSETBUNDLES";
+
+            buildPlayerOptions.extraScriptingDefines = extraScriptingDefines;
+        }
     }
 }
