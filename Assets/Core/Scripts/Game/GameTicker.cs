@@ -14,7 +14,7 @@ public class GameTicker : NetworkBehaviour
     {
         public double serverTime; // time of the server
         public float lastClientEarlyness; // lateness of last input received from this client
-        public ArraySegment<ServerPlayerState> ticks;
+        public ArraySegment<ServerPlayerState> playerStates;
     }
 
     /// <summary>
@@ -44,7 +44,7 @@ public class GameTicker : NetworkBehaviour
     public float extraSmoothing = 0.0017f;
     [Tooltip("Time, in seconds, that we can go without receiving server info before lag occurs")]
     public float timeTilLag = 0.75f;
-    public int fixedInputRate = 60;
+    public int fixedInputRate => tickerSettings.fixedTickRate;
     public int fixedPhysicsRate = 30;
 
     [Header("Prediction")]
@@ -52,17 +52,6 @@ public class GameTicker : NetworkBehaviour
     public float maxLocalPrediction = 1f;
     [Range(0.01f, 1f), Tooltip("[client] The length of buffered inputs to send to the server for safety, in seconds. Shorter means lower net traffic but possibly more missed inputs under bad net conditions")]
     public float sendBufferLength = 0.15f;
-
-    [Space, Tooltip("Whether to extrapolate the local character's movement")]
-    public bool extrapolateLocalInput = true;
-
-    [Header("Remote playback")]
-    [Tooltip("[client] Whether to extrapolate remote clients' movement based on their last input.")]
-    public bool predictRemotes = true;
-    [Range(0f, 1f), Tooltip("[client] How far ahead we can predict other players' movements, maximally")]
-    public float maxRemotePrediction = 0.3f;
-    [Range(0.01f, 0.5f), Tooltip("[client] When predicting other players, this is the tick rate to tick them by. Should be small enough for accuracy but high enough to avoid spending too much processing time on them.")]
-    public float remotePredictionTickRate = 0.08f;
 
     // preallocated outgoing player ticks
     private readonly List<ServerPlayerState> ticksOut = new List<ServerPlayerState>(32);
@@ -154,7 +143,7 @@ public class GameTicker : NetworkBehaviour
             if (Time.realtimeSinceStartupAsDouble - realtimeOfLastProcessedServerTick < timeTilLag + 1f / Netplay.singleton.playerTickrate) // add tickrate because we _should_ expect to wait that long
                 predictedServerTime = Time.timeAsDouble + currentClientServerTimeOffset;
             else
-                predictedServerTime += Time.deltaTime * 0.01f;
+                predictedServerTime += Time.deltaTime * 0.01f; // lag
 
             // replica server time should reduce player jumpiness as much as possible, by reducing how far we need to predict them, which is normally by local ping.
             // predictedServerTime - smoothLocalPlayerPing is basically no jumpiness, we just need to clamp to the tolerance setting
@@ -333,9 +322,9 @@ public class GameTicker : NetworkBehaviour
                 tick = MakeTickMessage();
 
                 // we need to send it to each of them individually due to differing client times
-                for (int i = 0; i < tick.ticks.Count; i++)
+                for (int i = 0; i < tick.playerStates.Count; i++)
                 {
-                    Character character = Netplay.singleton.players[tick.ticks.Array[tick.ticks.Offset + i].id];
+                    Character character = Netplay.singleton.players[tick.playerStates.Array[tick.playerStates.Offset + i].id];
 
                     if (character.netIdentity.connectionToClient != null && character.netIdentity.connectionToClient.identity != null) // bots don't have a connection
                     {
@@ -386,7 +375,7 @@ public class GameTicker : NetworkBehaviour
         ServerTickMessage tick = new ServerTickMessage()
         {
             serverTime = predictedServerTime,
-            ticks = new ArraySegment<ServerPlayerState>(ticksOut.ToArray()),
+            playerStates = new ArraySegment<ServerPlayerState>(ticksOut.ToArray()),
         };
 
         return tick;
@@ -397,24 +386,28 @@ public class GameTicker : NetworkBehaviour
     /// </summary>
     private void ApplyServerTick(ServerTickMessage tickMessage)
     {
-        double effectiveStateTime = TimeTool.Quantize(tickMessage.serverTime, fixedInputRate);
+        double gameStateTime = TimeTool.Quantize(tickMessage.serverTime, fixedInputRate);
+        double replicaStateTime = TimeTool.Quantize(tickMessage.serverTime + (predictedServerTime - predictedReplicaServerTime), fixedInputRate); // replicas might not tick as far ahead
 
-        foreach (var tick in tickMessage.ticks)
+        foreach (ServerPlayerState playerState in tickMessage.playerStates)
         {
-            Character character = Netplay.singleton.players[tick.id];
+            Character character = Netplay.singleton.players[playerState.id];
 
             if (character)
             {
                 // Receive character state and rewind character to the server time
+                // We do a hack with replicas if server lag compensation is on. We don't want to predict them as far, but as of writing Timeline only ticks everything to the same time
+                // So as a trick to predict them less, we shift their states further ahead on the timeline
+                double effectiveStateTime = character == Netplay.singleton.localPlayer ? gameStateTime : replicaStateTime;
                 PlayerSounds sounds = character.GetComponent<PlayerSounds>();
                 Timeline.Entity<CharacterState, CharacterInput> entity = character.entity;
 
-                sounds.ReceiveSoundHistory(tick.sounds);
+                sounds.ReceiveSoundHistory(playerState.sounds);
 
-                if (character != Netplay.singleton.localPlayer) // local player's inputs are more accurate timing-wise, don't interweave them with poorly estimated inputs (serverTime is NOT the exact time the inputs went in!)
-                    entity.InsertInput(tick.lastInput, effectiveStateTime);
+                if (character != Netplay.singleton.localPlayer) // local player's inputs are more accurate timing-wise so don't overwrite them
+                    entity.InsertInput(playerState.lastInput, effectiveStateTime);
 
-                entity.StoreStateAt(tick.state, effectiveStateTime);
+                entity.StoreStateAt(playerState.state, effectiveStateTime);
             }
         }
 

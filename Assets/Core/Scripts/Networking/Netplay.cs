@@ -41,7 +41,7 @@ public class Netplay : MonoBehaviour
     public float pingsPerSecond = 2f;
 
     [Header("Tickrate")]
-    public float playerTickrate = 10f;
+    public float playerTickrate = 10f; // note - not sure if still valid - check GameTicker.timelineSettings
 
     public bool isPlayerTick => (int)(Time.unscaledTime * playerTickrate) != (int)((Time.unscaledTime - Time.unscaledDeltaTime) * playerTickrate);
 
