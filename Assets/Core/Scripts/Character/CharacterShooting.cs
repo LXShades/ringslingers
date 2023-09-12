@@ -13,7 +13,7 @@ public class CharacterShooting : NetworkBehaviour
     /// <summary>
     /// List of weapons that have been picked up
     /// </summary>
-    public SyncList<RingWeapon> weapons = new SyncList<RingWeapon>();
+    public readonly SyncList<RingWeapon> weapons = new SyncList<RingWeapon>();
 
     /// <summary>
     /// Weapons currently equipped by the player. For local player it's locally predicted, for other players it's received form the server.
@@ -33,7 +33,7 @@ public class CharacterShooting : NetworkBehaviour
     private List<RingWeaponSettingsAsset> _localEquippedWeapons = new List<RingWeaponSettingsAsset>();
 
     // Remote selected weapons (other player on client)
-    private SyncList<RingWeaponSettingsAsset> _remoteEquippedWeapons = new SyncList<RingWeaponSettingsAsset>();
+    private readonly SyncList<RingWeaponSettingsAsset> _remoteEquippedWeapons = new SyncList<RingWeaponSettingsAsset>();
 
     /// <summary>
     /// [Server, Client] Generated from the combination of weapons. This is not networked directly but uses the weapons list which is.

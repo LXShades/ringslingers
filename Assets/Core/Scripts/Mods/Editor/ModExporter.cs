@@ -134,7 +134,8 @@ public class ModExporterEditorWindow : EditorWindow
 
         settings.lastExportPath = exportPath;
 
-        AssetBundleManifest manifest = RingslingersAssetManager.BuildAssetBundles(true, false, exportPath, settings.modsPathsToExport.ToArray());
+        AssetBundleManifest manifest = RingslingersAssetManager.BuildAssetBundles(true, false, RingslingersCoreLoader.modBuildDirectory, settings.modsPathsToExport.ToArray(), 
+            RingslingersAssetManager.ModExportCopyFlags.CopyToBuildModsFolder | RingslingersAssetManager.ModExportCopyFlags.CopyToAdditionalCopyPath, exportPath);
 
         if (manifest != null)
         {

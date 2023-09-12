@@ -23,8 +23,9 @@ public class RingslingersCoreLoader : MonoBehaviour
     // Of course, you gotta keep this up to date!
     public const string bootAssetPath = "Assets/Core/RingslingersCore.Assets/Prefabs/Boot.prefab";
 
-    public static string gameBuildPath = $"{Application.dataPath}/../Builds";
-    public static string coreAssetsBuildPath = $"{Application.dataPath}/../Builds/AssetBundles";
+    public static string gameBuildDirectory = $"{Application.dataPath}/../Builds";
+    public static string assetBundleBuildDirectory = $"{Application.dataPath}/../Builds/AssetBundles";
+    public static string modBuildDirectory = $"{Application.dataPath}/../Builds/Mods";
 
     public const string coreAssetBundleName = "ringslingerscore.assets";
     public const string coreSceneBundleName = "ringslingerscore.scenes";
@@ -40,9 +41,10 @@ public class RingslingersCoreLoader : MonoBehaviour
 #if DISABLE_ASSETBUNDLES
         areAssetBundlesEnabled = false;
 #endif
-
+#if UNITY_EDITOR
         if (useEditorAssetsIfAvailable)
             areAssetBundlesEnabled = false;
+#endif
 
         // Start loading the core game content as early as possible
         LoadCoreContent();
@@ -63,7 +65,7 @@ public class RingslingersCoreLoader : MonoBehaviour
 #if UNITY_EDITOR
                 Debug.Log("[RingslingersCoreLoader] Using EDITOR ASSETS to load the game. These are different to the assets used in builds and do not support mods.");
                 bootAsset = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(bootAssetPath);
-#else
+#elif DISABLE_ASSETBUNDLES
                 Debug.Log("[RingslingersCoreLoader] Using BUILD SCENES to load the game. These are different to the assets used in moddable builds, and mods are disabled.");
                 bootAsset = bootAssetIfDisabledAssetBundles;
 #endif
@@ -75,7 +77,7 @@ public class RingslingersCoreLoader : MonoBehaviour
             }
             else
             {
-                Debug.LogError("[RingslingersCoreLoader] Fatal erorr occurred while trying to load Ringslingers Core content. The Boot asset could not be found.");
+                Debug.LogError("[RingslingersCoreLoader] Fatal error occurred while trying to load Ringslingers Core content. The Boot asset could not be found.");
             }
         }
         else
@@ -92,8 +94,8 @@ public class RingslingersCoreLoader : MonoBehaviour
         {
 #if UNITY_EDITOR
             // Load them from the editor build folder for the latest versions
-            commonAssets = AssetBundle.LoadFromFile($"{coreAssetsBuildPath}/{coreAssetBundleName}");
-            commonScenes = AssetBundle.LoadFromFile($"{coreAssetsBuildPath}/{coreSceneBundleName}");
+            commonAssets = AssetBundle.LoadFromFile($"{assetBundleBuildDirectory}/{coreAssetBundleName}");
+            commonScenes = AssetBundle.LoadFromFile($"{assetBundleBuildDirectory}/{coreSceneBundleName}");
 #else
             commonAssets = AssetBundle.LoadFromFile(coreAssetBundleName);
             commonScenes = AssetBundle.LoadFromFile(coreSceneBundleName);

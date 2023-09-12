@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,15 @@ using UnityEngine;
 
 public class RingslingersAssetManager
 {
+    [Flags]
+    public enum ModExportCopyFlags
+    {
+        None = 0,
+        CopyToBuildCoreFolder = 1,
+        CopyToBuildModsFolder = 2,
+        CopyToAdditionalCopyPath = 4
+    }
+
     public static bool shouldUseEditorAssetsInPlaymode
     {
         get => EditorPrefs.GetBool("shouldUseEditorAssetsInPlaymode", true);
@@ -33,10 +43,7 @@ public class RingslingersAssetManager
     [MenuItem("Ringslingers/Build Core AssetBundles", priority = 0)]
     public static void BuildCoreAssetBundles()
     {
-        if (!System.IO.Directory.Exists(RingslingersCoreLoader.coreAssetsBuildPath))
-            System.IO.Directory.CreateDirectory(RingslingersCoreLoader.coreAssetsBuildPath);
-
-        AssetBundleManifest manifest = BuildAssetBundles(true, true, RingslingersCoreLoader.coreAssetsBuildPath, null);
+        AssetBundleManifest manifest = BuildAssetBundles(true, true, RingslingersCoreLoader.assetBundleBuildDirectory, null, ModExportCopyFlags.CopyToBuildCoreFolder);
 
         if (manifest != null)
             EditorUtility.DisplayDialog("Success", "Core assets built successfully", "OK");
@@ -47,10 +54,7 @@ public class RingslingersAssetManager
     [MenuItem("Ringslingers/Build Core AssetBundles (exclude scenes)", priority = 1)]
     public static void BuildCoreAssetBundles_ExcludeScenes()
     {
-        if (!System.IO.Directory.Exists(RingslingersCoreLoader.coreAssetsBuildPath))
-            System.IO.Directory.CreateDirectory(RingslingersCoreLoader.coreAssetsBuildPath);
-
-        AssetBundleManifest manifest = BuildAssetBundles(true, false, RingslingersCoreLoader.coreAssetsBuildPath, null);
+        AssetBundleManifest manifest = BuildAssetBundles(true, false, RingslingersCoreLoader.assetBundleBuildDirectory, null, ModExportCopyFlags.CopyToBuildCoreFolder);
 
         if (manifest != null)
             EditorUtility.DisplayDialog("Success", "Core assets built successfully", "OK");
@@ -61,7 +65,7 @@ public class RingslingersAssetManager
     [MenuItem("Ringslingers/Open Core AssetBundle Build Folder", priority = 2)]
     public static void OpenAssetBundleFolder()
     {
-        System.Diagnostics.Process.Start(RingslingersCoreLoader.coreAssetsBuildPath);
+        System.Diagnostics.Process.Start(RingslingersCoreLoader.assetBundleBuildDirectory);
     }
 
     [MenuItem("Ringslingers/Disable AssetBundles in Playmode (disables mods in editor)", priority = 30)]
@@ -82,7 +86,7 @@ public class RingslingersAssetManager
         return true;
     }
 
-    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)", priority = 31)]
+    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods in build)", priority = 31)]
     private static void BuildModlessVersionForPlaytests()
     {
         shouldBuildModlessVersionForPlaytests = !shouldBuildModlessVersionForPlaytests;
@@ -93,10 +97,10 @@ public class RingslingersAssetManager
             EditorUtility.DisplayDialog("In Unity, everything has a sacrifice", "When this is disabled, mods are enabled in builds. However, you must Build Core AssetBundles as necessary for scene and prefab changes to take place.", "I understand");
     }
 
-    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)", validate = true)]
+    [MenuItem("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods in build)", validate = true)]
     private static bool BuildModlessVersionForPlaytests_Validate()
     {
-        Menu.SetChecked("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods)", shouldUseEditorAssetsInPlaymode);
+        Menu.SetChecked("Ringslingers/Disable AssetBundles for Playtest Builds (disables mods in build)", shouldBuildModlessVersionForPlaytests);
         return true;
     }
 
@@ -106,7 +110,7 @@ public class RingslingersAssetManager
     /// Usually, you want includeCoreAssets to be true to ensure any added mods use those assets rather than duplicating them (which causes trouble)
     /// IncludeCoreScenes only needs to be true if you want to build the core scenes
     /// </summary>
-    public static AssetBundleManifest BuildAssetBundles(bool includeCoreAssets, bool includeCoreScenes, string exportPath, string[] modContentDatabasePathsToExport)
+    public static AssetBundleManifest BuildAssetBundles(bool includeCoreAssets, bool includeCoreScenes, string buildPath, string[] modContentDatabasePathsToExport, ModExportCopyFlags copyFlags, string additionalCopyPath = null)
     {
         StringBuilder sb = new StringBuilder();
         List<AssetBundleBuild> bundleBuilds = new List<AssetBundleBuild>();
@@ -194,8 +198,11 @@ public class RingslingersAssetManager
             bundleDefinitions = bundleBuilds.ToArray(),
             targetPlatform = EditorUserBuildSettings.activeBuildTarget,
             options = BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.DisableLoadAssetByFileName | BuildAssetBundleOptions.DisableLoadAssetByFileNameWithExtension,
-            outputPath = exportPath
+            outputPath = buildPath
         };
+
+        if (!System.IO.Directory.Exists(buildPath))
+            System.IO.Directory.CreateDirectory(buildPath);
 
         AssetBundleManifest manifest;
         try
@@ -211,20 +218,46 @@ public class RingslingersAssetManager
         if (manifest != null)
         {
             // Copy the bundles all builds in the build folder
-            string buildFolder = System.IO.Path.GetFullPath(RingslingersCoreLoader.gameBuildPath);
+            string buildFolder = System.IO.Path.GetFullPath(RingslingersCoreLoader.gameBuildDirectory);
             int numFilesCopied = 0;
 
-            foreach (string buildDirectory in System.IO.Directory.EnumerateDirectories(buildFolder, "*", new System.IO.EnumerationOptions() { RecurseSubdirectories = true }))
+            if ((copyFlags & (ModExportCopyFlags.CopyToBuildCoreFolder | ModExportCopyFlags.CopyToBuildModsFolder)) != 0)
             {
-                string directoryName = System.IO.Path.GetFileName(buildDirectory);
-
-                if (directoryName == $"{Application.productName}_Data")
+                foreach (string gameBuildDirectory in System.IO.Directory.EnumerateDirectories(buildFolder, "*", new System.IO.EnumerationOptions() { RecurseSubdirectories = true }))
                 {
-                    foreach (var bundleBuild in bundleBuilds)
+                    string directoryName = System.IO.Path.GetFileName(gameBuildDirectory);
+
+                    if (directoryName == $"{Application.productName}_Data")
                     {
-                        System.IO.File.Copy($"{exportPath}/{bundleBuild.assetBundleName}", $"{buildDirectory}/{bundleBuild.assetBundleName}", true);
+                        string buildCoreFolder = $"{gameBuildDirectory}";
+                        string buildModFolder = $"{gameBuildDirectory}/Mods";
+
+                        foreach (AssetBundleBuild bundleBuild in bundleBuilds)
+                        {
+                            numFilesCopied++;
+
+                            if ((copyFlags & ModExportCopyFlags.CopyToBuildCoreFolder) != 0)
+                                System.IO.File.Copy($"{buildPath}/{bundleBuild.assetBundleName}", $"{buildCoreFolder}/{bundleBuild.assetBundleName}", true);
+                            if ((copyFlags & ModExportCopyFlags.CopyToBuildModsFolder) != 0)
+                            {
+                                if (!System.IO.Directory.Exists(buildModFolder))
+                                    System.IO.Directory.CreateDirectory(buildModFolder);
+
+                                System.IO.File.Copy($"{buildPath}/{bundleBuild.assetBundleName}", $"{buildModFolder}/{bundleBuild.assetBundleName}", true);
+                            }
+                        }
                     }
                 }
+            }
+
+            // and to the additional copy target if provided
+            if ((copyFlags & ModExportCopyFlags.CopyToAdditionalCopyPath) != 0)
+            {
+                if (!System.IO.Directory.Exists(additionalCopyPath))
+                    System.IO.Directory.CreateDirectory(additionalCopyPath);
+
+                foreach (AssetBundleBuild bundleBuild in bundleBuilds)
+                    System.IO.File.Copy($"{buildPath}/{bundleBuild.assetBundleName}", $"{additionalCopyPath}/{bundleBuild.assetBundleName}", true);
             }
 
             if (numFilesCopied > 0)
