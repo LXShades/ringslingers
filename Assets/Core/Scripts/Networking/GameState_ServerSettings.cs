@@ -38,7 +38,8 @@ public class GameState_ServerSettings : GameStateComponent
     {
         base.OnStartClient();
 
-        addedMods.Callback += ClientOnAddedModsCallback;
+        if (!NetworkServer.active)
+            addedMods.Callback += ClientOnAddedModsCallback;
     }
 
     void OnDestroy()
@@ -49,7 +50,7 @@ public class GameState_ServerSettings : GameStateComponent
 
     private void Update()
     {
-        if (clientModsNeedRechecking)
+        if (clientModsNeedRechecking && !NetworkServer.active)
         {
             ClientCheckAndLoadMods();
             clientModsNeedRechecking = false;
@@ -73,7 +74,7 @@ public class GameState_ServerSettings : GameStateComponent
             if (i < ModManager.loadedMods.Count)
             {
                 if (addedMods[i].filename != ModManager.loadedMods[i].filename)
-                    Debug.LogError($"Mod loaded at idx={i} \"{addedMods[i].filename}\" does not match server mod requested at idx={i} \"{addedMods[i]}\". TODO kick you from the game because it will break.");
+                    Netplay.singleton.DisconnectSelfWithMessage($"Mod loaded at idx={i} '{ModManager.loadedMods[i].filename}' does not match server mod requested at idx={i} '{addedMods[i].filename}'.", true);
                 else
                     continue;
             }
@@ -89,12 +90,17 @@ public class GameState_ServerSettings : GameStateComponent
 
     private void ClientOnModLoaded(RingslingersMod mod, ulong originalModHash, bool wasSuccessful, string message)
     {
+        string errorMessage = null;
+
         if (!wasSuccessful)
-            Debug.LogError($"Mod \"{mod.filename}\" could not be loaded (error: {message})");
+            errorMessage = $"Mod '{mod.filename}': {message})";
         else if (ModManager.GetModHash(mod.filename) != originalModHash)
-            Debug.LogError($"Mod \"{mod.filename}\" has incorrect hash, wrong version?");
+            errorMessage = $"Mod '{mod.filename}' has an incorrect hash, wrong version?";
         else
             Debug.Log($"Successfully loaded mod \"{mod.filename}\" from server");
+
+        if (errorMessage != null)
+            Netplay.singleton.DisconnectSelfWithMessage($"The server added a mod that triggered an error:\n\n{errorMessage}", true);
     }
 
     private void OnModLoaded(RingslingersMod mod)

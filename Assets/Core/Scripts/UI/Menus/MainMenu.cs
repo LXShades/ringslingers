@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,6 +12,8 @@ public class MainMenu : MonoBehaviour
     public Button hostButton;
     public Button quitButton;
     public GameObject waitMessage;
+    public GameObject messageBoxPanel;
+    public TextMeshProUGUI messageBoxText;
 
     // Start is called before the first frame update
     void Start()
@@ -18,6 +21,17 @@ public class MainMenu : MonoBehaviour
         joinButton.onClick.AddListener(OnJoinClicked);
         quitButton.onClick.AddListener(OnQuitClicked);
         playerName.onValueChanged.AddListener(OnNameChanged);
+
+        if (Netplay.singleton && !string.IsNullOrEmpty(Netplay.singleton.nextDisconnectionErrorMessage))
+        {
+            messageBoxPanel.SetActive(true);
+            messageBoxText.text = Netplay.singleton.nextDisconnectionErrorMessage;
+            Netplay.singleton.ClearDisconnectionErrorMessage();
+        }
+        else
+        {
+            messageBoxPanel.SetActive(false);
+        }
 
         OnNameChanged(playerName.text);
     }

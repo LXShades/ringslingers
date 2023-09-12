@@ -81,6 +81,8 @@ public class Netplay : MonoBehaviour
 
     private NetMan netMan;
 
+    public string nextDisconnectionErrorMessage = null;
+
     public float unreliablePing { get; private set; }
     public float reliablePing { get; private set; }
 
@@ -288,6 +290,23 @@ public class Netplay : MonoBehaviour
     #endregion
 
     #region Connection
+    public void DisconnectSelfWithMessage(string message, bool isError)
+    {
+        if (NetworkClient.isConnectedAndAuthenticated)
+        {
+            nextDisconnectionErrorMessage = message;
+            if (isError)
+                Debug.LogError($"[Netplay] Disconnect reason: {message}");
+            else
+                Debug.Log($"[Netplay] Disconnect reason: {message}");
+            NetworkClient.Disconnect();
+        }
+    }
+
+    public void SetConnectionErrorMessage(string message) => nextDisconnectionErrorMessage = message;
+
+    public void ClearDisconnectionErrorMessage() => nextDisconnectionErrorMessage = null;
+
     public void ConnectToServer(string ipString)
     {
         if (netMan || InitNet())

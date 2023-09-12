@@ -16,7 +16,7 @@ public class Player : NetworkBehaviour
         {
             _localPersistent = value;
 
-            if (Netplay.singleton.localClient != null)
+            if (Netplay.singleton && Netplay.singleton.localClient != null)
             {
                 Netplay.singleton.localClient.CmdSendPersistentData(value);
             }

@@ -39,9 +39,9 @@ public class ModButton : MonoBehaviour
 
         // We always have an assets path, if there's a scenes path we add that too
         if (modScenesPath != null)
-            modsToLoad = new RingslingersMod[] { new RingslingersMod() { filename = modAssetsPath }, new RingslingersMod() { filename = modScenesPath } };
+            modsToLoad = new RingslingersMod[] { new RingslingersMod() { filename = System.IO.Path.GetFileName(modAssetsPath) }, new RingslingersMod() { filename = System.IO.Path.GetFileName(modScenesPath) } };
         else
-            modsToLoad = new RingslingersMod[] { new RingslingersMod() { filename = modAssetsPath } };
+            modsToLoad = new RingslingersMod[] { new RingslingersMod() { filename = System.IO.Path.GetFileName(modAssetsPath) } };
 
         ModManager.LoadMods(modsToLoad, (wasSuccessful, loadedMod) => {
             if (wasSuccessful)

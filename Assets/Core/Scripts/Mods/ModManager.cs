@@ -79,6 +79,9 @@ public class ModManager
 
             if (!System.IO.File.Exists(System.IO.Path.Combine(activeModDirectory, mod.filename)))
                 errors.AppendLine($"Mod \"{mod.filename}\" could not be found in {activeModDirectory}");
+
+            // strip path from the filename if there is one (there shouldn't really be a path)
+            mod.filename = System.IO.Path.GetFileName(mod.filename);
         }
 
         if (errors.Length > 0)
