@@ -8,6 +8,9 @@ using UnityEngine.ProBuilder.Shapes;
 
 public class RingslingersClientAuthenticator : NetworkAuthenticator
 {
+    private int maxRejectionQueueLength = 10;
+    private Queue<NetworkConnection> rejectionQueue = new Queue<NetworkConnection>();
+
     public struct ServerModsMessage : NetworkMessage
     {
         public RingslingersMod[] loadedMods;
@@ -27,6 +30,8 @@ public class RingslingersClientAuthenticator : NetworkAuthenticator
     {
         public bool hasAllRequiredMods;
     }
+
+    private string lastModLoadMessage = null;
 
     public override void OnStartServer()
     {
@@ -81,7 +86,9 @@ public class RingslingersClientAuthenticator : NetworkAuthenticator
         else
         {
             source.Send(new ServerResponseMessage() { error = $"You don't have the necessary mods" });
-            ServerReject(source);
+            rejectionQueue.Enqueue(source);
+            StartCoroutine(RejectClientRoutine());
+            //ServerReject(source);
         }
     }
 
@@ -89,7 +96,14 @@ public class RingslingersClientAuthenticator : NetworkAuthenticator
     {
         if (!string.IsNullOrEmpty(response.error))
         {
+            // Client was rejected
             Debug.LogError($"Rejected by server: {response.error}");
+
+            string error = $"Cannot join this server:\n{response.error}";
+            if (lastModLoadMessage != null)
+                error += $"\n{lastModLoadMessage}";
+
+            Netplay.singleton.DisconnectSelfWithMessage(error, true);
             ClientReject();
         }
         else
@@ -99,21 +113,37 @@ public class RingslingersClientAuthenticator : NetworkAuthenticator
         }
     }
 
+    // reject clients with a delay so we should have enough time to tell them goodbye
+    private IEnumerator RejectClientRoutine()
+    {
+        while (rejectionQueue.Count > 0)
+        {
+            yield return new WaitForSeconds(1);
+            ServerReject(rejectionQueue.Dequeue());
+        }
+    }
+
     private void ClientOnServerModsMessage(ServerModsMessage mods)
     {
         if (mods.loadedMods.Length > 0)
         {
             Debug.Log($"Server has mods enabled, adding them now");
 
-            ModManager.LoadMods(mods.loadedMods, (bool wasSuccessful, string message) =>
+            ModManager.TrySyncMods(mods.loadedMods, (bool wasSuccessful, string message) =>
             {
-                Debug.Log($"Mod load success: {wasSuccessful} message: {message}");
+                if (wasSuccessful)
+                    Debug.Log($"Mod load SUCCEEDED: {message}");
+                else
+                    Debug.LogError($"Mod load FAILED: {message}");
+
+                lastModLoadMessage = message;
 
                 NetworkClient.connection.Send(new ClientModStatusMessage() { hasAllRequiredMods = wasSuccessful });
             });
         }
         else
         {
+            lastModLoadMessage = null;
             NetworkClient.connection.Send(new ClientModStatusMessage() { hasAllRequiredMods = true });
         }
     }

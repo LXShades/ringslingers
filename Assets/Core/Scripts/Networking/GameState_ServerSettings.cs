@@ -1,4 +1,6 @@
 using Mirror;
+using System;
+using System.Linq;
 using UnityEngine;
 
 public class GameState_ServerSettings : GameStateComponent
@@ -69,35 +71,24 @@ public class GameState_ServerSettings : GameStateComponent
 
     private void ClientCheckAndLoadMods()
     {
-        for (int i = 0; i < addedMods.Count; i++)
+        try
         {
-            if (i < ModManager.loadedMods.Count)
-            {
-                if (addedMods[i].filename != ModManager.loadedMods[i].filename)
-                    Netplay.singleton.DisconnectSelfWithMessage($"Mod loaded at idx={i} '{ModManager.loadedMods[i].filename}' does not match server mod requested at idx={i} '{addedMods[i].filename}'.", true);
-                else
-                    continue;
-            }
-            else
-            {
-                ulong originalModHash = addedMods[i].hash;
-                RingslingersMod modToLoad = addedMods[i];
-
-                ModManager.LoadMods(new RingslingersMod[] { modToLoad }, (wasSuccessful, message) => ClientOnModLoaded(modToLoad, originalModHash, wasSuccessful, message ));
-            }
+            ModManager.TrySyncMods(addedMods.ToArray(), (wasSuccessful, message) => ClientOnModLoaded(wasSuccessful, message));
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
         }
     }
 
-    private void ClientOnModLoaded(RingslingersMod mod, ulong originalModHash, bool wasSuccessful, string message)
+    private void ClientOnModLoaded(bool wasSuccessful, string message)
     {
         string errorMessage = null;
 
         if (!wasSuccessful)
-            errorMessage = $"Mod '{mod.filename}': {message})";
-        else if (ModManager.GetModHash(mod.filename) != originalModHash)
-            errorMessage = $"Mod '{mod.filename}' has an incorrect hash, wrong version?";
+            errorMessage = $"Errors loading mods:\n{message}";
         else
-            Debug.Log($"Successfully loaded mod \"{mod.filename}\" from server");
+            Debug.Log($"Successfully loaded mods from server");
 
         if (errorMessage != null)
             Netplay.singleton.DisconnectSelfWithMessage($"The server added a mod that triggered an error:\n\n{errorMessage}", true);

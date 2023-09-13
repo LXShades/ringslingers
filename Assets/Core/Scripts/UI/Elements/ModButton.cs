@@ -22,7 +22,7 @@ public class ModButton : MonoBehaviour
 
     private void RefreshTextAndInteractivity()
     {
-        if (ModManager.loadedMods.Find(x => string.Compare(System.IO.Path.GetFullPath(x.filename), System.IO.Path.GetFullPath(modAssetsPath), true) == 0) != null)
+        if (ModManager.loadedMods.Find(x => string.Compare(System.IO.Path.GetFileName(x.filename), System.IO.Path.GetFileName(modAssetsPath), true) == 0) != null)
         {
             button.interactable = false; // Mod is already loaded
             text.text = $"<ADDED> {System.IO.Path.GetFileNameWithoutExtension(modAssetsPath)}";
@@ -43,7 +43,7 @@ public class ModButton : MonoBehaviour
         else
             modsToLoad = new RingslingersMod[] { new RingslingersMod() { filename = System.IO.Path.GetFileName(modAssetsPath) } };
 
-        ModManager.LoadMods(modsToLoad, (wasSuccessful, loadedMod) => {
+        ModManager.LoadMods(modsToLoad, false, (wasSuccessful, loadedMod) => {
             if (wasSuccessful)
                 Debug.Log("Mod successfully loaded");
             else

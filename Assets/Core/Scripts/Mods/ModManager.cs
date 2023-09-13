@@ -1,3 +1,4 @@
+using Mirror;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -49,11 +50,54 @@ public class ModManager
     private static AssetBundleCreateRequest modLoadOperation = null;
 
     /// <summary>
+    /// Tries to synchronise our mod list with the given mod list
+    /// 
+    /// The given mod list must have valid hashes set, and they will be checked
+    /// </summary>
+    public static void TrySyncMods(RingslingersMod[] desiredMods, LoadedModsDelegate onFinished)
+    {
+        StringBuilder errors = new StringBuilder();
+
+        for (int i = 0; i < desiredMods.Length; i++)
+        {
+            if (desiredMods[i].hash == 0)
+                errors.AppendLine($"Mod at idx={desiredMods[i]} has an invalid hash");
+        }
+
+        for (int i = 0; i < loadedMods.Count; i++)
+        {
+            if (i < desiredMods.Length)
+            {
+                if (desiredMods[i].filename != loadedMods[i].filename)
+                    errors.AppendLine($"Loaded mod at idx={i} '{loadedMods[i].filename}' does not match requested mod at idx={i} '{desiredMods[i].filename}'.");
+                else
+                    continue;
+            }
+            else
+            {
+                // we kinda need to be able to unload mods on the fly
+                errors.AppendLine($"Mod '{loadedMods[i].filename}' is loaded when there should be no mod at idx={i}.");
+            }
+        }
+        
+        if (errors.Length > 0)
+        {
+            // Failed: loaded mods list is out of sync
+            onFinished?.Invoke(false, errors.ToString());
+            return;
+        }
+
+        // Try loading the remaining mods
+        if (desiredMods.Length > loadedMods.Count)
+            LoadMods(desiredMods.AsSpan(loadedMods.Count, desiredMods.Length - loadedMods.Count).ToArray(), true, onFinished);
+    }
+
+    /// <summary>
     /// Loads a set of mods. Note that some properties may be changed (filename)
     /// 
     /// TODO: input and output is the RingslingersMod provided, but they should probably be split into descriptor (filename, crc etc) and instance (loadedAssetBundle, etc)
     /// </summary>
-    public static void LoadMods(RingslingersMod[] mods, LoadedModsDelegate onFinished)
+    public static void LoadMods(RingslingersMod[] mods, bool enableHashCheck, LoadedModsDelegate onFinished)
     {
         if (!RingslingersCoreLoader.areAssetBundlesEnabled)
         {
@@ -78,7 +122,16 @@ public class ModManager
                 mod.filename = System.IO.Path.ChangeExtension(mod.filename, "assetbundle");
 
             if (!System.IO.File.Exists(System.IO.Path.Combine(activeModDirectory, mod.filename)))
-                errors.AppendLine($"Mod \"{mod.filename}\" could not be found in {activeModDirectory}");
+                errors.AppendLine($"Mod '{mod.filename}' could not be found in {activeModDirectory}");
+            else
+            {
+                if (enableHashCheck)
+                {
+                    ulong localModHash = GetModHash(mod.filename);
+                    if (localModHash != mod.hash)
+                        errors.AppendLine($"Mod '{mod.filename}' has an incorrect hash (requested {mod.hash}, got {localModHash}). Wrong version?");
+                }
+            }
 
             // strip path from the filename if there is one (there shouldn't really be a path)
             mod.filename = System.IO.Path.GetFileName(mod.filename);

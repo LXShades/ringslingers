@@ -292,7 +292,7 @@ public class Netplay : MonoBehaviour
     #region Connection
     public void DisconnectSelfWithMessage(string message, bool isError)
     {
-        if (NetworkClient.isConnectedAndAuthenticated)
+        if (NetworkClient.isConnected)
         {
             nextDisconnectionErrorMessage = message;
             if (isError)

@@ -36,6 +36,11 @@ public class MainMenu : MonoBehaviour
         OnNameChanged(playerName.text);
     }
 
+    private void OnDestroy()
+    {
+        NetMan.singleton.onClientDisconnect -= OnConnectionFailed;
+    }
+
     private void OnJoinClicked()
     {
         SetMenuEnabled(false);
