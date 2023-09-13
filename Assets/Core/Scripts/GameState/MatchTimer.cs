@@ -26,7 +26,7 @@ public class MatchTimer : MatchStateComponent
                     RpcTimeUpdate(timeRemaining);
 
                 if (timeRemaining - Time.deltaTime <= 0f)
-                    MatchState.singleton.ServerEndGame(); // end game when time runs out
+                    MatchState.singleton.ServerEndRound(); // end game when time runs out
             }
 
             timeRemaining = Mathf.Max(timeRemaining - Time.deltaTime, 0f);

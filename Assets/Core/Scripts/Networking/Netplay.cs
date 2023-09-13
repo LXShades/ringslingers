@@ -177,6 +177,12 @@ public class Netplay : MonoBehaviour
             return;
         }
 
+        if (NetworkServer.isLoadingScene)
+        {
+            Log.WriteWarning($"[ServerNextMap()] The map is already changing");
+            return;
+        }
+
         if (RingslingersContent.loaded.mapRotations.Count == 0)
         {
             Log.WriteWarning("[ServerNextMap()] There are no map rotations loaded");
@@ -201,10 +207,18 @@ public class Netplay : MonoBehaviour
                 break;
         }
 
-        ServerLoadLevel(maps[( + 1) % maps.Count]);
+        ServerLoadLevel(maps[nextMapIndex]);
     }
 
     #region Game
+    public void ConsoleCommand_EndRound()
+    {
+        if (!MatchState.singleton.IsWinScreen)
+            MatchState.singleton.ServerEndRound();
+        else
+            MatchState.singleton.ServerSkipWinScreen();
+    }
+
     private void OnSceneChanged(UnityEngine.SceneManagement.Scene oldScene, UnityEngine.SceneManagement.Scene newScene)
     {
         StartMatch();

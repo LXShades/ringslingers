@@ -18,7 +18,7 @@ public class MatchTeams : MatchStateComponent
             _blueTeamPoints++;
 
         if (redTeamPoints >= pointLimit || blueTeamPoints >= pointLimit)
-            MatchState.singleton.ServerEndGame();
+            MatchState.singleton.ServerEndRound();
     }
 
     public PlayerTeam FindBestTeamToJoin()

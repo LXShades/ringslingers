@@ -12,8 +12,11 @@ public class Chatbox : MonoBehaviour
 
     private PlayerControls input;
 
+    private ChatboxCommands commands;
+
     private void Start()
     {
+        commands = GetComponent<ChatboxCommands>();
         input = GameManager.singleton.input;
         chatInput.gameObject.SetActive(false);
 
@@ -40,7 +43,13 @@ public class Chatbox : MonoBehaviour
     {
         if (Keyboard.current.enterKey.wasPressedThisFrame && text != defaultText && !string.IsNullOrEmpty(text))
         {
-            Netplay.singleton.localClient?.CmdSendMessage(text);
+            if (text.StartsWith("/"))
+            {
+                if (!commands.OnCommandSubmitted(text.Substring(1), out string error))
+                    MessageFeed.PostLocal(error);
+            }
+            else
+                Netplay.singleton.localClient?.CmdSendMessage(text);
         }
 
         chatInput.gameObject.SetActive(false);

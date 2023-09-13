@@ -86,7 +86,10 @@ public class MatchState : NetworkBehaviour
             timeTilRestart -= Time.deltaTime;
 
             if (timeTilRestart <= 0f)
+            {
+                _isWinScreen = false;
                 Netplay.singleton.ServerNextMap();
+            }
         }
     }
 
@@ -112,9 +115,16 @@ public class MatchState : NetworkBehaviour
     /// It's ok to spam this function
     /// </summary>
     [Server]
-    public void ServerEndGame()
+    public void ServerEndRound()
     {
         _isWinScreen = true;
+    }
+
+    [Server]
+    public void ServerSkipWinScreen()
+    {
+        if (IsWinScreen)
+            timeTilRestart = 0.001f;
     }
 
     [ClientRpc(channel = Channels.Unreliable)]
