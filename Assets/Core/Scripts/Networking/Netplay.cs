@@ -441,7 +441,7 @@ public class Netplay : MonoBehaviour
         return character;
     }
 
-    public Character ChangePlayerCharacter(int playerId, int characterIndex)
+    public Character ChangePlayerCharacter(int playerId, int characterIndex, Player owner)
     {
         if (characterIndex < 0 || characterIndex >= RingslingersContent.loaded.characters.Count)
         {
@@ -459,12 +459,13 @@ public class Netplay : MonoBehaviour
             players[playerId] = null;
         }
 
-        Character player = Spawner.Spawn(RingslingersContent.loaded.characters[characterIndex].prefab).GetComponent<Character>();
+        Character character = Spawner.Spawn(RingslingersContent.loaded.characters[characterIndex].prefab).GetComponent<Character>();
 
-        player.characterIndex = characterIndex;
-        player.Rename(playerName);
+        character.serverOwningPlayer = owner;
+        character.characterIndex = characterIndex;
+        character.Rename(playerName);
 
-        return player;
+        return character;
     }
 
     public void RemovePlayer(int id)

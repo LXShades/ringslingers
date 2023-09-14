@@ -81,7 +81,7 @@ public class Player : NetworkBehaviour
         // Character
         if (persistentData.characterIndex >= 0 && persistentData.characterIndex < RingslingersContent.loaded.characters.Count && character != null && character.characterIndex != persistentData.characterIndex)
         {
-            Character player = Netplay.singleton.ChangePlayerCharacter(playerId, persistentData.characterIndex);
+            Character player = Netplay.singleton.ChangePlayerCharacter(playerId, persistentData.characterIndex, this);
 
             if (player != null)
             {
