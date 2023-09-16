@@ -11,14 +11,6 @@ public class CharacterAnimation : MonoBehaviour
     public Transform torso;
     public Transform head;
 
-    [Header("Clips")]
-    public AnimationClip slowRunClip;
-    public AnimationClip fastRunClip;
-    public AnimationClip jumpClip;
-    public AnimationClip spindashClip;
-    public AnimationClip spinClip;
-    public AnimationClip hurtClip;
-
     [Header("Settings")]
     public float legTurnDegreesPerSecond = 360f;
     public float fallTiltDegreesPerSecond = 50f;

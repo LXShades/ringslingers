@@ -297,7 +297,7 @@ Animator:
   m_GameObject: {fileID: 947785863825852060}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 3db183c5f2b07c34391206c3053ce356, type: 2}
+  m_Controller: {fileID: 22100000, guid: 4bf9862597953a743b75e2acdd352acc, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -324,6 +324,7 @@ MonoBehaviour:
   root: {fileID: 1060647861751006646}
   torso: {fileID: 8766570804159803975}
   head: {fileID: 5551344115801321025}
+  animationOverrides: {fileID: 22100000, guid: 4bf9862597953a743b75e2acdd352acc, type: 2}
   legTurnDegreesPerSecond: 720
   fallTiltDegreesPerSecond: 50
   fallTiltMaxDegrees: 20
