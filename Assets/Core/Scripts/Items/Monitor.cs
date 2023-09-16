@@ -79,8 +79,9 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
 
     public void OnMovementCollidedBy(Movement source, TickInfo tickInfo)
     {
-        if (source is PlayerCharacterMovement character && (character.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling)) != 0)
+        if (source is PlayerCharacterMovement character && (character.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.Gliding)) != 0)
         {
+            Debug.Log("monitor ow");
             // bounce off
             float upwardVelocity = -character.velocity.AlongAxis(character.gravityDirection);
             if (upwardVelocity <= -1.0f)
