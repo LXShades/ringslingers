@@ -284,7 +284,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
                 transform.forward = spawnPoint.transform.forward.Horizontal(); // todo
 
                 movement.velocity = Vector3.zero;
-                movement.baseState = CharacterMovementState.None;
+                movement.state = CharacterMovementState.None;
 
                 if (entity != null)
                     entity.StoreCurrentState(entity.latestStateTime);
@@ -573,10 +573,10 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         {
             position = transform.position,
             rotation = transform.rotation,
-            state = movement.baseState,
+            state = movement.state,
             velocity = movement.velocity,
             up = movement.up,
-            spindashChargeLevel = movement.spindashChargeLevel
+            stateFloat = movement.stateFloat
         };
     }
 
@@ -588,10 +588,10 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     {
         transform.position = state.position;
         transform.rotation = state.rotation;
-        movement.baseState = state.state;
+        movement.state = state.state;
         movement.velocity = state.velocity;
         movement.up = state.up;
-        movement.spindashChargeLevel = state.spindashChargeLevel;
+        movement.stateFloat = state.stateFloat;
 
         Physics.SyncTransforms(); // CRUCIAL for correct collision checking - a lot of things broke before adding this...
     }

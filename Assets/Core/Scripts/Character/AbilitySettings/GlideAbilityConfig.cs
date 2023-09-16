@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
-[CreateAssetMenu(fileName = "GlideSettings.asset", menuName = "Glide Settings")]
-public class GlideSettings : ScriptableObject
+[CreateAssetMenu(fileName = "GlideAbilityConfig.asset", menuName = "Glide Ability Config")]
+public class GlideAbilityConfig : ScriptableObject
 {
     public float minSpeed = 5f;
     public float startSpeed = 8f;

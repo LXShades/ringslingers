@@ -71,7 +71,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
 
     public bool ShouldBlockMovement(Movement source, in RaycastHit hit)
     {
-        if (source is PlayerCharacterMovement character && (character.isSpinblading || character.baseState == CharacterMovementState.Gliding))
+        if (source is PlayerCharacterMovement character && (character.isSpinblading || character.state == CharacterMovementState.Gliding))
             return Vector3.Dot(hit.normal, transform.up) >= 0.95f; // being jumped on from the top means we should block, otherwise let the character through
 
         return true;
@@ -79,7 +79,7 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
 
     public void OnMovementCollidedBy(Movement source, TickInfo tickInfo)
     {
-        if (source is PlayerCharacterMovement character && (character.isSpinblading || character.baseState == CharacterMovementState.Gliding))
+        if (source is PlayerCharacterMovement character && (character.isSpinblading || character.state == CharacterMovementState.Gliding))
         {
             // bounce off
             float upwardVelocity = -character.velocity.AlongAxis(character.gravityDirection);

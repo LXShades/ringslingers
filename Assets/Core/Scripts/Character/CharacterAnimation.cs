@@ -32,6 +32,7 @@ public class CharacterAnimation : MonoBehaviour
     private AnimatorBool propIsFreeFalling;
     private AnimatorBool propIsHurt;
     private AnimatorBool propIsGliding;
+    private AnimatorBool propIsFlying;
     private AnimatorFloat propSpinSpeed;
 
     private void Start()
@@ -48,6 +49,7 @@ public class CharacterAnimation : MonoBehaviour
         propIsFreeFalling = new AnimatorBool(animator, "IsFreeFalling");
         propIsHurt = new AnimatorBool(animator, "IsHurt");
         propIsGliding = new AnimatorBool(animator, "IsGliding");
+        propIsFlying = new AnimatorBool(animator, "IsFlying");
         propSpinSpeed = new AnimatorFloat(animator, "SpinSpeed");
     }
 
@@ -65,10 +67,11 @@ public class CharacterAnimation : MonoBehaviour
         propHorizontalForwardSpeed.value = groundVelocity.magnitude * forwardSpeedMultiplier;
         propIsOnGround.value = movement.isOnGround;
         propIsRolling.value = movement.isSpinblading;
-        propIsSpringing.value = !movement.isOnGround && upwardVelocity > 0 && movement.baseState == CharacterMovementState.None;
-        propIsFreeFalling.value = !movement.isOnGround && upwardVelocity < 0 && movement.baseState == CharacterMovementState.None;
-        propIsHurt.value = movement.baseState == CharacterMovementState.Pained;
-        propIsGliding.value = movement.baseState == CharacterMovementState.Gliding;
+        propIsSpringing.value = !movement.isOnGround && upwardVelocity > 0 && movement.state == CharacterMovementState.None;
+        propIsFreeFalling.value = !movement.isOnGround && upwardVelocity < 0 && movement.state == CharacterMovementState.None;
+        propIsHurt.value = movement.state == CharacterMovementState.Pained;
+        propIsGliding.value = movement.state == CharacterMovementState.Gliding;
+        propIsFlying.value = movement.state == CharacterMovementState.Flying;
         propSpinSpeed.value = spinSpeed;
     }
 
@@ -101,7 +104,7 @@ public class CharacterAnimation : MonoBehaviour
                 lastRootRotation = root.rotation;
             }
 
-            if (movement.baseState == CharacterMovementState.Gliding)
+            if (movement.state == CharacterMovementState.Gliding)
             {
                 characterUp = Quaternion.Inverse(root.rotation) * characterUp;
 

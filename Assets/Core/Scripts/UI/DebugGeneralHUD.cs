@@ -25,6 +25,7 @@ public class DebugGeneralHUD : MonoBehaviour
             // Movement
             debugText.text +=
                 $"Player \"{player.playerName}\" info ===\n" +
+                $"MoveState: {player.movement.state}\n" +
                 $"Velocity: {player.movement.velocity} ({player.movement.velocity.magnitude:F2})\n" +
                 $"Ground: {player.movement.isOnGround}\n" +
                 $"GroundNml: {player.movement.groundNormal}\n" +

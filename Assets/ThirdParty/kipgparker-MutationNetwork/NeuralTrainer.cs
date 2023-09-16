@@ -102,7 +102,7 @@ public class NeuralTrainer : MonoBehaviour
             bot.network = networks[i];
             bot.trainingEnvironment = trainingEnvironment;
             bot.movement.velocity = startVelocity;
-            bot.movement.baseState = CharacterMovementState.None;
+            bot.movement.state = CharacterMovementState.None;
             bot.localPlayer = localPlayer;
             bot.trainer = this;
 
