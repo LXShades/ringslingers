@@ -284,7 +284,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
                 transform.forward = spawnPoint.transform.forward.Horizontal(); // todo
 
                 movement.velocity = Vector3.zero;
-                movement.state = 0;
+                movement.baseState = CharacterMovementState.None;
 
                 if (entity != null)
                     entity.StoreCurrentState(entity.latestStateTime);
@@ -573,7 +573,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         {
             position = transform.position,
             rotation = transform.rotation,
-            state = movement.state,
+            state = movement.baseState,
             velocity = movement.velocity,
             up = movement.up,
             spindashChargeLevel = movement.spindashChargeLevel
@@ -588,7 +588,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     {
         transform.position = state.position;
         transform.rotation = state.rotation;
-        movement.state = state.state;
+        movement.baseState = state.state;
         movement.velocity = state.velocity;
         movement.up = state.up;
         movement.spindashChargeLevel = state.spindashChargeLevel;

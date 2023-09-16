@@ -1,6 +1,22 @@
 ﻿using System;
 using UnityEngine;
 
+// Character state is split into multiple sections where each state is exclusive
+// Originally we had a single set of flags, but many states (actually I guess all of them lol) were mutually exclusive so it wasn't the most efficient way of storing and transmitting them
+public enum CharacterMovementState : byte // 3 bits
+{
+    None,
+    Jumped,
+    CanceledJump,
+    Thokked,
+    Pained,
+    Rolling,
+    SpinCharging,
+    Gliding,
+    Climbing,
+    Flying,
+}
+
 public class PlayerCharacterMovement : CharacterMovement
 {
     const float kFracunitSpeedToMetreSpeed = 35f / 64f;
@@ -63,21 +79,6 @@ public class PlayerCharacterMovement : CharacterMovement
     [Header("[PlayerCharacterMovement] Debug")]
     public bool debugDrawMovement = false;
 
-    // States
-    [Flags]
-    public enum State : byte
-    {
-        Jumped   = 1,
-        Rolling  = 2,
-        SpinCharging = 4,
-        Thokked  = 8,
-        CanceledJump = 16,
-        Pained = 32,
-        Gliding = 64,
-        Climbing = 128,
-    };
-    public State state { get; set; }
-
     // while charging a spindash, how much it's charged
     public float spindashChargeLevel;
 
@@ -104,6 +105,21 @@ public class PlayerCharacterMovement : CharacterMovement
         get => velocity.AlongAxis(up);
         set => velocity.SetAlongAxis(up, value);
     }
+
+    /// <summary>
+    /// Main character state, ability, etc
+    /// </summary>
+    public CharacterMovementState baseState { get; set; }
+
+    /// <summary>
+    /// Whether the character is spinning either by jumping or rolling, i.e. dangerous to touch
+    /// </summary>
+    public bool isSpinblading => baseState == CharacterMovementState.Rolling || baseState == CharacterMovementState.SpinCharging || isSpinbladingFromJump;
+
+    /// <summary>
+    /// Whether the character is jumping and spinning
+    /// </summary>
+    public bool isSpinbladingFromJump => baseState == CharacterMovementState.Jumped || baseState == CharacterMovementState.CanceledJump || baseState == CharacterMovementState.Thokked;
 
     /// <summary>
     /// The direction the player is trying to run in
@@ -146,7 +162,7 @@ public class PlayerCharacterMovement : CharacterMovement
         groundNormal = groundInfo.normal;
 
         // Look direction
-        if ((state & State.Climbing) == 0)
+        if (baseState != CharacterMovementState.Climbing)
             forward = input.aimDirection;
 
         // Apply grounding effects straight away so we can be more up-to-date with wallrunning stuff
@@ -154,7 +170,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
         // Add/remove states depending on whether isOnGround
         if (isOnGround && velocity.AlongAxis(up) <= 0.5f)
-            state &= ~(State.Pained | State.Gliding | State.Climbing);
+            RemoveStates(CharacterMovementState.Pained, CharacterMovementState.Gliding, CharacterMovementState.Climbing);
 
         // Friction
         ApplyFriction(deltaTime);
@@ -164,7 +180,7 @@ public class PlayerCharacterMovement : CharacterMovement
         ApplyRunAcceleration(deltaTime, input);
 
         // Gravity
-        if ((state & State.Climbing) == 0)
+        if (baseState != CharacterMovementState.Climbing)
             ApplyCharacterGravity(groundInfo, deltaTime);
 
         // Top speed clamp
@@ -188,7 +204,7 @@ public class PlayerCharacterMovement : CharacterMovement
         // Adjust character hitbox when spindashing/rolling
         float capsuleHeight = originalCapsuleHeight;
         CapsuleCollider capsule = colliders[0] as CapsuleCollider;
-        if ((state & (State.Rolling | State.SpinCharging)) != 0)
+        if (isSpinblading && !isSpinbladingFromJump) // todo: shouldn't jumping also reduce hitbox size
             capsuleHeight = rollingCapsuleHeight;
 
         if (capsule.height != capsuleHeight)
@@ -216,7 +232,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
         // Final movement
         bool oldEnableStepUp = enableStepUp;
-        if ((state & State.Climbing) != 0)
+        if (baseState == CharacterMovementState.Climbing)
             enableStepUp = false;
 
         ApplyCharacterVelocity(groundInfo, deltaTime, tickInfo);
@@ -233,9 +249,9 @@ public class PlayerCharacterMovement : CharacterMovement
     {
         float currentFriction = friction;
 
-        if ((state & State.Rolling) != 0)
+        if (baseState == CharacterMovementState.Rolling)
             currentFriction = rollingFriction;
-        if ((state & State.SpinCharging) != 0)
+        else if (baseState == CharacterMovementState.SpinCharging)
             currentFriction = spindashChargeFriction;
 
         if (groundVelocity.magnitude > 0 && isOnGround)
@@ -244,7 +260,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void ApplyRunAcceleration(float deltaTime, CharacterInput input)
     {
-        if ((state & (State.Pained | State.Gliding | State.Climbing | State.SpinCharging)) != 0)
+        if (IsAnyState(CharacterMovementState.Pained, CharacterMovementState.Gliding, CharacterMovementState.Climbing, CharacterMovementState.SpinCharging))
             return; // cannot accelerate in these states
 
         Vector3 aim = input.aimDirection;
@@ -257,7 +273,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
         if (!isOnGround)
             currentAcceleration *= airAccelerationMultiplier;
-        if ((state & State.Rolling) != 0)
+        if (baseState == CharacterMovementState.Rolling)
             currentAcceleration *= rollingAccelerationMultiplier;
 
         velocity += inputRunDirection * currentAcceleration;
@@ -268,32 +284,31 @@ public class PlayerCharacterMovement : CharacterMovement
         float speedToClamp = groundVelocity.magnitude;
 
         // speed limit doesn't apply while rolling
-        if ((state & State.Rolling) == 0 && speedToClamp > topSpeed && speedToClamp > lastHorizontalSpeed)
+        if (baseState != CharacterMovementState.Rolling && speedToClamp > topSpeed && speedToClamp > lastHorizontalSpeed)
             groundVelocity = (groundVelocity * (Mathf.Max(lastHorizontalSpeed, topSpeed) / speedToClamp));
     }
 
     public void ApplyHitKnockback(Vector3 force)
     {
-        state = State.Pained;
+        baseState = CharacterMovementState.Pained;
         velocity = force;
     }
 
     private void HandleJumpAbilities(CharacterInput input, float deltaTime, TickInfo tickInfo)
     {
-        if (state.HasFlag(State.Pained))
+        if (IsAnyState(CharacterMovementState.Pained))
             return;
 
         if (input.btnJumpPressed)
         {
             // Start regular jump
-            if ((isOnGround && !state.HasFlag(State.Jumped)) || (state & State.Climbing) != 0)
+            if (baseState != CharacterMovementState.Jumped && (isOnGround || baseState == CharacterMovementState.Climbing))
             {
-                if ((state & State.Climbing) != 0)
+                if (baseState == CharacterMovementState.Climbing)
                 {
                     // Climb jump
                     velocity.SetAlongAxis(forward.AlongPlane(gravityDirection), -jumpSpeed);
                     velocity.SetAlongAxis(up, jumpSpeed);
-                    state &= ~State.Climbing;
                 }
                 else
                 {
@@ -304,16 +319,15 @@ public class PlayerCharacterMovement : CharacterMovement
                 if (tickInfo.isFullForwardTick)
                     sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Jump);
 
-                state |= State.Jumped;
-                state &= ~(State.Rolling | State.SpinCharging);
+                baseState = CharacterMovementState.Jumped;
             }
             // Start jump abilities
-            else if (state.HasFlag(State.Jumped) && (player == null || !player.isHoldingFlag))
+            else if (player == null || !player.isHoldingFlag)
             {
                 switch (jumpAbility)
                 {
                     case JumpAbility.Thok:
-                        if (!state.HasFlag(State.Thokked) && state.HasFlag(State.Jumped))
+                        if (baseState == CharacterMovementState.CanceledJump)
                         {
                             // Thok
                             velocity.SetAlongPlane(gravityDirection, input.aimDirection.AlongPlane(gravityDirection).normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
@@ -321,27 +335,28 @@ public class PlayerCharacterMovement : CharacterMovement
                             if (tickInfo.isFullForwardTick)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
 
-                            state |= State.Thokked;
+                            baseState = CharacterMovementState.Thokked;
                         }
                         break;
                     case JumpAbility.Glide:
-                    {
-                        state |= State.Gliding;
+                        if (isSpinbladingFromJump)
+                        {
+                            baseState = CharacterMovementState.Gliding;
 
-                        // give an initial boost towards facing direction
-                        float clampedHorizontalMag = velocity.Horizontal().magnitude;
-                        if (clampedHorizontalMag < glide.startSpeed)
-                            velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * glide.startSpeed);
+                            // give an initial boost towards facing direction
+                            float clampedHorizontalMag = velocity.Horizontal().magnitude;
+                            if (clampedHorizontalMag < glide.startSpeed)
+                                velocity.SetHorizontal(input.aimDirection.Horizontal().normalized * glide.startSpeed);
+                        }
                         break;
-                    }
                 }
             }
         }
         
         // Cancel jumps
-        if (input.btnJumpReleased && state.HasFlag(State.Jumped) && !state.HasFlag(State.CanceledJump))
+        if (input.btnJumpReleased && baseState == CharacterMovementState.Jumped)
         {
-            state |= State.CanceledJump;
+            baseState = CharacterMovementState.CanceledJump;
 
             float verticalSpeed = -velocity.AlongAxis(gravityDirection);
             if (verticalSpeed > 0f)
@@ -354,30 +369,30 @@ public class PlayerCharacterMovement : CharacterMovement
 
     private void HandleSpinAbilities(CharacterInput input, float deltaTime, TickInfo tickInfo)
     {
-        if ((state & State.Climbing) != 0)
+        if (baseState == CharacterMovementState.Climbing)
             return;
 
         bool isMovingFastEnoughToRoll = groundVelocity.magnitude >= minRollSpeed;
-        if (isMovingFastEnoughToRoll && (state & State.Rolling) == 0 && isOnGround && (state & State.Jumped) == 0 && input.btnSpinPressed) // we check State.Jumped as well because we may have jumped in this frame
+        if (isMovingFastEnoughToRoll && baseState != CharacterMovementState.Rolling && baseState != CharacterMovementState.Jumped && isOnGround && input.btnSpinPressed) // we check State.Jumped as well because we may have jumped in this frame
         {
-            state |= State.Rolling;
+            baseState = CharacterMovementState.Rolling;
 
             if (tickInfo.isFullForwardTick)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRoll);
         }
-        else if (((state & State.Rolling) != 0 || (isOnGround && !isMovingFastEnoughToRoll)) && input.btnSpinPressed)
+        else if ((baseState == CharacterMovementState.Rolling || (isOnGround && !isMovingFastEnoughToRoll)) && input.btnSpinPressed)
         {
             spindashChargeLevel = 0f;
-            state |= State.SpinCharging;
+            baseState = CharacterMovementState.SpinCharging;
         }
-        else if ((state & State.SpinCharging) != 0 && input.btnSpin)
+        else if (baseState == CharacterMovementState.SpinCharging && input.btnSpin)
         {
             spindashChargeLevel = Mathf.Min(spindashChargeLevel + deltaTime / spindashChargeDuration, 1f);
 
             if (TimeTool.IsTick(tickInfo.time, deltaTime, 8) && tickInfo.isFullForwardTick)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinCharge);
         }
-        else if ((state & State.SpinCharging) != 0 && input.btnSpinReleased)
+        else if (baseState == CharacterMovementState.SpinCharging && input.btnSpinReleased)
         {
             Vector3 nextDirection = input.aimDirection.AlongPlane(groundNormal).normalized;
             float releaseSpeed = (spindashMaxSpeed * spindashChargeLevel);
@@ -388,18 +403,17 @@ public class PlayerCharacterMovement : CharacterMovement
             if (factor > 0 && tickInfo.isFullForwardTick)
                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.SpinRelease);
 
-            state &= ~State.SpinCharging;
-            state |= State.Rolling;
+            baseState = CharacterMovementState.Rolling;
             isMovingFastEnoughToRoll = true;
             spindashChargeLevel = 0f;
         }
-        else if ((state & State.Rolling) == 0f)
+        else if (baseState != CharacterMovementState.Rolling && baseState != CharacterMovementState.SpinCharging)
         {
             spindashChargeLevel = 0f;
         }
 
-        if (!isMovingFastEnoughToRoll)
-            state &= ~(State.Rolling);
+        if (!isMovingFastEnoughToRoll && baseState == CharacterMovementState.Rolling)
+            baseState = CharacterMovementState.None;
     }
 
     private void HandleJumpAbilities_Gliding(CharacterInput input, float deltaTime)
@@ -409,17 +423,17 @@ public class PlayerCharacterMovement : CharacterMovement
         // Cancel gliding upon release
         if (!input.btnJump)
         {
-            if ((state & State.Gliding) != 0)
+            if (baseState == CharacterMovementState.Gliding)
             {
                 if (glide.canMultiGlide)
-                    state &= ~State.Gliding;
+                    baseState = CharacterMovementState.CanceledJump;
                 else
-                    state &= ~(State.Gliding | State.Jumped); // remove jumping state as well to prevent next glide
+                    baseState = CharacterMovementState.None; // remove jumping state as well to prevent next glide
             }
         }
 
         // Handle gliding
-        if ((state & State.Gliding) != 0)
+        if (baseState == CharacterMovementState.Gliding)
         {
             Vector3 gravityUp = -gravityDirection;
             float horizontalSpeed = velocity.AlongPlane(gravityDirection).magnitude;
@@ -453,18 +467,18 @@ public class PlayerCharacterMovement : CharacterMovement
         }
 
         // Handle climbing
-        if ((state & State.Gliding) != 0 || (state & State.Climbing) != 0)
+        if (baseState == CharacterMovementState.Gliding || baseState == CharacterMovementState.Climbing)
         {
-            Vector3 wallDirection = (state & State.Climbing) != 0 ? forward.AlongPlane(gravityDirection) : input.aimDirection.AlongPlane(gravityDirection);
+            Vector3 wallDirection = baseState == CharacterMovementState.Climbing ? forward.AlongPlane(gravityDirection) : input.aimDirection.AlongPlane(gravityDirection);
 
             if (Physics.Raycast(transform.position, wallDirection, out RaycastHit hit, 0.5f, blockingCollisionLayers, QueryTriggerInteraction.Ignore))
             {
                 forward = -hit.normal.AlongPlane(gravityDirection).normalized;
 
-                if ((state & State.Climbing) == 0)
+                if (baseState != CharacterMovementState.Climbing)
                 {
                     velocity = Vector3.zero;
-                    state = State.Climbing;
+                    baseState = CharacterMovementState.Climbing;
                 }
                 else
                 {
@@ -476,7 +490,7 @@ public class PlayerCharacterMovement : CharacterMovement
             }
             else
             {
-                state = (state & ~State.Climbing) | State.Jumped;
+                baseState = CharacterMovementState.CanceledJump;
             }
         }
     }
@@ -485,19 +499,29 @@ public class PlayerCharacterMovement : CharacterMovement
     {
         if (isOnGround && Vector3.Dot(velocity, groundNormal) <= groundEscapeThreshold)
         {
-            state &= ~(State.Jumped | State.Thokked | State.CanceledJump);
+            RemoveStates(CharacterMovementState.Jumped, CharacterMovementState.Thokked, CharacterMovementState.CanceledJump);
         }
     }
 
     public void SpringUp(float force, Vector3 direction, bool doSpringAbsolutely)
     {
-        state &= ~(State.Jumped | State.Thokked | State.CanceledJump | State.Pained | State.SpinCharging | State.Rolling);
-
+        baseState = CharacterMovementState.None;
         if (doSpringAbsolutely)
             velocity = direction * force;
         else
             velocity.SetAlongAxis(direction, force);
     }
+
+    public void RemoveStates(CharacterMovementState a) => baseState = baseState == a ? CharacterMovementState.None : baseState;
+    public void RemoveStates(CharacterMovementState a, CharacterMovementState b) => baseState = (baseState == a || baseState == b) ? CharacterMovementState.None : baseState;
+    public void RemoveStates(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c) => baseState = (baseState == a || baseState == b || baseState == c) ? CharacterMovementState.None : baseState;
+    public void RemoveStates(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c, CharacterMovementState d) => baseState = (baseState == a || baseState == b || baseState == c || baseState == d) ? CharacterMovementState.None : baseState;
+
+    public bool IsAnyState(CharacterMovementState a) => baseState == a;
+    public bool IsAnyState(CharacterMovementState a, CharacterMovementState b) => baseState == a || baseState == b;
+    public bool IsAnyState(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c) => baseState == a || baseState == b || baseState == c;
+    public bool IsAnyState(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c, CharacterMovementState d) => baseState == a || baseState == b || baseState == c || baseState == d;
+    public bool IsAnyState(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c, CharacterMovementState d, CharacterMovementState e) => baseState == a || baseState == b || baseState == c || baseState == d || baseState == e;
 
 #if UNITY_EDITOR
     protected override void OnValidate()

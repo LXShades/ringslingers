@@ -19,27 +19,36 @@ public class CharacterAnimation : MonoBehaviour
     public float glideTiltDamp = 0.1f;
 
     private Quaternion lastRootRotation = Quaternion.identity;
-    private Vector3 lastCharacterUp = Vector3.up;
     private Vector3 lastVelocity;
 
     private float smoothGlideTilt = 0f;
     private float smoothGlideTiltVelocity = 0f;
 
-    private int propHorizontalSpeed = Animator.StringToHash("HorizontalSpeed");
-    private int propHorizontalForwardSpeed = Animator.StringToHash("HorizontalForwardSpeed");
-    private int propIsOnGround = Animator.StringToHash("IsOnGround");
-    private int propIsRolling = Animator.StringToHash("IsRolling");
-    private int propIsSpringing = Animator.StringToHash("IsSpringing");
-    private int propIsFreeFalling = Animator.StringToHash("IsFreeFalling");
-    private int propIsHurt = Animator.StringToHash("IsHurt");
-    private int propIsGliding = Animator.StringToHash("IsGliding");
-    private int propSpinSpeed = Animator.StringToHash("SpinSpeed");
+    private AnimatorFloat propHorizontalSpeed;
+    private AnimatorFloat propHorizontalForwardSpeed;
+    private AnimatorBool propIsOnGround;
+    private AnimatorBool propIsRolling;
+    private AnimatorBool propIsSpringing;
+    private AnimatorBool propIsFreeFalling;
+    private AnimatorBool propIsHurt;
+    private AnimatorBool propIsGliding;
+    private AnimatorFloat propSpinSpeed;
 
     private void Start()
     {
         movement = GetComponentInParent<PlayerCharacterMovement>();
         player = GetComponentInParent<Character>();
         animator = GetComponentInParent<Animator>();
+
+        propHorizontalSpeed = new AnimatorFloat(animator, "HorizontalSpeed");
+        propHorizontalForwardSpeed = new AnimatorFloat(animator, "HorizontalForwardSpeed");
+        propIsOnGround = new AnimatorBool(animator, "IsOnGround");
+        propIsRolling = new AnimatorBool(animator, "IsRolling");
+        propIsSpringing = new AnimatorBool(animator, "IsSpringing");
+        propIsFreeFalling = new AnimatorBool(animator, "IsFreeFalling");
+        propIsHurt = new AnimatorBool(animator, "IsHurt");
+        propIsGliding = new AnimatorBool(animator, "IsGliding");
+        propSpinSpeed = new AnimatorFloat(animator, "SpinSpeed");
     }
 
     private void Update()
@@ -48,28 +57,26 @@ public class CharacterAnimation : MonoBehaviour
         float forwardSpeedMultiplier = Vector3.Dot(transform.forward.AlongPlane(movement.gravityDirection), groundVelocity) <= 0f ? -1 : 1;
         float spinSpeed = 15f;
 
-        if ((movement.state & (PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.SpinCharging)) != 0f)
-        {
+        if (movement.IsAnyState(CharacterMovementState.Rolling, CharacterMovementState.SpinCharging))
             spinSpeed = Mathf.Max(movement.velocity.magnitude, movement.spindashChargeLevel * movement.spindashMaxSpeed);
-        }
 
         float upwardVelocity = -movement.velocity.AlongAxis(movement.gravityDirection);
-        animator.SetFloat(propHorizontalSpeed, groundVelocity.magnitude);
-        animator.SetFloat(propHorizontalForwardSpeed, groundVelocity.magnitude * forwardSpeedMultiplier);
-        animator.SetBool(propIsOnGround, movement.isOnGround);
-        animator.SetBool(propIsRolling, (movement.state & (PlayerCharacterMovement.State.Jumped | PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.SpinCharging)) != 0);
-        animator.SetBool(propIsSpringing, !movement.isOnGround && upwardVelocity > 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
-        animator.SetBool(propIsFreeFalling, !movement.isOnGround && upwardVelocity < 0 && (movement.state & PlayerCharacterMovement.State.Jumped) == 0);
-        animator.SetBool(propIsHurt, (movement.state & PlayerCharacterMovement.State.Pained) != 0);
-        animator.SetBool(propIsGliding, (movement.state & PlayerCharacterMovement.State.Gliding) != 0);
-        animator.SetFloat(propSpinSpeed, spinSpeed);
+        propHorizontalSpeed.value = groundVelocity.magnitude;
+        propHorizontalForwardSpeed.value = groundVelocity.magnitude * forwardSpeedMultiplier;
+        propIsOnGround.value = movement.isOnGround;
+        propIsRolling.value = movement.isSpinblading;
+        propIsSpringing.value = !movement.isOnGround && upwardVelocity > 0 && movement.baseState == CharacterMovementState.None;
+        propIsFreeFalling.value = !movement.isOnGround && upwardVelocity < 0 && movement.baseState == CharacterMovementState.None;
+        propIsHurt.value = movement.baseState == CharacterMovementState.Pained;
+        propIsGliding.value = movement.baseState == CharacterMovementState.Gliding;
+        propSpinSpeed.value = spinSpeed;
     }
 
     private void LateUpdate()
     {
         float glideTilt = 0f;
 
-        if ((movement.state & (PlayerCharacterMovement.State.Rolling | PlayerCharacterMovement.State.Jumped)) == 0 || (movement.state & PlayerCharacterMovement.State.Gliding) != 0) // spinning animations shouldn't normally be tampered with
+        if (!movement.isSpinblading) // spinning animations shouldn't normally be tampered with
         {
             Vector3 groundVelocity = movement.groundVelocity;
             Vector3 characterUp = movement.up;
@@ -94,7 +101,7 @@ public class CharacterAnimation : MonoBehaviour
                 lastRootRotation = root.rotation;
             }
 
-            if ((movement.state & PlayerCharacterMovement.State.Gliding) != 0)
+            if (movement.baseState == CharacterMovementState.Gliding)
             {
                 characterUp = Quaternion.Inverse(root.rotation) * characterUp;
 

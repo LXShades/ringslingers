@@ -122,7 +122,7 @@ public class PlayerCamera : MonoBehaviour
                 verticalAngleDelta = 180f - limit - degreesFromUp;
             newAim = Quaternion.AngleAxis(verticalAngleDelta, Vector3.Cross(interpolatedCharacterUp, newAim)) * newAim;
 
-            if (currentPlayer && (currentPlayer.movement.state & PlayerCharacterMovement.State.Climbing) != 0)
+            if (currentPlayer && currentPlayer.movement.baseState == CharacterMovementState.Climbing)
             {
                 // it's 10pm, this is what I came up with for the angle limit, let's see if I regret this later
                 float angleLimit = 80f;

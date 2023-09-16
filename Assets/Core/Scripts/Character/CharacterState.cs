@@ -37,9 +37,9 @@ public struct CharacterState : ITickerState<CharacterState>
             _upHigh = (byte)(compressed >> 16);
         }
     }
-    public PlayerCharacterMovement.State state
+    public CharacterMovementState state
     {
-        get => (PlayerCharacterMovement.State)_state;
+        get => (CharacterMovementState)_state;
         set => _state = (byte)value;
     }
     public float spindashChargeLevel

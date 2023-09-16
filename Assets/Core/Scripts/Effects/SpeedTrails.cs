@@ -92,7 +92,7 @@ public class SpeedTrails : MonoBehaviour
         float opacity = 0f;
 
         // thok pulses
-        if ((movement.state & PlayerCharacterMovement.State.Thokked) != 0)
+        if (movement.baseState == CharacterMovementState.Thokked)
         {
             if (!hasPulsedSinceLand)
             {
@@ -112,7 +112,7 @@ public class SpeedTrails : MonoBehaviour
         if (thokPulseProgress.isRunning)
             opacity = Mathf.Max(opacity, 1f - thokPulseProgress.progress);
 
-        if ((movement.state & PlayerCharacterMovement.State.Rolling) != 0)
+        if (movement.baseState == CharacterMovementState.Rolling)
             opacity = Mathf.Max(opacity, opacityWhileRolling);
 
         //if (opacity >= 0.05f)
