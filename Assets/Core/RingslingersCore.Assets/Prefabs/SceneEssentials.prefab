@@ -236,7 +236,7 @@ MonoBehaviour:
   collisionLayers:
     serializedVersion: 2
     m_Bits: 2147484727
-  collisionRadius: 0.1
+  collisionRadius: 0.2
   eyeBobHeight: 0.15
   eyeBobSpeed: 630
   maxPlayerVelocityForEyeBob: 8.7
@@ -468,14 +468,9 @@ MonoBehaviour:
     debugDrawReconciles: 0
   extraSmoothing: 0.0017
   timeTilLag: 0.75
-  fixedInputRate: 60
   fixedPhysicsRate: 30
   maxLocalPrediction: 1
   sendBufferLength: 0.2
-  extrapolateLocalInput: 1
-  predictRemotes: 1
-  maxRemotePrediction: 0.3
-  remotePredictionTickRate: 0.08
   localPlayerInput:
     _moveAxes: 0
     _aim: 0

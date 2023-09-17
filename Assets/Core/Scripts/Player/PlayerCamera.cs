@@ -200,7 +200,7 @@ public class PlayerCamera : MonoBehaviour
             {
                 Vector3 targetPosition = transform.position - transform.forward * currentThirdPersonDistance;
 
-                if (Physics.Raycast(transform.position, targetPosition - transform.position, out RaycastHit hit, currentThirdPersonDistance, collisionLayers, QueryTriggerInteraction.Ignore))
+                if (Physics.SphereCast(transform.position, collisionRadius, targetPosition - transform.position, out RaycastHit hit, currentThirdPersonDistance, collisionLayers, QueryTriggerInteraction.Ignore))
                     targetPosition = hit.point + hit.normal * collisionRadius;
 
                 transform.position = targetPosition;
