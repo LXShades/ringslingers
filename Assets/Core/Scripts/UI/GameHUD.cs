@@ -95,24 +95,31 @@ public class GameHUD : MonoBehaviour
             weaponSlots.Add(slot);
         }
 
-        // Setup level intro
-        MapConfiguration config = GameManager.singleton.activeMap;
-        if (config != null)
+        GameState.GetWhenAvailable<GameState_Map>(this, gsMap =>
         {
-            levelNameText.text = config.friendlyName;
-            levelDescriptionText.text = 
-                $"By: <color=orange>{config.credits}</color>\n" +
-                $"Weapon ammo type: <color=orange>{(config.defaultWeaponAmmoStyle == WeaponAmmoStyle.Quantity ? "Ammo" : "Timed")}</color>\n" +
-                $"Combinable weapons: <color=orange>{(config.defaultWeaponCombinationStyle == WeaponCombinationStyle.Combinable ? "Yes" : "No")}</color>";
+            gsMap.onMapChanged += OnMapChanged;
 
-            levelIntroRoot.SetActive(true);
-        }
+            // Setup level intro
+            MapConfiguration config = gsMap.activeMap;
+            if (config != null)
+            {
+                levelNameText.text = config.friendlyName;
+                levelDescriptionText.text =
+                    $"By: <color=orange>{config.credits}</color>\n" +
+                    $"Weapon ammo type: <color=orange>{(config.defaultWeaponAmmoStyle == WeaponAmmoStyle.Quantity ? "Ammo" : "Timed")}</color>\n" +
+                    $"Combinable weapons: <color=orange>{(config.defaultWeaponCombinationStyle == WeaponCombinationStyle.Combinable ? "Yes" : "No")}</color>";
+
+                levelIntroRoot.SetActive(true);
+            }
+        });
     }
 
     private void OnDestroy()
     {
         Application.logMessageReceived -= OnLogMessageReceived;
         GamePreferences.onPreferencesChanged -= OnPreferencesChanged;
+        if (GameState.Get(out GameState_Map gsMap))
+            gsMap.onMapChanged -= OnMapChanged;
     }
 
     void LateUpdate()
@@ -401,6 +408,21 @@ public class GameHUD : MonoBehaviour
         // Debug info
         if (debugDisplay.activeInHierarchy)
             UpdateDebugs();
+    }
+
+    private void OnMapChanged(MapConfiguration activeMap)
+    {
+        // Setup level intro
+        if (activeMap != null)
+        {
+            levelNameText.text = activeMap.friendlyName;
+            levelDescriptionText.text =
+                $"By: <color=orange>{activeMap.credits}</color>\n" +
+                $"Weapon ammo type: <color=orange>{(activeMap.defaultWeaponAmmoStyle == WeaponAmmoStyle.Quantity ? "Ammo" : "Timed")}</color>\n" +
+                $"Combinable weapons: <color=orange>{(activeMap.defaultWeaponCombinationStyle == WeaponCombinationStyle.Combinable ? "Yes" : "No")}</color>";
+
+            levelIntroRoot.SetActive(true);
+        }
     }
 
     private void UpdateDebugs()

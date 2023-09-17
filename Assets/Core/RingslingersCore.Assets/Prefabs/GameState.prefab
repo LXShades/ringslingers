@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 8935205186728226857}
   - component: {fileID: -1028870695216392720}
   - component: {fileID: 286134612921565095}
+  - component: {fileID: 5382619208647689679}
   m_Layer: 0
-  m_Name: ServerState
+  m_Name: GameState
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,3 +82,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
+--- !u!114 &5382619208647689679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5370636911838918152}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5361c98eaa8db48478fbd5ca549b9814, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

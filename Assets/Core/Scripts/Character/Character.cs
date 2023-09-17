@@ -272,7 +272,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     {
         if (NetworkServer.active)
         {
-            List<PlayerSpawn> spawners = new List<PlayerSpawn>(GameObject.FindObjectsOfType<PlayerSpawn>());
+            List<PlayerSpawn> spawners = new List<PlayerSpawn>(GameObject.FindObjectsByType<PlayerSpawn>(FindObjectsSortMode.None));
 
             spawners.RemoveAll(s => s.team != team);
 

@@ -44,7 +44,7 @@ namespace Ringslingers.Tests
         {
             base.Awake();
 
-            cam = FindObjectOfType<FreeCam>();
+            cam = FindFirstObjectByType<FreeCam>();
             meshFilter = GetComponentInChildren<MeshFilter>();
         }
 

@@ -34,7 +34,7 @@ namespace Ringslingers.Tests
         void Awake()
         {
             meshFilter = GetComponentInChildren<MeshFilter>();
-            cam = FindObjectOfType<FreeCam>();
+            cam = FindFirstObjectByType<FreeCam>();
             spawnPosition = transform.position;
         }
 

@@ -45,7 +45,7 @@ public class BotNavMeshBuilder : MonoBehaviour
         navLinks.Clear();
 
         // Generate nav mesh links
-        foreach (Spring spring in FindObjectsOfType<Spring>())
+        foreach (Spring spring in FindObjectsByType<Spring>(FindObjectsSortMode.None))
         {
             float speed = 20f;
 

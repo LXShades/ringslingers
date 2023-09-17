@@ -47,7 +47,7 @@ public class ScenePrefabReferenceDatabaseEditor : Editor
 
         // Find all prefab roots
         HashSet<GameObject> prefabRootInstances = new HashSet<GameObject>();
-        foreach (GameObject gameObject in FindObjectsOfType<GameObject>())
+        foreach (GameObject gameObject in FindObjectsByType<GameObject>(FindObjectsSortMode.None))
         {
             if (gameObject == PrefabUtility.GetOutermostPrefabInstanceRoot(gameObject))
             {

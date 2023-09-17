@@ -16,7 +16,7 @@ public class GameManager : MonoBehaviour
         get
         {
             if (_singleton == null)
-                _singleton = FindObjectOfType<GameManager>();
+                _singleton = FindFirstObjectByType<GameManager>();
 
             return _singleton;
         }
@@ -47,24 +47,6 @@ public class GameManager : MonoBehaviour
 
     public GameObject localObjects;
 
-    public MapConfiguration activeMap
-    {
-        get => _activeLevel;
-        set
-        {
-            _activeLevel = value;
-
-            // try keep the map rotation in sync (we should probably put this somewhere else)
-            foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
-            {
-                if (mapRotation.maps.Contains(_activeLevel))
-                    activeMapRotation = mapRotation;
-            }
-        }
-    }
-    private MapConfiguration _activeLevel;
-    public MapRotation activeMapRotation { get; private set; }
-
     /// <summary>
     /// The currently active in-game camera
     /// </summary>
@@ -72,7 +54,7 @@ public class GameManager : MonoBehaviour
     {
         get
         {
-            return cachedCamera != null ? cachedCamera : (cachedCamera = FindObjectOfType<PlayerCamera>());
+            return cachedCamera != null ? cachedCamera : (cachedCamera = FindFirstObjectByType<PlayerCamera>());
         }
     }
 

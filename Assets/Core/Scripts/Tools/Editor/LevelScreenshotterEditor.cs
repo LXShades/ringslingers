@@ -73,7 +73,7 @@ public class LevelScreenshotterEditor : Editor
 
             // Make visible InvisibleInGame objects invisible
             List<Renderer> disabledRenderers = new List<Renderer>();
-            foreach (InvisibleInGame go in FindObjectsOfType<InvisibleInGame>())
+            foreach (InvisibleInGame go in FindObjectsByType<InvisibleInGame>(FindObjectsSortMode.None))
             {
                 foreach (Renderer renderer in go.GetComponentsInChildren<Renderer>())
                 {

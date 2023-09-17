@@ -31,7 +31,7 @@ public class GameSounds : MonoBehaviour
         get
         {
             if (_listener == null)
-                _listener = FindObjectOfType<AudioListener>();
+                _listener = FindFirstObjectByType<AudioListener>();
 
             return _listener;
         }

@@ -21,7 +21,7 @@ public class MapSelector : MonoBehaviour
         mapRotationsDropdown.ClearOptions();
 
         List<string> options = new List<string>();
-        int currentMapRotationIndex = RingslingersContent.loaded.mapRotations.IndexOf(GameManager.singleton.activeMapRotation);
+        int currentMapRotationIndex = RingslingersContent.loaded.mapRotations.IndexOf(GameState.Get(out GameState_Map gsMap) ? gsMap.activeMapRotation : null);
         foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
             options.Add(mapRotation.name);
         
@@ -74,7 +74,7 @@ public class MapSelector : MonoBehaviour
         if (selectedMap != null)
         {
             if (NetworkServer.active)
-                Netplay.singleton.ServerLoadLevel(selectedMap);
+                GameState.Get<GameState_Map>().ServerLoadMap(selectedMap);
             else if (!NetworkServer.active && !NetworkClient.active) // this might have been called from the main menu?
                 Netplay.singleton.HostServer(selectedMap);
             else

@@ -86,9 +86,18 @@ public class RingslingersClientAuthenticator : NetworkAuthenticator
         else
         {
             source.Send(new ServerResponseMessage() { error = $"You don't have the necessary mods" });
-            rejectionQueue.Enqueue(source);
-            StartCoroutine(RejectClientRoutine());
-            //ServerReject(source);
+
+            if (rejectionQueue.Count < maxRejectionQueueLength)
+            {
+                rejectionQueue.Enqueue(source);
+                StartCoroutine(RejectClientRoutine());
+            }
+            else
+            {
+                // rejections are flooding for some reason, just get rid of this client for now
+                // it just means they might not receive the reason why they were rejected
+                ServerReject(source);
+            }
         }
     }
 

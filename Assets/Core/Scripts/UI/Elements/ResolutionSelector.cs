@@ -15,9 +15,9 @@ public class ResolutionSelector : MonoBehaviour
         for (int i = Screen.resolutions.Length - 1; i >= 0; i--)
         {
             Resolution res = Screen.resolutions[i];
-            options.Add(new Dropdown.OptionData($"{res.width}x{res.height} @ {res.refreshRate}"));
+            options.Add(new Dropdown.OptionData($"{res.width}x{res.height} @ {res.refreshRateRatio.value}"));
 
-            if (res.width == Screen.currentResolution.width && res.height == Screen.currentResolution.height && res.refreshRate == Screen.currentResolution.refreshRate)
+            if (res.width == Screen.currentResolution.width && res.height == Screen.currentResolution.height && res.refreshRateRatio.value == Screen.currentResolution.refreshRateRatio.value)
                 currentResolution = i;
         }
 
@@ -39,7 +39,7 @@ public class ResolutionSelector : MonoBehaviour
         if (newIndex >= 0 && newIndex < Screen.resolutions.Length)
         {
             newIndex = Screen.resolutions.Length - 1 - newIndex; // resolutions are added in descending order
-            Screen.SetResolution(Screen.resolutions[newIndex].width, Screen.resolutions[newIndex].height, Screen.fullScreenMode, Screen.resolutions[newIndex].refreshRate);
+            Screen.SetResolution(Screen.resolutions[newIndex].width, Screen.resolutions[newIndex].height, Screen.fullScreenMode, Screen.resolutions[newIndex].refreshRateRatio);
         }
     }
 

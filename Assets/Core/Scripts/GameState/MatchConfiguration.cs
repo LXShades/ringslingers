@@ -23,7 +23,7 @@ public class MatchConfiguration : MatchStateComponent
 
     public override void OnStart()
     {
-        MapConfiguration config = GameManager.singleton.activeMap;
+        MapConfiguration config = GameState.Get(out GameState_Map gsMap) ? gsMap.activeMap : null;
 
         if (config != null)
         {

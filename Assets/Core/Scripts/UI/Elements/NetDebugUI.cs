@@ -125,17 +125,19 @@ public class NetDebugUI : MonoBehaviour
         statsByCategory[msgType].Apply(msg, isInbound);
 
         NetworkIdentity identity = null;
+        var spawned = NetworkServer.active ? NetworkServer.spawned : NetworkClient.spawned;
+
         if (msg.message is EntityStateMessage messageAsUpdateVars)
         {
-            NetworkIdentity.spawned.TryGetValue(messageAsUpdateVars.netId, out identity);
+            spawned.TryGetValue(messageAsUpdateVars.netId, out identity);
         }
         if (msg.message is CommandMessage messageAsCommand)
         {
-            NetworkIdentity.spawned.TryGetValue(messageAsCommand.netId, out identity);
+            spawned.TryGetValue(messageAsCommand.netId, out identity);
         }
         if (msg.message is RpcMessage messageAsRpc)
         {
-            NetworkIdentity.spawned.TryGetValue(messageAsRpc.netId, out identity);
+            spawned.TryGetValue(messageAsRpc.netId, out identity);
         }
 
         if (identity)

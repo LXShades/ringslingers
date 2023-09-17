@@ -11,7 +11,7 @@ public class DodgeTrainingBot : TrainingBotBase
     protected override void Start()
     {
         base.Start();
-        spawner = FindObjectOfType<TrainingRingSpawner>();
+        spawner = FindFirstObjectByType<TrainingRingSpawner>();
     }
 
     public override void OnReset()

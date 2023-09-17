@@ -454,7 +454,7 @@ public class BotController : MonoBehaviour
         public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             if (rings.Count == 0)
-                rings.AddRange(FindObjectsOfType<Ring>());
+                rings.AddRange(FindObjectsByType<Ring>(FindObjectsSortMode.None));
 
             float closestDist = float.MaxValue;
             float nextClosestDist = float.MaxValue;

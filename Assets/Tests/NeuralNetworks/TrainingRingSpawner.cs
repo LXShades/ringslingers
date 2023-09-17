@@ -18,7 +18,7 @@ public class TrainingRingSpawner : MonoBehaviour
 
     private void Awake()
     {
-        trainer = FindObjectOfType<NeuralTrainer>();
+        trainer = FindFirstObjectByType<NeuralTrainer>();
     }
 
     private void Start()

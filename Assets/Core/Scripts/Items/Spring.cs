@@ -61,7 +61,7 @@ public class Spring : MonoBehaviour, IMovementCollisionCallbacks
 
         Gizmos.color = Color.yellow;
 
-        foreach (GravityVolume gravVol in FindObjectsOfType<GravityVolume>())
+        foreach (GravityVolume gravVol in FindObjectsByType<GravityVolume>(FindObjectsSortMode.None))
         {
             float dist = Vector3.Distance(gravVol.transform.position, transform.position);
             if (dist < nearestGravVolDist)

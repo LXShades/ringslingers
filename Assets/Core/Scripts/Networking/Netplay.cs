@@ -19,7 +19,7 @@ public class Netplay : MonoBehaviour
         get
         {
             if (_singleton == null)
-                _singleton = FindObjectOfType<Netplay>();
+                _singleton = FindFirstObjectByType<Netplay>();
 
             return _singleton;
         }
@@ -78,6 +78,8 @@ public class Netplay : MonoBehaviour
     /// Whether this is not a server or host player
     /// </summary>
     public bool isClient => netMan.mode == Mirror.NetworkManagerMode.ClientOnly;
+
+    private MapConfiguration serverHostInitialMap;
 
     private NetMan netMan;
 
@@ -163,53 +165,6 @@ public class Netplay : MonoBehaviour
         }
     }
 
-    public void ServerLoadLevel(MapConfiguration level)
-    {
-        GameManager.singleton.activeMap = level;
-        NetMan.singleton.ServerChangeScene(level.path, true);
-    }
-
-    public void ServerNextMap()
-    {
-        if (!NetworkServer.active)
-        {
-            Log.WriteWarning("[ServerNextMap()] Only the server can change the map");
-            return;
-        }
-
-        if (NetworkServer.isLoadingScene)
-        {
-            Log.WriteWarning($"[ServerNextMap()] The map is already changing");
-            return;
-        }
-
-        if (RingslingersContent.loaded.mapRotations.Count == 0)
-        {
-            Log.WriteWarning("[ServerNextMap()] There are no map rotations loaded");
-            return;
-        }
-
-        List<MapConfiguration> maps = GameManager.singleton.activeMapRotation?.maps ?? RingslingersContent.loaded.mapRotations[0].maps;
-
-        if (maps == null || maps.Count == 0)
-        {
-            Log.WriteError("Cannot load levels database: list is empty or null");
-            return;
-        }
-
-        // Move to the next map
-        int initialMapIndex = maps.IndexOf(GameManager.singleton.activeMap);
-        int nextMapIndex;
-        for (nextMapIndex = (initialMapIndex + 1) % maps.Count; nextMapIndex != initialMapIndex; nextMapIndex = (nextMapIndex + 1) % maps.Count)
-        {
-            // todo: check player count
-            if (!maps[nextMapIndex].isDevOnly || Application.isEditor)
-                break;
-        }
-
-        ServerLoadLevel(maps[nextMapIndex]);
-    }
-
     #region Game
     public void ConsoleCommand_EndRound()
     {
@@ -231,10 +186,22 @@ public class Netplay : MonoBehaviour
     {
         if (NetworkServer.active)
         {
-            if (GameManager.singleton.activeMap != null)
-                MatchState.SetNetGameState(GameManager.singleton.activeMap.defaultGameModePrefab);
+            if (GameState.Get(out GameState_Map gsMap))
+            {
+                MapConfiguration activeMap = serverHostInitialMap != null ? serverHostInitialMap : gsMap.activeMap;
+
+                serverHostInitialMap = null;
+
+                if (activeMap != null)
+                {
+                    gsMap.activeMap = activeMap;
+                    MatchState.SetNetGameState(activeMap.defaultGameModePrefab);
+                }
+                else
+                    Debug.LogError("We can't play this map properly, for some reason activeMap is null, so we can't determine the gametype!");
+            }
             else
-                Debug.LogError("We can't play this map properly, for some reason activeLevel is null so we can't find the game mode!");
+                Debug.LogError("We can't play this map properly, for some reason GameState_Map is missing.");
         }
     }
     #endregion
@@ -337,7 +304,7 @@ public class Netplay : MonoBehaviour
     {
         if (level != null)
         {
-            GameManager.singleton.activeMap = level;
+            serverHostInitialMap = level;
 
             // HACK: we need to load the scene before kicking off the server I don't know why it be this way
             AsyncOperation op = SceneManager.LoadSceneAsync(level.path);
@@ -352,18 +319,17 @@ public class Netplay : MonoBehaviour
                 // Try find the first level config for this scene and use that to set the active level/gamemode stuff/etc
                 foreach (MapRotation mapRotation in RingslingersContent.loaded.mapRotations)
                 {
-                    MapConfiguration levelConfig = mapRotation.maps.Find(x => x.path == scenePath);
+                    MapConfiguration mapConfig = mapRotation.maps.Find(x => x.path == scenePath);
 
-                    if (levelConfig != null)
+                    if (mapConfig != null)
                     {
-                        GameManager.singleton.activeMap = levelConfig;
+                        serverHostInitialMap = mapConfig;
                         Debug.Log($"Assumed map from rotation: {mapRotation.name}");
                         break;
                     }
                 }
             }
-
-            // finish up
+            // finish host first
             FinishHost();
         }
     }

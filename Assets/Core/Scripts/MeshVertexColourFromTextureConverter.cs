@@ -17,7 +17,7 @@ public class MeshVertexColourFromTextureConverter : MonoBehaviour
 
     private void Awake()
     {
-        foreach (MeshFilter filter in FindObjectsOfType<MeshFilter>())
+        foreach (MeshFilter filter in FindObjectsByType<MeshFilter>(FindObjectsSortMode.None))
         {
             Mesh mesh = filter.sharedMesh;
             MeshRenderer renderer = filter.GetComponent<MeshRenderer>();

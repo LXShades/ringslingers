@@ -88,7 +88,8 @@ public class MatchState : NetworkBehaviour
             if (timeTilRestart <= 0f)
             {
                 _isWinScreen = false;
-                Netplay.singleton.ServerNextMap();
+
+                GameState.Get<GameState_Map>().ServerNextMap();
             }
         }
     }
