@@ -189,6 +189,26 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2266500768883055632, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+      propertyPath: flySound.clip
+      value: 
+      objectReference: {fileID: 8300000, guid: db987509b3a71e74a8d944c053c4a281, type: 3}
+    - target: {fileID: 2266500768883055632, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+      propertyPath: flySoundPerSecond
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 2266500768883055632, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+      propertyPath: flySound.environment
+      value: 
+      objectReference: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
+    - target: {fileID: 2266500768883055632, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+      propertyPath: flySound.pitchVariance
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2266500768883055632, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+      propertyPath: flySound.volumeDecibels
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3620776001654559608, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
       propertyPath: m_AssetId
       value: b7b0682fa69c5d744a86b0a3a9b0c03c

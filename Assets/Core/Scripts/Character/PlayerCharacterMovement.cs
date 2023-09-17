@@ -382,7 +382,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
         // Run other abilities
         HandleJumpAbilities_Gliding(input, deltaTime);
-        HandleJumpAbilities_Flying(input, deltaTime);
+        HandleJumpAbilities_Flying(input, deltaTime, tickInfo);
     }
 
     private void HandleSpinAbilities(CharacterInput input, float deltaTime, TickInfo tickInfo)
@@ -508,7 +508,7 @@ public class PlayerCharacterMovement : CharacterMovement
             }
         }
     }
-    private void HandleJumpAbilities_Flying(CharacterInput input, float deltaTime)
+    private void HandleJumpAbilities_Flying(CharacterInput input, float deltaTime, TickInfo tickInfo)
     {
         if (state != CharacterMovementState.Flying)
             return;
@@ -528,6 +528,11 @@ public class PlayerCharacterMovement : CharacterMovement
         if (input.btnJumpPressed)
             velocity.y += Mathf.Min(flyAbilityConfig.ascentBoostAmount, Mathf.Max(0, flyAbilityConfig.ascentMaxSpeed - velocity.y));
 
+        // Play flight sound
+        if (tickInfo.isFullForwardTick && TimeTool.IsTick((flyAbilityConfig.duration - flightRemaining), deltaTime, sounds.flySoundPerSecond))
+            GameSounds.PlaySound(gameObject, sounds.flySound);
+
+        // Tick down the clock
         flightRemaining -= deltaTime;
         if (flightRemaining <= 0f)
         {

@@ -44,8 +44,8 @@ public struct CharacterState : ITickerState<CharacterState>
     }
     public float stateFloat
     {
-        get => _stateFloat;// / 65535f;
-        set => _stateFloat = value;//(ushort)(value * 65535f);
+        get => _stateFloat / 65535f;
+        set => _stateFloat = (ushort)(value * 65535f);
     }
 
     // internal - actual data sent/received and confirmed/deconfirmed

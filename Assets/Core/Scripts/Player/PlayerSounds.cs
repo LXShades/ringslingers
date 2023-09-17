@@ -25,6 +25,8 @@ public class PlayerSounds : NetworkBehaviour
     public GameSound spinRollSound = new GameSound();
     public GameSound spinChargeSound = new GameSound();
     public GameSound spinReleaseSound = new GameSound();
+    public GameSound flySound = new GameSound(); // Only played locally so doesn't need to be networked
+    public int flySoundPerSecond = 6;
 
     // current layout: NNsssSSS where N = number (looping) 
     const int kNumCountBits = 2;

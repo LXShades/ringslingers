@@ -4,7 +4,7 @@ This is a fangame of [SRB2](http://srb2.org) and contains assets by Sonic Team J
 # Ringslingers
 Blast other Sonic characters with rings in this fast-paced multiplayer fangame inspired by Sonic Robo Blast 2's Ringslingers game modes!
 
-This fangame is made in Unity. The current required Unity version is **2021.1.10f1**.
+This fangame is made in Unity. The current required Unity version is **2023.1.11f1**.
 
 **This open-source game is non-profit.** Not all content is original, see Credits.
 
@@ -40,7 +40,7 @@ This fangame contains ripped assets, music and levels, not only from Sonic itsel
 This fangame and its creator(s) has no direct relationship or affiliation with these parties.
 
 ### Contributors
-LXShades - A whole lot of code, map rips, Blender models
+LXShades - The core project, a whole lot of code, map ripping and importing, character models and animations.
 Spazzo - UI assistance
 
 ### Libraries and third-party sources:  
