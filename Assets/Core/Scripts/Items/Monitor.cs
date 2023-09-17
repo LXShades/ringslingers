@@ -85,6 +85,8 @@ public class Monitor : NetworkBehaviour, IMovementCollisionCallbacks
             float upwardVelocity = -character.velocity.AlongAxis(character.gravityDirection);
             if (upwardVelocity <= -1.0f)
                 character.velocity.SetAlongAxis(character.gravityDirection, upwardVelocity);
+            if (character.state == CharacterMovementState.JumpedAbilityLocked)
+                character.state = CharacterMovementState.JumpedReleasedButton; // Let the user chain abilities if they bounce off of monitors
 
             // pop
             if (respawnable.isSpawned && tickInfo.isFullTick)

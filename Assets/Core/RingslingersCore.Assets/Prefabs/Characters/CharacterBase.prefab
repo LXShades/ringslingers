@@ -1147,7 +1147,11 @@ MonoBehaviour:
   spindashMaxSpeed: 36
   spindashMinSpeed: 1
   spindashChargeFriction: 0.975
-  gravityAltitudeCorrectionFactor: 0.51
+  waterSpeedMultiplier: 0.6
+  waterGravityMultiplier: 0.5
+  waterJumpSpeedMultiplier: 0.75
+  waterActionSpeedMultiplier: 0.5
+  gravityAltitudeCorrectionFactor: 0.8
   debugDrawMovement: 0
   stateFloat: 0
 --- !u!114 &1227556274159782272

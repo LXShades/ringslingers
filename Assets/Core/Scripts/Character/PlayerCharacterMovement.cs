@@ -75,6 +75,12 @@ public class PlayerCharacterMovement : CharacterMovement
     [Range(0f, 1f)]
     public float spindashChargeFriction = 0.995f;
 
+    [Header("[PlayerCharacterMovement] Environment")]
+    public float waterSpeedMultiplier = 0.5f;
+    public float waterGravityMultiplier = 0.5f;
+    public float waterJumpSpeedMultiplier = 0.75f;
+    public float waterActionSpeedMultiplier = 0.5f;
+
     [Header("[PlayerCharacterMovement] Gravity manipulation")]
     [Tooltip("When in spherical gravity environments, lateral movement can keep you in orbit due to affecting your altitude. Correction works by eliminating altitude change when gravity changes")]
     [Range(0f, 1f)]
@@ -138,9 +144,11 @@ public class PlayerCharacterMovement : CharacterMovement
     /// <summary>
     /// Whether the player is on the ground
     /// </summary>
-    public bool isOnGround { get; private set; }
+    public bool isOnGround { get; private set; } // Not stored in state, recalculated always at beginning of Tick
 
-    public Vector3 groundNormal { get; private set; }
+    public Vector3 groundNormal { get; private set; } // Not stored in state, recalculated always at beginning of Tick
+
+    public bool isInWater { get; private set; } // Not stored in state, recaulclated always at beginning of Tick
 
     // to restore collision capsule when rolling
     private float originalCapsuleHeight;
@@ -169,6 +177,7 @@ public class PlayerCharacterMovement : CharacterMovement
 
         isOnGround = groundInfo.isOnGround;
         groundNormal = groundInfo.normal;
+        isInWater = LiquidVolume.GetContainingLiquid(transform.position) != null;
 
         // Look direction
         if (state != CharacterMovementState.Climbing)
@@ -189,8 +198,14 @@ public class PlayerCharacterMovement : CharacterMovement
         ApplyRunAcceleration(deltaTime, input);
 
         // Gravity
+        float originalGravity = gravity;
+
+        if (isInWater)
+            gravity *= waterGravityMultiplier;
+
         if (state != CharacterMovementState.Climbing)
             ApplyCharacterGravity(groundInfo, deltaTime);
+        gravity = originalGravity; // todo: bit messy, would be nicer to have multiplier
 
         // Top speed clamp
         ApplyTopSpeedLimit(lastHorizontalSpeed);
@@ -284,6 +299,8 @@ public class PlayerCharacterMovement : CharacterMovement
             currentAcceleration *= airAccelerationMultiplier;
         if (state == CharacterMovementState.Rolling)
             currentAcceleration *= rollingAccelerationMultiplier;
+        if (isInWater)
+            currentAcceleration *= waterSpeedMultiplier;
 
         velocity += inputRunDirection * currentAcceleration;
     }
@@ -313,16 +330,17 @@ public class PlayerCharacterMovement : CharacterMovement
             // Start regular jump
             if (state != CharacterMovementState.Jumped && state != CharacterMovementState.JumpedAbilityLocked && state != CharacterMovementState.JumpedReleasedButton && (isOnGround || state == CharacterMovementState.Climbing))
             {
+                float effectiveJumpSpeed = isInWater ? jumpSpeed * waterJumpSpeedMultiplier : jumpSpeed;
                 if (state == CharacterMovementState.Climbing)
                 {
                     // Climb jump
-                    velocity.SetAlongAxis(forward.AlongPlane(gravityDirection), -jumpSpeed);
-                    velocity.SetAlongAxis(up, jumpSpeed);
+                    velocity.SetAlongAxis(forward.AlongPlane(gravityDirection), -effectiveJumpSpeed);
+                    velocity.SetAlongAxis(up, effectiveJumpSpeed);
                 }
                 else
                 {
                     // Regular ground jump
-                    velocity.SetAlongAxis(groundNormal, jumpSpeed * jumpFactor);
+                    velocity.SetAlongAxis(groundNormal, effectiveJumpSpeed * jumpFactor);
                 }
 
                 if (tickInfo.isFullForwardTick)
@@ -338,8 +356,10 @@ public class PlayerCharacterMovement : CharacterMovement
                     case JumpAbility.Thok:
                         if (state == CharacterMovementState.JumpedReleasedButton)
                         {
+                            float effectiveActionSpeed = isInWater ? actionSpeed * waterActionSpeedMultiplier : actionSpeed;
+
                             // Thok
-                            velocity.SetAlongPlane(gravityDirection, input.aimDirection.AlongPlane(gravityDirection).normalized * (actionSpeed / GameManager.singleton.fracunitsPerM * 35f));
+                            velocity.SetAlongPlane(gravityDirection, input.aimDirection.AlongPlane(gravityDirection).normalized * (effectiveActionSpeed / GameManager.singleton.fracunitsPerM * 35f));
 
                             if (tickInfo.isFullForwardTick)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);

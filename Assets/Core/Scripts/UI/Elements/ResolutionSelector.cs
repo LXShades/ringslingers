@@ -1,21 +1,22 @@
 ﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ResolutionSelector : MonoBehaviour
 {
-    public Dropdown list;
+    public TMP_Dropdown list;
 
     private void OnEnable()
     {
         list.ClearOptions();
 
-        List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
+        List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
         int currentResolution = -1;
         for (int i = Screen.resolutions.Length - 1; i >= 0; i--)
         {
             Resolution res = Screen.resolutions[i];
-            options.Add(new Dropdown.OptionData($"{res.width}x{res.height} @ {res.refreshRateRatio.value}"));
+            options.Add(new TMP_Dropdown.OptionData($"{res.width}x{res.height} @ {res.refreshRateRatio.value}"));
 
             if (res.width == Screen.currentResolution.width && res.height == Screen.currentResolution.height && res.refreshRateRatio.value == Screen.currentResolution.refreshRateRatio.value)
                 currentResolution = i;
@@ -47,7 +48,7 @@ public class ResolutionSelector : MonoBehaviour
     {
         if (list == null)
         {
-            list = GetComponentInChildren<Dropdown>();
+            list = GetComponentInChildren<TMP_Dropdown>();
         }
     }
 }

@@ -28,6 +28,7 @@ public class GameHUD : MonoBehaviour
     public GameObject gotRedFlagIcon;
     public GameObject gotBlueFlagIcon;
     public GameObject shieldOverlay;
+    public GameObject underwaterOverlay;
 
     [Header("Weapons")]
     public GameObject weaponWheel;
@@ -404,6 +405,11 @@ public class GameHUD : MonoBehaviour
 
         deltaMin = Mathf.Min(Time.unscaledDeltaTime, deltaMin);
         deltaMax = Mathf.Max(Time.unscaledDeltaTime, deltaMax);
+
+        // Water post process
+        bool shouldShowUnderwaterEffect = GameManager.singleton.camera != null && LiquidVolume.GetContainingLiquid(GameManager.singleton.camera.transform.position) != null;
+        if (shouldShowUnderwaterEffect != underwaterOverlay.activeSelf)
+            underwaterOverlay.SetActive(shouldShowUnderwaterEffect);
 
         // Debug info
         if (debugDisplay.activeInHierarchy)

@@ -1,17 +1,18 @@
 ﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class FullscreenSelector : MonoBehaviour
 {
-    public Dropdown dropdown;
+    public TMP_Dropdown dropdown;
 
     public void OnEnable()
     {
         dropdown.ClearOptions();
 
-        dropdown.AddOptions(new List<Dropdown.OptionData>(
-            new Dropdown.OptionData[] { new Dropdown.OptionData("Windowed"), new Dropdown.OptionData("Fullscreen"), new Dropdown.OptionData("Fullscreen Borderless") }));
+        dropdown.AddOptions(new List<TMP_Dropdown.OptionData>(
+            new TMP_Dropdown.OptionData[] { new TMP_Dropdown.OptionData("Windowed"), new TMP_Dropdown.OptionData("Fullscreen"), new TMP_Dropdown.OptionData("Fullscreen Borderless") }));
 
         switch (Screen.fullScreenMode)
         {

@@ -1,19 +1,20 @@
 ﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class QualitySelector : MonoBehaviour
 {
-    public Dropdown dropdown;
+    public TMP_Dropdown dropdown;
 
     private void Awake()
     {
         dropdown.ClearOptions();
 
-        List<Dropdown.OptionData> options = new List<Dropdown.OptionData>();
+        List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
         foreach (string qualityLevelName in QualitySettings.names)
         {
-            options.Add(new Dropdown.OptionData()
+            options.Add(new TMP_Dropdown.OptionData()
             {
                 text = qualityLevelName
             });
