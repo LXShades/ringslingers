@@ -407,7 +407,7 @@ public class GameHUD : MonoBehaviour
         deltaMax = Mathf.Max(Time.unscaledDeltaTime, deltaMax);
 
         // Water post process
-        bool shouldShowUnderwaterEffect = GameManager.singleton.camera != null && LiquidVolume.GetContainingLiquid(GameManager.singleton.camera.transform.position) != null;
+        bool shouldShowUnderwaterEffect = GameManager.singleton.camera != null && GameManager.singleton.camera.isUnderwater;
         if (shouldShowUnderwaterEffect != underwaterOverlay.activeSelf)
             underwaterOverlay.SetActive(shouldShowUnderwaterEffect);
 

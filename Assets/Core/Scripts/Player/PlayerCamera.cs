@@ -62,12 +62,18 @@ public class PlayerCamera : MonoBehaviour
     /// </summary>
     public float loopyDampFactor = 0.1f;
 
+    [Header("Underwater effects")]
+    /// <summary>Audio filters that'll be enabled whenever the camera is underwater</summary>
+    public Behaviour[] underwaterAudioFilters = new Behaviour[0];
+
     public Camera unityCamera { get; private set; }
 
     /// <summary>
     /// Current aim direction of the camera
     /// </summary>
     public Vector3 aimDirection { get; set; } = Vector3.forward;
+
+    public bool isUnderwater { get; private set; }
 
     public bool isFirstPerson => thirdPersonDistance <= 0f;
 
@@ -240,6 +246,16 @@ public class PlayerCamera : MonoBehaviour
         else
         {
             // spectator cam goes here?
+        }
+
+        // Update underwater state (used for audio FX)
+        bool wasUnderwater = isUnderwater;
+        isUnderwater = LiquidVolume.GetContainingLiquid(GameManager.singleton.camera.transform.position) != null;
+
+        if (isUnderwater != wasUnderwater)
+        {
+            foreach (Behaviour filter in underwaterAudioFilters)
+                filter.enabled = isUnderwater;
         }
     }
 }

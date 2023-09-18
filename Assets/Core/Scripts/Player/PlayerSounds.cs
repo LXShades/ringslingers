@@ -25,7 +25,10 @@ public class PlayerSounds : NetworkBehaviour
     public GameSound spinRollSound = new GameSound();
     public GameSound spinChargeSound = new GameSound();
     public GameSound spinReleaseSound = new GameSound();
-    public GameSound flySound = new GameSound(); // Only played locally so doesn't need to be networked
+
+    // The below are only played locally and don't need to be networked
+    public GameSound splashSound = new GameSound();
+    public GameSound flySound = new GameSound();
     public int flySoundPerSecond = 6;
 
     // current layout: NNsssSSS where N = number (looping) 
@@ -38,6 +41,24 @@ public class PlayerSounds : NetworkBehaviour
     public byte soundHistory { get; private set; }
 
     private byte lastReceivedSoundHistory;
+
+    private bool wasInWater = false;
+
+    private PlayerCharacterMovement movement;
+
+    private void Awake()
+    {
+        movement = GetComponent<PlayerCharacterMovement>();
+    }
+
+    private void LateUpdate()
+    {
+        // We can do some sound effects locally at the end of all ticks/reconciliations etc
+        if (movement.isInWater != wasInWater)
+            GameSounds.PlaySound(gameObject, splashSound);
+
+        wasInWater = movement.isInWater;
+    }
 
     public void PlayNetworked(PlayerSoundType sound)
     {

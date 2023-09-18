@@ -133,6 +133,9 @@ GameObject:
   - component: {fileID: 3413194138946377953}
   - component: {fileID: 3413194138946377958}
   - component: {fileID: 5923223032543216597}
+  - component: {fileID: 1639399969509953800}
+  - component: {fileID: 5863557829288916215}
+  - component: {fileID: 858177197052707575}
   m_Layer: 0
   m_Name: PlayerCamera
   m_TagString: MainCamera
@@ -243,6 +246,10 @@ MonoBehaviour:
   landEyeBobHeight: 0.5
   maxPlayerLandForEyeBob: 40
   loopyDampFactor: 0.1
+  underwaterAudioFilters:
+  - {fileID: 1639399969509953800}
+  - {fileID: 5863557829288916215}
+  - {fileID: 858177197052707575}
 --- !u!114 &5923223032543216597
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -256,6 +263,67 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   screenshotDimensions: {x: 256, y: 256}
+--- !u!164 &1639399969509953800
+AudioReverbFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3413194138946377954}
+  m_Enabled: 0
+  m_DryLevel: 0
+  m_Room: -1825
+  m_RoomHF: -834
+  m_DecayTime: 3.3
+  m_DecayHFRatio: 0.24
+  m_ReflectionsLevel: -10000
+  m_ReverbLevel: 957
+  m_ReverbDelay: 0
+  m_Diffusion: 86.2
+  m_Density: 60
+  m_HFReference: 10262
+  m_RoomLF: -496
+  m_LFReference: 250
+  m_ReflectionsDelay: 0
+  m_ReverbPreset: 27
+--- !u!169 &5863557829288916215
+AudioLowPassFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3413194138946377954}
+  m_Enabled: 0
+  serializedVersion: 3
+  m_LowpassResonanceQ: 1
+  lowpassLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.03992724
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!168 &858177197052707575
+AudioEchoFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3413194138946377954}
+  m_Enabled: 0
+  serializedVersion: 2
+  m_Delay: 300
+  m_DecayRatio: 0.4
+  m_WetMix: 0.23
+  m_DryMix: 1
 --- !u!1 &3413194139127699361
 GameObject:
   m_ObjectHideFlags: 0
