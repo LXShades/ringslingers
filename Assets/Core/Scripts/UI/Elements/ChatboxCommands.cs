@@ -15,6 +15,8 @@ public class ChatboxCommands : MonoBehaviour
     {
         RegisterCommand("help", ConsoleCommand_Help);
         RegisterCommand("endround", Netplay.singleton.ConsoleCommand_EndRound);
+        RegisterCommand("addbot", Netplay.singleton.ConsoleCommand_AddBot);
+        RegisterCommand("addfollowbot", Netplay.singleton.ConsoleCommand_AddFollowBot);
     }
 
     public bool OnCommandSubmitted(string commandAndParameters, out string error)

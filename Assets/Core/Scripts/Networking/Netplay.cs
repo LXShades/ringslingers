@@ -47,6 +47,7 @@ public class Netplay : MonoBehaviour
 
     [Header("Players")]
     [SerializeField] private int _localPlayerId = -1;
+    [SerializeField] private Player botPrefab;
     /// <summary>
     /// Local player ID
     /// </summary>
@@ -267,6 +268,36 @@ public class Netplay : MonoBehaviour
         }
 
         return -1;
+    }
+
+    public void ConsoleCommand_AddBot()
+    {
+        if (NetworkServer.active)
+        {
+            GameObject bot = Spawner.Spawn(botPrefab.gameObject);
+        }
+        else
+        {
+            Debug.LogError($"Only the server can do this");
+        }
+    }
+
+    public void ConsoleCommand_AddFollowBot()
+    {
+        if (NetworkServer.active)
+        {
+            GameObject bot = Spawner.Spawn(botPrefab.gameObject);
+
+            if (bot.TryGetComponent(out BotController botController))
+            {
+                botController.ClearStates();
+                botController.GetOrActivateState<BotController.State_FollowPlayer>().followPlayerId = localPlayerId;
+            }
+        }
+        else
+        {
+            Debug.LogError($"Only the server can do this");
+        }
     }
     #endregion
 

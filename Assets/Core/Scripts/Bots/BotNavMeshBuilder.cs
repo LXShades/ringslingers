@@ -1,10 +1,18 @@
 using System.Collections.Generic;
+using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class BotNavMeshBuilder : MonoBehaviour
 {
     public bool regenerate = false;
+
+    public int agentTypeId = 1;
+
+    [Header("Generation settings")]
+    public float jumpHeight = 1.5f;
+    public float jumpDistance = 7f;
+    public float jumpCostModifier = 1f;
 
     public struct NavLink
     {
@@ -15,6 +23,8 @@ public class BotNavMeshBuilder : MonoBehaviour
 
     // not actually serialized but still used at edit time for preview
     private List<NavLink> navLinks = new List<NavLink>();
+
+    private NavMeshSurface navMeshSurface;
 
     private void OnValidate()
     {
@@ -36,15 +46,63 @@ public class BotNavMeshBuilder : MonoBehaviour
                 startPosition = link.startPosition,
                 endPosition = link.endPosition,
                 costModifier = link.costModifier,
+                agentTypeID = agentTypeId
             });
         }
     }
 
     private void Regenerate()
     {
+        navMeshSurface = GetComponent<NavMeshSurface>();
         navLinks.Clear();
 
-        // Generate nav mesh links
+        // Generate the base nav mesh (todo: we should only do that if there are bots, right?)
+        navMeshSurface.BuildNavMesh();
+
+        // Use existing drop-down points to create possible jump-up points
+        // NVM LMAO UNITY DOESN'T LET YOU READ THOSE AND HASN'T FOR NEARLY 10 YEARS
+        // wtf?? why is it so hard to let the user simply access the nav mesh links?
+        // ??????????
+        // guess we'll make our own
+        NavMeshTriangulation triangulation = NavMesh.CalculateTriangulation();
+
+        var vertices = triangulation.vertices;
+        for (int vA = 0; vA < vertices.Length; vA++)
+        {
+            for (int vB = vA + 1; vB < vertices.Length; vB++)
+            {
+                var pointA = vertices[vA];
+                var pointB = vertices[vB];
+
+                if (pointB.y != pointA.y && Mathf.Abs(pointB.y - pointA.y) < jumpHeight)
+                {
+                    if (Vector3.Distance(pointA, pointB) < jumpDistance)
+                    {
+                        Vector3 startPosition = pointB.y >= pointA.y ? pointA : pointB;
+                        Vector3 endPosition = pointB.y >= pointA.y ? pointB : pointA;
+
+                        Vector3 upwardRay = new Vector3(startPosition.x, endPosition.y + 0.01f, startPosition.z) - startPosition;
+                        Vector3 alongRay = endPosition - (startPosition + upwardRay);
+
+                        // ensure it's not a jump through a wall or ceiling
+                        if (Physics.Raycast(startPosition, upwardRay, upwardRay.magnitude, ~0, QueryTriggerInteraction.Ignore) ||
+                            Physics.Raycast(startPosition + upwardRay, alongRay, alongRay.magnitude, ~0, QueryTriggerInteraction.Ignore))
+                        {
+                            continue;
+                        }
+
+                        navLinks.Add(new NavLink()
+                        {
+                            startPosition = startPosition,
+                            endPosition = endPosition,
+                            costModifier = jumpCostModifier
+                        });
+                    }
+                }
+            }
+        }
+
+        // Generate nav mesh links from areas that can be reached by springs
         foreach (Spring spring in FindObjectsByType<Spring>(FindObjectsSortMode.None))
         {
             float speed = 20f;
@@ -66,6 +124,8 @@ public class BotNavMeshBuilder : MonoBehaviour
                 }
             }
         }
+
+        navMeshSurface.UpdateNavMesh(navMeshSurface.navMeshData);
     }
 
     private void OnDrawGizmosSelected()

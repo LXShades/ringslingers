@@ -17,7 +17,7 @@ public class BotController : MonoBehaviour
 
     private Character character;
 
-    private CharacterInput input;
+    private CharacterInput lastInput;
 
     public List<IState> activeStates = new List<IState>();
 
@@ -56,9 +56,10 @@ public class BotController : MonoBehaviour
         if (NetworkServer.active && character)
         {
             for (int i = 0; i < activeStates.Count; i++)
-                activeStates[i].Update(this, character, ref input);
+                activeStates[i].Update(this, character, ref lastInput);
 
-            GameTicker.singleton.OnRecvBotInput(character.playerId, input);
+            lastInput = lastInput.WithDeltas(character.entity.latestInput);
+            GameTicker.singleton.OnRecvBotInput(character.playerId, lastInput);
         }
     }
 
@@ -75,6 +76,11 @@ public class BotController : MonoBehaviour
     public void DeactivateState<TState>() where TState : IState
     {
         activeStates.RemoveAll(a => a.GetType() == typeof(TState));
+    }
+
+    public void ClearStates()
+    {
+        activeStates.Clear();
     }
 
     public class State_CollectAndShoot : IState
@@ -229,13 +235,24 @@ public class BotController : MonoBehaviour
             Vector3 nextPathPoint = GetNextPathPoint(character, targetPosition, out Vector3 recommendedAcceleration);
             Vector3 moveIntentionDirection = recommendedAcceleration == Vector3.zero ? (nextPathPoint - character.transform.position).Horizontal().normalized : recommendedAcceleration;
 
-            Debug.DrawLine(character.transform.position, nextPathPoint, Color.green);
+            DebugDraw.DrawLine(character.transform.position, nextPathPoint, Color.green);
 
             float sin = Mathf.Sin(-input.horizontalAim * Mathf.Deg2Rad);
             float cos = Mathf.Cos(-input.horizontalAim * Mathf.Deg2Rad);
 
             input.moveHorizontalAxis = moveIntentionDirection.x * cos + moveIntentionDirection.z * sin;
             input.moveVerticalAxis = -moveIntentionDirection.x * sin + moveIntentionDirection.z * cos;
+
+            // jump up places
+            bool canJumpLedge = nextPathPoint.y > character.transform.position.y + 0.1f;
+            bool isAlreadyJumping = !character.movement.isOnGround;
+            bool needsToHoldJump = (!character.movement.isOnGround && character.movement.velocity.y > 0f);
+            bool hasAlreadyReleasedButton = character.movement.state == CharacterMovementState.JumpedReleasedButton; // so we don't thok
+
+            if (((canJumpLedge && !isAlreadyJumping) || needsToHoldJump) && !hasAlreadyReleasedButton)
+                input.btnJump = true;
+            else
+                input.btnJump = false;
 
             hasReachedDestination = Vector3.Distance(character.transform.position, targetPosition) <= 0.5f;
 
@@ -258,17 +275,26 @@ public class BotController : MonoBehaviour
 
         private Vector3 GetNextPathPoint(Character character, Vector3 target, out Vector3 recommendedAcceleration)
         {
-            if (path.corners != null)
-            {
-                for (int i = 0; i + 1 < path.corners.Length; i++)
-                    Debug.DrawLine(path.corners[i] + Vector3.up * 0.5f, path.corners[i + 1] + Vector3.up * 0.5f, Color.blue);
-            }
-
+            Color navmeshCastedColor = Color.red;
+            Color pathColor = Color.blue;
             bool hasTargetPosition = NavMesh.SamplePosition(target, out NavMeshHit targetHit, 10.0f, ~0);
             bool hasLocalPosition = NavMesh.SamplePosition(character.transform.position, out NavMeshHit myHit, 20.0f, ~0);
             
             if (hasTargetPosition && hasLocalPosition)
                 NavMesh.CalculatePath(myHit.position, targetHit.position, ~0, path);
+
+            if (path.corners != null)
+            {
+                for (int i = 0; i + 1 < path.corners.Length; i++)
+                    DebugDraw.DrawLine(path.corners[i] + Vector3.up * 0.5f, path.corners[i + 1] + Vector3.up * 0.5f, pathColor);
+                DebugDraw.DrawLine(path.corners[path.corners.Length - 1], target, pathColor);
+            }
+
+            if (hasTargetPosition)
+            {
+                DebugDraw.DrawCross(targetHit.position, 1f, navmeshCastedColor);
+                DebugDraw.DrawLine(targetHit.position, target, navmeshCastedColor);
+            }
 
             if (path.corners != null && path.corners.Length > 1 && path.status != NavMeshPathStatus.PathInvalid)
             {
@@ -276,25 +302,13 @@ public class BotController : MonoBehaviour
                 {
                     Vector3 point = path.corners[i];
 
-                    bool shouldStopAtTarget = true;
-                    if (i + 1 < path.corners.Length)
-                    {
-                        if (path.corners[i + 1].y > path.corners[i].y + 0.5f)
-                        {
-                            // PROBABLY A JUMP OR A SPRING
-                            // check if we could make it with our current velocity and the spring
-                            if (Vector3.Dot(character.movement.velocity.normalized, (path.corners[i + 1] - path.corners[i]).normalized) < 0.5f)
-                            {
-                                point = path.corners[i] - (path.corners[i + 1] - path.corners[i]).Horizontal().normalized * 2f;
-                                shouldStopAtTarget = false;
-                            }
-                        }
-                    }
+                    bool shouldStopAtTarget = false;
 
-                    if (i + 1 < path.corners.Length && path.corners[i + 1].y > path.corners[i].y + 0.5f)
-                        shouldStopAtTarget = false; // we want speed
+                    // originally the jump/spring check was here
+                    // INSTEAD: we should pre-plan the path and visualise it to determine where we need acceleration/speed to move, and where we don't
 
-                    if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, point, nextTargetPosition, out recommendedAcceleration, shouldStopAtTarget))
+
+                    if (CanSimulateMovementToPoint(character.movement, character.transform.position, character.movement.velocity, point, nextTargetPosition, out recommendedAcceleration, shouldStopAtTarget))
                         return point;
                 }
 
@@ -304,7 +318,7 @@ public class BotController : MonoBehaviour
             else
             {
                 // skip straight to the target if we can
-                if (CanReachPoint(character.movement, character.transform.position, character.movement.velocity, target, nextTargetPosition, out recommendedAcceleration, true))
+                if (CanSimulateMovementToPoint(character.movement, character.transform.position, character.movement.velocity, target, nextTargetPosition, out recommendedAcceleration, true))
                     return target;
             }
 
@@ -313,14 +327,28 @@ public class BotController : MonoBehaviour
             return character.transform.position;
         }
 
-        private bool CanReachPoint(PlayerCharacterMovement movement, Vector3 position, Vector3 velocity, Vector3 target, Vector3 nextTarget, out Vector3 recommendedAcceleration, bool shouldStopAtTarget)
+        private bool CanSimulateMovementToPoint(PlayerCharacterMovement movement, Vector3 position, Vector3 velocity, Vector3 target, Vector3 nextTarget, out Vector3 recommendedAcceleration, bool shouldStopAtTarget)
         {
+            if (Vector3.Distance(target, position) < 3f)
+            {
+                // nvm
+                recommendedAcceleration = Vector3.zero; // no idea
+                return true;
+            }
+
+            // Let's try computing multiple approaches:
+            // -> Get there without a jump
+            // -> Go there with a thok
+            // -> Go there without a running start?
+
             float deltaTime = 0.05f;
             float brakeFactor = 0.5f;
 
             recommendedAcceleration = Vector3.zero;
             Vector3 firstAcceleration = Vector3.zero;
             Vector3 prevPosition = position;
+
+            velocity.y = movement.jumpSpeed;
 
             for (int i = 0; i < 80; i++)
             {
@@ -404,14 +432,12 @@ public class BotController : MonoBehaviour
                 if (i == 0)
                     firstAcceleration = bestAcceleration;
 
-                Debug.DrawLine(prevPosition, position, Color.black);
+                DebugDraw.DrawLine(prevPosition, position, Color.black);
                 prevPosition = position;
 
-                if (target.y > position.y + 0.5f)
-                    return false;
                 if (Vector3.Distance(position, target) < 0.5f)
                 {
-                    Debug.DrawLine(position - Vector3.up, position + Vector3.up, Color.green);
+                    DebugDraw.DrawLine(position - Vector3.up, position + Vector3.up, Color.green);
                     recommendedAcceleration = firstAcceleration;
                     return true;
                 }
@@ -427,21 +453,10 @@ public class BotController : MonoBehaviour
 
         public void Update(BotController controller, Character character, ref CharacterInput input)
         {
-            if (followPlayerId > 0 && Netplay.singleton.players.Count > followPlayerId && Netplay.singleton.players[followPlayerId])
-            {
+            if (Netplay.singleton.players.Count > followPlayerId && Netplay.singleton.players[followPlayerId])
                 controller.GetOrActivateState<State_MoveTowards>().SetTargetPosition(Netplay.singleton.players[followPlayerId].transform.position);
-            }
-
-            /*if (path)
-            {
-                if (Vector3.Distance(character.transform.position, path.GetWorldPoint(currentTargetPathPoint)) < pathTargetAcceptanceRange)
-                {
-                    currentTargetPathPoint = (currentTargetPathPoint + 1) % path.points.Count;
-                }
-
-                moveIntentionDirection = MoveTowardsTarget(path.GetWorldPoint(currentTargetPathPoint));
-            }
-            else */
+            else
+                controller.DeactivateState<State_MoveTowards>();
         }
     }
 
