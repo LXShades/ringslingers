@@ -50,11 +50,25 @@ public class CommandLineProcessor : MonoBehaviour
             }
         }
 
+        if (CommandLine.GetCommand("-password", 1, out string[] passwordParams))
+        {
+            Debug.Log("Admin password set");
+
+            Netplay.singleton.adminPassword = passwordParams[0];
+        }
+        
+        if (CommandLine.HasCommand("-server"))
+        {
+            Debug.Log("Running server! No local player");
+
+            Netplay.singleton.HostServer(null, false);
+        }
+
         if (CommandLine.HasCommand("-host"))
         {
-            Debug.Log("Hosting!");
+            Debug.Log("Hosting! One local player");
 
-            Netplay.singleton.HostServer(null);
+            Netplay.singleton.HostServer(null, true);
         }
 
         if (CommandLine.GetCommand("-connect", 1, out string[] connectParams))

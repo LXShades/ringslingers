@@ -85,7 +85,7 @@ public class WeaponWheel : MonoBehaviour
 
     private void OnDisable()
     {
-        if (Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
+        if (Netplay.singleton && Netplay.singleton.localPlayer && Netplay.singleton.localPlayer.TryGetComponent(out CharacterShooting shooting))
         {
             if (hasSelectedNakedWeapon)
                 shooting.LocalSetSelectedWeapons(new RingWeaponSettingsAsset[] { shooting.defaultWeapon.weaponType });

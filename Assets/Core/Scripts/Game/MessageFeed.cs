@@ -39,13 +39,20 @@ public class MessageFeed : NetworkBehaviour
         singleton?.PostImpl(message, doBeep);
     }
 
+    [Server]
+    public static void PostToPlayer(Player targetPlayer, string message, bool doBeep = false)
+    {
+        if (targetPlayer)
+            targetPlayer.TargetPostMessage(message, doBeep);
+    }
+
     /// <summary>
     /// Posts a message to the message locally (not networked)
     /// </summary>
     /// <param name="message"></param>
-    public static void PostLocal(string message)
+    public static void PostLocal(string message, bool doBeep = false)
     {
-        singleton?.PostLocalImpl(message);
+        singleton?.PostLocalImpl(message, doBeep);
     }
 
     [Server]
@@ -56,7 +63,7 @@ public class MessageFeed : NetworkBehaviour
         RpcPost(message, doBeep);
     }
 
-    private void PostLocalImpl(string message)
+    private void PostLocalImpl(string message, bool doBeep)
     {
         // Format the message
         StringBuilder sb = new StringBuilder(message);
@@ -100,6 +107,8 @@ public class MessageFeed : NetworkBehaviour
         // remove old messages
         while (messages.Count > messageHistoryLength)
             messages.RemoveAt(0);
+        if (doBeep)
+            GameSounds.PlaySound(null, beepSound);
 
         lastPostedMessageTime = Time.time;
         onNewMessage?.Invoke(message);
@@ -109,9 +118,6 @@ public class MessageFeed : NetworkBehaviour
     [ClientRpc]
     public void RpcPost(string message, bool doBeep)
     {
-        PostLocal(message);
-
-        if (doBeep)
-            GameSounds.PlaySound(null, beepSound);
+        PostLocal(message, doBeep);
     }
 }

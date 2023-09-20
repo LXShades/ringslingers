@@ -110,4 +110,39 @@ public class GameState_ServerSettings : GameStateComponent
             };
         }
     }
+
+    [Command(requiresAuthority = false)]
+    public void CmdTryLogin(string password, NetworkConnectionToClient sourceConnection = null)
+    {
+        if (sourceConnection.identity && sourceConnection.identity.TryGetComponent(out Player player))
+        {
+            if (password == Netplay.singleton.adminPassword)
+            {
+                player.isAdmin = true;
+                MessageFeed.PostToPlayer(player, "Logged in as admin");
+            }
+            else
+            {
+                MessageFeed.PostToPlayer(player, "Wrong password");
+            }
+        }
+    }
+
+    [Command(requiresAuthority = false)]
+    public void CmdRunAdminCommand(string command, NetworkConnectionToClient sourceConnection = null)
+    {
+        if (sourceConnection.identity && sourceConnection.identity.TryGetComponent(out Player player))
+        {
+            if (player.isAdmin)
+            {
+                // kind of a hack for now, run it on local ChatboxCommands...
+                if (!FindFirstObjectByType<ChatboxCommands>().OnCommandSubmitted(command, out string error))
+                    MessageFeed.PostToPlayer(player, $"Error running command: {error}");
+            }
+            else
+            {
+                MessageFeed.PostToPlayer(player, "Only admins can run this command");
+            }
+        }
+    }
 }

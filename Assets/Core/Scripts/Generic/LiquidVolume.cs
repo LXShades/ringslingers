@@ -31,9 +31,15 @@ public class LiquidVolume : MonoBehaviour
         allCollidersToLiquidVolumes.Remove(collider);
     }
 
-    public static LiquidVolume GetContainingLiquid(Vector3 point)
+    /// <summary>
+    /// Gets the liquid containing the point and the given radius.
+    /// </summary>
+    public static LiquidVolume GetContainingLiquid(Vector3 point, float radius = 0.001f)
     {
-        int numOverlaps = Physics.OverlapSphereNonAlloc(point, 0f, overlapBuffer);
+        if (radius < 0.001f)
+            radius = 0.001f; // Radius of 0 can cause unexpected slowdown in some maps, such as Desolate Twilight and Thunder Citadel, not sure why.
+
+        int numOverlaps = Physics.OverlapSphereNonAlloc(point, radius, overlapBuffer);
 
         for (int i = 0; i < numOverlaps; i++)
         {

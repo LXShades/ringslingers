@@ -1,5 +1,6 @@
 ﻿using Mirror;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -283,11 +284,12 @@ public class BotController : MonoBehaviour
             if (hasTargetPosition && hasLocalPosition)
                 NavMesh.CalculatePath(myHit.position, targetHit.position, ~0, path);
 
-            if (path.corners != null)
+            Vector3[] corners = path.corners; // unity allocs each time we retrieve this???
+            if (corners != null)
             {
-                for (int i = 0; i + 1 < path.corners.Length; i++)
-                    DebugDraw.DrawLine(path.corners[i] + Vector3.up * 0.5f, path.corners[i + 1] + Vector3.up * 0.5f, pathColor);
-                DebugDraw.DrawLine(path.corners[path.corners.Length - 1], target, pathColor);
+                for (int i = 0; i + 1 < corners.Length; i++)
+                    DebugDraw.DrawLine(corners[i] + Vector3.up * 0.5f, corners[i + 1] + Vector3.up * 0.5f, pathColor);
+                DebugDraw.DrawLine(path.corners[corners.Length - 1], target, pathColor);
             }
 
             if (hasTargetPosition)
@@ -295,18 +297,17 @@ public class BotController : MonoBehaviour
                 DebugDraw.DrawCross(targetHit.position, 1f, navmeshCastedColor);
                 DebugDraw.DrawLine(targetHit.position, target, navmeshCastedColor);
             }
-
-            if (path.corners != null && path.corners.Length > 1 && path.status != NavMeshPathStatus.PathInvalid)
+            
+            if (corners != null && corners.Length > 1 && path.status != NavMeshPathStatus.PathInvalid)
             {
-                for (int i = path.corners.Length - 1; i > 0; i--)
+                for (int i = corners.Length - 1; i > 0; i--)
                 {
-                    Vector3 point = path.corners[i];
+                    Vector3 point = corners[i];
 
                     bool shouldStopAtTarget = false;
 
                     // originally the jump/spring check was here
                     // INSTEAD: we should pre-plan the path and visualise it to determine where we need acceleration/speed to move, and where we don't
-
 
                     if (CanSimulateMovementToPoint(character.movement, character.transform.position, character.movement.velocity, point, nextTargetPosition, out recommendedAcceleration, shouldStopAtTarget))
                         return point;
@@ -343,10 +344,13 @@ public class BotController : MonoBehaviour
 
             float deltaTime = 0.05f;
             float brakeFactor = 0.5f;
+            float[] neuralInputs = new float[6];
 
             recommendedAcceleration = Vector3.zero;
             Vector3 firstAcceleration = Vector3.zero;
             Vector3 prevPosition = position;
+
+            PhysicsScene physScene = Physics.defaultPhysicsScene;
 
             velocity.y = movement.jumpSpeed;
 
@@ -381,16 +385,14 @@ public class BotController : MonoBehaviour
                 {
                     if (botController.airNeuralNetwork != null)
                     {
-                        float[] inputs = new float[]
-                        {
-                            target.x - position.x,
-                            target.y - position.y,
-                            target.z - position.z,
-                            velocity.x,
-                            velocity.y,
-                            velocity.z
-                        };
-                        float[] outputs = botController.airNeuralNetwork.FeedForward(inputs);
+                        neuralInputs[0] = target.x - position.x;
+                        neuralInputs[1] = target.y - position.y;
+                        neuralInputs[2] = target.z - position.z;
+                        neuralInputs[3] = velocity.x;
+                        neuralInputs[4] = velocity.y;
+                        neuralInputs[5] = velocity.z;
+
+                        float[] outputs = botController.airNeuralNetwork.FeedForward(neuralInputs);
                         bestAcceleration = new Vector3(outputs[0], 0f, outputs[1]).normalized;
                     }
                 }
@@ -398,17 +400,14 @@ public class BotController : MonoBehaviour
                 {
                     if (botController.groundRunNeuralNetwork != null)
                     {
-                        float[] inputs = new float[]
-                        {
-                            target.x - position.x,
-                            target.z - position.z,
-                            nextTarget.x - position.x,
-                            nextTarget.z - position.z,
-                            velocity.x,
-                            velocity.z
-                        };
-                        float[] outputs = botController.groundRunNeuralNetwork.FeedForward(inputs);
-                        
+                        neuralInputs[0] = target.x - position.x;
+                        neuralInputs[1] = target.z - position.z;
+                        neuralInputs[2] = nextTarget.x - position.x;
+                        neuralInputs[3] = nextTarget.z - position.z;
+                        neuralInputs[4] = velocity.x;
+                        neuralInputs[5] = velocity.z;
+
+                        float[] outputs = botController.groundRunNeuralNetwork.FeedForward(neuralInputs);
                         bestAcceleration = new Vector3(outputs[0], 0f, outputs[1]).normalized;
                     }
                 }
@@ -462,14 +461,29 @@ public class BotController : MonoBehaviour
 
     public class State_CollectRings : IState
     {
-        private List<Ring> rings = new List<Ring>();
+        private struct CachedRing
+        {
+            public Vector3 position;
+            public Ring ring;
+            public bool isWeapon;
+        }
+
+        private List<CachedRing> rings = new List<CachedRing>(128);
 
         public bool doExcludeWeapons = true;
 
         public void Update(BotController controller, Character character, ref CharacterInput input)
         {
             if (rings.Count == 0)
-                rings.AddRange(FindObjectsByType<Ring>(FindObjectsSortMode.None));
+            {
+                // cache the rings in the map
+                rings.AddRange(FindObjectsByType<Ring>(FindObjectsSortMode.None).Select(x => new CachedRing()
+                {
+                    ring = x,
+                    position = x.transform.position,
+                    isWeapon = x.TryGetComponent<RingWeaponPickup>(out _)
+                }));
+            }
 
             float closestDist = float.MaxValue;
             float nextClosestDist = float.MaxValue;
@@ -477,13 +491,19 @@ public class BotController : MonoBehaviour
             Vector3 closestPosition = myPosition;
             Vector3 nextClosestPosition = myPosition;
             State_MoveTowards moveState = controller.GetOrActivateState<State_MoveTowards>();
+            float velocityBonusFactor = 5f;
+            Vector3 velocityBonus = character.movement.velocity / character.movement.topSpeed * velocityBonusFactor;
 
-            foreach (Ring ring in rings)
+            foreach (CachedRing ring in rings)
             {
-                if (ring && (!doExcludeWeapons || !ring.GetComponent<RingWeaponPickup>()))
+                if (ring.ring != null && (!doExcludeWeapons || !ring.isWeapon))
                 {
-                    float dist = Vector3.Distance(myPosition, ring.transform.position) + Mathf.Abs(ring.transform.position.y - myPosition.y) * 3f;
-                    if (ring.respawnableItem.isSpawned)
+                    float dist = Vector3.Distance(myPosition, ring.position) + Mathf.Abs(ring.position.y - myPosition.y) * 3f;
+
+                    // favour the next ring according to our velocity
+                    dist -= Vector3.Dot((ring.position - myPosition).normalized, velocityBonus);
+                    
+                    if (ring.ring.respawnableItem.isSpawned)
                     {
                         if (dist < closestDist)
                         {
@@ -491,12 +511,12 @@ public class BotController : MonoBehaviour
                             nextClosestPosition = closestPosition;
 
                             closestDist = dist;
-                            closestPosition = ring.transform.position;
+                            closestPosition = ring.position;
                         }
                         else if (dist < nextClosestDist)
                         {
                             nextClosestDist = dist;
-                            nextClosestPosition = ring.transform.position;
+                            nextClosestPosition = ring.position;
                         }
                     }
                 }

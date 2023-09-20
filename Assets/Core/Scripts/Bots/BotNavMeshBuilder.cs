@@ -23,6 +23,7 @@ public class BotNavMeshBuilder : MonoBehaviour
 
     // not actually serialized but still used at edit time for preview
     private List<NavLink> navLinks = new List<NavLink>();
+    private List<NavMeshLinkInstance> navLinkInstances = new List<NavMeshLinkInstance>();
 
     private NavMeshSurface navMeshSurface;
 
@@ -41,13 +42,13 @@ public class BotNavMeshBuilder : MonoBehaviour
 
         foreach (NavLink link in navLinks)
         {
-            NavMesh.AddLink(new NavMeshLinkData()
+            navLinkInstances.Add(NavMesh.AddLink(new NavMeshLinkData()
             {
                 startPosition = link.startPosition,
                 endPosition = link.endPosition,
                 costModifier = link.costModifier,
                 agentTypeID = agentTypeId
-            });
+            }));
         }
     }
 
@@ -55,6 +56,9 @@ public class BotNavMeshBuilder : MonoBehaviour
     {
         navMeshSurface = GetComponent<NavMeshSurface>();
         navLinks.Clear();
+        foreach (NavMeshLinkInstance linkInstance in navLinkInstances)
+            NavMesh.RemoveLink(linkInstance); // [LF] another reason to complain, there's no clear nav links function???? we need to do this???
+        navLinkInstances.Clear();
 
         // Generate the base nav mesh (todo: we should only do that if there are bots, right?)
         navMeshSurface.BuildNavMesh();

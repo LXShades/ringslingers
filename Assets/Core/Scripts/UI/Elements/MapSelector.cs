@@ -76,7 +76,7 @@ public class MapSelector : MonoBehaviour
             if (NetworkServer.active)
                 GameState.Get<GameState_Map>().ServerLoadMap(selectedMap);
             else if (!NetworkServer.active && !NetworkClient.active) // this might have been called from the main menu?
-                Netplay.singleton.HostServer(selectedMap);
+                Netplay.singleton.HostServer(selectedMap, true);
             else
                 Debug.LogError("Clients can not change the game map!");
         }

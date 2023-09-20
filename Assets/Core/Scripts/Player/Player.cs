@@ -7,6 +7,11 @@ public class Player : NetworkBehaviour
     /// </summary>
     [SyncVar(hook = nameof(OnPlayerIdChanged))] public int playerId;
 
+    /// <summary>
+    /// Whether this client is an admin
+    /// </summary>
+    [SyncVar] public bool isAdmin;
+
     private Character character => playerId != -1 ? Netplay.singleton.players[playerId] : null;
 
     public static LocalPersistentPlayer localPersistent
@@ -95,10 +100,17 @@ public class Player : NetworkBehaviour
             character.TryChangeColour(persistentData.colour);
     }
 
+    // says something to the world
     [Command]
     public void CmdSendMessage(string message)
     {
         message = message.Replace("</noparse>", "lol"); // plz don't
         MessageFeed.Post($"<{character?.playerName}> <noparse>{message}</noparse>", true);
+    }
+
+    [TargetRpc]
+    public void TargetPostMessage(string message, bool doBeep)
+    {
+        MessageFeed.PostLocal(message, doBeep);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -79,6 +80,11 @@ public class Netplay : MonoBehaviour
     /// Whether this is not a server or host player
     /// </summary>
     public bool isClient => netMan.mode == Mirror.NetworkManagerMode.ClientOnly;
+
+    /// <summary>
+    /// The server admin password, plaintext (y'all shouldn't be reusing your main passwords for this Sonic fangame anyway)
+    /// </summary>
+    public string adminPassword;
 
     private MapConfiguration serverHostInitialMap;
 
@@ -299,6 +305,12 @@ public class Netplay : MonoBehaviour
             Debug.LogError($"Only the server can do this");
         }
     }
+
+    public void ConsoleCommand_Admin(string password)
+    {
+        if (GameState.Get(out GameState_ServerSettings serverSettings))
+            serverSettings.CmdTryLogin(password);
+    }
     #endregion
 
     #region Connection
@@ -331,7 +343,7 @@ public class Netplay : MonoBehaviour
         }
     }
 
-    public void HostServer(MapConfiguration level)
+    public void HostServer(MapConfiguration level, bool hostWithLocalPlayer)
     {
         if (level != null)
         {
@@ -339,7 +351,7 @@ public class Netplay : MonoBehaviour
 
             // HACK: we need to load the scene before kicking off the server I don't know why it be this way
             AsyncOperation op = SceneManager.LoadSceneAsync(level.path);
-            op.completed += op => FinishHost();
+            op.completed += op => FinishHost(hostWithLocalPlayer);
         }
         else
         {
@@ -361,15 +373,15 @@ public class Netplay : MonoBehaviour
                 }
             }
             // finish host first
-            FinishHost();
+            FinishHost(hostWithLocalPlayer);
         }
     }
 
-    private void FinishHost()
+    private void FinishHost(bool hostWithLocalPlayer)
     {
         if (netMan || InitNet())
         {
-            netMan.Host(true);
+            netMan.Host(hostWithLocalPlayer);
 
             connectionStatus = ConnectionStatus.Ready;
             ApplyNetPreferences();
