@@ -276,15 +276,29 @@ public class Netplay : MonoBehaviour
         return -1;
     }
 
-    public void ConsoleCommand_AddBot()
+    [Server]
+    public void ConsoleCommand_AddBot() => ConsoleCommand_AddBots(1);
+
+    [Server]
+    public void ConsoleCommand_AddBots(int number)
     {
-        if (NetworkServer.active)
+        for (int i = 0; i < number; i++)
         {
             GameObject bot = Spawner.Spawn(botPrefab.gameObject);
         }
-        else
+    }
+
+    [Server]
+    public void ConsoleCommand_RemoveBots()
+    {
+        foreach (BotController bot in FindObjectsByType<BotController>(FindObjectsSortMode.None))
         {
-            Debug.LogError($"Only the server can do this");
+            if (bot.TryGetComponent(out Player player))
+            {
+                if (players.Count > player.playerId && players[player.playerId] != null)
+                    NetworkServer.Destroy(players[player.playerId].gameObject);
+            }
+            NetworkServer.Destroy(bot.gameObject);
         }
     }
 

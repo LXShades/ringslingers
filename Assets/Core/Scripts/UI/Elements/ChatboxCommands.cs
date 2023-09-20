@@ -28,7 +28,9 @@ public class ChatboxCommands : MonoBehaviour
         // Admin commands
         RegisterCommand("endround", "Ends the current round or intermission screen", Netplay.singleton.ConsoleCommand_EndRound, true);
         RegisterCommand("addbot", "Adds a basic bot (testing)", Netplay.singleton.ConsoleCommand_AddBot, true);
+        RegisterCommand<int>("addbots", "<number> Adds multiple basic bots (testing)", Netplay.singleton.ConsoleCommand_AddBots, true);
         RegisterCommand("addfollowbot", "Adds a bot that follows you (works on host only)", Netplay.singleton.ConsoleCommand_AddFollowBot, true);
+        RegisterCommand("removebots", "Removes all bots", Netplay.singleton.ConsoleCommand_RemoveBots, true);
     }
 
     public bool OnCommandSubmitted(string commandAndParameters, out string error)
@@ -161,7 +163,11 @@ public class ChatboxCommands : MonoBehaviour
         StringBuilder sb = new StringBuilder();
 
         foreach (KeyValuePair<string, Command> command in commands)
-            sb.AppendLine(command.Key);
+        {
+            sb.Append(command.Key);
+            sb.Append(": ");
+            sb.AppendLine(command.Value.description);
+        }
 
         MessageFeed.PostLocal(sb.ToString());
     }
