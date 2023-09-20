@@ -32,9 +32,9 @@ public class PlayerCharacterSelector : MonoBehaviour
 
     void OnCharacterChanged(int index)
     {
-        LocalPersistentPlayer persistent = Player.localPersistent;
+        PlayerInfo persistent = Player.localPersistentPlayerInfo;
 
         persistent.characterIndex = index;
-        Player.localPersistent = persistent;
+        Player.localPersistentPlayerInfo = persistent;
     }
 }

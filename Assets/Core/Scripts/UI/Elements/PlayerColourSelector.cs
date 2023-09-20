@@ -43,9 +43,9 @@ public class PlayerColourSelector : MonoBehaviour
 
         if (Netplay.singleton && index >= 0 && index < colourChoices.Length)
         {
-            LocalPersistentPlayer persistent = Player.localPersistent;
+            PlayerInfo persistent = Player.localPersistentPlayerInfo;
             persistent.colour = colour;
-            Player.localPersistent = persistent;
+            Player.localPersistentPlayerInfo = persistent;
         }
 
         dropdown.colors = new ColorBlock()

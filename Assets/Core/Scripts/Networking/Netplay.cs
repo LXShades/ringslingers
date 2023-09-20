@@ -64,7 +64,7 @@ public class Netplay : MonoBehaviour
 
     public Player localClient => NetworkClient.connection?.identity != null ? NetworkClient.connection.identity.GetComponent<Player>() : null;
 
-    public Character localPlayer => localPlayerId != -1 ? players[localPlayerId] : null;
+    public Character localPlayer => localPlayerId != -1 && localPlayerId < players.Count ? players[localPlayerId] : null;
 
     /// <summary>
     /// Player objects by ID. May contain null gaps
@@ -285,6 +285,7 @@ public class Netplay : MonoBehaviour
         for (int i = 0; i < number; i++)
         {
             GameObject bot = Spawner.Spawn(botPrefab.gameObject);
+            bot.GetComponent<Player>().OnStartBot();
         }
     }
 

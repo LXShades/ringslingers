@@ -474,6 +474,7 @@ public class BotController : MonoBehaviour
 
         public void Update(BotController controller, Character character, ref CharacterInput input)
         {
+            rings.RemoveAll(r => r.ring == null);
             if (rings.Count == 0)
             {
                 // cache the rings in the map
@@ -496,7 +497,7 @@ public class BotController : MonoBehaviour
 
             foreach (CachedRing ring in rings)
             {
-                if (ring.ring != null && (!doExcludeWeapons || !ring.isWeapon))
+                if (!doExcludeWeapons || !ring.isWeapon) // no need to null check as we filter out earlier
                 {
                     float dist = Vector3.Distance(myPosition, ring.position) + Mathf.Abs(ring.position.y - myPosition.y) * 3f;
 

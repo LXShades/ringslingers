@@ -99,10 +99,17 @@ public class ChatboxCommands : MonoBehaviour
         {
             command = parameters =>
             {
-                if (TryParseParameter<TA>(parameters[1], out TA taValue, out string error))
-                    function(taValue);
+                if (parameters.Length >= 2)
+                {
+                    if (TryParseParameter<TA>(parameters[1], out TA taValue, out string error))
+                        function(taValue);
+                    else
+                        MessageFeed.PostLocal(error);
+                }
                 else
-                    MessageFeed.PostLocal(error);
+                {
+                    MessageFeed.PostLocal($"Expected 1 parameter.\n{description}");
+                }
             },
             description = description,
             isAdminCommand = isAdminCommand

@@ -57,10 +57,10 @@ public class MainMenu : MonoBehaviour
 
     private void OnNameChanged(string newName)
     {
-        LocalPersistentPlayer persistent = Player.localPersistent;
+        PlayerInfo persistent = Player.localPersistentPlayerInfo;
 
         persistent.name = newName;
-        Player.localPersistent = persistent;
+        Player.localPersistentPlayerInfo = persistent;
     }
 
     private void SetMenuEnabled(bool enabled)

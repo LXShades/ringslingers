@@ -1,20 +1,25 @@
 ﻿using Mirror;
+using System;
+using UnityEngine.SceneManagement;
 
 public class Player : NetworkBehaviour
 {
     /// <summary>
     /// ID of this client
     /// </summary>
-    [SyncVar(hook = nameof(OnPlayerIdChanged))] public int playerId;
+    [NonSerialized] [SyncVar(hook = nameof(OnPlayerIdChanged))] public int playerId = -1;
 
     /// <summary>
     /// Whether this client is an admin
     /// </summary>
-    [SyncVar] public bool isAdmin;
+    [NonSerialized] [SyncVar] public bool isAdmin;
 
-    private Character character => playerId != -1 ? Netplay.singleton.players[playerId] : null;
+    private Character character => playerId != -1 && playerId < Netplay.singleton.players.Count ? Netplay.singleton.players[playerId] : null;
 
-    public static LocalPersistentPlayer localPersistent
+    /// <summary>
+    /// Persistent data for the local player
+    /// </summary>
+    public static PlayerInfo localPersistentPlayerInfo
     {
         get => _localPersistent;
         set
@@ -22,44 +27,53 @@ public class Player : NetworkBehaviour
             _localPersistent = value;
 
             if (Netplay.singleton && Netplay.singleton.localClient != null)
-            {
                 Netplay.singleton.localClient.CmdSendPersistentData(value);
-            }
         }
     }
-    private static LocalPersistentPlayer _localPersistent;
+    private static PlayerInfo _localPersistent;
+
+    private PlayerInfo playerInfo;
 
     // [server] predicted servertime of the last input we received from the client, recorded here because history is trimmed but we need to inform the client of how far ahead it was
     public double serverTimeOfLastReceivedInput { get; set; }
 
     public override void OnStartServer()
     {
-        // spawn the player
-        Character newPlayer = Netplay.singleton.AddCharacter(0, this);
-        
-        if (netIdentity.connectionToClient != null)
-            newPlayer.netIdentity.AssignClientAuthority(netIdentity.connectionToClient);
+        // Players are now persistent between maps
+        DontDestroyOnLoad(gameObject);
 
-        playerId = newPlayer.playerId;
+        SceneManager.sceneLoaded += ServerOnSceneChanged;
 
         base.OnStartServer();
     }
 
     public override void OnStartLocalPlayer()
     {
-        // Request our name upon joining
+        // Players are now persistent between maps
+        DontDestroyOnLoad(gameObject);
+
         base.OnStartLocalPlayer();
 
         Netplay.singleton.localPlayerId = playerId;
 
-        // local player character created, update everyone else's outline statuc
-        foreach (Character character in Netplay.singleton.players)
-        {
-            if (character)
-                character.UpdateOutlineColour();
-        }
+        // Request our name upon joining
+        CmdSendPersistentData(localPersistentPlayerInfo);
+        CmdRequestCharacterSpawn();
+    }
 
-        CmdSendPersistentData(localPersistent);
+    public void OnStartBot()
+    {
+        ServerSetupCharacter();
+    }
+
+    private void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= ServerOnSceneChanged;
+    }
+
+    private void ServerOnSceneChanged(Scene scene, LoadSceneMode mode)
+    {
+        ServerSetupCharacter();
     }
 
     void OnPlayerIdChanged(int oldValue, int newValue)
@@ -72,21 +86,15 @@ public class Player : NetworkBehaviour
         }
     }
 
-    [Command]
-    public void CmdSendPersistentData(LocalPersistentPlayer persistentData)
+    /// <summary>
+    /// Spawns and sets up this player's character if necessary
+    /// </summary>
+    private void ServerSetupCharacter()
     {
-        // Name
-        string oldName = character.playerName;
-
-        character?.Rename(persistentData.name);
-
-        if (oldName != character.playerName)
-            MessageFeed.Post($"{oldName} was renamed to <player>{character.playerName}</player>");
-
-        // Character
-        if (persistentData.characterIndex >= 0 && persistentData.characterIndex < RingslingersContent.loaded.characters.Count && character != null && character.characterIndex != persistentData.characterIndex)
+        // Change existing character
+        if (playerInfo.characterIndex >= 0 && playerInfo.characterIndex < RingslingersContent.loaded.characters.Count && character != null && character.characterIndex != playerInfo.characterIndex)
         {
-            Character player = Netplay.singleton.ChangePlayerCharacter(playerId, persistentData.characterIndex, this);
+            Character player = Netplay.singleton.ChangePlayerCharacter(playerId, playerInfo.characterIndex, this);
 
             if (player != null)
             {
@@ -95,9 +103,50 @@ public class Player : NetworkBehaviour
             }
         }
 
+        // Spawn new character, if needed
+        if (character == null)
+        {
+            Character newPlayer = Netplay.singleton.AddCharacter(playerInfo.characterIndex, this);
+
+            if (netIdentity.connectionToClient != null)
+                newPlayer.netIdentity.AssignClientAuthority(netIdentity.connectionToClient);
+
+            playerId = newPlayer.playerId;
+        }
+
+        // Name
+        string oldName = character.playerName;
+
+        if (oldName != playerInfo.name)
+        {
+            MessageFeed.Post($"{oldName} was renamed to <player>{character.playerName}</player>");
+            character?.Rename(playerInfo.name);
+        }
+
         // Colour
-        if (character != null)
-            character.TryChangeColour(persistentData.colour);
+        character.TryChangeColour(playerInfo.colour);
+    }
+
+    [Command]
+    public void CmdSendPersistentData(PlayerInfo persistentData)
+    {
+        playerInfo = persistentData;
+    }
+
+    /// <summary>
+    /// Sent when the player is ready / new scene loaded
+    /// </summary>
+    [Command]
+    private void CmdRequestCharacterSpawn()
+    {
+        ServerSetupCharacter();
+
+        // local player character created, update everyone else's outline statuc
+        foreach (Character character in Netplay.singleton.players)
+        {
+            if (character)
+                character.UpdateOutlineColour();
+        }
     }
 
     // says something to the world
