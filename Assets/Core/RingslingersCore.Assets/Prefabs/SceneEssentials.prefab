@@ -49,6 +49,7 @@ MonoBehaviour:
   agentTypeId: -1372625422
   jumpHeight: 1.75
   jumpDistance: 7
+  jumpCostModifier: 1
 --- !u!114 &1366298380073302854
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -556,9 +557,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   syncMode: 0
   syncInterval: 0.1
-  tickerSettings:
+  timelineSettings:
     maxDeltaTime: 0.033333335
-    maxSeekIterations: 15
+    maxSeekIterations: 45
     maxTickRate: 60
     maxTickRateConstraint: 0
     fixedTickRate: 60
@@ -1112,15 +1113,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6453930959932192041, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Size
-      value: 0.9999999
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6453930959932192041, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Value
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6633051397774757385, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_Size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6633051397774757385, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
+      propertyPath: m_Value
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6762070008939915740, guid: 7124c5815ce073742ac81cd6d18f8569, type: 3}
       propertyPath: m_AnchorMax.y

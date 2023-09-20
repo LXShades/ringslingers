@@ -52,13 +52,15 @@ public class BotNavMeshBuilder : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        ClearGeneratedNavLinks();
+    }
+
     private void Regenerate()
     {
         navMeshSurface = GetComponent<NavMeshSurface>();
-        navLinks.Clear();
-        foreach (NavMeshLinkInstance linkInstance in navLinkInstances)
-            NavMesh.RemoveLink(linkInstance); // [LF] another reason to complain, there's no clear nav links function???? we need to do this???
-        navLinkInstances.Clear();
+        ClearGeneratedNavLinks();
 
         // Generate the base nav mesh (todo: we should only do that if there are bots, right?)
         navMeshSurface.BuildNavMesh();
@@ -130,6 +132,14 @@ public class BotNavMeshBuilder : MonoBehaviour
         }
 
         navMeshSurface.UpdateNavMesh(navMeshSurface.navMeshData);
+    }
+
+    private void ClearGeneratedNavLinks()
+    {
+        foreach (NavMeshLinkInstance linkInstance in navLinkInstances)
+            NavMesh.RemoveLink(linkInstance); // [LF] another reason to complain, there's no clear nav links function???? we need to do this???
+        navLinkInstances.Clear();
+        navLinks.Clear();
     }
 
     private void OnDrawGizmosSelected()

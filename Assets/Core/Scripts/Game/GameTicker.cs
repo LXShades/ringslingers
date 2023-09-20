@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class GameTicker : NetworkBehaviour
 {
@@ -37,14 +38,15 @@ public class GameTicker : NetworkBehaviour
     }
 
     [Header("Game")]
-    public TimelineSettings tickerSettings = TimelineSettings.Default;
+    [FormerlySerializedAs("tickerSettings")]
+    public TimelineSettings timelineSettings = TimelineSettings.Default;
 
     [Header("Time")]
     [Tooltip("WARNING: Set by GamePreferences.extraSmoothing and its defaults")]
     public float extraSmoothing = 0.0017f;
     [Tooltip("Time, in seconds, that we can go without receiving server info before lag occurs")]
     public float timeTilLag = 0.75f;
-    public int fixedInputRate => tickerSettings.fixedTickRate;
+    public int fixedInputRate => timelineSettings.fixedTickRate;
     public int fixedPhysicsRate = 30;
 
     [Header("Prediction")]
@@ -313,6 +315,7 @@ public class GameTicker : NetworkBehaviour
         }
 
         // Tick all players
+        timeline.settings = timelineSettings;
         timeline.Seek(predictedServerTime);
     }
 
