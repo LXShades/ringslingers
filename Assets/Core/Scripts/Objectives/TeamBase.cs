@@ -12,7 +12,7 @@ public class TeamBase : MonoBehaviour
             {
                 TheFlag ourFlag = stateCTF.GetTeamFlag(team);
 
-                if (player.holdingFlag != null && player.team == team && ourFlag?.state == TheFlag.State.Idle)
+                if (player.holdingFlag != null && player.team == team && ourFlag?.carryable.state == Carryable.State.Idle)
                 {
                     player.holdingFlag.Capture(player);
                 }

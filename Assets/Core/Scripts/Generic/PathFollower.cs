@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class PathFollower : NetworkBehaviour
 {
-    public Path path;
+    public LinearPath path;
     public float speed = 5.0f;
     public float offset = 0f;
 

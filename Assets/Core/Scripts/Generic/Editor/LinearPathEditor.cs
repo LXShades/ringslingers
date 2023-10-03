@@ -1,14 +1,14 @@
 ﻿using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(Path)), CanEditMultipleObjects]
-public class PathEditor : Editor
+[CustomEditor(typeof(LinearPath)), CanEditMultipleObjects]
+public class LinearPathEditor : Editor
 {
     private int lastSelectedPoint = 0;
 
     public override void OnInspectorGUI()
     {
-        Path path = (Path)target;
+        LinearPath path = (LinearPath)target;
         base.OnInspectorGUI();
 
         if (GUILayout.Button("Insert point"))
@@ -38,7 +38,7 @@ public class PathEditor : Editor
 
     protected virtual void OnSceneGUI()
     {
-        Path path = (Path)target;
+        LinearPath path = (LinearPath)target;
 
         for (int i = 0; i < path.points.Count; i++)
         {

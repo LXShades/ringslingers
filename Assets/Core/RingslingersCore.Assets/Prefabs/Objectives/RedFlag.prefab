@@ -5,10 +5,11 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
+    serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 3111956062486528451, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 783dd368aa776194980b508913b4375e, type: 2}
     - target: {fileID: 3368029225196881782, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
@@ -36,12 +37,19 @@ PrefabInstance:
       value: RedFlag
       objectReference: {fileID: 0}
     - target: {fileID: 6326427146094059178, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: 6763c12678c58d749b1ecec42fb7d94f, type: 2}
+    - target: {fileID: 7752477547936243400, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
+      propertyPath: blockingCollisionLayers.m_Bits
+      value: 1079
+      objectReference: {fileID: 0}
     - target: {fileID: 8734837860526907390, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
       propertyPath: m_AssetId
-      value: 
+      value: 24fbdd17d59a3ae499a6b2d84a148aae
       objectReference: {fileID: 0}
     m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a6538f33c4769044d95b5759269e50a0, type: 3}

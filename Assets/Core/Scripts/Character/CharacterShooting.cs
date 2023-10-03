@@ -234,6 +234,8 @@ public class CharacterShooting : NetworkBehaviour
         float ringDistance = 0f;
         float ringStep = effectiveWeaponSettings.projectileSpeed * interval;
         float lastTargetDistance = Vector3.Distance(target.transform.position, startPosition);
+        Vector3 torsoOffset = target.GetTorsoOffset();
+
         for (int i = 1; i * interval < maxPredictionTime; i++)
         {
             // Tick the player
@@ -244,7 +246,7 @@ public class CharacterShooting : NetworkBehaviour
             Vector3 currentTargetPosition = target.transform.position;
             float currentTargetDistance = Vector3.Distance(currentTargetPosition, startPosition);
 
-            autoaimPredictedBlips.Add(currentTargetPosition + new Vector3(0, 0.5f, 0));
+            autoaimPredictedBlips.Add(currentTargetPosition + torsoOffset);
 
             if (currentTargetDistance >= lastTargetDistance + ringStep) // target is moving away faster than our ring would, so if they continue along this path we probably can't hit them
                 break;

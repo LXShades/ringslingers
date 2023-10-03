@@ -56,7 +56,7 @@ public class ThrownRing : NetworkBehaviour
     void Start()
     {
         // colour the ring
-        if (owner.TryGetComponent(out Character owningPlayer))
+        if (owner && owner.TryGetComponent(out Character owningPlayer))
         {
             switch (owningPlayer.team)
             {
@@ -151,23 +151,30 @@ public class ThrownRing : NetworkBehaviour
     }
 
     private List<PastCharacter> nearbyCharacters = new List<PastCharacter>(32);
+    private static List<Collider> tempCollidersA = new List<Collider>(16);
+    private static List<Collider> tempCollidersB = new List<Collider>(16);
 
     public virtual void Throw(Character owner, Vector3 spawnPosition, Vector3 direction, float serverPredictionAmount)
     {
-        foreach (Collider collider in GetComponentsInChildren<Collider>())
+        if (owner)
         {
-            foreach (Collider ownerCollider in owner.GetComponentsInChildren<Collider>())
-                Physics.IgnoreCollision(collider, ownerCollider);
+            GetComponentsInChildren(tempCollidersA);
+            foreach (Collider collider in tempCollidersA)
+            {
+                owner.GetComponentsInChildren(tempCollidersB);
+                foreach (Collider ownerCollider in tempCollidersB)
+                    Physics.IgnoreCollision(collider, ownerCollider);
+            }
+
+            if (movement)
+                movement.gameObjectInstancesToIgnore.Add(owner.gameObject);
         }
 
-        this.owner = owner.gameObject;
+        this.owner = owner ? owner.gameObject : null;
         this.wasLocallyThrown = true;
 
         velocity = direction.normalized * effectiveSettings.projectileSpeed;
         initialVelocity = velocity;
-
-        if (movement)
-            movement.gameObjectInstancesToIgnore.Add(owner.gameObject);
 
         transform.SetPositionAndRotation(spawnPosition, Quaternion.LookRotation(direction));
 
@@ -227,7 +234,7 @@ public class ThrownRing : NetworkBehaviour
         }
 
         // Hurt any players we collided with
-        if (otherCollider.TryGetComponent(out Damageable damageable) && owner)
+        if (otherCollider.TryGetComponent(out Damageable damageable))
         {
             if (!doDisablePlayerCollisions)
                 damageable.TryDamage(owner, velocity.normalized * effectiveSettings.projectileKnockback);
@@ -307,7 +314,7 @@ public class ThrownRing : NetworkBehaviour
 
     private void OnOwnerChanged(GameObject oldOwner, GameObject newOwner)
     {
-        if (newOwner.TryGetComponent(out CharacterShooting ringShooting))
+        if (newOwner && newOwner.TryGetComponent(out CharacterShooting ringShooting))
         {
             effectiveSettings = ringShooting.effectiveWeaponSettings;
         }

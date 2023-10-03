@@ -323,7 +323,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
                 force = -transform.forward.Horizontal() * hurtDefaultHorizontalKnockback;
             else if (force.Horizontal().magnitude < hurtDefaultHorizontalKnockback)
                 force.SetHorizontal(force.Horizontal().normalized * hurtDefaultHorizontalKnockback);
-            force += movement.up * hurtDefaultVerticalKnockback;
+            force = movement.up * hurtDefaultVerticalKnockback;
 
             // predict our hit
             entity.owner.CallEvent((_) => movement.ApplyHitKnockback(force));
@@ -354,9 +354,14 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
             }
         }
 
-        if (NetworkServer.active && holdingFlag)
+        // drop carryables
+        if (NetworkServer.active)
         {
-            holdingFlag.Drop();
+            List<Carryable> carrying = Carryable.GetAllCarriedByPlayer(this);
+
+            // we can't use a foreach because the collection would get modified during iteration
+            for (int i = carrying.Count - 1; i >= 0; i--)
+                carrying[i].Drop();
         }
     }
 
@@ -476,6 +481,11 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     {
         this.team = team;
     }
+
+    public Vector3 GetTorsoOffset() => new Vector3(0f, 0.5f, 0f);
+
+    // useful for shooting towards the character, here in case we end up with characters with different size
+    public Vector3 GetTorsoPosition() => transform.position + GetTorsoOffset();
 
     public Color GetCharacterColour()
     {

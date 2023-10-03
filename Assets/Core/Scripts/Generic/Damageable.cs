@@ -4,6 +4,9 @@ using UnityEngine.Events;
 
 public class Damageable : NetworkBehaviour
 {
+    /// <summary>
+    /// GameObject instigator, Vector3 force, bool instaKill
+    /// </summary>
     public UnityEvent<GameObject, Vector3, bool> onLocalDamaged;
 
     [Header("I-frames")]

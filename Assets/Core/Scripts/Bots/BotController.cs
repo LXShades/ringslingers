@@ -11,7 +11,7 @@ public class BotController : MonoBehaviour
         public void Update(BotController controller, Character character, ref CharacterInput input);
     }
 
-    public Path path;
+    public LinearPath path;
     public float pathTargetAcceptanceRange = 2f;
 
     public int followPlayerId;
