@@ -16,15 +16,20 @@ public class Damageable : NetworkBehaviour
     public float hitInvincibilityBlinkRate = 25f;
     public float invincibilityTimeRemaining { get; private set; }
 
-    [Header("Visuals")]
-    public bool autoPopulateRenderers = true;
-    public Renderer[] affectedRenderers = new Renderer[0];
-
     [Header("Teams")]
     [Tooltip("Except when 0 (neutral), objects with the same damage team won't hurt each other")]
     public int damageTeam = 0;
 
     public bool isInvincible => invincibilityTimeRemaining > 0f;
+
+    private Visibility visibility;
+
+    private void Awake()
+    {
+        visibility = GetComponent<Visibility>();
+        if (doInvincibilityBlink != (visibility != null))
+            Debug.LogError($"Damageable {gameObject} uses invincibility blink but is missing Visibility component");
+    }
 
     private void Update()
     {
@@ -35,15 +40,10 @@ public class Damageable : NetworkBehaviour
 
             if (doInvincibilityBlink)
             {
-                bool enableRenderers;
-
                 if (invincibilityTimeRemaining > 0)
-                    enableRenderers = ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0;
+                    visibility.Set(this, ((int)(Time.time * hitInvincibilityBlinkRate) & 1) == 0);
                 else
-                    enableRenderers = true; // we finished blinky blinkying
-
-                foreach (Renderer renderer in affectedRenderers)
-                    renderer.enabled = enableRenderers;
+                    visibility.Unset(this); // we finished blinky blinkying
             }
         }
     }
@@ -83,11 +83,5 @@ public class Damageable : NetworkBehaviour
             RpcStartInvincibilityTime(hitInvincibilityDuration);
         }
         onLocalDamaged?.Invoke(instigator, force, instaKill);
-    }
-
-    private void OnValidate()
-    {
-        if (autoPopulateRenderers)
-            affectedRenderers = GetComponentsInChildren<Renderer>();
     }
 }

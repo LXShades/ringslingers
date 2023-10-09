@@ -510,6 +510,7 @@ GameObject:
   - component: {fileID: 2222083882362034574}
   - component: {fileID: 8686370219680115010}
   - component: {fileID: 7349117552367724936}
+  - component: {fileID: 5825511496158799294}
   m_Layer: 8
   m_Name: CharacterBase
   m_TagString: Untagged
@@ -1202,11 +1203,6 @@ MonoBehaviour:
   hitInvincibilityDuration: 4
   doInvincibilityBlink: 1
   hitInvincibilityBlinkRate: 25
-  autoPopulateRenderers: 1
-  affectedRenderers:
-  - {fileID: 3724725801851352227}
-  - {fileID: 8562868047605996599}
-  - {fileID: 3973711577790497247}
   damageTeam: 0
 --- !u!114 &2266500768883055632
 MonoBehaviour:
@@ -1387,6 +1383,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mispredictionInterpolationSmoothing: 0.3
+--- !u!114 &5825511496158799294
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7352825796714013436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3415f2e50183dac47a4c9474c4a6ae42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  autoPopulateRenderers: 1
+  affectedRenderers:
+  - {fileID: 3724725801851352227}
+  - {fileID: 8562868047605996599}
+  - {fileID: 3973711577790497247}
+  visibilityPriority: 0
+  enableDefaultVisibility: 1
+  defaultVisibility: 1
 --- !u!1 &7396597584314610511
 GameObject:
   m_ObjectHideFlags: 0

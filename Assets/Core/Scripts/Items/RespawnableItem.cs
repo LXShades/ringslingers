@@ -56,6 +56,7 @@ public class RespawnableItem : NetworkBehaviour
     public void Respawn()
     {
         isSpawned = true;
+        StopCoroutine(nameof(RespawnRoutine));
     }
 
     public void SetSpawnPosition(Vector3 position)

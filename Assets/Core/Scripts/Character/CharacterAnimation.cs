@@ -124,9 +124,11 @@ public class CharacterAnimation : MonoBehaviour
         smoothGlideTilt = Mathf.SmoothDamp(smoothGlideTilt, glideTilt, ref smoothGlideTiltVelocity, glideTiltDamp);
 
         // After animation post-processing, handle stuff attached to the player
-        TheFlag holdingFlag = player.holdingFlag;
-        if (holdingFlag != null)
-            holdingFlag.transform.SetPositionAndRotation(player.flagHoldBone.position - (player.flagHoldBone.rotation * Vector3.up) * 0.4f, player.flagHoldBone.rotation);
+        System.Collections.Generic.List<Carryable> itemsCarriedByPlayer = Carryable.GetAllCarriedByPlayer(player);
+        foreach (Carryable carryable in itemsCarriedByPlayer) // we haven't got handling for multiple carried things yet whee
+        {
+            carryable.transform.SetPositionAndRotation(player.flagHoldBone.position - (player.flagHoldBone.rotation * carryable.localHandCarrySocketOffset), player.flagHoldBone.rotation);
+        }
 
         lastVelocity = movement.velocity;
     }

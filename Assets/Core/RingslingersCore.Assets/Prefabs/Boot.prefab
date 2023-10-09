@@ -45,10 +45,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spawnablePrefabs:
-  - {fileID: 2445915459991108960, guid: e2486acf2e3aab1458aa7ce82376243b, type: 3}
-  - {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
   - {fileID: 5419749541942614628, guid: c2ec5802f9d0f86438eb562756d915db, type: 3}
   - {fileID: 1595258891142828527, guid: 54991d5589c3bab47b6811e82e173945, type: 3}
+  - {fileID: 1595258891142828527, guid: b7b0682fa69c5d744a86b0a3a9b0c03c, type: 3}
+  - {fileID: 2445915459991108960, guid: e2486acf2e3aab1458aa7ce82376243b, type: 3}
+  - {fileID: 7352825796714013436, guid: a4a3d056519020b428087d0a094c3a95, type: 3}
+  - {fileID: 5370636911838918152, guid: af640a52bf45dbb4fab403327ae75bc0, type: 3}
   - {fileID: 8670862961137819668, guid: 7af073a7756bb724ca9dcc1c982af4dd, type: 3}
   - {fileID: 8670862961137819668, guid: aa9f889d43b91fc459e2679483e77211, type: 3}
   - {fileID: 6770892757207176522, guid: e26038525ad148e43a8d6975e905296e, type: 3}
@@ -60,6 +62,8 @@ MonoBehaviour:
   - {fileID: 4905443269852683854, guid: 497ed5ac10ef377488fd995676d02f0c, type: 3}
   - {fileID: 5582948268396191393, guid: a6538f33c4769044d95b5759269e50a0, type: 3}
   - {fileID: 8055353508438605935, guid: 24fbdd17d59a3ae499a6b2d84a148aae, type: 3}
+  - {fileID: 6945960052717361218, guid: a4245705c59f31245a3ad13a96d8b599, type: 3}
+  - {fileID: 1514973897864752164, guid: 7fef5a9336aa0534e9042ecbf7d801b1, type: 3}
   - {fileID: 1297403141984525710, guid: f0c306dbc1be08e4fb8eaf64b03d6283, type: 3}
   - {fileID: 7739814440051990028, guid: 204539ea41bf24344a4955a880472e69, type: 3}
   - {fileID: 1203937048721973902, guid: 71cd869cc1b82c1449b6f30c52353efb, type: 3}
@@ -68,7 +72,6 @@ MonoBehaviour:
   - {fileID: 1152841599159748358, guid: 8bb4e75fff7305b4587ed91a8f1ee60e, type: 3}
   - {fileID: 1203937048721973902, guid: 57ca2a69e274d0a4caaa0dd2d91e3cdb, type: 3}
   - {fileID: 1790104548480656412, guid: bb9dfd51c90b05943b69d3e8498fbcf8, type: 3}
-  - {fileID: 5370636911838918152, guid: af640a52bf45dbb4fab403327ae75bc0, type: 3}
   - {fileID: 4288885136135841199, guid: d97c42bdd3c51be45a7f13389fefe402, type: 3}
   - {fileID: 6167014272590406206, guid: 5f2ee636d2368a64fa4d7e8acdb62ec6, type: 3}
   - {fileID: 5180647389967111679, guid: cb76cd5e549efe041b127b4bf4af68b3, type: 3}
@@ -81,6 +84,13 @@ MonoBehaviour:
   - {fileID: 1080679924113744, guid: da367a4c269be6d4a855ee1a9a68256b, type: 3}
   - {fileID: 1240244544407914, guid: a85b24263182aae4bbc1829bb2b73d7a, type: 3}
   - {fileID: 542835289192032773, guid: 5339554c46006dd4e91cae9ff34c095d, type: 3}
+  - {fileID: 3784785161027906916, guid: 14287757445895a409a4724e6a7a44b3, type: 3}
+  - {fileID: 8645287420545827495, guid: b2236b49afcde0b44887e98c437157b7, type: 3}
+  - {fileID: 6503358966875659586, guid: b4d88983bb06c394fbbcd622a1f6fa42, type: 3}
+  - {fileID: 3181899219042528418, guid: 7c6a0a278eba11e44b9a86cd4da603df, type: 3}
+  - {fileID: 7619140271685878370, guid: 9f0094c1325091d42a558274b947221f, type: 3}
+  - {fileID: 1098173225717622925, guid: c624c75494b4d7d4086b9212f897e56a, type: 3}
+  - {fileID: 2188792038427236743, guid: e588080aa542be54d9ca9d5c734dc9ee, type: 3}
   - {fileID: 1076878374699499732, guid: e1971f4a8c7661546bc509b44bd91b80, type: 3}
   - {fileID: 5623359707189648430, guid: 4ff300cf6bb3c6342a9552c4f18788c8, type: 3}
   - {fileID: 6852530814182375312, guid: 12a4c14e672c00b4b840f937d824b890, type: 3}
@@ -108,9 +118,6 @@ MonoBehaviour:
   - {fileID: 3117426950187087154, guid: a78e009e3f2dee44e8859516974ede43, type: 3}
   - {fileID: 9072865897540379920, guid: 33169286da0313d45ab5bfccc6cf3775, type: 3}
   - {fileID: 796411093575107534, guid: 5d01c4bf42a9b434dac396c2ba1aea10, type: 3}
-  - {fileID: 3784785161027906916, guid: 14287757445895a409a4724e6a7a44b3, type: 3}
-  - {fileID: 8645287420545827495, guid: b2236b49afcde0b44887e98c437157b7, type: 3}
-  - {fileID: 6503358966875659586, guid: b4d88983bb06c394fbbcd622a1f6fa42, type: 3}
   autoSearchPrefabsOnValidate: 0
   warnIfSlowSearch: 1
   prefabSearchFolders:
@@ -169,6 +176,7 @@ MonoBehaviour:
   playerTickrate: 30
   _localPlayerId: -1
   botPrefab: {fileID: 1048031609977103405, guid: e2486acf2e3aab1458aa7ce82376243b, type: 3}
+  adminPassword: 
   nextDisconnectionErrorMessage: 
 --- !u!114 &6795168564576558630
 MonoBehaviour:

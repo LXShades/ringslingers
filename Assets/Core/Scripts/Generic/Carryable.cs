@@ -16,6 +16,20 @@ public class Carryable : NetworkBehaviour, IMovementCollisionCallbacks
         Carrying
     }
 
+    public enum CarrySlot
+    {
+        Flag,
+        Shard,
+    }
+
+    [Header("Limits")]
+    public CarrySlot carrySlot;
+    public int carryLimitForSlot = 2;
+
+    [Header("Visuals")]
+    public Transform handCarrySocket;
+    public Vector3 localHandCarrySocketOffset;
+
     [Header("Drop")]
     public float dropInteractionCooldown = 0.2f; // basically needed due to physics system quirks and collisions
     public float dropExpiryDuration = 15f;
@@ -50,6 +64,7 @@ public class Carryable : NetworkBehaviour, IMovementCollisionCallbacks
     public Action onDropExpiredServer;
     public Action<Character> onDropped;
     public Action onLostPlayer;
+    public Action onCarryStateChanged;
 
     private List<Renderer> renderers;
     private Visibility visibility;
@@ -62,6 +77,8 @@ public class Carryable : NetworkBehaviour, IMovementCollisionCallbacks
         renderers = new List<Renderer>(GetComponentsInChildren<Renderer>());
         blinker = GetComponent<Blinker>();
         visibility = GetComponent<Visibility>();
+
+        localHandCarrySocketOffset = handCarrySocket ? Quaternion.Inverse(transform.rotation) * (handCarrySocket.position - transform.position) : Vector3.zero;
     }
 
     private void Update()
@@ -118,6 +135,8 @@ public class Carryable : NetworkBehaviour, IMovementCollisionCallbacks
     public void ServerDetachFromPlayer()
     {
         currentCarrier = -1;
+        if (NetworkServer.active)
+            state = State.Dropped;
 
         LocalDetachFromPlayer();
     }
@@ -138,12 +157,25 @@ public class Carryable : NetworkBehaviour, IMovementCollisionCallbacks
     {
         if (NetworkServer.active && currentCarrier == -1 && Time.time > timeOfEndCooldown && !player.damageable.isInvincible)
         {
-            StartInteractionCooldown(dropInteractionCooldown);
+            // check we haven't reached the limit yet
+            List<Carryable> allCarriedByPlayer = Carryable.GetAllCarriedByPlayer(player);
+            int numOtherItemsInSlot = 0;
 
-            if (onAttemptPickupServer == null || onAttemptPickupServer.Invoke(player))
+            foreach (var item in allCarriedByPlayer)
             {
-                state = State.Carrying;
-                currentCarrier = player.playerId;
+                if (item.carrySlot == carrySlot)
+                    numOtherItemsInSlot++;
+            }
+
+            if (carryLimitForSlot <= 0 || numOtherItemsInSlot < carryLimitForSlot)
+            {
+                StartInteractionCooldown(dropInteractionCooldown);
+
+                if (onAttemptPickupServer == null || onAttemptPickupServer.Invoke(player))
+                {
+                    state = State.Carrying;
+                    currentCarrier = player.playerId;
+                }
             }
         }
     }
@@ -165,29 +197,21 @@ public class Carryable : NetworkBehaviour, IMovementCollisionCallbacks
     {
         if (NetworkServer.active)
         {
-            if (currentCarrier != -1)
+            Character carryingPlayer = currentCarrierCharacter;
+
+            if (carryingPlayer != null)
             {
-                Character carryingPlayer = Netplay.singleton.players[currentCarrier];
-
-                if (carryingPlayer != null)
-                {
-                    // drop position
-                    transform.position = carryingPlayer.transform.position;
-                    transform.rotation = Quaternion.identity;
-
-                    // drop state
-                    ServerDetachFromPlayer();
-                    state = State.Dropped;
-
-                    // callbacks
-                    onDropped?.Invoke(carryingPlayer);
-                    RpcDrop(carryingPlayer);
-                }
+                // drop position
+                transform.position = carryingPlayer.transform.position;
+                transform.rotation = Quaternion.identity;
             }
-            else
-            {
-                Log.WriteWarning($"Can't drop {gameObject.name}, it's not being carried!");
-            }
+
+            // drop state
+            ServerDetachFromPlayer();
+
+            // callbacks
+            onDropped?.Invoke(carryingPlayer);
+            RpcDrop(carryingPlayer);
         }
     }
 
