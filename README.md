@@ -32,7 +32,7 @@ Sometimes, Unity crashes with a MemoryStream corruption error on the first run. 
 Use the Playtest menu to run multi-player playtests. **The player count can be inaccurate sometimes because there is always a host character** and the playtest menu doesn't realize this yet (this will probably be fixed in the future).
 
 # Licenses
-Code in this repo, **outside of the ThirdParty folder and submodules**, is free to use for any purpose without credit under Creative Commons 0. Code within the [Mirror](https://github.com/vis2k/mirror) and [Ignorance](https://github.com/SoftwareGuy/Ignorance) submodules, and possibly others during development, have their own licenses. See relevant credits. Some assets are subject to copyright - see below.
+Code in this repo, **outside of the ThirdParty folder, packages and submodules**, is free to use for any purpose without credit under Creative Commons 0. Code within the [Mirror](https://github.com/vis2k/mirror) and [Ignorance](https://github.com/SoftwareGuy/Ignorance) submodules, and possibly others during development, have their own licenses. See relevant credits. Some assets are subject to copyright - see below.
 
 # Credits
 This fangame contains ripped assets, music and levels, not only from Sonic itself, but another Sonic fangame: [Sonic Robo Blast 2](http://srb2.org) developed by Sonic Team Junior. All level designs, textures, sound effects, music and characters belong to their respective owners. Sonic and related properties are copyrighted properties of SEGA Corporation.
@@ -47,3 +47,4 @@ Spazzo - UI assistance
 [Mirror](https://github.com/vis2k/mirror)  
 [Ignorance](https://github.com/SoftwareGuy/Ignorance)  
 [MutationNetwork](https://github.com/kipgparker/MutationNetwork)  
+[RealtimeCSG](https://github.com/LogicalError/realtime-CSG-for-unity)  
