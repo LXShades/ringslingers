@@ -211,13 +211,11 @@ public class PlayerCamera : MonoBehaviour
 
                 transform.position = targetPosition;
 
-                currentPlayer.isInvisible = false; // show our own model in third-person
-                currentPlayer.damageable.doInvincibilityBlink = true;
+                currentPlayer.visibility.Unset(this);
             }
             else
             {
-                currentPlayer.isInvisible = true; // hide our own model in first-person
-                currentPlayer.damageable.doInvincibilityBlink = false; // don't let invincibility blink unhide it
+                currentPlayer.visibility.Set(this, false, 10);
             }
 
             // Apply eye bob

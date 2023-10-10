@@ -123,6 +123,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     // Components
     [HideInInspector] public PlayerCharacterMovement movement;
     [HideInInspector] public Damageable damageable;
+    [HideInInspector] public Visibility visibility;
     private PlayerSounds sounds;
 
     // Timeline entity - handles ticking the player
@@ -130,8 +131,6 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     public Timeline.Entity<CharacterState, CharacterInput> entity;
 
     public float timeOfLastInputPush { get; set; }
-
-    public bool isInvisible { get; set; }
 
     /// <summary>Note: overridden by isInvisible</summary>
     public float renderAlpha
@@ -176,6 +175,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         movement = GetComponent<PlayerCharacterMovement>();
         damageable = GetComponent<Damageable>();
         sounds = GetComponent<PlayerSounds>();
+        visibility = GetComponent<Visibility>();
     }
 
     void Start()
@@ -236,11 +236,6 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
 
     void Update()
     {
-        if (isInvisible)
-            characterModel.enabled = crownModel.enabled = false;
-        else if (!damageable.isInvincible) // blinking also controls visibility so we won't change it while invincible
-            characterModel.enabled = crownModel.enabled = true;
-
         if (PlayerCamera.singleton && PlayerCamera.singleton.currentPlayer == this && !GameManager.singleton.isPaused /* allow character customisation */)
             renderAlpha = localPlayerAlpha;
         else
