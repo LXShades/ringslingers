@@ -93,7 +93,10 @@ public class Visibility : MonoBehaviour
             }
         }
         else
+        {
             affectors.Add(new Affector() { affector = requester, value = isVisible, priority = priority });
+            hasChanged = true;
+        }
     }
 
     /// <summary>

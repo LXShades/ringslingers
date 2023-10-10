@@ -34,7 +34,10 @@ public class RespawnableItem : NetworkBehaviour
     public Action onRespawn;
     public Action onDespawn;
 
+    private float timeTilRespawn = 0f;
     private Coroutine respawnRoutine = null;
+
+    public bool isRespawnPaused { get; set; }
 
     void Start()
     {
@@ -44,19 +47,29 @@ public class RespawnableItem : NetworkBehaviour
 
     public void Despawn()
     {
-        if (NetworkServer.active && GameManager.singleton.itemRespawnTime > 0 && isSpawned)
-        {
-            isSpawned = false;
+        DespawnForSeconds(GameManager.singleton.itemRespawnTime);
+    }
 
-            StopCoroutine(nameof(RespawnRoutine));
-            respawnRoutine = StartCoroutine(nameof(RespawnRoutine));
+    public void DespawnForSeconds(float numSeconds)
+    {
+        if (NetworkServer.active)
+        {
+            timeTilRespawn = numSeconds;
+
+            if (isSpawned)
+            {
+                isSpawned = false;
+
+                StopRespawnRoutine(); // just in case...?
+                respawnRoutine = StartCoroutine(nameof(RespawnRoutine));
+            }
         }
     }
 
     public void Respawn()
     {
         isSpawned = true;
-        StopCoroutine(nameof(RespawnRoutine));
+        StopRespawnRoutine();
     }
 
     public void SetSpawnPosition(Vector3 position)
@@ -89,9 +102,30 @@ public class RespawnableItem : NetworkBehaviour
         }
     }
 
-    IEnumerator RespawnRoutine()
+    private IEnumerator RespawnRoutine()
     {
-        yield return new WaitForSeconds(GameManager.singleton.itemRespawnTime);
-        Respawn();
+        while (!isSpawned)
+        {
+            yield return new WaitForSeconds(1f);
+
+            if (!isRespawnPaused)
+                timeTilRespawn--;
+
+            if (!isSpawned && timeTilRespawn <= 0f)
+            {
+                Respawn();
+                break;
+            }
+        }
+        respawnRoutine = null;
+    }
+
+    private void StopRespawnRoutine()
+    {
+        if (respawnRoutine != null)
+        {
+            StopCoroutine(respawnRoutine);
+            respawnRoutine = null;
+        }
     }
 }

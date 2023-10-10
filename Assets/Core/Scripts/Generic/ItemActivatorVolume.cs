@@ -44,14 +44,19 @@ public class ItemActivatorVolume : MonoBehaviour
 
         if (NetworkServer.active)
         {
-            // TODO: proper override of respawn behaviour, these items are respawning constantly and we just keep shoving them back into despawned land
-            // TODO: item respawn time is overridden, can respawn instantly if returning shard
             foreach (var item in affectedItems)
             {
-                if (item.isSpawned && !itemsAreCurrentlyEnabled)
-                    item.Despawn();
-                else if (!item.isSpawned && itemsAreCurrentlyEnabled)
-                    item.Respawn();
+                if (!itemsAreCurrentlyEnabled)
+                {
+                    if (item.isSpawned)
+                        item.DespawnForSeconds(1f);
+                    else
+                        item.isRespawnPaused = true;
+                }
+                else if (itemsAreCurrentlyEnabled)
+                {
+                    item.isRespawnPaused = false;
+                }
             }
         }
     }
