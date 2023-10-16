@@ -14,6 +14,10 @@ public class ShardHolder : NetworkBehaviour, IMovementCollisionCallbacks
     [Header("Rewards")]
     public ItemActivatorVolume[] itemActivatorsByShardCount = new ItemActivatorVolume[0];
 
+    [Header("Sounds")]
+    public GameSound addShardSound;
+    public GameSound smashSound;
+
     [Header("Hierarchy")]
     public Damageable damageable;
     public GameObject[] shardPieceSlots = new GameObject[0];
@@ -24,7 +28,7 @@ public class ShardHolder : NetworkBehaviour, IMovementCollisionCallbacks
 
     [Header("Stats")]
     public int initialNumShards = 0;
-    private int maxNumShards => initialNumShards;
+    private int maxNumShards => int.MaxValue; // hack for now - do not set a real limit until we have a solution to the 'issue' (if a shard despawns/returns, and its home is at max capacity, where does it go?)
 
     [Header("Shards")]
     public GameObject shardPiecePrefab;
@@ -74,6 +78,7 @@ public class ShardHolder : NetworkBehaviour, IMovementCollisionCallbacks
     {
         Spawner.Despawn(shardPiece.gameObject);
         currentNumShards++;
+        RpcPlayAddShardSound();
     }
 
     private void RefreshShardCount()
@@ -86,7 +91,7 @@ public class ShardHolder : NetworkBehaviour, IMovementCollisionCallbacks
                 itemActivatorsByShardCount[i].SetItemsEnabled(i < currentNumShards);
         }
 
-        beaconRenderer.material.color = beaconColourOverHealth.Evaluate((float)currentNumShards / maxNumShards);
+        beaconRenderer.material.color = beaconColourOverHealth.Evaluate((float)currentNumShards / initialNumShards);
     }
 
     private void OnDamaged(GameObject source, Vector3 direction, bool dunno)
@@ -96,6 +101,8 @@ public class ShardHolder : NetworkBehaviour, IMovementCollisionCallbacks
             currentNumShards--;
 
             ServerSpawnShardPiece();
+
+            RpcPlaySmashSound();
         }
     }
 
@@ -104,10 +111,15 @@ public class ShardHolder : NetworkBehaviour, IMovementCollisionCallbacks
         RefreshShardCount();
     }
 
+    [ClientRpc]
+    private void RpcPlaySmashSound() => GameSounds.PlaySound(gameObject, smashSound);
+    [ClientRpc]
+    private void RpcPlayAddShardSound() => GameSounds.PlaySound(gameObject, addShardSound);
+
     private void OnValidate()
     {
         if (initialNumShards > shardPieceSlots.Length)
-            Debug.LogError("Initial num shards is larger than actual number of slots, which should define the maximum number of shards in this holder", gameObject);
+            Debug.LogError("Initial num shards is larger than actual number of slots, which defines the maximum number of visual shards in this holder", gameObject);
     }
 
     public bool ShouldBlockMovement(Movement source, in RaycastHit hit) => true;
@@ -120,8 +132,7 @@ public class ShardHolder : NetworkBehaviour, IMovementCollisionCallbacks
             List<Carryable> carriedCarryables = Carryable.GetAllCarriedByPlayer(character);
             if (carriedCarryables.Find(x => x.TryGetComponent<ShardPiece>(out _)) is Carryable carriedShardPiece)
             {
-                Destroy(carriedShardPiece.gameObject);
-                currentNumShards++;
+                ServerReturnShardPiece(carriedShardPiece.GetComponent<ShardPiece>());
             }
         }
     }

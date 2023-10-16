@@ -25,7 +25,7 @@ public class TeamAreaShield : NetworkBehaviour, IMovementCollisionCallbacks
             return false;
 
         if (source.TryGetComponent(out Character character))
-            return character.team != team;
+            return character.team != team && Vector3.Dot(character.movement.velocity, character.transform.position - transform.position) <= 0f; // you can always leave, but not always enter
         else
             return true;
     }

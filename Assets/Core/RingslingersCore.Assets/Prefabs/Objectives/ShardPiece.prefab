@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 3149495221909727495}
   - component: {fileID: 2978659597877445841}
   - component: {fileID: -3250919238078143817}
+  - component: {fileID: 5770930933295685111}
   m_Layer: 0
   m_Name: ShardPiece
   m_TagString: Untagged
@@ -146,7 +147,6 @@ MonoBehaviour:
   autoPopulateRenderers: 1
   affectedRenderers:
   - {fileID: 2170142420772465365}
-  visibilityPriority: 0
   enableDefaultVisibility: 1
   defaultVisibility: 1
 --- !u!114 &2978659597877445841
@@ -215,7 +215,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc08dfc008b21b94e994c43e0950f642, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  pickupSound:
+    clip: {fileID: 8300000, guid: 8df6aeeb8173e9747b7210fab90d3aae, type: 3}
+    additionalClips: []
+    environment: {fileID: 11400000, guid: 22365649f2047154ea99b8689c37bcf8, type: 2}
+    volumeDecibels: 0
+    pitch: 1
+    pitchVariance: 0
+    looping: 0
   serverSourceShardHolder: {fileID: 0}
+--- !u!114 &5770930933295685111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1514973897864752164}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a826e19050d5424f915e9b5dbdae06e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncMode: 0
+  syncInterval: 0.1
+  updatesPerSecond: 4
+  movement: {fileID: 0}
 --- !u!1 &2645248050272471508
 GameObject:
   m_ObjectHideFlags: 0
