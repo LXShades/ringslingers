@@ -9,7 +9,7 @@ public class LiquidVolume : MonoBehaviour
 
     private static Collider[] overlapBuffer = new Collider[48];
 
-    private Collider collider;
+    private new Collider collider;
 
     private void Awake()
     {

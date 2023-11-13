@@ -9,7 +9,7 @@ public class ShardsHUD : MonoBehaviour
 
     private void Update()
     {
-        bool shouldMapBeVisible = MatchState.Get(out MatchShards shardsState);
+        bool shouldMapBeVisible = GameState.Get(out GameStateShards shardsState);
         if (shouldMapBeVisible != map.activeSelf)
             map.SetActive(shouldMapBeVisible);
     }

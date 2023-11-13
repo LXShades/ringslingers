@@ -57,7 +57,7 @@ public class TheFlag : NetworkBehaviour
 
     private void Start()
     {
-        if (MatchState.Get(out MatchFlags stateCTF))
+        if (GameState.Get(out GameStateTeamFlags stateCTF))
         {
             if (team == PlayerTeam.Red)
                 stateCTF.redFlag = this;
@@ -101,7 +101,7 @@ public class TheFlag : NetworkBehaviour
 
     public void Capture(Character player)
     {
-        if (NetworkServer.active && MatchState.Get(out MatchTeams stateTeams) && MatchState.Get(out MatchFlags stateCtf))
+        if (NetworkServer.active && GameState.Get(out GameStateTeams stateTeams) && GameState.Get(out GameStateTeamFlags stateCtf))
         {
             MessageFeed.Post($"<player>{player.playerName}</player> captured the {team.ToColoredString()} flag!");
 

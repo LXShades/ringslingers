@@ -129,12 +129,12 @@ public class GameHUD : MonoBehaviour
             return;
 
         Character player = GameManager.singleton.camera.currentPlayer;
-        bool isMatchFinished = MatchState.singleton != null ? MatchState.singleton.IsWinScreen : false;
+        bool isMatchFinished = GameState.primary != null ? GameState.primary.IsWinScreen : false;
 
         numFramesThisSecond++;
 
         // Match stuff
-        if (MatchState.Get(out MatchTimer matchTimer))
+        if (GameState.Get(out GameStateTimer matchTimer))
         {
             float time = Mathf.Max(matchTimer.timeRemaining, 0f);
 
@@ -146,7 +146,7 @@ public class GameHUD : MonoBehaviour
         }
 
         // Team stuff
-        if (MatchState.Get(out MatchTeams matchTeams))
+        if (GameState.Get(out GameStateTeams matchTeams))
         {
             if (!teamsHud.gameObject.activeSelf)
                 teamsHud.SetActive(true);
@@ -161,7 +161,7 @@ public class GameHUD : MonoBehaviour
         }
 
         // CTF stuff
-        if (MatchState.Get(out MatchFlags matchFlags))
+        if (GameState.Get(out GameStateTeamFlags matchFlags))
         {
             bool isRedFlagStolen = matchFlags.redFlag != null && (matchFlags.redFlag.currentCarrier != -1);
             bool isBlueFlagStolen = matchFlags.blueFlag != null && (matchFlags.blueFlag.currentCarrier != -1);
@@ -365,8 +365,8 @@ public class GameHUD : MonoBehaviour
 
         if (isMatchFinished)
         {
-            winScreenMessage.text = $"{MatchState.singleton.GetWinners()} wins!";
-            winScreenCountdown.text = $"Next round in {((int)MatchState.singleton.timeTilRestart).ToString()}...";
+            winScreenMessage.text = $"{GameState.primary.GetWinners()} wins!";
+            winScreenCountdown.text = $"Next round in {((int)GameState.primary.timeTilRestart).ToString()}...";
         }
 
         // Connection stuff

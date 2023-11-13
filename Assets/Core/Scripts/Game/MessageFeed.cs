@@ -68,7 +68,7 @@ public class MessageFeed : NetworkBehaviour
         // Format the message
         StringBuilder sb = new StringBuilder(message);
 
-        if (MatchState.Get(out MatchFlags netGameStateCTF))
+        if (GameState.Get(out GameStateTeamFlags netGameStateCTF))
         {
             // player name is based on team color
             foreach (var player in Netplay.singleton.players)

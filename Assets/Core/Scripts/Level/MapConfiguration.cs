@@ -10,7 +10,7 @@ public class MapConfiguration
 
     [Header("Game mode")]
     [Tooltip("The default game mode to load for this scene")]
-    public GameObject defaultGameModePrefab;
+    public GameState defaultGameModePrefab;
     public WeaponAmmoStyle defaultWeaponAmmoStyle = WeaponAmmoStyle.Time;
     public WeaponCombinationStyle defaultWeaponCombinationStyle = WeaponCombinationStyle.Combinable;
 

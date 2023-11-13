@@ -13,11 +13,11 @@ public struct RingWeapon
     /// </summary>
     public float ammo
     {
-        get => MatchState.Get(out MatchConfiguration config)
+        get => GameState.Get(out GameStateWeapons config)
             && config.weaponAmmoStyle == WeaponAmmoStyle.Time ? (float)Math.Max(_ammoInternal - GameTicker.singleton.predictedServerTime, 0) : (float)_ammoInternal;
         set
         {
-            if (MatchState.Get(out MatchConfiguration config) && config.weaponAmmoStyle == WeaponAmmoStyle.Time)
+            if (GameState.Get(out GameStateWeapons config) && config.weaponAmmoStyle == WeaponAmmoStyle.Time)
                 _ammoInternal = GameTicker.singleton.predictedServerTime + value;
             else
                 _ammoInternal = value;

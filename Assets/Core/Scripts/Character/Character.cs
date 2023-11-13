@@ -159,7 +159,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     {
         get
         {
-            if (MatchState.Get(out MatchFlags matchCtf) && matchCtf.redFlag && matchCtf.blueFlag)
+            if (GameState.Get(out GameStateTeamFlags matchCtf) && matchCtf.redFlag && matchCtf.blueFlag)
             {
                 if (matchCtf.blueFlag.currentCarrier == playerId)
                     return matchCtf.blueFlag;
@@ -198,7 +198,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         Netplay.singleton.RegisterPlayer(this);
         WhenReady<GameTicker>.Execute(this, ticker => RegisterEntity(ticker));
 
-        if (MatchState.Get(out MatchTeams matchTeams))
+        if (GameState.Get(out GameStateTeams matchTeams))
             ChangeTeam(matchTeams.FindBestTeamToJoin());
 
         Respawn();

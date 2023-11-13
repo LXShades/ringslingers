@@ -274,7 +274,7 @@ public class CharacterShooting : NetworkBehaviour
     {
         float ammoToAdd = doOverrideAmmo ? ammoOverride : weaponType.settings.timeOnPickup;
 
-        if (MatchState.Get(out MatchConfiguration config))
+        if (GameState.Get(out GameStateWeapons config))
         {
             if (config.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
                 ammoToAdd = weaponType.settings.ammoOnPickup;
@@ -416,7 +416,7 @@ public class CharacterShooting : NetworkBehaviour
             // Update stats
             character.numRings--;
 
-            if (MatchState.Get(out MatchConfiguration matchConfig) && matchConfig.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
+            if (GameState.Get(out GameStateWeapons matchConfig) && matchConfig.weaponAmmoStyle == WeaponAmmoStyle.Quantity)
             {
                 // consume ammo
                 for (int i = 0; i < weapons.Count; i++)

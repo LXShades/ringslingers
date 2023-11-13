@@ -175,10 +175,10 @@ public class Netplay : MonoBehaviour
     #region Game
     public void ConsoleCommand_EndRound()
     {
-        if (!MatchState.singleton.IsWinScreen)
-            MatchState.singleton.ServerEndRound();
+        if (!GameState.primary.IsWinScreen)
+            GameState.primary.ServerEndGame();
         else
-            MatchState.singleton.ServerSkipWinScreen();
+            GameState.primary.ServerEndWinScreen();
     }
 
     private void OnSceneChanged(UnityEngine.SceneManagement.Scene oldScene, UnityEngine.SceneManagement.Scene newScene)
@@ -202,7 +202,7 @@ public class Netplay : MonoBehaviour
                 if (activeMap != null)
                 {
                     gsMap.activeMap = activeMap;
-                    MatchState.SetNetGameState(activeMap.defaultGameModePrefab);
+                    GameState.ServerChangeGameState(activeMap.defaultGameModePrefab);
                 }
                 else
                     Debug.LogError("We can't play this map properly, for some reason activeMap is null, so we can't determine the gametype!");
