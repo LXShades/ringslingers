@@ -92,7 +92,7 @@ public class Player : NetworkBehaviour
     private void ServerSetupCharacter()
     {
         // Change existing character
-        if (playerInfo.characterIndex >= 0 && playerInfo.characterIndex < RingslingersContent.loaded.characters.Count && character != null && character.characterIndex != playerInfo.characterIndex)
+        if (character != null && character.characterIndex != playerInfo.characterIndex)
         {
             Character player = Netplay.singleton.ChangePlayerCharacter(playerId, playerInfo.characterIndex, this);
 
@@ -131,6 +131,12 @@ public class Player : NetworkBehaviour
     public void CmdSendPersistentData(PlayerInfo persistentData)
     {
         playerInfo = persistentData;
+
+        // sanitize
+        if (!(playerInfo.characterIndex >= 0 && playerInfo.characterIndex < RingslingersContent.loaded.characters.Count))
+            playerInfo.characterIndex = 0;
+
+        ServerSetupCharacter();
     }
 
     /// <summary>
