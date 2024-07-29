@@ -1,31 +1,39 @@
 ﻿using Mirror;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class ThrownRingRail : ThrownRing
 {
+    [Header("Collision")]
     public float maxRange = 100;
-
-    public Transform endPoint;
-
     public LayerMask collisionLayers;
 
+    [Header("Effects")]
+    public float tubeEffectScaleFactor = 2f;
+    public Transform tubeEffect;
+    public Transform endPoint;
     public GameObject particles;
 
     private bool endPointWasSet = false;
+
+    RaycastHit[] hits = new RaycastHit[10];
 
     public override void Simulate(float deltaTime, bool isFirstSimulation)
     {
         if (!endPointWasSet)
         {
+            Vector3 forward = transform.forward;
+            Vector3 position = transform.position;
             // clients need to do this because Throw doesn't get called
             RaycastHit hit;
 
-            if (Physics.Raycast(transform.position + transform.forward * 0.5f, transform.forward, out hit, maxRange, collisionLayers, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(position + forward * 0.5f, forward, out hit, maxRange, collisionLayers, QueryTriggerInteraction.Ignore))
                 endPoint.transform.position = hit.point;
             else
-                endPoint.transform.position = transform.position + transform.forward * maxRange;
+                endPoint.transform.position = position + forward * maxRange;
 
+            InitVfx();
             endPointWasSet = true;
         }
 
@@ -76,7 +84,6 @@ public class ThrownRingRail : ThrownRing
         }
 
         // Run the hitscan against damageables
-        RaycastHit[] hits = new RaycastHit[10];
         int numHits = Physics.RaycastNonAlloc(spawnPosition, direction, hits, maxRange, collisionLayers, QueryTriggerInteraction.Ignore);
         for (int i = 0; i < numHits; i++)
         {
@@ -103,6 +110,15 @@ public class ThrownRingRail : ThrownRing
         GameSounds.PlaySound(endPoint.transform.position, effectiveSettings.despawnSound);
         SpawnContactEffect(endPoint.transform.position);
 
+        InitVfx();
         endPointWasSet = true;
+    }
+
+    private void InitVfx()
+    {
+        Vector3 position = transform.position;
+        tubeEffect.position = (position + endPoint.transform.position) * 0.5f;
+        tubeEffect.localScale = new Vector3(1f, 1f, Vector3.Distance(position, endPoint.transform.position) * tubeEffectScaleFactor);
+        tubeEffect.rotation = Quaternion.LookRotation(transform.forward);
     }
 }

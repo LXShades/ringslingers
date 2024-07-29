@@ -13,6 +13,9 @@ Shader "Custom/SRB2 Style (Opaque)"
             Tags {"LightMode" = "ForwardBase"}
 
             CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
             #include "SRB2Style.cginc"
             ENDCG
         }

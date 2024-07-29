@@ -1,6 +1,3 @@
-#pragma vertex vert
-#pragma fragment frag
-
 // compile shader into multiple variants, with and without shadows
 // (we don't care about any lightmaps yet, so skip these variants)
 #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight
@@ -39,7 +36,7 @@ v2f vert(appdata_base v)
     o.diff = _LightColor0.rgb * nl * brightnessMultiplier;
     o.ambient = ShadeSH9(half4(worldNormal, 1));
 
-    TRANSFER_SHADOW(o)
+    TRANSFER_SHADOW(o);
     return o;
 }
 

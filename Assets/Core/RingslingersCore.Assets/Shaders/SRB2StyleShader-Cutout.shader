@@ -14,6 +14,8 @@ Shader "Custom/SRB2 Style (Cutout)"
 
             CGPROGRAM
             #define CUTOUT_ENABLED
+            #pragma vertex vert
+            #pragma fragment frag
             #include "./SRB2Style.cginc"
             ENDCG
         }

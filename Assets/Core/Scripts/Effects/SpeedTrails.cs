@@ -146,12 +146,12 @@ public class SpeedTrails : MonoBehaviour
                 if (i > 0 && i < trailPoints.Count - 1)
                 {
                     up = Vector3.Cross(trailPoints[i + 1].position - trailPoints[i - 1].position, forward);
-                    up = up * halfThickness / Mathf.Max(up.magnitude, 0.0001f);
+                    up = up * (halfThickness / Mathf.Max(up.magnitude, 0.0001f));
                 }
                 if (i < trailPoints.Count - 1)
                 {
                     up = Vector3.Cross(trailPoints[i + 1].position - trailPoints[i].position, forward);
-                    up = up * halfThickness / Mathf.Max(up.magnitude, 0.0001f);
+                    up = up * (halfThickness / Mathf.Max(up.magnitude, 0.0001f));
                 }
 
                 trailVertices[i * 2] = trailPoints[i].position + up;
