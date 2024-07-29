@@ -192,6 +192,43 @@ public class RingslingersAssetManager
             });
         }
 
+        // User-friendly error checking
+        bool hasError = false;
+        foreach (AssetBundleBuild bundleBuild in bundleBuilds)
+        {
+            int numSceneAssets = 0;
+            int numNonSceneAssets = 0;
+            foreach (string assetName in bundleBuild.assetNames)
+            {
+                if (AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset))
+                    numSceneAssets++;
+                else
+                    numNonSceneAssets++;
+            }
+
+            if (numSceneAssets > 0 && numNonSceneAssets > 0)
+            {
+                if (!hasError)
+                    EditorUtility.DisplayDialog("Unity plz", $"Asset bundle {bundleBuild.assetBundleName} has scene assets and non-scene assets. Unfortunately asset bundles are limited to either scenes or assets only and they must be separate.\n\nCheck log for problem assets.", "aight m8");
+
+                StringBuilder sceneSb = new StringBuilder();
+                StringBuilder assetSb = new StringBuilder();
+                foreach (string assetName in bundleBuild.assetNames)
+                {
+                    StringBuilder activeSb = AssetDatabase.GetMainAssetTypeAtPath(assetName) == typeof(SceneAsset) ? sceneSb : assetSb;
+                    activeSb.Append(assetName);
+                    activeSb.Append(", ");
+                }
+                Debug.LogError($"Asset bundle {bundleBuild.assetBundleName} has both scene and non-scene assets.\n\nScene assets: {sceneSb.ToString()}\nNon-scene assets: {assetSb.ToString()}");
+
+                hasError = true;
+            }
+        }
+        if (hasError)
+        {
+            return null;
+        }
+
         // Prepare to build
         BuildAssetBundlesParameters buildParams = new BuildAssetBundlesParameters()
         {
