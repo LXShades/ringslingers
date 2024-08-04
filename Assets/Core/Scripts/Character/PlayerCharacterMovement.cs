@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ENet;
+using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -282,6 +283,11 @@ public class PlayerCharacterMovement : CharacterMovement
             groundVelocity = velocity * Mathf.Pow(currentFriction, deltaTime * 35f);
     }
 
+    public static float CalculateFrictionMultiplier(float friction, float deltaTime)
+    {
+        return Mathf.Pow(friction, deltaTime * 35f);
+    }
+
     private void ApplyRunAcceleration(float deltaTime, CharacterInput input)
     {
         if (IsAnyState(CharacterMovementState.Pained, CharacterMovementState.Gliding, CharacterMovementState.Climbing, CharacterMovementState.SpinCharging))
@@ -292,17 +298,28 @@ public class PlayerCharacterMovement : CharacterMovement
 
         inputRunDirection = Vector3.ClampMagnitude(groundForward * input.moveVerticalAxis + groundRight * input.moveHorizontalAxis, 1);
 
-        float speed = groundVelocity.magnitude; // todo: use rmomentum
+        float multiplier = 1f;
+        if (!isOnGround)
+            multiplier *= airAccelerationMultiplier;
+        if (state == CharacterMovementState.Rolling)
+            multiplier *= rollingAccelerationMultiplier;
+        if (isInWater)
+            multiplier *= waterSpeedMultiplier;
+
+        velocity += CalculateAccelerationVector(groundVelocity, inputRunDirection, deltaTime, multiplier);
+    }
+
+    public static float GetAccelerationMagnitude(float speed, AnimationCurve accelCurve, AnimationCurve inverseAccelCurve, float deltaTime)
+    {
+        return accelCurve.Evaluate(inverseAccelCurve.Evaluate(speed) + deltaTime) - speed;
+    }
+
+    public Vector3 CalculateAccelerationVector(Vector3 currentGroundVelocity, Vector3 worldInputDirection, float deltaTime, float multiplier = 1f)
+    {
+        float speed = currentGroundVelocity.magnitude; // todo: use rmomentum
         float currentAcceleration = Mathf.Max(accelCurve.Evaluate(inverseAccelCurve.Evaluate(speed) + deltaTime) - speed, 0f);
 
-        if (!isOnGround)
-            currentAcceleration *= airAccelerationMultiplier;
-        if (state == CharacterMovementState.Rolling)
-            currentAcceleration *= rollingAccelerationMultiplier;
-        if (isInWater)
-            currentAcceleration *= waterSpeedMultiplier;
-
-        velocity += inputRunDirection * currentAcceleration;
+        return worldInputDirection * (currentAcceleration * multiplier);
     }
 
     private void ApplyTopSpeedLimit(float lastHorizontalSpeed)
@@ -312,6 +329,21 @@ public class PlayerCharacterMovement : CharacterMovement
         // speed limit doesn't apply while rolling
         if (state != CharacterMovementState.Rolling && speedToClamp > topSpeed && speedToClamp > lastHorizontalSpeed)
             groundVelocity = (groundVelocity * (Mathf.Max(lastHorizontalSpeed, topSpeed) / speedToClamp));
+    }
+
+    public void RunSimpleCollisionFreeSimulation(ref CharacterState charState, in CharacterInput input, float deltaTime)
+    {
+        Vector3 uncompressedFlatVelocity = charState.velocity.Horizontal();
+
+        float frictionMultiplier = PlayerCharacterMovement.CalculateFrictionMultiplier(friction, deltaTime);
+        float oldSpeed = uncompressedFlatVelocity.magnitude;
+        uncompressedFlatVelocity *= frictionMultiplier;
+        uncompressedFlatVelocity += CalculateAccelerationVector(uncompressedFlatVelocity, input.worldMovementDirection, deltaTime);
+        float speedToClamp = uncompressedFlatVelocity.magnitude;
+        if (speedToClamp > topSpeed && uncompressedFlatVelocity.magnitude > oldSpeed)
+            uncompressedFlatVelocity = uncompressedFlatVelocity * (Mathf.Max(oldSpeed, topSpeed) / speedToClamp);
+        charState.position += uncompressedFlatVelocity * deltaTime;
+        charState.velocity = uncompressedFlatVelocity;
     }
 
     public void ApplyHitKnockback(Vector3 force)
@@ -586,6 +618,8 @@ public class PlayerCharacterMovement : CharacterMovement
     public bool IsAnyState(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c) => state == a || state == b || state == c;
     public bool IsAnyState(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c, CharacterMovementState d) => state == a || state == b || state == c || state == d;
     public bool IsAnyState(CharacterMovementState a, CharacterMovementState b, CharacterMovementState c, CharacterMovementState d, CharacterMovementState e) => state == a || state == b || state == c || state == d || state == e;
+
+
 
 #if UNITY_EDITOR
     protected override void OnValidate()

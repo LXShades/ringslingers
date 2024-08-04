@@ -73,6 +73,24 @@ public struct CharacterInput : IEquatable<CharacterInput>, ITickerInput<Characte
         }
     }
 
+    public Vector3 worldMovementDirection
+    {
+        set
+        {
+            float sin = Mathf.Sin(-horizontalAim * Mathf.Deg2Rad);
+            float cos = Mathf.Cos(-horizontalAim * Mathf.Deg2Rad);
+            Vector2 moveAxes = Vector3.ClampMagnitude(new Vector2(value.x * cos + value.z * sin, -value.x * sin + value.z * cos), 1f);
+            moveHorizontalAxis = moveAxes.x;
+            moveVerticalAxis = moveAxes.y;
+        }
+        get
+        {
+            float sin = Mathf.Sin(horizontalAim * Mathf.Deg2Rad);
+            float cos = Mathf.Cos(horizontalAim * Mathf.Deg2Rad);
+            return new Vector3(moveHorizontalAxis * cos + moveVerticalAxis * sin, 0f, -moveHorizontalAxis * sin + moveVerticalAxis * cos);
+        }
+    }
+
     /// <summary>
     /// Generates input commands from the current input
     /// </summary>

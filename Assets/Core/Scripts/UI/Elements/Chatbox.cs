@@ -20,7 +20,7 @@ public class Chatbox : MonoBehaviour
         input = GameManager.singleton.input;
         chatInput.gameObject.SetActive(false);
 
-        chatInput.onEndEdit.AddListener(OnChatBoxSubmitted);
+        chatInput.onSubmit.AddListener(OnChatBoxSubmitted);
     }
 
     private void Update()
@@ -41,7 +41,7 @@ public class Chatbox : MonoBehaviour
 
     public void OnChatBoxSubmitted(string text)
     {
-        if (Keyboard.current.enterKey.wasPressedThisFrame && text != defaultText && !string.IsNullOrEmpty(text))
+        if (text != defaultText && !string.IsNullOrEmpty(text))
         {
             if (text.StartsWith("/"))
             {
