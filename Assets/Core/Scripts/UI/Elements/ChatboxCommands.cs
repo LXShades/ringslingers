@@ -30,6 +30,7 @@ public class ChatboxCommands : MonoBehaviour
         RegisterCommand("addbot", "Adds a basic bot (testing)", Netplay.singleton.ConsoleCommand_AddBot, true);
         RegisterCommand<int>("addbots", "<number> Adds multiple basic bots (testing)", Netplay.singleton.ConsoleCommand_AddBots, true);
         RegisterCommand("addfollowbot", "Adds a bot that follows you (works on host only)", Netplay.singleton.ConsoleCommand_AddFollowBot, true);
+        RegisterCommand("addringbot", "Adds a bot that gets rings (works on host only)", Netplay.singleton.ConsoleCommand_AddRingBot, true);
         RegisterCommand("removebots", "Removes all bots", Netplay.singleton.ConsoleCommand_RemoveBots, true);
     }
 

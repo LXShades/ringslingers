@@ -26,7 +26,7 @@ public class TestBotExecutorEditor : Editor
         if (tester.autoplay)
         {
             float deltaTime = (float)(Time.realtimeSinceStartupAsDouble - lastUpdateTime);
-            tester.stateTime = (tester.stateTime + deltaTime) % tester.simulationDuration;
+            tester.watchTime = (tester.watchTime + deltaTime) % tester.simulationDuration;
 
             UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
             UnityEditor.SceneView.RepaintAll();
@@ -58,12 +58,12 @@ public class TestBotExecutorEditor : Editor
         base.OnInspectorGUI();
 
         EditorGUILayout.HelpBox("Change the type of action below. Note this will reset the action data.", MessageType.Info);
-        foreach (var type in typeof(TestBotAction_RunToPoints).Assembly.GetTypes().Where(x => typeof(TestBotAction).IsAssignableFrom(x)))
+        foreach (var type in typeof(TestBT_RunToPoints).Assembly.GetTypes().Where(x => typeof(ITestableBotTask).IsAssignableFrom(x)))
         {
             if (EditorGUILayout.LinkButton(type.Name))
             {
                 Undo.RecordObject(target, "change testbot action type");
-                (target as TestBotExecutor).actionToPerform = (TestBotAction)type.GetConstructor(System.Array.Empty<System.Type>()).Invoke(null);
+                (target as TestBotExecutor).actionToPerform = (ITestableBotTask)type.GetConstructor(System.Array.Empty<System.Type>()).Invoke(null);
             }
         }
     }

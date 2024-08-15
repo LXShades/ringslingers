@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class TestBotAction_Pathfinding : TestBotAction
+public class TestBotAction_Pathfinding : IBotTask, ITestableBotTask
 {
     public float deltaTime = 0.0166666f;
     public float timePerIteration = 0.2f;
@@ -14,8 +14,15 @@ public class TestBotAction_Pathfinding : TestBotAction
     private List<CharacterInput> inputs = new List<CharacterInput>();
     private int inputFrame = 0;
 
-    public override void Init(TestBotExecutor exec)
+    private TestBotExecutor exec;
+
+    public void Init(in BotTaskParams taskParams) { }
+
+
+    public void InitTests(TestBotExecutor exec)
     {
+        this.exec = exec;
+
         hasMadePath = false;
         inputFrame = 0;
         inputs.Clear();
@@ -23,7 +30,7 @@ public class TestBotAction_Pathfinding : TestBotAction
         targetRadius = exec.targetRadius;
     }
 
-    public override void Run(TestBotExecutor exec, ref CharacterInput input)
+    public void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
         Vector3 endPosition = exec.targetPositions[exec.targetPositions.Count - 1];
 
@@ -214,10 +221,8 @@ public class TestBotAction_Pathfinding : TestBotAction
         return (totalDistanceRemainingPerGoal[targetPosition] + Vector3.Distance(node.state.position, exec.targetPositions[targetPosition])) * heuristicMultiplier;
     }
 
-    public override void OnDrawGizmos()
+    public void OnDrawGizmos()
     {
-        base.OnDrawGizmos();
-
         foreach (var node in visitedNodes)
         {
             if (node.cameFrom != -1)

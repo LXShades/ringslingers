@@ -276,6 +276,13 @@ public class Netplay : MonoBehaviour
         return -1;
     }
 
+    private GameObject AddBot()
+    {
+        GameObject bot = Spawner.Spawn(botPrefab.gameObject);
+        bot.GetComponent<Player>().OnStartBot();
+        return bot;
+    }
+
     [Server]
     public void ConsoleCommand_AddBot() => ConsoleCommand_AddBots(1);
 
@@ -284,8 +291,7 @@ public class Netplay : MonoBehaviour
     {
         for (int i = 0; i < number; i++)
         {
-            GameObject bot = Spawner.Spawn(botPrefab.gameObject);
-            bot.GetComponent<Player>().OnStartBot();
+            AddBot();
         }
     }
 
@@ -307,12 +313,30 @@ public class Netplay : MonoBehaviour
     {
         if (NetworkServer.active)
         {
-            GameObject bot = Spawner.Spawn(botPrefab.gameObject);
+            GameObject bot = AddBot();
 
             if (bot.TryGetComponent(out BotController botController))
             {
                 botController.ClearStates();
-                botController.GetOrActivateState<BotController.State_FollowPlayer>().followPlayerId = localPlayerId;
+                botController.GetOrActivateState<BT_FollowPlayer>().followPlayerId = localPlayerId;
+            }
+        }
+        else
+        {
+            Debug.LogError($"Only the server can do this");
+        }
+    }
+
+    public void ConsoleCommand_AddRingBot()
+    {
+        if (NetworkServer.active)
+        {
+            GameObject bot = AddBot();
+
+            if (bot.TryGetComponent(out BotController botController))
+            {
+                botController.ClearStates();
+                botController.GetOrActivateState<BT_CircleBasedPathFollow>();
             }
         }
         else

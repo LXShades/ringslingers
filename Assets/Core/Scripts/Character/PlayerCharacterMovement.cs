@@ -314,6 +314,12 @@ public class PlayerCharacterMovement : CharacterMovement
         return accelCurve.Evaluate(inverseAccelCurve.Evaluate(speed) + deltaTime) - speed;
     }
 
+    public float CalculateAccelerationMagnitude(Vector3 currentGroundVelocity, float deltaTime)
+    {
+        float speed = currentGroundVelocity.magnitude;
+        return Mathf.Max(accelCurve.Evaluate(inverseAccelCurve.Evaluate(speed) + deltaTime) - speed, 0f);
+    }
+
     public Vector3 CalculateAccelerationVector(Vector3 currentGroundVelocity, Vector3 worldInputDirection, float deltaTime, float multiplier = 1f)
     {
         float speed = currentGroundVelocity.magnitude; // todo: use rmomentum

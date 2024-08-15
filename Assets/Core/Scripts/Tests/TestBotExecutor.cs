@@ -4,6 +4,22 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+[Serializable]
+public struct CharacterMovementTurnCalculator
+{
+    public float inputCurrentSpeed;
+    public float inputRelativeAccelAngle;
+    public float accelerationAtTurnSpeed;
+
+    public void Calculate(PlayerCharacterMovement movement, float deltaTime)
+    {
+        float turnAccelerationDot = Mathf.Cos(inputRelativeAccelAngle * Mathf.Deg2Rad);
+        float frictionMagnitude = inputCurrentSpeed - (PlayerCharacterMovement.CalculateFrictionMultiplier(movement.friction, deltaTime) * inputCurrentSpeed);
+        float accelerationGeneral = PlayerCharacterMovement.GetAccelerationMagnitude(inputCurrentSpeed, movement.accelCurve, movement.inverseAccelCurve, deltaTime);
+        accelerationAtTurnSpeed = accelerationGeneral * turnAccelerationDot - frictionMagnitude;
+    }
+}
+
 [ExecuteInEditMode]
 public class TestBotExecutor : MonoBehaviour
 {
@@ -25,14 +41,6 @@ public class TestBotExecutor : MonoBehaviour
         public float accelerationMagnitude;
     }
 
-    [Serializable]
-    public struct TurnCalculator
-    {
-        public float inputCurrentSpeed;
-        public float inputRelativeAccelAngle;
-        public float accelerationAtTurnSpeed;
-    }
-
     [Header("Time")]
     [Range(0f, 50f)]
     public float simulationDuration;
@@ -41,7 +49,7 @@ public class TestBotExecutor : MonoBehaviour
     [Header("Action")]
     public Vector3 startVelocity;
     [SerializeReference]
-    public TestBotAction actionToPerform = new TestBotAction_RunToPoints();
+    public ITestableBotTask actionToPerform = new TestBT_RunToPoints();
 
     [Header("Targets")]
     public float targetRadius = 0.5f;
@@ -60,11 +68,11 @@ public class TestBotExecutor : MonoBehaviour
     public DotDisplayType dotDisplayType = DotDisplayType.FadePerSecond;
     public StateSnapshot watchState;
     [Range(0f, 5f)]
-    public float stateTime;
+    public float watchTime;
     public bool autoplay;
 
     [Header("Calculators")]
-    public TurnCalculator turnCalculator;
+    public CharacterMovementTurnCalculator turnCalculator;
 
     [Header("Output")]
     public float timeTaken;
@@ -97,15 +105,7 @@ public class TestBotExecutor : MonoBehaviour
         currentTime = 0f;
         currentTargetIndex = 0;
 
-        float turnAccelerationDot = Mathf.Cos(turnCalculator.inputRelativeAccelAngle * Mathf.Deg2Rad);
-        float frictionMagnitude = turnCalculator.inputCurrentSpeed - (PlayerCharacterMovement.CalculateFrictionMultiplier(movement.friction, deltaTime) * turnCalculator.inputCurrentSpeed);
-        float accelerationGeneral = PlayerCharacterMovement.GetAccelerationMagnitude(turnCalculator.inputCurrentSpeed, movement.accelCurve, movement.inverseAccelCurve, deltaTime);
-        turnCalculator = new TurnCalculator()
-        {
-            inputCurrentSpeed = turnCalculator.inputCurrentSpeed,
-            inputRelativeAccelAngle = turnCalculator.inputRelativeAccelAngle,
-            accelerationAtTurnSpeed = accelerationGeneral * turnAccelerationDot - frictionMagnitude
-        };
+        turnCalculator.Calculate(movement, deltaTime);
 
         CharacterState initialState = new CharacterState()
         {
@@ -121,14 +121,16 @@ public class TestBotExecutor : MonoBehaviour
         {
             isSimulationRunning = true;
 
-            actionToPerform.Init(this);
+            actionToPerform.InitTests(this);
+            if (actionToPerform is IBotTask botTask)
+                botTask.Init(new BotTaskParams() { character = null, characterObject = gameObject, controller = null, deltaTime = deltaTime, movement = movement });
 
             Vector3 lastVelocity = initialState.velocity;
             movement.velocity = initialState.velocity;
 
             for (currentTime = 0f; currentTime < simulationDuration && isSimulationRunning; currentTime += deltaTime)
             {
-                if (currentTime <= stateTime && currentTime + deltaTime > stateTime)
+                if (currentTime <= watchTime && currentTime + deltaTime > watchTime)
                 {
                     watchState = new StateSnapshot()
                     {
@@ -163,7 +165,8 @@ public class TestBotExecutor : MonoBehaviour
     private void Simulate()
     {
         input = default;
-        actionToPerform.Run(this, ref input);
+        if (actionToPerform is IBotTask botTask)
+            botTask.Update(new BotTaskParams() { character = null, characterObject = gameObject, controller = null, deltaTime = deltaTime, movement = movement }, ref input);
 
         if (useFullSimulation)
         {
@@ -225,11 +228,8 @@ public class TestBotExecutor : MonoBehaviour
     }
 }
 
-[System.Serializable]
-public class TestBotAction
+public interface ITestableBotTask
 {
-    public virtual void Init(TestBotExecutor exec) { }
-    public virtual void Run(TestBotExecutor exec, ref CharacterInput input) { }
-
-    public virtual void OnDrawGizmos() { }
+    public void InitTests(TestBotExecutor exec);
+    public void OnDrawGizmos();
 }
