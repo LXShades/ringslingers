@@ -2,38 +2,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class TestBT_RunToPoints : IBotTask, ITestableBotTask
-{
-    TestBotExecutor executor;
-
-    public void InitTests(TestBotExecutor exec)
-    {
-        executor = exec;
-    }
-
-    public void OnDrawGizmos()
-    {
-    }
-
-    public void Init(in BotTaskParams taskParams)
-    {
-    }
-
-    public void Update(in BotTaskParams taskParams, ref CharacterInput input)
-    {
-        Vector3 targetPosition = executor.targetPositions[executor.currentTargetIndex];
-        Vector3 moveIntentionDirection = targetPosition - taskParams.characterObject.transform.position;
-        Vector3 intendedAim = Vector3.forward;
-        input = new CharacterInput()
-        {
-            aimDirection = intendedAim,
-        };
-
-        input.worldMovementDirection = moveIntentionDirection;
-    }
-}
-
-[System.Serializable]
 public class TestBT_TimedTurns : IBotTask, ITestableBotTask
 {
     [System.Serializable]
@@ -117,46 +85,6 @@ public class TestBT_GetOntoLine : IBotTask, ITestableBotTask
         Gizmos.color = Color.white;
         Gizmos.DrawLine(lineStart, lineEnd);
     }
-}
-
-[System.Serializable]
-public class TestBT_SteerForDesiredVelocity : IBotTask, ITestableBotTask
-{
-    private TestBotExecutor exec;
-
-    public float interval = 0.2f;
-
-    private float time;
-
-    public void InitTests(TestBotExecutor exec)
-    {
-        this.exec = exec;
-        time = 0f;
-    }
-
-    public void Init(in BotTaskParams taskParams) { }
-
-    public void Update(in BotTaskParams taskParams, ref CharacterInput input)
-    {
-        time += taskParams.deltaTime;
-
-        Vector3 naturalPositionAfterInterval = taskParams.position + taskParams.movement.velocity * interval;
-        Vector3 desiredPosition = taskParams.position + (exec.targetPositions[exec.currentTargetIndex] - taskParams.position).normalized * (taskParams.movement.velocity.magnitude * interval);
-        Vector3 accelerationPossibility = (desiredPosition - naturalPositionAfterInterval).normalized * (taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity, time) * interval);
-
-        if (time <= exec.watchTime && time + taskParams.deltaTime > exec.watchTime)
-        {
-            // draw the things
-            DebugDraw.DrawLine(taskParams.position, naturalPositionAfterInterval, DebugDraw.Style.Thick.Color(Color.blue));
-            DebugDraw.DrawLine(taskParams.position, desiredPosition, DebugDraw.Style.Thick.Color(Color.green));
-            DebugDraw.DrawLine(naturalPositionAfterInterval, naturalPositionAfterInterval + accelerationPossibility, DebugDraw.Style.Thick.Color(Color.yellow));
-        }
-
-        //input.worldMovementDirection = accelerationPossibility.normalized * Mathf.Min(Vector3.Distance(naturalPositionAfterInterval, desiredPosition) / accelerationPossibility.magnitude, 1f);
-        input.worldMovementDirection = Vector3.ClampMagnitude((desiredPosition - taskParams.position).normalized + accelerationPossibility.normalized * Mathf.Min(Vector3.Distance(naturalPositionAfterInterval, desiredPosition) / accelerationPossibility.magnitude, 1f), 1f);
-    }
-
-    public void OnDrawGizmos() { }
 }
 
 [System.Serializable]

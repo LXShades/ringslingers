@@ -5,10 +5,11 @@ using UnityEngine;
 public class BT_GetRings : ITestableBotTask, IBotTask
 {
     [SerializeReference]
-    public BT_PathFollower pathFollower = new BT_CircleBasedPathFollow();
+    public BT_PathFollower pathFollower = new BT_TargetVelocityBasedPathFollower();
 
     private List<Vector3> ringPath = new List<Vector3>();
 
+    public float targetPathLength = 5;
     public bool drawRingPath = true;
 
     public void InitTests(TestBotExecutor exec)
@@ -19,7 +20,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask
 
     public void Init(in BotTaskParams taskParams)
     {
-        GeneratePathBetweenRings(taskParams.characterObject.transform.position, BotRingProfiler.singleton.ringLines, ringPath);
+        GeneratePathBetweenRings(taskParams.characterObject.transform.position, BotRingProfiler.singleton.ringLines, ringPath, targetPathLength);
 
         pathFollower.SetupPath(ringPath, taskParams.movement.velocity, 0.25f);
         pathFollower.Init(taskParams);
@@ -30,7 +31,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask
         pathFollower.Update(in taskParams, ref input);
     }
 
-    public static void GeneratePathBetweenRings(Vector3 startingPosition, IReadOnlyList<RingLine> ringLines, List<Vector3> outPath)
+    public static void GeneratePathBetweenRings(Vector3 startingPosition, IReadOnlyList<RingLine> ringLines, List<Vector3> outPath, float targetPathLength)
     {
         outPath.Clear();
 
@@ -52,6 +53,8 @@ public class BT_GetRings : ITestableBotTask, IBotTask
 
         float startingAng = Mathf.Atan2(startingPosition.z - centrePosition.z, startingPosition.x - centrePosition.x);
         float lastAng = startingAng;
+        float pathLength = 0f;
+
         do
         {
             nextRingLine = -1;
@@ -86,10 +89,13 @@ public class BT_GetRings : ITestableBotTask, IBotTask
                 visitedRingLines.Add(nextRingLine);
                 outPath.Add(entryPosition);
                 outPath.Add(exitPosition);
+                pathLength += Vector3.Distance(currentExitPosition, exitPosition);
+
                 currentExitPosition = exitPosition;
                 lastAng = closestAng;
+
             }
-        } while (nextRingLine != -1);
+        } while (nextRingLine != -1 && pathLength <= targetPathLength);
     }
 
     public void OnDrawGizmos()

@@ -49,7 +49,7 @@ public class TestBotExecutor : MonoBehaviour
     [Header("Action")]
     public Vector3 startVelocity;
     [SerializeReference]
-    public ITestableBotTask actionToPerform = new TestBT_RunToPoints();
+    public ITestableBotTask actionToPerform = new BT_BeelinePathFollower();
 
     [Header("Targets")]
     public float targetRadius = 0.5f;

@@ -58,7 +58,7 @@ public class TestBotExecutorEditor : Editor
         base.OnInspectorGUI();
 
         EditorGUILayout.HelpBox("Change the type of action below. Note this will reset the action data.", MessageType.Info);
-        foreach (var type in typeof(TestBT_RunToPoints).Assembly.GetTypes().Where(x => typeof(ITestableBotTask).IsAssignableFrom(x)))
+        foreach (var type in typeof(BT_PathFollower).Assembly.GetTypes().Where(x => typeof(ITestableBotTask).IsAssignableFrom(x)))
         {
             if (EditorGUILayout.LinkButton(type.Name))
             {
