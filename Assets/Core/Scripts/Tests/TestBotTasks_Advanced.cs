@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-public class TestBotAction_Pathfinding : IBotTask, ITestableBotTask
+public class TestBT_Pathfinding : IBotTask, ITestableBotTask
 {
     public float deltaTime = 0.0166666f;
     public float timePerIteration = 0.2f;

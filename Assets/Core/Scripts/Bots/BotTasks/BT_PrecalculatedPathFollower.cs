@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class BT_PrecalculatedPathFollower : ITestableBotTask, IBotTask
+public class BT_PrecalculatedPathFollower : BT_PathFollower
 {
     public struct CalculatePathPointParameters
     {
@@ -15,25 +15,21 @@ public class BT_PrecalculatedPathFollower : ITestableBotTask, IBotTask
     public float inputInterval = 0.2f;
 
     private List<CharacterInput> inputs = new List<CharacterInput>();
-    public Vector3[] targets;
-    public Vector3 startVelocity;
     public float pathDuration = 5f;
-    public float targetRadius = 0.5f;
     public float previewStateTime = -1f;
 
     private int playbackInputFrame = 0;
 
-
-    public virtual void InitTests(TestBotExecutor exec)
+    public override void InitTests(TestBotExecutor exec)
     {
-        targets = exec.targetPositions.ToArray();
-        startVelocity = exec.startVelocity;
-        pathDuration = exec.simulationDuration;
+        base.InitTests(exec);
         targetRadius = exec.targetRadius;
     }
 
-    public virtual void Init(in BotTaskParams taskParams)
+    public override void Init(in BotTaskParams taskParams)
     {
+        base.Init(in taskParams);
+
         playbackInputFrame = 0;
         inputs.Clear();
 
@@ -63,8 +59,9 @@ public class BT_PrecalculatedPathFollower : ITestableBotTask, IBotTask
         }
     }
 
-    public void Update(in BotTaskParams taskParams, ref CharacterInput input)
+    public override void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
+        base.Update(in taskParams, ref input);
         if (playbackInputFrame < inputs.Count)
             input = inputs[playbackInputFrame++];
     }

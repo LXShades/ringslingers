@@ -27,12 +27,6 @@ public class BT_CircleBasedPathFollow : BT_PrecalculatedPathFollower, IBotTask
     [Range(0f, 2f)]
     public float pushAwayForce = 0f;
 
-    public void SetupPath(IReadOnlyCollection<Vector3> targets, Vector3 startVelocity)
-    {
-        this.targets = targets.ToArray();
-        this.startVelocity = startVelocity;
-    }
-
     public override void Init(in BotTaskParams taskParams)
     {
         targetLineIdx = 0;

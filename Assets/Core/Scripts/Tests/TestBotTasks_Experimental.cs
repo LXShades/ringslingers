@@ -1,8 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static MenuButton;
-
-
 
 [System.Serializable]
 public class TestBT_RunToPoints : IBotTask, ITestableBotTask
@@ -223,7 +220,7 @@ public class TestBT_BrakeBeforePoint : IBotTask, ITestableBotTask
 }
 
 [System.Serializable]
-public class TestBotAction_RunToPointThenForceDirection : IBotTask, ITestableBotTask
+public class TestBT_RunToPointThenForceDirection : IBotTask, ITestableBotTask
 {
     [Range(0, 360)]
     public float directionToForce = 0f;
@@ -264,7 +261,7 @@ public class TestBotAction_RunToPointThenForceDirection : IBotTask, ITestableBot
 }
 
 [System.Serializable]
-public class TestBotAction_RunToPointThenCircle : IBotTask, ITestableBotTask
+public class TestBT_RunToPointThenCircle : IBotTask, ITestableBotTask
 {
     [Range(0, 360)]
     public float circleDegreesPerSecond = 0f;
@@ -313,20 +310,5 @@ public class TestBotAction_RunToPointThenCircle : IBotTask, ITestableBotTask
                 currentCircleTime += exec.deltaTime;
             }
         }
-    }
-}
-
-[System.Serializable]
-public class TestBotAction_BeelineWithLookahead : BT_PrecalculatedPathFollower
-{
-    public int refinementIterations = 0;
-
-    public float lookAheadTime = 0f;
-    
-    public override void CalculatePathPoint(in CalculatePathPointParameters parameters, ref CharacterInput input)
-    {
-        Vector3 lookaheadPosition = parameters.state.position + parameters.state.velocity * lookAheadTime;
-
-        input = new CharacterInput() { worldMovementDirection = targets[parameters.currentTarget] - lookaheadPosition };
     }
 }

@@ -5,17 +5,14 @@ using UnityEngine;
 public class BT_GetRings : ITestableBotTask, IBotTask
 {
     [SerializeReference]
-    public BT_PrecalculatedPathFollower pathFollower = new BT_CircleBasedPathFollow();
+    public BT_PathFollower pathFollower = new BT_CircleBasedPathFollow();
 
     private List<Vector3> ringPath = new List<Vector3>();
-
-    private Vector3 startVelocity;
 
     public bool drawRingPath = true;
 
     public void InitTests(TestBotExecutor exec)
     {
-        startVelocity = exec.startVelocity;
         BotRingProfiler.ForceInit();
         pathFollower.InitTests(exec);
     }
@@ -24,7 +21,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask
     {
         GeneratePathBetweenRings(taskParams.characterObject.transform.position, BotRingProfiler.singleton.ringLines, ringPath);
 
-        (pathFollower as BT_CircleBasedPathFollow).SetupPath(ringPath, startVelocity);
+        pathFollower.SetupPath(ringPath, taskParams.movement.velocity, 0.25f);
         pathFollower.Init(taskParams);
     }
 
