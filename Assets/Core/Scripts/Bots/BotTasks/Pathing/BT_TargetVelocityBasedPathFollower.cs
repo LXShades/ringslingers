@@ -25,7 +25,7 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
     {
         base.Update(in taskParams, ref input);
 
-        if (currentTargetIndex >= targets.Length)
+        if (currentTargetIndex >= targets.Count)
             return;
 
         time += taskParams.deltaTime;

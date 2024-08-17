@@ -40,7 +40,7 @@ public class BT_PrecalculatedPathFollower : BT_PathFollower
 
         for (float t = 0f; t < pathDuration; t += taskParams.deltaTime)
         {
-            if (currentTarget >= targets.Length)
+            if (currentTarget >= targets.Count)
             {
                 break;
             }

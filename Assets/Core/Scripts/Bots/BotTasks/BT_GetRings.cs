@@ -4,10 +4,12 @@ using UnityEngine;
 [System.Serializable]
 public class BT_GetRings : ITestableBotTask, IBotTask
 {
-    [SerializeReference]
+    [SerializeReference, PolymorphicTypeSelector]
     public BT_PathFollower pathFollower = new BT_TargetVelocityBasedPathFollower();
+    [SerializeReference, PolymorphicTypeSelector]
+    public List<PathFilter> pathFilters = new List<PathFilter>();
 
-    private List<Vector3> ringPath = new List<Vector3>();
+    private List<PathPoint> ringPath = new List<PathPoint>();
 
     public float targetPathLength = 5;
     public bool drawRingPath = true;
@@ -31,7 +33,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask
         pathFollower.Update(in taskParams, ref input);
     }
 
-    public static void GeneratePathBetweenRings(Vector3 startingPosition, IReadOnlyList<RingLine> ringLines, List<Vector3> outPath, float targetPathLength)
+    public static void GeneratePathBetweenRings(Vector3 startingPosition, IReadOnlyList<RingLine> ringLines, List<PathPoint> outPath, float targetPathLength)
     {
         outPath.Clear();
 

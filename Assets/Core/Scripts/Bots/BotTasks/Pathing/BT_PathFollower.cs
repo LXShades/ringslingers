@@ -1,10 +1,22 @@
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+
+public struct PathPoint
+{
+    public PathPoint(Vector3 position) => this.position = position;
+
+    public Vector3 position;
+    public float x { get => position.x; set => position.x = value; }
+    public float y { get => position.y; set => position.y = value; }
+    public float z { get => position.z; set => position.z = value; }
+
+    public static implicit operator Vector3(PathPoint p) => p.position;
+    public static implicit operator PathPoint(Vector3 v) => new PathPoint { position = v };
+}
 
 public class BT_PathFollower : ITestableBotTask, IBotTask
 {
-    public Vector3[] targets;
+    public List<PathPoint> targets = new List<PathPoint>();
     public int currentTargetIndex = 0;
     public Vector3 startVelocity;
 
@@ -16,21 +28,27 @@ public class BT_PathFollower : ITestableBotTask, IBotTask
     private Vector3 previousPosition;
     private Vector3 previousVelocity;
 
-    public void SetupPath(IReadOnlyCollection<Vector3> targets, Vector3 startVelocity, float targetRadius)
+    public void SetupPath(IReadOnlyCollection<PathPoint> pathPoints, Vector3 startVelocity, float targetRadius)
     {
-        this.targets = targets.ToArray();
+        this.targets.Clear();
+        this.targets.Capacity = pathPoints.Count;
+        this.targets.AddRange(pathPoints);
         this.startVelocity = startVelocity;
         this.targetHorizontalRadius = targetRadius;
         this.currentTargetIndex = 0;
     }
 
-    public virtual void InitTests(TestBotExecutor exec)
+    public void SetupPath(IReadOnlyCollection<Vector3> targets, Vector3 startVelocity, float targetRadius)
     {
-        targets = exec.targetPositions.ToArray();
-        startVelocity = exec.startVelocity;
-        targetHorizontalRadius = exec.targetRadius;
-        currentTargetIndex = 0;
+        this.targets.Clear();
+        foreach (Vector3 target in targets)
+            this.targets.Add(target);
+        this.startVelocity = startVelocity;
+        this.targetHorizontalRadius = targetRadius;
+        this.currentTargetIndex = 0;
     }
+
+    public virtual void InitTests(TestBotExecutor exec) => SetupPath(exec.targetPositions, exec.startVelocity, exec.targetRadius);
 
     public virtual void Init(in BotTaskParams taskParams)
     {
@@ -40,7 +58,7 @@ public class BT_PathFollower : ITestableBotTask, IBotTask
 
     public virtual void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
-        if (currentTargetIndex < targets.Length && previousVelocity.sqrMagnitude > 0f)
+        if (currentTargetIndex < targets.Count && previousVelocity.sqrMagnitude > 0f)
         {
             Vector3 positionClosestToTarget = taskParams.position;
             Vector3 previousVelocityNormalized = previousVelocity.normalized;

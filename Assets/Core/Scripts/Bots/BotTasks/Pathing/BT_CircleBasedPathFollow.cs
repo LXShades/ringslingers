@@ -47,11 +47,11 @@ public class BT_CircleBasedPathFollow : BT_PrecalculatedPathFollower, IBotTask
 
         // Next the rest of the circles, all based on the approx momentum you'll get while leaving a circle
         Vector3 prevTargetPosition = startPosition;
-        for (int target = 0; target < targets.Length; target++)
+        for (int target = 0; target < targets.Count; target++)
         {
             Vector3 targetPosition = targets[target];
 
-            TryMakeCircleFromEntryExitDirection(targetPosition, targetPosition - prevTargetPosition, target + 1 < targets.Length ? targets[target + 1] - targetPosition : Vector3.zero, turnCircleRadius, out Circle circle);
+            TryMakeCircleFromEntryExitDirection(targetPosition, targetPosition - prevTargetPosition, target + 1 < targets.Count ? targets[target + 1] - targetPosition : Vector3.zero, turnCircleRadius, out Circle circle);
             circles.Add(circle);
 
             prevTargetPosition = targets[target];
