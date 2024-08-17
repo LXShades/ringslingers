@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 public struct RingLine
 {
+    public List<RespawnableItem> rings;
     public Vector3 start;
     public Vector3 end;
     public float length;
@@ -106,6 +108,7 @@ public class BotRingProfiler : MonoBehaviour
                     start = forwardRing.transform.position,
                     end = backwardRing.transform.position,
                     length = Vector3.Distance(forwardRing.transform.position, backwardRing.transform.position),
+                    rings = new List<RespawnableItem>(nearbyCandidates.Select(x => x.respawnableItem)),
                     numRings = nearbyCandidates.Count + 1 // include base ring
                 };
 

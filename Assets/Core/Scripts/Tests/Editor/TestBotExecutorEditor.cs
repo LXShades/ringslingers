@@ -52,19 +52,4 @@ public class TestBotExecutorEditor : Editor
             }
         }
     }
-
-    public override void OnInspectorGUI()
-    {
-        base.OnInspectorGUI();
-
-        EditorGUILayout.HelpBox("Change the type of action below. Note this will reset the action data.", MessageType.Info);
-        foreach (var type in typeof(BT_PathFollower).Assembly.GetTypes().Where(x => typeof(ITestableBotTask).IsAssignableFrom(x)))
-        {
-            if (EditorGUILayout.LinkButton(type.Name))
-            {
-                Undo.RecordObject(target, "change testbot action type");
-                (target as TestBotExecutor).actionToPerform = (ITestableBotTask)type.GetConstructor(System.Array.Empty<System.Type>()).Invoke(null);
-            }
-        }
-    }
 }

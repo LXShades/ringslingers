@@ -2,12 +2,12 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [System.Serializable]
-public class BT_GetRings : ITestableBotTask, IBotTask
+public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
 {
     [SerializeReference, PolymorphicTypeSelector]
-    public BT_PathFollower pathFollower = new BT_TargetVelocityBasedPathFollower();
-    [SerializeReference, PolymorphicTypeSelector]
     public List<PathFilter> pathFilters = new List<PathFilter>();
+    [SerializeReference, PolymorphicTypeSelector]
+    public BT_PathFollower pathFollower = new BT_TargetVelocityBasedPathFollower();
 
     private List<PathPoint> ringPath = new List<PathPoint>();
 
@@ -23,6 +23,11 @@ public class BT_GetRings : ITestableBotTask, IBotTask
     public void Init(in BotTaskParams taskParams)
     {
         GeneratePathBetweenRings(taskParams.characterObject.transform.position, BotRingProfiler.singleton.ringLines, ringPath, targetPathLength);
+
+        foreach (PathFilter pathFilter in pathFilters)
+        {
+
+        }
 
         pathFollower.SetupPath(ringPath, taskParams.movement.velocity, 0.25f);
         pathFollower.Init(taskParams);
@@ -70,6 +75,14 @@ public class BT_GetRings : ITestableBotTask, IBotTask
                     continue;
                 if (Mathf.Abs(ringLines[i].start.y - startingPosition.y) > verticalThreshold || Mathf.Abs(ringLines[i].end.y - startingPosition.y) > verticalThreshold)
                     continue;
+                if (Application.isPlaying)
+                {
+                    int numLivingRings = 0;
+                    foreach (var ring in ringLines[i].rings)
+                        numLivingRings += ring.isSpawned ? 1 : 0;
+                    if (numLivingRings == 0)
+                        continue;
+                }
 
                 float startDist = VectorExtensions.HorizontalDistance(ringLines[i].start, currentExitPosition);
                 float endDist = VectorExtensions.HorizontalDistance(ringLines[i].end, currentExitPosition);
@@ -100,21 +113,20 @@ public class BT_GetRings : ITestableBotTask, IBotTask
         } while (nextRingLine != -1 && pathLength <= targetPathLength);
     }
 
-    public void OnDrawGizmos()
+    public void DrawDebugs()
     {
-        pathFollower.OnDrawGizmos();
+        pathFollower.DrawDebugs();
 
         if (drawRingPath)
         {
-            Gizmos.color = Color.yellow;
+            DebugDraw.Style style = Color.yellow;
             for (int i = 0; i < ringPath.Count - 1; i++)
-                Gizmos.DrawLine(ringPath[i] + new Vector3(0f, 0.05f, 0f), ringPath[i + 1] + new Vector3(0f, 0.05f, 0f));
-
+                DebugDraw.DrawLine(ringPath[i] + new Vector3(0f, 0.05f, 0f), ringPath[i + 1] + new Vector3(0f, 0.05f, 0f), style);
 
             if (BotRingProfiler.singleton)
             {
                 foreach (var ringLine in BotRingProfiler.singleton.ringLines)
-                    Gizmos.DrawLine(ringLine.start + new Vector3(0f, 0.05f, 0f), ringLine.end + new Vector3(0f, 0.05f, 0f));
+                    DebugDraw.DrawLine(ringLine.start + new Vector3(0f, 0.05f, 0f), ringLine.end + new Vector3(0f, 0.05f, 0f), style);
             }
         }
     }

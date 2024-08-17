@@ -15,7 +15,7 @@ public class BotController : MonoBehaviour
 
     private CharacterInput lastInput;
 
-    public List<IBotTask> activeStates = new List<IBotTask>();
+    public List<IBotTask> activeTasks = new List<IBotTask>();
 
     public string airNeuralNetworkString;
     public NeuralNetwork airNeuralNetwork { get; private set; }
@@ -32,8 +32,18 @@ public class BotController : MonoBehaviour
         groundRunNeuralNetwork = new NeuralNetwork(new int[] { 6, 3, 2 });
         groundRunNeuralNetwork.LoadAsString(groundRunNeuralNetworkString);
 
-        if (activeStates.Count == 0)
-            GetOrActivateState<BT_CollectAndShoot>();
+        if (activeTasks.Count == 0)
+            GetOrActivateTask<BT_CollectAndShoot>();
+    }
+
+    private void Update()
+    {
+        // draw task gizmos
+        foreach (IBotTask task in activeTasks)
+        {
+            if (task is IBotDebugDraws withGizmos)
+                withGizmos.DrawDebugs();
+        }
     }
 
     public void OnInputTick()
@@ -57,32 +67,44 @@ public class BotController : MonoBehaviour
             if (!isInitialised)
             {
                 isInitialised = true;
-                foreach (var state in activeStates)
+                foreach (var state in activeTasks)
                     state.Init(MakeBotTaskParams());
             }
 
             BotTaskParams taskParams = MakeBotTaskParams();
-            for (int i = 0; i < activeStates.Count; i++)
-                activeStates[i].Update(in taskParams, ref lastInput);
+            lastInput = default;
+            for (int i = 0; i < activeTasks.Count; i++)
+                activeTasks[i].Update(in taskParams, ref lastInput);
 
             lastInput = lastInput.WithDeltas(character.entity.latestInput);
             GameTicker.singleton.OnRecvBotInput(character.playerId, lastInput);
         }
     }
 
-    public TState GetOrActivateState<TState>() where TState : IBotTask, new()
+    public TTask GetOrActivateTask<TTask>() where TTask : IBotTask, new()
     {
-        TState state = (TState)activeStates.Find(a => a.GetType() == typeof(TState));
+        TTask task = (TTask)activeTasks.Find(a => a.GetType() == typeof(TTask));
 
-        if (state == null)
+        if (task == null)
         {
-            activeStates.Add(state = new TState());
+            activeTasks.Add(task = new TTask());
 
             if (isInitialised)
-                state.Init(MakeBotTaskParams());
+                task.Init(MakeBotTaskParams());
         }
 
-        return state;
+        return task;
+    }
+
+    public TTask ActivateTask<TTask>(TTask task) where TTask : IBotTask
+    {
+        DeactivateState<TTask>();
+        activeTasks.Add(task);
+
+        if (isInitialised)
+            task.Init(MakeBotTaskParams());
+
+        return task;
     }
 
     private BotTaskParams MakeBotTaskParams()
@@ -92,11 +114,11 @@ public class BotController : MonoBehaviour
 
     public void DeactivateState<TState>() where TState : IBotTask
     {
-        activeStates.RemoveAll(a => a.GetType() == typeof(TState));
+        activeTasks.RemoveAll(a => a.GetType() == typeof(TState));
     }
 
     public void ClearStates()
     {
-        activeStates.Clear();
+        activeTasks.Clear();
     }
 }

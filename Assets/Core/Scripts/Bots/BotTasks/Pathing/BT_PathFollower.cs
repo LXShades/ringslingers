@@ -14,7 +14,7 @@ public struct PathPoint
     public static implicit operator PathPoint(Vector3 v) => new PathPoint { position = v };
 }
 
-public class BT_PathFollower : ITestableBotTask, IBotTask
+public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
 {
     public List<PathPoint> targets = new List<PathPoint>();
     public int currentTargetIndex = 0;
@@ -27,6 +27,8 @@ public class BT_PathFollower : ITestableBotTask, IBotTask
 
     private Vector3 previousPosition;
     private Vector3 previousVelocity;
+
+    public bool hasReachedEnd => currentTargetIndex == targets.Count;
 
     public void SetupPath(IReadOnlyCollection<PathPoint> pathPoints, Vector3 startVelocity, float targetRadius)
     {
@@ -72,7 +74,6 @@ public class BT_PathFollower : ITestableBotTask, IBotTask
                 positionClosestToTarget = Vector3.Lerp(previousPosition, taskParams.position, (targetDot - lastDot) / (nextDot - lastDot));
             }
 
-
             float horDist = VectorExtensions.HorizontalDistance(positionClosestToTarget, targets[currentTargetIndex]);
             float vertDist = Mathf.Abs(positionClosestToTarget.y + characterHalfHeight - targets[currentTargetIndex].y);
             if (horDist < targetHorizontalRadius && vertDist <= targetVerticalRadius)
@@ -80,9 +81,10 @@ public class BT_PathFollower : ITestableBotTask, IBotTask
                 currentTargetIndex++;
             }
         }
+
+        previousPosition = taskParams.position;
+        previousVelocity = taskParams.movement.velocity;
     }
 
-    public virtual void OnDrawGizmos()
-    {
-    }
+    public virtual void DrawDebugs() { }
 }

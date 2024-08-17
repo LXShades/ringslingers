@@ -94,6 +94,9 @@ public class TestBotExecutor : MonoBehaviour
 
             if (runConstantly)
                 Run();
+
+            if (actionToPerform is IBotDebugDraws withGizmos)
+                withGizmos.DrawDebugs();
         }
     }
 
@@ -223,13 +226,5 @@ public class TestBotExecutor : MonoBehaviour
         Gizmos.color = Color.white;
         Gizmos.DrawLine(watchState.position, watchState.position + watchState.inputDirection.normalized);
         Gizmos.DrawSphere(watchState.position + watchState.inputDirection.normalized, 0.05f);
-
-        actionToPerform.OnDrawGizmos();
     }
-}
-
-public interface ITestableBotTask
-{
-    public void InitTests(TestBotExecutor exec);
-    public void OnDrawGizmos();
 }

@@ -3,6 +3,22 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.AI;
 
+public interface ITestableBotTask
+{
+    public void InitTests(TestBotExecutor exec);
+}
+
+public interface IBotTask
+{
+    public void Init(in BotTaskParams taskParams);
+    public void Update(in BotTaskParams taskParams, ref CharacterInput input);
+}
+
+public interface IBotDebugDraws
+{
+    public void DrawDebugs();
+}
+
 public struct BotTaskParams
 {
     public BotController controller;
@@ -11,12 +27,6 @@ public struct BotTaskParams
     public PlayerCharacterMovement movement;
     public float deltaTime;
     public Vector3 position => characterObject.transform.position;
-}
-
-public interface IBotTask
-{
-    public void Init(in BotTaskParams taskParams);
-    public void Update(in BotTaskParams taskParams, ref CharacterInput input);
 }
 
 public class BT_CollectAndShoot : IBotTask
@@ -51,7 +61,7 @@ public class BT_CollectAndShoot : IBotTask
 
                 if (!targetIsVisible || !targetIsInRange)
                 {
-                    controller.GetOrActivateState<BT_FollowPlayer>().followPlayerId = target.playerId;
+                    controller.GetOrActivateTask<BT_FollowPlayer>().followPlayerId = target.playerId;
                 }
                 else if (targetIsVisible)
                 {
@@ -72,10 +82,15 @@ public class BT_CollectAndShoot : IBotTask
         {
             controller.DeactivateState<BT_FollowPlayer>();
 
-            controller.GetOrActivateState<BT_CollectRings>();
+            BT_GetRings getRings = controller.GetOrActivateTask<BT_GetRings>();
+            if (getRings.pathFollower.hasReachedEnd)
+            {
+                controller.DeactivateState<BT_GetRings>();
+                controller.ActivateTask(new BT_GetRings() { targetPathLength = 30f });
+            }
 
-            if (character.numRings >= numRingsToStartShooting)
-                isCollecting = false;
+            //if (character.numRings >= numRingsToStartShooting)
+            //    isCollecting = false;
         }
     }
 
@@ -395,7 +410,7 @@ public class BT_FollowPlayer : IBotTask
     public void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
         if (Netplay.singleton.players.Count > followPlayerId && Netplay.singleton.players[followPlayerId])
-            taskParams.controller.GetOrActivateState<BT_MoveTowards>().SetTargetPosition(Netplay.singleton.players[followPlayerId].transform.position);
+            taskParams.controller.GetOrActivateTask<BT_MoveTowards>().SetTargetPosition(Netplay.singleton.players[followPlayerId].transform.position);
         else
             taskParams.controller.DeactivateState<BT_MoveTowards>();
     }
@@ -434,7 +449,7 @@ public class BT_CollectRings : IBotTask
         Vector3 myPosition = taskParams.character.transform.position;
         Vector3 closestPosition = myPosition;
         Vector3 nextClosestPosition = myPosition;
-        BT_MoveTowards moveState = taskParams.controller.GetOrActivateState<BT_MoveTowards>();
+        BT_MoveTowards moveState = taskParams.controller.GetOrActivateTask<BT_MoveTowards>();
         float velocityBonusFactor = 5f;
         Vector3 velocityBonus = taskParams.character.movement.velocity / taskParams.character.movement.topSpeed * velocityBonusFactor;
 
@@ -481,7 +496,7 @@ public class BT_CopyPlayer : IBotTask
     {
         if (Netplay.singleton.players[playerIndex])
         {
-            BT_MoveTowards moveState = taskParams.controller.GetOrActivateState<BT_MoveTowards>();
+            BT_MoveTowards moveState = taskParams.controller.GetOrActivateTask<BT_MoveTowards>();
             Vector3 targetPosition = Netplay.singleton.players[playerIndex].transform.position;
             CharacterInput playerInput = Netplay.singleton.players[playerIndex].liveInput;
 

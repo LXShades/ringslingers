@@ -209,6 +209,11 @@ public class Netplay : MonoBehaviour
             }
             else
                 Debug.LogError("We can't play this map properly, for some reason GameState_Map is missing.");
+
+            if (CommandLine.HasCommand("-addbot"))
+            {
+                AddBot();
+            }
         }
     }
     #endregion
@@ -318,7 +323,7 @@ public class Netplay : MonoBehaviour
             if (bot.TryGetComponent(out BotController botController))
             {
                 botController.ClearStates();
-                botController.GetOrActivateState<BT_FollowPlayer>().followPlayerId = localPlayerId;
+                botController.GetOrActivateTask<BT_FollowPlayer>().followPlayerId = localPlayerId;
             }
         }
         else
@@ -336,7 +341,7 @@ public class Netplay : MonoBehaviour
             if (bot.TryGetComponent(out BotController botController))
             {
                 botController.ClearStates();
-                botController.GetOrActivateState<BT_CircleBasedPathFollow>();
+                botController.GetOrActivateTask<BT_CircleBasedPathFollow>();
             }
         }
         else

@@ -67,8 +67,4 @@ public class BT_PrecalculatedPathFollower : BT_PathFollower
     }
 
     public virtual void CalculatePathPoint(in CalculatePathPointParameters parameters, ref CharacterInput input) { }
-
-    public virtual void OnDrawGizmos()
-    {
-    }
 }

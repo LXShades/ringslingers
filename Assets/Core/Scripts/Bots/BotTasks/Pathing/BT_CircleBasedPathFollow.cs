@@ -286,23 +286,21 @@ public class BT_CircleBasedPathFollow : BT_PrecalculatedPathFollower, IBotTask
         input.worldMovementDirection = state.velocity.RotatedAroundY(rotation).normalized;
     }
 
-    public override void OnDrawGizmos()
+    public override void DrawDebugs()
     {
-        base.OnDrawGizmos();
+        base.DrawDebugs();
 
-        Gizmos.color = Color.blue;
         foreach (var circle in circles)
         {
-            Gizmos.color = circle.clockwise ? Color.yellow : Color.blue;
-            GizmoExtensions.DrawCircle(circle.position + new Vector3(0f, 0.05f, 0f), circle.radius);
+            DebugDraw.Style style = circle.clockwise ? Color.yellow : Color.blue;
+            DebugDraw.DrawCircle(circle.position + new Vector3(0f, 0.05f, 0f), circle.radius, style);
         }
-        Gizmos.color = Color.blue;
-        foreach (var line in lines)
-            Gizmos.DrawLine(line.pointA + new Vector3(0f, 0.05f, 0f), line.pointB + new Vector3(0f, 0.05f, 0f));
 
-        Gizmos.color = Color.cyan;
+        foreach (var line in lines)
+            DebugDraw.DrawLine(line.pointA + new Vector3(0f, 0.05f, 0f), line.pointB + new Vector3(0f, 0.05f, 0f), Color.blue);
+
         foreach (var line in rotationLines)
-            Gizmos.DrawLine(line.pointA, line.pointB);
+            DebugDraw.DrawLine(line.pointA, line.pointB, Color.cyan);
     }
 
     public void Update(BotTaskParams taskParams, ref CharacterInput input)
