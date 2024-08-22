@@ -86,7 +86,7 @@ public class BT_CollectAndShoot : IBotTask
             if (getRings == null || getRings.pathFollower.hasReachedEnd)
             {
                 controller.DeactivateState<BT_GetRings>();
-                controller.ActivateTask(new BT_GetRings() { targetPathLength = 30f, pathFilters = new List<PathFilter>() { new PathFilter_NavMesh() } });
+                controller.ActivateTask(new BT_GetRings() { targetPathLength = 30f, pathFilters = new List<PathFilter>() { new PathFilter_NavMesh(), new PathFilter_Thoks() } });
             }
 
             //if (character.numRings >= numRingsToStartShooting)

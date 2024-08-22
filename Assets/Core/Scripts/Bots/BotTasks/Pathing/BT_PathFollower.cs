@@ -1,12 +1,27 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct PathPointTaskParams
+{
+    public BotTaskParams botTaskParams;
+    public List<PathPoint> pathPoints;
+    public int currentPathPoint;
+}
+
+public class PathPointTask
+{
+    public int pathPointIndex;
+
+    public virtual void Update(in PathPointTaskParams taskParams, ref CharacterInput input) { }
+}
+
 public struct PathPoint
 {
     public PathPoint(Vector3 position)
     {
         this.position = position;
         this.debugColor = Color.white;
+        this.task = null;
     }
 
     public Vector3 position;
@@ -15,6 +30,7 @@ public struct PathPoint
     public float z { get => position.z; set => position.z = value; }
 
     public Color debugColor;
+    public PathPointTask task;
 
     public static implicit operator Vector3(PathPoint p) => p.position;
     public static implicit operator PathPoint(Vector3 v) => new PathPoint { position = v };
@@ -94,10 +110,24 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
 
     public virtual void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
+        // Check if we crossed the latest point
         if (currentTargetIndex < targets.Count && previousVelocity.sqrMagnitude > 0f)
         {
             if (HasHitTarget(previousPosition, taskParams.position, targets[currentTargetIndex]))
                 currentTargetIndex++;
+        }
+
+        // Run path point tasks
+        PathPointTaskParams pathPointTaskParams = new PathPointTaskParams()
+        {
+            botTaskParams = taskParams,
+            pathPoints = targets,
+            currentPathPoint = currentTargetIndex
+        };
+        foreach (PathPoint point in targets)
+        {
+            if (point.task != null)
+                point.task.Update(in pathPointTaskParams, ref input);
         }
 
         previousPosition = taskParams.position;

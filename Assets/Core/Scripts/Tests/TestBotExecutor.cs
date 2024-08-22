@@ -81,6 +81,7 @@ public class TestBotExecutor : MonoBehaviour
 
     public PlayerCharacterMovement movement;
     private CharacterInput input = default;
+    private CharacterInput lastInput = default;
 
     private List<Tuple<Vector3, Quaternion>> positionHistory = new List<Tuple<Vector3, Quaternion>>();
 
@@ -123,6 +124,7 @@ public class TestBotExecutor : MonoBehaviour
     private void Run()
     {
         movement = GetComponent<PlayerCharacterMovement>();
+        movement.fracunitsPerM = 64f;
         positionHistory.Clear();
 
         currentTime = 0f;
@@ -143,6 +145,8 @@ public class TestBotExecutor : MonoBehaviour
         try
         {
             isSimulationRunning = true;
+
+            lastInput = default;
 
             actionToPerform.InitTests(this);
             if (actionToPerform is IBotTask botTask)
@@ -190,6 +194,8 @@ public class TestBotExecutor : MonoBehaviour
         input = default;
         if (actionToPerform is IBotTask botTask)
             botTask.Update(new BotTaskParams() { character = null, characterObject = gameObject, controller = null, deltaTime = deltaTime, movement = movement }, ref input);
+        input = input.WithDeltas(lastInput);
+        lastInput = input;
 
         if (useFullSimulation)
         {

@@ -154,12 +154,16 @@ public class PlayerCharacterMovement : CharacterMovement
     // to restore collision capsule when rolling
     private float originalCapsuleHeight;
 
+    public float fracunitsPerM { get; set; } // cached for bot testing without gamemanager access
+
     protected virtual void Awake()
     {
         player = GetComponent<Character>();
         sounds = GetComponent<PlayerSounds>();
 
         originalCapsuleHeight = (colliders[0] as CapsuleCollider).height;
+
+        fracunitsPerM = GameManager.singleton.fracunitsPerM;
     }
 
     public void TickMovement(float deltaTime, CharacterInput input) => TickMovement(deltaTime, input, TickInfo.Default);
@@ -398,7 +402,7 @@ public class PlayerCharacterMovement : CharacterMovement
                             float effectiveActionSpeed = isInWater ? actionSpeed * waterActionSpeedMultiplier : actionSpeed;
 
                             // Thok
-                            velocity.SetAlongPlane(gravityDirection, input.aimDirection.AlongPlane(gravityDirection).normalized * (effectiveActionSpeed / GameManager.singleton.fracunitsPerM * 35f));
+                            velocity.SetAlongPlane(gravityDirection, input.aimDirection.AlongPlane(gravityDirection).normalized * (effectiveActionSpeed / fracunitsPerM * 35f));
 
                             if (tickInfo.isFullForwardTick)
                                 sounds.PlayNetworked(PlayerSounds.PlayerSoundType.Thok);
