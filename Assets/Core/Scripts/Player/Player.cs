@@ -14,7 +14,7 @@ public class Player : NetworkBehaviour
     /// </summary>
     [NonSerialized] [SyncVar] public bool isAdmin;
 
-    private Character character => playerId != -1 && playerId < Netplay.singleton.players.Count ? Netplay.singleton.players[playerId] : null;
+    private Character character => playerId != -1 && playerId < Netplay.singleton.characters.Count ? Netplay.singleton.characters[playerId] : null;
 
     /// <summary>
     /// Persistent data for the local player
@@ -148,7 +148,7 @@ public class Player : NetworkBehaviour
         ServerSetupCharacter();
 
         // local player character created, update everyone else's outline statuc
-        foreach (Character character in Netplay.singleton.players)
+        foreach (Character character in Netplay.singleton.characters)
         {
             if (character)
                 character.UpdateOutlineColour();

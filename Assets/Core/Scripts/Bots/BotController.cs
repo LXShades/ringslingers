@@ -54,7 +54,7 @@ public class BotController : MonoBehaviour
 
             if (myPlayer)
             {
-                character = Netplay.singleton.players[myPlayer.playerId];
+                character = Netplay.singleton.characters[myPlayer.playerId];
 
                 if (character)
                     character.playerName = gameObject.name;
@@ -76,6 +76,10 @@ public class BotController : MonoBehaviour
             for (int i = 0; i < activeTasks.Count; i++)
                 activeTasks[i].Update(in taskParams, ref lastInput);
 
+            float inputVisualiserMaxLength = 2f;
+            DebugDraw.DrawArrow(character.transform.position, character.transform.position + lastInput.worldMovementDirection.normalized * inputVisualiserMaxLength, Color.red);
+            DebugDraw.DrawArrow(character.transform.position, character.transform.position + lastInput.worldMovementDirection * inputVisualiserMaxLength, Color.blue);
+
             lastInput = lastInput.WithDeltas(character.entity.latestInput);
             GameTicker.singleton.OnRecvBotInput(character.playerId, lastInput);
         }
@@ -93,6 +97,12 @@ public class BotController : MonoBehaviour
                 task.Init(MakeBotTaskParams());
         }
 
+        return task;
+    }
+
+    public TTask GetTask<TTask>() where TTask : IBotTask, new()
+    {
+        TTask task = (TTask)activeTasks.Find(a => a.GetType() == typeof(TTask));
         return task;
     }
 

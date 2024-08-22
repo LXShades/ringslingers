@@ -37,7 +37,7 @@ public class Turret : MonoBehaviour
 
         // find closest character and shoot em
         Vector3 selfPosition = projectileSpawnPoint.position;
-        foreach (Character character in Netplay.singleton.players)
+        foreach (Character character in Netplay.singleton.characters)
         {
             float distanceToCharacter = Vector3.Distance(selfPosition, character.transform.position);
             if (character && distanceToCharacter < closestCharacterDistance)

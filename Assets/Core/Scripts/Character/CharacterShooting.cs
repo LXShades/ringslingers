@@ -199,7 +199,7 @@ public class CharacterShooting : NetworkBehaviour
         float bestDot = Mathf.Cos(angleLimit * Mathf.Deg2Rad);
         Character bestTarget = null;
 
-        foreach (Character player in Netplay.singleton.players)
+        foreach (Character player in Netplay.singleton.characters)
         {
             if (player && player != this.character && player.damageable.CanBeDamagedBy(this.character.damageable.damageTeam))
             {

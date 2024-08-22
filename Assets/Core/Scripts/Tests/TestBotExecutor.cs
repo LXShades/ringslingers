@@ -25,6 +25,7 @@ public class TestBotExecutor : MonoBehaviour
 {
     public enum DotDisplayType
     {
+        None,
         FadePerSecond,
         Speed,
         Acceleration
@@ -63,6 +64,7 @@ public class TestBotExecutor : MonoBehaviour
     public bool runConstantly;
     private bool isSimulationRunning;
     public bool useFullSimulation = true;
+    public bool spawnBotHereOnGameStart = true;
 
     [Header("Display")]
     public DotDisplayType dotDisplayType = DotDisplayType.FadePerSecond;
@@ -81,6 +83,24 @@ public class TestBotExecutor : MonoBehaviour
     private CharacterInput input = default;
 
     private List<Tuple<Vector3, Quaternion>> positionHistory = new List<Tuple<Vector3, Quaternion>>();
+
+    private void Start()
+    {
+        if (Application.isPlaying)
+        {
+            gameObject.SetActive(false);
+            if (spawnBotHereOnGameStart)
+            {
+                GameObject actualBot = Netplay.singleton.AddBot();
+                Character character = Netplay.singleton.characters[actualBot.GetComponent<Player>().playerId];
+                var state = character.MakeState();
+                state.velocity = startVelocity;
+                state.position = transform.position;
+                character.ApplyState(state);
+                character.entity.StoreCurrentState(character.entity.latestStateTime);
+            }
+        }
+    }
 
     private void Update()
     {
@@ -202,22 +222,25 @@ public class TestBotExecutor : MonoBehaviour
         int numPositions = positionHistory.Count;
         float lastSpeed = 0f;
         float accelerationTolerance = 1f;
-        for (int i = 0; i < numPositions - 1; i++)
+        if (dotDisplayType != DotDisplayType.None)
         {
-            if (dotDisplayType == DotDisplayType.FadePerSecond)
-                Gizmos.color = Color.Lerp(new Color(0f, 0f, 0.5f), Color.red, (i * deltaTime) % 1f);
-            else if (dotDisplayType == DotDisplayType.Speed)
+            for (int i = 0; i < numPositions - 1; i++)
             {
-                Gizmos.color = Color.Lerp(Color.red, Color.green, Vector3.Distance(positionHistory[i].Item1, positionHistory[i + 1].Item1) / deltaTime / movement.topSpeed);
+                if (dotDisplayType == DotDisplayType.FadePerSecond)
+                    Gizmos.color = Color.Lerp(new Color(0f, 0f, 0.5f), Color.red, (i * deltaTime) % 1f);
+                else if (dotDisplayType == DotDisplayType.Speed)
+                {
+                    Gizmos.color = Color.Lerp(Color.red, Color.green, Vector3.Distance(positionHistory[i].Item1, positionHistory[i + 1].Item1) / deltaTime / movement.topSpeed);
+                }
+                else if (dotDisplayType == DotDisplayType.Acceleration)
+                {
+                    float speed = Vector3.Distance(positionHistory[i].Item1, positionHistory[i + 1].Item1) / deltaTime;
+                    Gizmos.color = Color.Lerp(Color.red, Color.green, 0.5f + (speed - lastSpeed) / accelerationTolerance * 0.5f);
+                    lastSpeed = speed;
+                }
+                Gizmos.DrawLine(positionHistory[i].Item1, positionHistory[i + 1].Item1);
+                Gizmos.DrawSphere(positionHistory[i].Item1, 0.25f);
             }
-            else if (dotDisplayType == DotDisplayType.Acceleration)
-            {
-                float speed = Vector3.Distance(positionHistory[i].Item1, positionHistory[i + 1].Item1) / deltaTime;
-                Gizmos.color = Color.Lerp(Color.red, Color.green, 0.5f + (speed - lastSpeed) / accelerationTolerance * 0.5f);
-                lastSpeed = speed;
-            }
-            Gizmos.DrawLine(positionHistory[i].Item1, positionHistory[i + 1].Item1);
-            Gizmos.DrawSphere(positionHistory[i].Item1, 0.25f);
         }
 
         Gizmos.color = Color.blue;

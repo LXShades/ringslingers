@@ -13,10 +13,12 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
 
     public float targetPathLength = 5;
     public bool drawRingPath = true;
+    public bool drawRingProfile = false;
+    public bool drawRingLinks = false;
 
     public void InitTests(TestBotExecutor exec)
     {
-        BotRingProfiler.ForceInit();
+        BotRingProfiler.EnsureInit();
         pathFollower.InitTests(exec);
     }
 
@@ -26,7 +28,13 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
 
         foreach (PathFilter pathFilter in pathFilters)
         {
-
+            pathFilter.Init();
+            pathFilter.Apply(ringPath);
+            if (pathFilter.hasError)
+            {
+                // Find the ring where the error happened
+                // regenerate the path excluding that ring
+            }
         }
 
         pathFollower.SetupPath(ringPath, taskParams.movement.velocity, 0.25f);
@@ -47,6 +55,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
         float verticalThreshold = 0.75f;
         HashSet<int> visitedRingLines = new HashSet<int>();
         int nextRingLine;
+        int lastRingLine = -1;
 
         Vector3 currentExitPosition = startingPosition;
         Vector3 centrePosition = Vector3.zero;
@@ -69,33 +78,59 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
             float closestDist = float.MaxValue;
             float closestAng = 0f;
             Vector3 entryPosition = default, exitPosition = default;
-            for (int i = 0; i < ringLines.Count; i++)
+
+            if (lastRingLine == -1)
             {
-                if (visitedRingLines.Contains(i))
-                    continue;
-                if (Mathf.Abs(ringLines[i].start.y - startingPosition.y) > verticalThreshold || Mathf.Abs(ringLines[i].end.y - startingPosition.y) > verticalThreshold)
-                    continue;
-                if (Application.isPlaying)
+                for (int i = 0; i < ringLines.Count; i++)
                 {
-                    int numLivingRings = 0;
-                    foreach (var ring in ringLines[i].rings)
-                        numLivingRings += ring.isSpawned ? 1 : 0;
-                    if (numLivingRings == 0)
+                    if (visitedRingLines.Contains(i))
                         continue;
+                    if (Mathf.Abs(ringLines[i].start.y - startingPosition.y) > verticalThreshold || Mathf.Abs(ringLines[i].end.y - startingPosition.y) > verticalThreshold)
+                        continue;
+
+                    // skip if none of the rings are actually spawned
+                    if (Application.isPlaying)
+                    {
+                        int numLivingRings = 0;
+                        foreach (var ring in ringLines[i].rings)
+                            numLivingRings += ring.isSpawned ? 1 : 0;
+                        if (numLivingRings == 0)
+                            continue;
+                    }
+
+                    float startDist = VectorExtensions.HorizontalDistance(ringLines[i].start, currentExitPosition);
+                    float endDist = VectorExtensions.HorizontalDistance(ringLines[i].end, currentExitPosition);
+                    float ang = Mathf.Atan2(ringLines[i].start.z - centrePosition.z, ringLines[i].start.x - centrePosition.x);
+                    float deltaAng = Mathf.DeltaAngle(lastAng * Mathf.Rad2Deg, ang * Mathf.Rad2Deg);
+
+                    if (Mathf.Min(startDist, endDist) < closestDist && deltaAng > 0f)
+                    {
+                        nextRingLine = i;
+                        closestDist = startDist < endDist ? startDist : endDist;
+                        closestAng = ang;
+                        entryPosition = startDist < endDist ? ringLines[i].start : ringLines[i].end;
+                        exitPosition = startDist < endDist ? ringLines[i].end : ringLines[i].start;
+                    }
                 }
-
-                float startDist = VectorExtensions.HorizontalDistance(ringLines[i].start, currentExitPosition);
-                float endDist = VectorExtensions.HorizontalDistance(ringLines[i].end, currentExitPosition);
-                float ang = Mathf.Atan2(ringLines[i].start.z - centrePosition.z, ringLines[i].start.x - centrePosition.x);
-                float deltaAng = Mathf.DeltaAngle(lastAng * Mathf.Rad2Deg, ang * Mathf.Rad2Deg);
-
-                if (Mathf.Min(startDist, endDist) < closestDist && deltaAng > 0f)
+            }
+            else
+            {
+                for (int link = 0; link < ringLines[lastRingLine].links.Length; link++)
                 {
-                    nextRingLine = i;
-                    closestDist = startDist < endDist ? startDist : endDist;
-                    closestAng = ang;
-                    entryPosition = startDist < endDist ? ringLines[i].start : ringLines[i].end;
-                    exitPosition = startDist < endDist ? ringLines[i].end : ringLines[i].start;
+                    int linkTarget = ringLines[lastRingLine].links[link].target;
+                    float startDist = VectorExtensions.HorizontalDistance(ringLines[linkTarget].start, currentExitPosition);
+                    float endDist = VectorExtensions.HorizontalDistance(ringLines[linkTarget].end, currentExitPosition);
+                    float ang = Mathf.Atan2(ringLines[linkTarget].start.z - centrePosition.z, ringLines[linkTarget].start.x - centrePosition.x);
+                    float deltaAng = Mathf.DeltaAngle(lastAng * Mathf.Rad2Deg, ang * Mathf.Rad2Deg);
+
+                    if (Mathf.Min(startDist, endDist) < closestDist && deltaAng > 0f)
+                    {
+                        nextRingLine = linkTarget;
+                        closestDist = startDist < endDist ? startDist : endDist;
+                        closestAng = ang;
+                        entryPosition = startDist < endDist ? ringLines[linkTarget].start : ringLines[linkTarget].end;
+                        exitPosition = startDist < endDist ? ringLines[linkTarget].end : ringLines[linkTarget].start;
+                    }
                 }
             }
 
@@ -108,7 +143,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
 
                 currentExitPosition = exitPosition;
                 lastAng = closestAng;
-
+                lastRingLine = nextRingLine;
             }
         } while (nextRingLine != -1 && pathLength <= targetPathLength);
     }
@@ -122,11 +157,21 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
             DebugDraw.Style style = Color.yellow;
             for (int i = 0; i < ringPath.Count - 1; i++)
                 DebugDraw.DrawLine(ringPath[i] + new Vector3(0f, 0.05f, 0f), ringPath[i + 1] + new Vector3(0f, 0.05f, 0f), style);
+        }
 
-            if (BotRingProfiler.singleton)
+        if (BotRingProfiler.singleton)
+        {
+            DebugDraw.Style style = Color.yellow;
+            foreach (var ringLine in BotRingProfiler.singleton.ringLines)
             {
-                foreach (var ringLine in BotRingProfiler.singleton.ringLines)
+                if (drawRingProfile)
                     DebugDraw.DrawLine(ringLine.start + new Vector3(0f, 0.05f, 0f), ringLine.end + new Vector3(0f, 0.05f, 0f), style);
+
+                if (drawRingLinks)
+                {
+                    foreach (var link in ringLine.links)
+                        DebugDraw.DrawLine(ringLine.end + new Vector3(0f, 0.05f, 0f), BotRingProfiler.singleton.ringLines[link.target].start, Color.cyan);
+                }
             }
         }
     }

@@ -314,6 +314,7 @@ public class PlayerCharacterMovement : CharacterMovement
         return accelCurve.Evaluate(inverseAccelCurve.Evaluate(speed) + deltaTime) - speed;
     }
 
+    // Calculates the raw acceleration magnitude if we were to accelerate now. Factors in deltaTime and returns a result where it can be applied with velocity + result (do not need to multiply by deltaTime)
     public float CalculateAccelerationMagnitude(Vector3 currentGroundVelocity, float deltaTime)
     {
         float speed = currentGroundVelocity.magnitude;

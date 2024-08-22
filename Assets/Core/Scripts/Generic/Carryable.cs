@@ -52,7 +52,7 @@ public class Carryable : NetworkBehaviour, IMovementCollisionCallbacks
     private int _currentCarrier = -1;
 
     public int currentCarrier { get => _currentCarrier; set => _currentCarrier = value; }
-    public Character currentCarrierCharacter => _currentCarrier != -1 && currentCarrier < Netplay.singleton.players.Count ? Netplay.singleton.players[currentCarrier] : null;
+    public Character currentCarrierCharacter => _currentCarrier != -1 && currentCarrier < Netplay.singleton.characters.Count ? Netplay.singleton.characters[currentCarrier] : null;
 
     public bool isHiddenDueToFirstPersonCarrying { get; private set; }
 

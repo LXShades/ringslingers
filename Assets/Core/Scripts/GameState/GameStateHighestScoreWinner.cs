@@ -7,7 +7,7 @@ public class GameStateHighestScoreWinner : GameStateComponent
     {
         Character winningPlayer = null;
 
-        foreach (Character candidate in Netplay.singleton.players)
+        foreach (Character candidate in Netplay.singleton.characters)
         {
             if (candidate != null)
             {

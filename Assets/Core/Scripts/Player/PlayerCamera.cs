@@ -167,7 +167,7 @@ public class PlayerCamera : MonoBehaviour
         if (currentPlayer == null)
         {
             if (Netplay.singleton.localPlayerId >= 0)
-                currentPlayer = Netplay.singleton.players[Netplay.singleton.localPlayerId]; // follow the player in this world
+                currentPlayer = Netplay.singleton.characters[Netplay.singleton.localPlayerId]; // follow the player in this world
         }
 
         if (currentPlayer)

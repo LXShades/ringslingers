@@ -64,12 +64,12 @@ public class Netplay : MonoBehaviour
 
     public Player localClient => NetworkClient.connection?.identity != null ? NetworkClient.connection.identity.GetComponent<Player>() : null;
 
-    public Character localPlayer => localPlayerId != -1 && localPlayerId < players.Count ? players[localPlayerId] : null;
+    public Character localPlayer => localPlayerId != -1 && localPlayerId < characters.Count ? characters[localPlayerId] : null;
 
     /// <summary>
     /// Player objects by ID. May contain null gaps
     /// </summary>
-    public readonly List<Character> players = new List<Character>();
+    public readonly List<Character> characters = new List<Character>();
 
     /// <summary>
     /// Whether this is the server player
@@ -160,15 +160,15 @@ public class Netplay : MonoBehaviour
     {
         // Update player crowns, because scores etc
         int bestPlayerScore = -1;
-        for (int i = 0; i < players.Count; i++)
+        for (int i = 0; i < characters.Count; i++)
         {
-            if (players[i] && players[i].score > bestPlayerScore)
-                bestPlayerScore = players[i].score;
+            if (characters[i] && characters[i].score > bestPlayerScore)
+                bestPlayerScore = characters[i].score;
         }
-        for (int i = 0; i < players.Count; i++)
+        for (int i = 0; i < characters.Count; i++)
         {
-            if (players[i])
-                players[i].isFirstPlace = (players[i].score == bestPlayerScore);
+            if (characters[i])
+                characters[i].isFirstPlace = (characters[i].score == bestPlayerScore);
         }
     }
 
@@ -281,7 +281,7 @@ public class Netplay : MonoBehaviour
         return -1;
     }
 
-    private GameObject AddBot()
+    public GameObject AddBot()
     {
         GameObject bot = Spawner.Spawn(botPrefab.gameObject);
         bot.GetComponent<Player>().OnStartBot();
@@ -307,8 +307,8 @@ public class Netplay : MonoBehaviour
         {
             if (bot.TryGetComponent(out Player player))
             {
-                if (players.Count > player.playerId && players[player.playerId] != null)
-                    NetworkServer.Destroy(players[player.playerId].gameObject);
+                if (characters.Count > player.playerId && characters[player.playerId] != null)
+                    NetworkServer.Destroy(characters[player.playerId].gameObject);
             }
             NetworkServer.Destroy(bot.gameObject);
         }
@@ -502,14 +502,14 @@ public class Netplay : MonoBehaviour
             return null;
         }
 
-        Debug.Assert(playerId >= 0 && playerId < players.Count);
+        Debug.Assert(playerId >= 0 && playerId < characters.Count);
 
         string playerName = $"Player {playerId}";
-        if (players[playerId] != null)
+        if (characters[playerId] != null)
         {
-            playerName = players[playerId].playerName;
-            Spawner.Despawn(players[playerId].gameObject);
-            players[playerId] = null;
+            playerName = characters[playerId].playerName;
+            Spawner.Despawn(characters[playerId].gameObject);
+            characters[playerId] = null;
         }
 
         Character character = Spawner.Spawn(RingslingersContent.loaded.characters[characterIndex].prefab).GetComponent<Character>();
@@ -523,10 +523,10 @@ public class Netplay : MonoBehaviour
 
     public void RemovePlayer(int id)
     {
-        if (players[id] != null)
+        if (characters[id] != null)
         {
-            Destroy(players[id].gameObject);
-            players[id] = null;
+            Destroy(characters[id].gameObject);
+            characters[id] = null;
         }
     }
 
@@ -537,34 +537,34 @@ public class Netplay : MonoBehaviour
     {
         if (id == -1)
         {
-            for (int i = 0; i < players.Count; i++)
+            for (int i = 0; i < characters.Count; i++)
             {
-                if (players[i] == null || players[i] == player)
+                if (characters[i] == null || characters[i] == player)
                 {
-                    players[i] = player;
+                    characters[i] = player;
                     player.playerId = i;
                     return;
                 }
             }
 
             // no space found
-            players.Add(player);
-            player.playerId = players.Count - 1;
+            characters.Add(player);
+            player.playerId = characters.Count - 1;
         }
         else
         {
             // we might be a client registering awareness of this player
-            while (players.Count <= id)
-                players.Add(null);
+            while (characters.Count <= id)
+                characters.Add(null);
             
-            players[id] = player;
+            characters[id] = player;
             player.playerId = id;
         }
     }
 
     public Character FindPlayer(string name)
     {
-        foreach (Character player in players)
+        foreach (Character player in characters)
         {
             if (player.name == name)
                 return player;

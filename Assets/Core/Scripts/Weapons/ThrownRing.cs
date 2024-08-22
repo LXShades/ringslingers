@@ -139,7 +139,7 @@ public class ThrownRing : NetworkBehaviour
         if (effectiveSettings.proximityDespawnTriggerRange > 0f && velocity.sqrMagnitude <= 1f) // kinda hack, grenades
         {
             Vector3 myPosition = transform.position;
-            foreach (Character character in Netplay.singleton.players)
+            foreach (Character character in Netplay.singleton.characters)
             {
                 if (character && character.gameObject != owner && Vector3.Distance(character.transform.position, myPosition) < effectiveSettings.proximityDespawnTriggerRange)
                 {
@@ -185,10 +185,10 @@ public class ThrownRing : NetworkBehaviour
 
             // Rewind nearby players and play them through each simulation. Ideally don't do every single player if we can avoid it
             nearbyCharacters.Clear();
-            for (int i = 0; i < Netplay.singleton.players.Count; i++)
+            for (int i = 0; i < Netplay.singleton.characters.Count; i++)
             {
-                if (Netplay.singleton.players[i] && Netplay.singleton.players[i] != owner && Vector3.Distance(Netplay.singleton.players[i].transform.position, spawnPosition) < testPlayerRadius)
-                    nearbyCharacters.Add(new PastCharacter() { character = Netplay.singleton.players[i], originalState = Netplay.singleton.players[i].MakeState() });
+                if (Netplay.singleton.characters[i] && Netplay.singleton.characters[i] != owner && Vector3.Distance(Netplay.singleton.characters[i].transform.position, spawnPosition) < testPlayerRadius)
+                    nearbyCharacters.Add(new PastCharacter() { character = Netplay.singleton.characters[i], originalState = Netplay.singleton.characters[i].MakeState() });
 
             }
 

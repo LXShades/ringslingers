@@ -177,7 +177,7 @@ public class GameTicker : NetworkBehaviour
 
             if (isServer)
             {
-                foreach (Character character in Netplay.singleton.players)
+                foreach (Character character in Netplay.singleton.characters)
                 {
                     if (character && character.serverOwningPlayer.TryGetComponent(out BotController bot))
                         bot.OnInputTick();
@@ -274,7 +274,7 @@ public class GameTicker : NetworkBehaviour
         // Client receive server ticks if available
         if (hasIncomingServerTick)
         {
-            foreach (Character character in Netplay.singleton.players)
+            foreach (Character character in Netplay.singleton.characters)
             {
                 if (character && character.TryGetComponent(out TimelineEntityInterpolator interpolator))
                     interpolator.OnAboutToRecalculateLatestState();
@@ -302,7 +302,7 @@ public class GameTicker : NetworkBehaviour
         // They also may have a time offset if we're using the fancy experimental Rewind stuff
         if (!NetworkServer.active)
         {
-            foreach (Character player in Netplay.singleton.players)
+            foreach (Character player in Netplay.singleton.characters)
             {
                 if (player)
                 {
@@ -336,7 +336,7 @@ public class GameTicker : NetworkBehaviour
                 // we need to send it to each of them individually due to differing client times
                 for (int i = 0; i < tick.playerStates.Count; i++)
                 {
-                    Character character = Netplay.singleton.players[tick.playerStates.Array[tick.playerStates.Offset + i].id];
+                    Character character = Netplay.singleton.characters[tick.playerStates.Array[tick.playerStates.Offset + i].id];
 
                     if (character.netIdentity.connectionToClient != null && character.netIdentity.connectionToClient.identity != null) // bots don't have a connection
                     {
@@ -364,9 +364,9 @@ public class GameTicker : NetworkBehaviour
     {
         ticksOut.Clear();
 
-        for (int i = 0; i < Netplay.singleton.players.Count; i++)
+        for (int i = 0; i < Netplay.singleton.characters.Count; i++)
         {
-            Character character = Netplay.singleton.players[i];
+            Character character = Netplay.singleton.characters[i];
 
             if (character)
             {
@@ -403,7 +403,7 @@ public class GameTicker : NetworkBehaviour
 
         foreach (ServerPlayerState playerState in tickMessage.playerStates)
         {
-            Character character = Netplay.singleton.players[playerState.id];
+            Character character = Netplay.singleton.characters[playerState.id];
 
             if (character)
             {
@@ -441,14 +441,14 @@ public class GameTicker : NetworkBehaviour
     {
         if (source.identity && source.identity.TryGetComponent(out Player client))
         {
-            if (Netplay.singleton.players[client.playerId])
+            if (Netplay.singleton.characters[client.playerId])
             {
-                Netplay.singleton.players[client.playerId].entity.InsertInputPack(inputMessage.inputPack);
+                Netplay.singleton.characters[client.playerId].entity.InsertInputPack(inputMessage.inputPack);
 
                 // Trim the history regularly
                 // If we receive an old input from the future (i.e. a message sent on the previous level, or before the timer was reset)
                 // then this will screw up the aheadness history, and the input history in general. Keep it trimmed
-                Netplay.singleton.players[client.playerId].entity.inputTrack.Trim(predictedServerTime - 2f, predictedServerTime + 2f);
+                Netplay.singleton.characters[client.playerId].entity.inputTrack.Trim(predictedServerTime - 2f, predictedServerTime + 2f);
 
                 if (inputMessage.inputPack.times.Length > 0)
                    client.serverTimeOfLastReceivedInput = inputMessage.inputPack.times[0];
@@ -462,8 +462,8 @@ public class GameTicker : NetworkBehaviour
 
     public void OnRecvBotInput(int playerId, CharacterInput input)
     {
-        if (Netplay.singleton.players[playerId])
-            Netplay.singleton.players[playerId].entity.InsertInput(input, predictedServerTime);
+        if (Netplay.singleton.characters[playerId])
+            Netplay.singleton.characters[playerId].entity.InsertInput(input, predictedServerTime);
     }
 
     private void OnPreferencesChanged()

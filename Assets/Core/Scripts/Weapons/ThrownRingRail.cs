@@ -65,7 +65,7 @@ public class ThrownRingRail : ThrownRing
             direction.Normalize(); // so that the dot is accurate
 
             // candidate characters are rewound to the earlier state
-            foreach (Character character in Netplay.singleton.players)
+            foreach (Character character in Netplay.singleton.characters)
             {
                 if (character && character != owner)
                 {

@@ -82,11 +82,11 @@ public class BT_CollectAndShoot : IBotTask
         {
             controller.DeactivateState<BT_FollowPlayer>();
 
-            BT_GetRings getRings = controller.GetOrActivateTask<BT_GetRings>();
-            if (getRings.pathFollower.hasReachedEnd)
+            BT_GetRings getRings = controller.GetTask<BT_GetRings>();
+            if (getRings == null || getRings.pathFollower.hasReachedEnd)
             {
                 controller.DeactivateState<BT_GetRings>();
-                controller.ActivateTask(new BT_GetRings() { targetPathLength = 30f });
+                controller.ActivateTask(new BT_GetRings() { targetPathLength = 30f, pathFilters = new List<PathFilter>() { new PathFilter_NavMesh() } });
             }
 
             //if (character.numRings >= numRingsToStartShooting)
@@ -101,7 +101,7 @@ public class BT_CollectAndShoot : IBotTask
         float closestCharDistance = float.MaxValue;
         Character closestChar = null;
 
-        foreach (Character character in Netplay.singleton.players)
+        foreach (Character character in Netplay.singleton.characters)
         {
             if (character && character != myCharacter && character.damageable.CanBeDamagedBy(myCharacter.damageable.damageTeam))
             {
@@ -409,8 +409,8 @@ public class BT_FollowPlayer : IBotTask
     public void Init(in BotTaskParams taskParams) { }
     public void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
-        if (Netplay.singleton.players.Count > followPlayerId && Netplay.singleton.players[followPlayerId])
-            taskParams.controller.GetOrActivateTask<BT_MoveTowards>().SetTargetPosition(Netplay.singleton.players[followPlayerId].transform.position);
+        if (Netplay.singleton.characters.Count > followPlayerId && Netplay.singleton.characters[followPlayerId])
+            taskParams.controller.GetOrActivateTask<BT_MoveTowards>().SetTargetPosition(Netplay.singleton.characters[followPlayerId].transform.position);
         else
             taskParams.controller.DeactivateState<BT_MoveTowards>();
     }
@@ -494,11 +494,11 @@ public class BT_CopyPlayer : IBotTask
     public void Init(in BotTaskParams taskParams) { }
     public void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
-        if (Netplay.singleton.players[playerIndex])
+        if (Netplay.singleton.characters[playerIndex])
         {
             BT_MoveTowards moveState = taskParams.controller.GetOrActivateTask<BT_MoveTowards>();
-            Vector3 targetPosition = Netplay.singleton.players[playerIndex].transform.position;
-            CharacterInput playerInput = Netplay.singleton.players[playerIndex].liveInput;
+            Vector3 targetPosition = Netplay.singleton.characters[playerIndex].transform.position;
+            CharacterInput playerInput = Netplay.singleton.characters[playerIndex].liveInput;
 
             targetInputs.Insert(Time.timeAsDouble, playerInput);
             targetInputs.TrimBefore(Time.timeAsDouble - 1f);

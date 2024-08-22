@@ -293,9 +293,9 @@ public class GameHUD : MonoBehaviour
 
             // On-screen crown based on your score
             int positionInScoreboard = 1, myScore = player.score;
-            for (int i = 0; i < Netplay.singleton.players.Count; i++)
+            for (int i = 0; i < Netplay.singleton.characters.Count; i++)
             {
-                if (Netplay.singleton.players[i] && Netplay.singleton.players[i].score > myScore)
+                if (Netplay.singleton.characters[i] && Netplay.singleton.characters[i].score > myScore)
                     positionInScoreboard++;
             }
 
@@ -324,7 +324,7 @@ public class GameHUD : MonoBehaviour
         if (scoreboard.activeSelf)
         {
             // Refresh scoreboard info
-            Character[] orderedPlayers = Netplay.singleton.players.ToArray();
+            Character[] orderedPlayers = Netplay.singleton.characters.ToArray();
             StringBuilder scoreboardNameBuilder = new StringBuilder(512);
             StringBuilder scoreboardScoreBuilder = new StringBuilder(512);
             bool useTeamColours = matchTeams != null;

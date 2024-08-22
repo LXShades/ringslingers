@@ -5,7 +5,8 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
 {
     private TestBotExecutor exec;
 
-    public float interval = 0.2f;
+    public float interval = 0.04f;
+    public float cornerBlendRange = 2f;
 
     private float time;
 
@@ -30,9 +31,19 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
 
         time += taskParams.deltaTime;
 
+        // even if heading towards our last position, we might nudge it a bit in case our prediction goes _past_ it, which is okay, that will happen as we get close
+
         Vector3 naturalPositionAfterInterval = taskParams.position + taskParams.movement.velocity * interval;
-        Vector3 desiredPosition = taskParams.position + (targets[currentTargetIndex] - taskParams.position).normalized * (Mathf.Max(taskParams.movement.velocity.magnitude, 1f) * interval);
-        Vector3 accelerationPossibility = VectorExtensions.HorizontalNormalized(desiredPosition - naturalPositionAfterInterval) * (taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity.Horizontal(), interval) * interval);
+
+        // Adjust the target position to chase if we're passing through a point, otherwise we'll try to slow ourselves down as we reach it, which is not desirable
+        bool willHitTarget = HasHitTarget(taskParams.position, naturalPositionAfterInterval, targets[currentTargetIndex]);
+        Vector3 targetPositionToUse = currentTargetIndex < targets.Count - 1 ?
+            (willHitTarget ? targets[currentTargetIndex + 1] : targets[currentTargetIndex])
+            : (willHitTarget ? targetPositionToUse = taskParams.position + taskParams.movement.velocity : targets[currentTargetIndex]);
+        // old - this worked, annoyingly, and I don't know why
+        //Vector3 accelerationPossibility = VectorExtensions.HorizontalNormalized(desiredPosition - naturalPositionAfterInterval) * (taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity.Horizontal(), interval) * interval);
+        float accelMagnitude = taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity.Horizontal(), interval);
+        Vector3 desiredVelocity = VectorExtensions.HorizontalNormalized(targetPositionToUse - naturalPositionAfterInterval) * Mathf.Min(taskParams.movement.topSpeed, taskParams.movement.velocity.magnitude + accelMagnitude);
 
         if (exec)
         {
@@ -40,11 +51,17 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
             {
                 // draw the things
                 DebugDraw.DrawLine(taskParams.position, naturalPositionAfterInterval, DebugDraw.Style.Thick.Color(Color.blue));
-                DebugDraw.DrawLine(taskParams.position, desiredPosition, DebugDraw.Style.Thick.Color(Color.green));
-                DebugDraw.DrawLine(naturalPositionAfterInterval, naturalPositionAfterInterval + accelerationPossibility, DebugDraw.Style.Thick.Color(Color.yellow));
+                DebugDraw.DrawLine(taskParams.position, taskParams.position + (desiredVelocity - taskParams.movement.velocity).normalized, DebugDraw.Style.Thick.Color(Color.yellow));
             }
         }
 
-        input.worldMovementDirection = Vector3.ClampMagnitude((desiredPosition - taskParams.position).normalized + accelerationPossibility.normalized * Mathf.Min(Vector3.Distance(naturalPositionAfterInterval, desiredPosition) / accelerationPossibility.magnitude, 1f), 1f);
+        // i swear teach I got dis
+        // velocity + ? * accelMagnitude = desiredVelocity
+        // ? * accelMagnitude + velocity = desiredVelocity
+        // ? * accelMagnitude = desiredVelocity - velocity
+        // ? = (desiredVelocity - velocity) / (accelMagnitude)
+
+        //input.worldMovementDirection = Vector3.ClampMagnitude((desiredPosition - taskParams.position).normalized + accelerationPossibility.normalized * Mathf.Min(Vector3.Distance(naturalPositionAfterInterval, desiredPosition) / accelerationPossibility.magnitude, 1f), 1f);
+        input.worldMovementDirection = Vector3.ClampMagnitude((desiredVelocity - taskParams.movement.velocity) / accelMagnitude, 1f);
     }
 }

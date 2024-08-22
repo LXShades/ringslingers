@@ -120,6 +120,9 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
     [Header("Misc")]
     public float killY = -50f;
 
+    // Delegates
+    public System.Action onStartServer;
+
     // Components
     [HideInInspector] public PlayerCharacterMovement movement;
     [HideInInspector] public Damageable damageable;
@@ -202,6 +205,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
             ChangeTeam(matchTeams.FindBestTeamToJoin());
 
         Respawn();
+        onStartServer?.Invoke();
     }
 
     public override void OnStartClient()
@@ -450,7 +454,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         if (string.IsNullOrWhiteSpace(newName))
             newName = updatedName = "Anonymous";
 
-        while (Netplay.singleton.players.Exists(a => a != null && a != this && a.playerName == updatedName))
+        while (Netplay.singleton.characters.Exists(a => a != null && a != this && a.playerName == updatedName))
         {
             if (currentSuffix < nameSuffices.Length)
                 updatedName = newName + nameSuffices[currentSuffix++];
@@ -517,7 +521,7 @@ public class Character : NetworkBehaviour, ITickable<CharacterState, CharacterIn
         {
             if (this == Netplay.singleton.localPlayer) // we've changed team, now we need to update everyone else's outline
             {
-                foreach (Character character in Netplay.singleton.players)
+                foreach (Character character in Netplay.singleton.characters)
                 {
                     if (character)
                         character.UpdateOutlineColour();

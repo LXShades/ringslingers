@@ -25,7 +25,18 @@ public class BotNavMeshBuilder : MonoBehaviour
     private List<NavLink> navLinks = new List<NavLink>();
     private List<NavMeshLinkInstance> navLinkInstances = new List<NavMeshLinkInstance>();
 
+    private bool hasGenerated = false;
+
     private NavMeshSurface navMeshSurface;
+
+    public static void EnsureInit()
+    {
+        foreach (BotNavMeshBuilder botNavMeshBuilder in FindObjectsByType<BotNavMeshBuilder>(FindObjectsSortMode.None))
+        {
+            if (!botNavMeshBuilder.hasGenerated)
+                botNavMeshBuilder.Regenerate();
+        }
+    }
 
     private void OnValidate()
     {
@@ -132,6 +143,7 @@ public class BotNavMeshBuilder : MonoBehaviour
         }
 
         navMeshSurface.UpdateNavMesh(navMeshSurface.navMeshData);
+        hasGenerated = true;
     }
 
     private void ClearGeneratedNavLinks()

@@ -71,7 +71,7 @@ public class MessageFeed : NetworkBehaviour
         if (GameState.Get(out GameStateTeamFlags netGameStateCTF))
         {
             // player name is based on team color
-            foreach (var player in Netplay.singleton.players)
+            foreach (var player in Netplay.singleton.characters)
             {
                 if (player != null && message.Contains(player.playerName))
                 {

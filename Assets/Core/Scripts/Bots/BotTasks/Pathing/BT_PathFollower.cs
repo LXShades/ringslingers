@@ -3,12 +3,18 @@ using UnityEngine;
 
 public struct PathPoint
 {
-    public PathPoint(Vector3 position) => this.position = position;
+    public PathPoint(Vector3 position)
+    {
+        this.position = position;
+        this.debugColor = Color.white;
+    }
 
     public Vector3 position;
     public float x { get => position.x; set => position.x = value; }
     public float y { get => position.y; set => position.y = value; }
     public float z { get => position.z; set => position.z = value; }
+
+    public Color debugColor;
 
     public static implicit operator Vector3(PathPoint p) => p.position;
     public static implicit operator PathPoint(Vector3 v) => new PathPoint { position = v };
@@ -58,33 +64,49 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
         previousVelocity = taskParams.movement.velocity;
     }
 
+    public bool HasHitTarget(Vector3 previousPosition, Vector3 nextPosition, Vector3 targetPosition)
+    {
+        Vector3 positionClosestToTarget = nextPosition;
+
+        if (nextPosition != previousPosition)
+        {
+            Vector3 trajectoryNormalized = (nextPosition - previousPosition).normalized;
+            float targetDot = Vector3.Dot(trajectoryNormalized, targetPosition);
+            float lastDot = Vector3.Dot(trajectoryNormalized, previousPosition);
+            float nextDot = Vector3.Dot(trajectoryNormalized, nextPosition);
+
+            if (lastDot < targetDot && nextDot >= targetDot)
+            {
+                // we zoomed past the point, see if we passed closely enough
+                positionClosestToTarget = Vector3.Lerp(previousPosition, nextPosition, (targetDot - lastDot) / (nextDot - lastDot));
+            }
+        }
+
+        float horDist = VectorExtensions.HorizontalDistance(positionClosestToTarget, targets[currentTargetIndex]);
+        float vertDist = Mathf.Abs(positionClosestToTarget.y + characterHalfHeight - targets[currentTargetIndex].y);
+        if (horDist < targetHorizontalRadius && vertDist <= targetVerticalRadius)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     public virtual void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
         if (currentTargetIndex < targets.Count && previousVelocity.sqrMagnitude > 0f)
         {
-            Vector3 positionClosestToTarget = taskParams.position;
-            Vector3 previousVelocityNormalized = previousVelocity.normalized;
-            float targetDot = Vector3.Dot(previousVelocityNormalized, targets[currentTargetIndex]);
-            float lastDot = Vector3.Dot(previousVelocityNormalized, previousPosition);
-            float nextDot = Vector3.Dot(previousVelocityNormalized, taskParams.position);
-
-            if (lastDot < targetDot && nextDot >= 0f)
-            {
-                // we zoomed past the point, see if we passed closely enough
-                positionClosestToTarget = Vector3.Lerp(previousPosition, taskParams.position, (targetDot - lastDot) / (nextDot - lastDot));
-            }
-
-            float horDist = VectorExtensions.HorizontalDistance(positionClosestToTarget, targets[currentTargetIndex]);
-            float vertDist = Mathf.Abs(positionClosestToTarget.y + characterHalfHeight - targets[currentTargetIndex].y);
-            if (horDist < targetHorizontalRadius && vertDist <= targetVerticalRadius)
-            {
+            if (HasHitTarget(previousPosition, taskParams.position, targets[currentTargetIndex]))
                 currentTargetIndex++;
-            }
         }
 
         previousPosition = taskParams.position;
         previousVelocity = taskParams.movement.velocity;
     }
 
-    public virtual void DrawDebugs() { }
+    public virtual void DrawDebugs()
+    {
+        for (int i = 0; i < targets.Count - 1; i++)
+            DebugDraw.DrawCross(targets[i], 1f, DebugDraw.Style.DefaultWhite.Color(targets[i].debugColor));
+    }
 }
