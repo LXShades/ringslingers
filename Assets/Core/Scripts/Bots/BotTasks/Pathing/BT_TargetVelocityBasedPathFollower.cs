@@ -31,6 +31,15 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
 
         time += taskParams.deltaTime;
 
+        // todo: move this into movement function
+        float accelMultiplier = 1f;
+        if (!taskParams.movement.isOnGround)
+            accelMultiplier *= taskParams.movement.airAccelerationMultiplier;
+        if (taskParams.movement.state == CharacterMovementState.Rolling)
+            accelMultiplier *= taskParams.movement.rollingAccelerationMultiplier;
+        if (taskParams.movement.isInWater)
+            accelMultiplier *= taskParams.movement.waterSpeedMultiplier;
+
         // even if heading towards our last position, we might nudge it a bit in case our prediction goes _past_ it, which is okay, that will happen as we get close
 
         Vector3 naturalPositionAfterInterval = taskParams.position + taskParams.movement.velocity * interval;
@@ -42,7 +51,7 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
             : (willHitTarget ? targetPositionToUse = taskParams.position + taskParams.movement.velocity : targets[currentTargetIndex]);
         // old - this worked, annoyingly, and I don't know why
         //Vector3 accelerationPossibility = VectorExtensions.HorizontalNormalized(desiredPosition - naturalPositionAfterInterval) * (taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity.Horizontal(), interval) * interval);
-        float accelMagnitude = taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity.Horizontal(), interval);
+        float accelMagnitude = taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity.Horizontal(), interval) * accelMultiplier;
         Vector3 desiredVelocity = VectorExtensions.HorizontalNormalized(targetPositionToUse - naturalPositionAfterInterval) * Mathf.Min(taskParams.movement.topSpeed, taskParams.movement.velocity.magnitude + accelMagnitude);
 
         if (exec)

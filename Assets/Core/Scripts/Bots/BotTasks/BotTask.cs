@@ -27,6 +27,7 @@ public struct BotTaskParams
     public PlayerCharacterMovement movement;
     public float deltaTime;
     public Vector3 position => characterObject.transform.position;
+    public bool isWatchTime;
 }
 
 public class BT_CollectAndShoot : IBotTask
@@ -86,7 +87,7 @@ public class BT_CollectAndShoot : IBotTask
             if (getRings == null || getRings.pathFollower.hasReachedEnd)
             {
                 controller.DeactivateState<BT_GetRings>();
-                controller.ActivateTask(new BT_GetRings() { targetPathLength = 30f, pathFilters = new List<PathFilter>() { new PathFilter_NavMesh(), new PathFilter_Thoks() } });
+                controller.ActivateTask(new BT_GetRings() { targetPathLength = 30f, pathFollower = new BT_TargetVelocityBasedPathFollower() { pathFilters = new List<PathFilter>() { new PathFilter_NavMesh(), new PathFilter_Thoks() } } });
             }
 
             //if (character.numRings >= numRingsToStartShooting)

@@ -68,8 +68,9 @@ public class TestBotExecutor : MonoBehaviour
 
     [Header("Display")]
     public DotDisplayType dotDisplayType = DotDisplayType.FadePerSecond;
+    public float dotDisplaySize = 0.25f;
     public StateSnapshot watchState;
-    [Range(0f, 5f)]
+    [Range(0f, 15f)]
     public float watchTime;
     public bool autoplay;
 
@@ -82,6 +83,7 @@ public class TestBotExecutor : MonoBehaviour
     public PlayerCharacterMovement movement;
     private CharacterInput input = default;
     private CharacterInput lastInput = default;
+    private bool isWatchTime;
 
     private List<Tuple<Vector3, Quaternion>> positionHistory = new List<Tuple<Vector3, Quaternion>>();
 
@@ -168,7 +170,13 @@ public class TestBotExecutor : MonoBehaviour
                         accelerationMagnitude = movement.velocity.magnitude - lastVelocity.magnitude,
                         inputDirection = input.aimDirection * input.moveVerticalAxis + Vector3.Cross(Vector3.up, input.aimDirection).normalized * input.moveHorizontalAxis
                     };
+                    isWatchTime = true;
                 }
+                else
+                {
+                    isWatchTime = false;
+                }
+
                 lastVelocity = movement.velocity;
 
                 Simulate();
@@ -193,7 +201,7 @@ public class TestBotExecutor : MonoBehaviour
     {
         input = default;
         if (actionToPerform is IBotTask botTask)
-            botTask.Update(new BotTaskParams() { character = null, characterObject = gameObject, controller = null, deltaTime = deltaTime, movement = movement }, ref input);
+            botTask.Update(new BotTaskParams() { character = null, characterObject = gameObject, controller = null, deltaTime = deltaTime, movement = movement, isWatchTime = isWatchTime }, ref input);
         input = input.WithDeltas(lastInput);
         lastInput = input;
 
@@ -245,7 +253,7 @@ public class TestBotExecutor : MonoBehaviour
                     lastSpeed = speed;
                 }
                 Gizmos.DrawLine(positionHistory[i].Item1, positionHistory[i + 1].Item1);
-                Gizmos.DrawSphere(positionHistory[i].Item1, 0.25f);
+                Gizmos.DrawSphere(positionHistory[i].Item1, dotDisplaySize);
             }
         }
 

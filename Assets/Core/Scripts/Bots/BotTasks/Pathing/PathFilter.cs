@@ -11,13 +11,14 @@ public struct PathFilterError
 [System.Serializable]
 public class PathFilter
 {
-    public bool enabled;
+    public bool enabled = true;
 
     public bool hasError => error.hasError;
     public PathFilterError error { get; private set; }
 
     public void Init() { error = default; }
     public virtual void Apply(List<PathPoint> points) { }
+    public virtual void Update(in PathPointTaskParams taskParams, ref CharacterInput input) { }
 
     protected void OnError(int problemPoint, string reason)
     {

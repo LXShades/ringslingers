@@ -5,8 +5,6 @@ using UnityEngine;
 public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
 {
     [SerializeReference, PolymorphicTypeSelector]
-    public List<PathFilter> pathFilters = new List<PathFilter>();
-    [SerializeReference, PolymorphicTypeSelector]
     public BT_PathFollower pathFollower = new BT_TargetVelocityBasedPathFollower();
 
     private List<PathPoint> ringPath = new List<PathPoint>();
@@ -25,17 +23,6 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
     public void Init(in BotTaskParams taskParams)
     {
         GeneratePathBetweenRings(taskParams.characterObject.transform.position, BotRingProfiler.singleton.ringLines, ringPath, targetPathLength);
-
-        foreach (PathFilter pathFilter in pathFilters)
-        {
-            pathFilter.Init();
-            pathFilter.Apply(ringPath);
-            if (pathFilter.hasError)
-            {
-                // Find the ring where the error happened
-                // regenerate the path excluding that ring
-            }
-        }
 
         pathFollower.SetupPath(ringPath, taskParams.movement.velocity, 0.25f);
         pathFollower.Init(taskParams);
@@ -154,7 +141,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
 
         if (drawRingPath)
         {
-            DebugDraw.Style style = Color.yellow;
+            DebugDraw.Style style = DebugDraw.Style.DefaultWhite.Color(Color.yellow).Thickness(1f);
             for (int i = 0; i < ringPath.Count - 1; i++)
                 DebugDraw.DrawLine(ringPath[i] + new Vector3(0f, 0.05f, 0f), ringPath[i + 1] + new Vector3(0f, 0.05f, 0f), style);
         }
