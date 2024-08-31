@@ -50,17 +50,6 @@ public class BotNavMeshBuilder : MonoBehaviour
     private void Awake()
     {
         Regenerate();
-
-        foreach (NavLink link in navLinks)
-        {
-            navLinkInstances.Add(NavMesh.AddLink(new NavMeshLinkData()
-            {
-                startPosition = link.startPosition,
-                endPosition = link.endPosition,
-                costModifier = link.costModifier,
-                agentTypeID = agentTypeId
-            }));
-        }
     }
 
     private void OnDestroy()
@@ -140,6 +129,17 @@ public class BotNavMeshBuilder : MonoBehaviour
                     }
                 }
             }
+        }
+
+        foreach (NavLink link in navLinks)
+        {
+            navLinkInstances.Add(NavMesh.AddLink(new NavMeshLinkData()
+            {
+                startPosition = link.startPosition,
+                endPosition = link.endPosition,
+                costModifier = link.costModifier,
+                agentTypeID = agentTypeId
+            }));
         }
 
         navMeshSurface.UpdateNavMesh(navMeshSurface.navMeshData);

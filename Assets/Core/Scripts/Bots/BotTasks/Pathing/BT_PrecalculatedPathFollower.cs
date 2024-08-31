@@ -20,12 +20,6 @@ public class BT_PrecalculatedPathFollower : BT_PathFollower
 
     private int playbackInputFrame = 0;
 
-    public override void InitTests(TestBotExecutor exec)
-    {
-        base.InitTests(exec);
-        targetHorizontalRadius = exec.targetRadius;
-    }
-
     public override void Init(in BotTaskParams taskParams)
     {
         base.Init(in taskParams);
@@ -54,7 +48,7 @@ public class BT_PrecalculatedPathFollower : BT_PathFollower
             inputs.Add(input);
             taskParams.movement.RunSimpleCollisionFreeSimulation(ref state, input, taskParams.deltaTime);
 
-            if (VectorExtensions.HorizontalDistance(state.position, targets[currentTarget]) < targetHorizontalRadius)
+            if (IsInAcceptanceRange(state.position, targets[currentTarget]))
                 currentTarget++;
         }
     }

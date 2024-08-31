@@ -24,7 +24,7 @@ public class BT_GetRings : ITestableBotTask, IBotTask, IBotDebugDraws
     {
         GeneratePathBetweenRings(taskParams.characterObject.transform.position, BotRingProfiler.singleton.ringLines, ringPath, targetPathLength);
 
-        pathFollower.SetupPath(ringPath, taskParams.movement.velocity, 0.25f);
+        pathFollower.SetupPath(ringPath, taskParams.movement.velocity);
         pathFollower.Init(taskParams);
     }
 

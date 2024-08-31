@@ -27,7 +27,6 @@ public class TestBT_Pathfinding : IBotTask, ITestableBotTask
         inputFrame = 0;
         inputs.Clear();
         deltaTime = exec.deltaTime;
-        targetRadius = exec.targetRadius;
     }
 
     public void Update(in BotTaskParams taskParams, ref CharacterInput input)

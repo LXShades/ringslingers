@@ -53,9 +53,11 @@ public class TestBotExecutor : MonoBehaviour
     public ITestableBotTask actionToPerform = new BT_BeelinePathFollower();
 
     [Header("Targets")]
-    public float targetRadius = 0.5f;
     public List<Vector3> targetPositions = new List<Vector3>();
 
+    /// <summary>
+    /// DEPRECATED - no longer valid, some code needs updating. Use BT_PathFollower(s) instead
+    /// </summary>
     public int currentTargetIndex { get; set; } = 0;
     private float currentTime;
 
@@ -217,13 +219,13 @@ public class TestBotExecutor : MonoBehaviour
             movement.velocity = state.velocity;
         }
 
-        if (currentTargetIndex < targetPositions.Count && Vector3.Distance(transform.position, targetPositions[currentTargetIndex]) <= targetRadius)
+        /*if (currentTargetIndex < targetPositions.Count && Vector3.Distance(transform.position, targetPositions[currentTargetIndex]) <= targetRadius)
         {
             currentTargetIndex++;
 
             if (currentTargetIndex >= targetPositions.Count)
                 FinishSimulation();
-        }
+        }*/
     }
 
     private void FinishSimulation()

@@ -13,10 +13,11 @@ public class PathFilter_NavMesh : PathFilter
         BotNavMeshBuilder.EnsureInit();
 
         NavMeshPath path = new NavMeshPath();
+        Vector3 verticalPadding = new Vector3(0f, 0.3f, 0f);
         for (int idx = 0; idx < points.Count - 1; idx++)
         {
-            bool hasSourcePosition = NavMesh.SamplePosition(points[idx], out NavMeshHit sourceHit, 20.0f, ~0);
-            bool hasTargetPosition = NavMesh.SamplePosition(points[idx + 1], out NavMeshHit targetHit, 10.0f, ~0);
+            bool hasSourcePosition = NavMesh.SamplePosition(points[idx] + verticalPadding, out NavMeshHit sourceHit, 20.0f, ~0);
+            bool hasTargetPosition = NavMesh.SamplePosition(points[idx + 1] + verticalPadding, out NavMeshHit targetHit, 20.0f, ~0);
 
             if (hasTargetPosition && hasSourcePosition)
             {
@@ -42,6 +43,7 @@ public class PathFilter_NavMesh : PathFilter
                 // do an error somehow
                 // idea: wouldn't it be cool if you could click vectors in logs and see them on screen??
                 OnError(hasSourcePosition ? idx + 1 : idx, $"Navmesh not valid for both points: [{idx}] {points[idx]}={hasSourcePosition} and [{idx+1}] {points[idx + 1]}={hasTargetPosition}");
+                DebugDraw.DrawSphere(points[idx + 1], 5f, Color.red);
             }
         }
     }

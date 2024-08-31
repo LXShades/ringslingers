@@ -15,6 +15,14 @@ public class PathPointTask
     public virtual void Update(in PathPointTaskParams taskParams, ref CharacterInput input) { }
 }
 
+[System.Serializable]
+public struct PathPointAcceptanceRange
+{
+    public float maxYOffset;
+    public float minYOffset;
+    public float horizontalRadius;
+}
+
 public struct PathPoint
 {
     public PathPoint(Vector3 position)
@@ -23,6 +31,7 @@ public struct PathPoint
         this.debugColor = Color.white;
         this.task = null;
         this.canPathfollowerIgnore = false;
+        this.acceptanceRange = new PathPointAcceptanceRange();
     }
 
     public Vector3 position;
@@ -30,12 +39,15 @@ public struct PathPoint
     public float y { get => position.y; set => position.y = value; }
     public float z { get => position.z; set => position.z = value; }
 
+    // Path radii. If zero, uses path follower defaults. If our position enters area it is considered 'reached'.
+    public PathPointAcceptanceRange acceptanceRange;
+
     public Color debugColor;
     public PathPointTask task;
     public bool canPathfollowerIgnore;
 
     public static implicit operator Vector3(PathPoint p) => p.position;
-    public static implicit operator PathPoint(Vector3 v) => new PathPoint { position = v };
+    public static implicit operator PathPoint(Vector3 v) => new PathPoint(v);
 }
 
 public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
@@ -48,8 +60,7 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
 
     private float characterHalfHeight = 0.5f;
 
-    public float targetHorizontalRadius;
-    private float targetVerticalRadius = 2f;
+    public PathPointAcceptanceRange defaultPathPointAcceptanceRange = new PathPointAcceptanceRange() { minYOffset = -0.5f, maxYOffset = 1f, horizontalRadius = 0.25f };
 
     private Vector3 previousPosition;
     private Vector3 previousVelocity;
@@ -59,26 +70,25 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
 
     public bool hasReachedEnd => currentTargetIndex == targets.Count;
 
-    public void SetupPath(IReadOnlyCollection<PathPoint> pathPoints, Vector3 startVelocity, float targetRadius)
+    public void SetupPath(IReadOnlyCollection<PathPoint> pathPoints, Vector3 startVelocity)
     {
         this.targets.Clear();
         this.targets.Capacity = pathPoints.Count;
         this.targets.AddRange(pathPoints);
-        SetupPathForCurrentPathPoints(startVelocity, targetRadius);
+        SetupPathForCurrentPathPoints(startVelocity);
     }
 
-    public void SetupPath(IReadOnlyCollection<Vector3> targets, Vector3 startVelocity, float targetRadius)
+    public void SetupPath(IReadOnlyCollection<Vector3> targets, Vector3 startVelocity)
     {
         this.targets.Clear();
         foreach (Vector3 target in targets)
             this.targets.Add(target);
-        SetupPathForCurrentPathPoints(startVelocity, targetRadius);
+        SetupPathForCurrentPathPoints(startVelocity);
     }
 
-    private void SetupPathForCurrentPathPoints(Vector3 startVelocity, float targetRadius)
+    private void SetupPathForCurrentPathPoints(Vector3 startVelocity)
     {
         this.startVelocity = startVelocity;
-        this.targetHorizontalRadius = targetRadius;
         this.currentTargetIndex = 0;
 
         foreach (PathFilter pathFilter in pathFilters)
@@ -95,7 +105,23 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
         }
     }
 
-    public virtual void InitTests(TestBotExecutor exec) => SetupPath(exec.targetPositions, exec.startVelocity, exec.targetRadius);
+    public bool IsInAcceptanceRange(Vector3 position, in PathPoint pathPoint)
+    {
+        PathPointAcceptanceRange acceptanceRange = GetAcceptanceRangeForPoint(pathPoint);
+        return VectorExtensions.HorizontalDistance(position, pathPoint.position) < acceptanceRange.horizontalRadius && position.y >= pathPoint.position.y + acceptanceRange.minYOffset && position.y <= pathPoint.position.y + acceptanceRange.maxYOffset;
+    }
+
+    public PathPointAcceptanceRange GetAcceptanceRangeForPoint(in PathPoint pathPoint)
+    {
+        return new PathPointAcceptanceRange()
+        {
+            horizontalRadius = pathPoint.acceptanceRange.horizontalRadius != 0f ? pathPoint.acceptanceRange.horizontalRadius : defaultPathPointAcceptanceRange.horizontalRadius,
+            minYOffset = pathPoint.acceptanceRange.minYOffset != 0f ? pathPoint.acceptanceRange.minYOffset : defaultPathPointAcceptanceRange.minYOffset,
+            maxYOffset = pathPoint.acceptanceRange.maxYOffset != 0f ? pathPoint.acceptanceRange.maxYOffset : defaultPathPointAcceptanceRange.maxYOffset,
+        };
+    }
+
+    public virtual void InitTests(TestBotExecutor exec) => SetupPath(exec.targetPositions, exec.startVelocity);
 
     public virtual void Init(in BotTaskParams taskParams)
     {
@@ -121,9 +147,7 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
             }
         }
 
-        float horDist = VectorExtensions.HorizontalDistance(positionClosestToTarget, targets[currentTargetIndex]);
-        float vertDist = Mathf.Abs(positionClosestToTarget.y + characterHalfHeight - targets[currentTargetIndex].y);
-        if (horDist < targetHorizontalRadius && vertDist <= targetVerticalRadius)
+        if (IsInAcceptanceRange(positionClosestToTarget, targets[currentTargetIndex]))
         {
             return true;
         }
@@ -180,8 +204,12 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
         var lineStyle = DebugDraw.Style.DefaultWhite.Thickness(1f);
         for (int i = 0; i < targets.Count - 1; i++)
         {
-            DebugDraw.DrawCross(targets[i], 1f, DebugDraw.Style.DefaultWhite.Color(targets[i].debugColor));
+            PathPointAcceptanceRange acceptanceRange = GetAcceptanceRangeForPoint(targets[i]);
+            DebugDraw.Style targetStyle = DebugDraw.Style.DefaultWhite.Color(targets[i].debugColor);
+
+            DebugDraw.DrawCross(targets[i], 1f, targetStyle);
             DebugDraw.DrawLine(targets[i] + new Vector3(0f, 0.05f, 0f), targets[i + 1] + new Vector3(0f, 0.05f, 0f), lineStyle);
+            DebugDraw.DrawCapsule(targets[i] + new Vector3(0f, acceptanceRange.minYOffset, 0f), targets[i] + new Vector3(0f, acceptanceRange.maxYOffset, 0f), acceptanceRange.horizontalRadius, targetStyle);
         }
 
         DebugDraw.DrawLine(debugWatchPosition, debugWatchTargetPosition, Color.blue);
