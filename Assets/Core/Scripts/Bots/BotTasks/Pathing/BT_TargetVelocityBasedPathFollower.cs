@@ -54,14 +54,11 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
         float accelMagnitude = taskParams.movement.CalculateAccelerationMagnitude(taskParams.movement.velocity.Horizontal(), interval) * accelMultiplier;
         Vector3 desiredVelocity = VectorExtensions.HorizontalNormalized(targetPositionToUse - naturalPositionAfterInterval) * Mathf.Min(taskParams.movement.topSpeed, taskParams.movement.velocity.magnitude + accelMagnitude);
 
-        if (exec)
+        if (taskParams.isWatchTime)
         {
-            if (time <= exec.watchTime && time + taskParams.deltaTime > exec.watchTime)
-            {
-                // draw the things
-                DebugDraw.DrawLine(taskParams.position, naturalPositionAfterInterval, DebugDraw.Style.Thick.Color(Color.blue));
-                DebugDraw.DrawLine(taskParams.position, taskParams.position + (desiredVelocity - taskParams.movement.velocity).normalized, DebugDraw.Style.Thick.Color(Color.yellow));
-            }
+            // draw the things
+            DebugDraw.DrawLine(taskParams.position, naturalPositionAfterInterval, DebugDraw.Style.Thick.Color(new Color(0f, 0f, 1f, 0.2f)));
+            DebugDraw.DrawLine(taskParams.position, taskParams.position + (desiredVelocity - taskParams.movement.velocity).normalized, DebugDraw.Style.Thick.Color(Color.yellow));
         }
 
         // i swear teach I got dis

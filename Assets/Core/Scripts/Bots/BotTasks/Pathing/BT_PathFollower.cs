@@ -202,14 +202,16 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
     public virtual void DrawDebugs()
     {
         var lineStyle = DebugDraw.Style.DefaultWhite.Thickness(1f);
-        for (int i = 0; i < targets.Count - 1; i++)
+        for (int i = 0; i < targets.Count; i++)
         {
             PathPointAcceptanceRange acceptanceRange = GetAcceptanceRangeForPoint(targets[i]);
             DebugDraw.Style targetStyle = DebugDraw.Style.DefaultWhite.Color(targets[i].debugColor);
 
             DebugDraw.DrawCross(targets[i], 1f, targetStyle);
-            DebugDraw.DrawLine(targets[i] + new Vector3(0f, 0.05f, 0f), targets[i + 1] + new Vector3(0f, 0.05f, 0f), lineStyle);
             DebugDraw.DrawCapsule(targets[i] + new Vector3(0f, acceptanceRange.minYOffset, 0f), targets[i] + new Vector3(0f, acceptanceRange.maxYOffset, 0f), acceptanceRange.horizontalRadius, targetStyle);
+
+            if (i < targets.Count - 1)
+                DebugDraw.DrawLine(targets[i] + new Vector3(0f, 0.05f, 0f), targets[i + 1] + new Vector3(0f, 0.05f, 0f), lineStyle);
         }
 
         DebugDraw.DrawLine(debugWatchPosition, debugWatchTargetPosition, Color.blue);
