@@ -8,8 +8,6 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
     public float interval = 0.04f;
     public float cornerBlendRange = 2f;
 
-    private float time;
-
     public override void InitTests(TestBotExecutor exec)
     {
         this.exec = exec;
@@ -19,17 +17,14 @@ public class BT_TargetVelocityBasedPathFollower : BT_PathFollower
     public override void Init(in BotTaskParams taskParams)
     {
         base.Init(in taskParams);
-        time = 0f;
     }
 
-    public override void Update(in BotTaskParams taskParams, ref CharacterInput input)
+    public override void OnPreFilterMove(in BotTaskParams taskParams, ref CharacterInput input)
     {
-        base.Update(in taskParams, ref input);
+        base.OnPreFilterMove(in taskParams, ref input);
 
         if (currentTargetIndex >= targets.Count)
             return;
-
-        time += taskParams.deltaTime;
 
         // todo: move this into movement function
         float accelMultiplier = 1f;

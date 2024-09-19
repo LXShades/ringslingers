@@ -155,6 +155,8 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
         return false;
     }
 
+    public virtual void OnPreFilterMove(in BotTaskParams taskParams, ref CharacterInput input) { }
+
     public virtual void Update(in BotTaskParams taskParams, ref CharacterInput input)
     {
         // Check if we crossed the latest point
@@ -175,6 +177,8 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
             debugWatchPosition = taskParams.position;
             debugWatchTargetPosition = targets[currentTargetIndex];
         }
+
+        OnPreFilterMove(in taskParams, ref input);
 
         // Run path point tasks
         PathPointTaskParams pathPointTaskParams = new PathPointTaskParams()

@@ -119,7 +119,7 @@ public class BotController : MonoBehaviour
 
     private BotTaskParams MakeBotTaskParams()
     {
-        return new BotTaskParams() { character = character, controller = this, deltaTime = 1f / GameTicker.singleton.fixedInputRate, movement = character?.movement, characterObject = character?.gameObject };
+        return new BotTaskParams() { character = character, controller = this, deltaTime = 1f / GameTicker.singleton.fixedInputRate, movement = character?.movement, characterObject = character?.gameObject, lastInput = lastInput };
     }
 
     public void DeactivateState<TState>() where TState : IBotTask

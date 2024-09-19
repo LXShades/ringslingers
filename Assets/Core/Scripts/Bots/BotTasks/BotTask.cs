@@ -26,6 +26,7 @@ public struct BotTaskParams
     public Character character;
     public PlayerCharacterMovement movement;
     public float deltaTime;
+    public CharacterInput lastInput;
     public Vector3 position => characterObject.transform.position;
     public bool isWatchTime;
 }

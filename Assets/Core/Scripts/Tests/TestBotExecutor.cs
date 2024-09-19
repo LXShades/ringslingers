@@ -203,7 +203,7 @@ public class TestBotExecutor : MonoBehaviour
     {
         input = default;
         if (actionToPerform is IBotTask botTask)
-            botTask.Update(new BotTaskParams() { character = null, characterObject = gameObject, controller = null, deltaTime = deltaTime, movement = movement, isWatchTime = isWatchTime }, ref input);
+            botTask.Update(new BotTaskParams() { character = null, characterObject = gameObject, controller = null, deltaTime = deltaTime, movement = movement, isWatchTime = isWatchTime, lastInput = lastInput }, ref input);
         input = input.WithDeltas(lastInput);
         lastInput = input;
 
