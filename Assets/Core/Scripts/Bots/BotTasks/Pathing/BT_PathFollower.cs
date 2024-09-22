@@ -31,6 +31,7 @@ public struct PathPoint
         this.debugColor = Color.white;
         this.task = null;
         this.canPathfollowerIgnore = false;
+        this.canPathfollowerSkip = true;
         this.acceptanceRange = new PathPointAcceptanceRange();
     }
 
@@ -45,6 +46,7 @@ public struct PathPoint
     public Color debugColor;
     public PathPointTask task;
     public bool canPathfollowerIgnore;
+    public bool canPathfollowerSkip;
 
     public static implicit operator Vector3(PathPoint p) => p.position;
     public static implicit operator PathPoint(Vector3 v) => new PathPoint(v);
@@ -147,7 +149,7 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
             }
         }
 
-        if (IsInAcceptanceRange(positionClosestToTarget, targets[currentTargetIndex]))
+        if (IsInAcceptanceRange(positionClosestToTarget, targetPosition))
         {
             return true;
         }
@@ -162,13 +164,21 @@ public class BT_PathFollower : ITestableBotTask, IBotTask, IBotDebugDraws
         // Check if we crossed the latest point
         if (currentTargetIndex < targets.Count && previousVelocity.sqrMagnitude > 0f)
         {
-            if (HasHitTarget(previousPosition, taskParams.position, targets[currentTargetIndex]))
+            // We can check all the following points (skip points!) until we hit a point that cannot be skipped
+            for (int nextValidTargetIndex = currentTargetIndex; nextValidTargetIndex < targets.Count; nextValidTargetIndex++)
             {
-                do
+                if (HasHitTarget(previousPosition, taskParams.position, targets[nextValidTargetIndex]))
                 {
-                    currentTargetIndex++;
-                    // keep incrementing it if these are path points we can ignore
-                } while (currentTargetIndex < targets.Count && targets[currentTargetIndex].canPathfollowerIgnore);
+                    currentTargetIndex = nextValidTargetIndex + 1;
+                    while (currentTargetIndex < targets.Count && targets[currentTargetIndex].canPathfollowerIgnore)
+                    {
+                        // keep incrementing it if these are path points we can ignore
+                        currentTargetIndex++;
+                    }
+                }
+
+                if (!targets[nextValidTargetIndex].canPathfollowerSkip)
+                    break;
             }
         }
 
